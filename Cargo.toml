@@ -1,0 +1,9 @@
+[package]
+name = "hdf5-rs"
+version = "0.0.1"
+authors = ["Ivan Smirnov <i.s.smirnov@gmail.com>"]
+keywords = ["hdf5"]
+description = "HDF5 library wrapper for Rust."
+
+[dependencies]
+lazy_static = "*"
