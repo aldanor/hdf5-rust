@@ -10,6 +10,7 @@ pub mod h5f;
 pub mod h5g;
 pub mod h5i;
 pub mod h5l;
+pub mod h5mm;
 pub mod h5o;
 pub mod h5t;
 
