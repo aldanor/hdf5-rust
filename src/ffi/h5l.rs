@@ -1,11 +1,17 @@
 pub use self::H5L_type_t::*;
 
-use libc::{c_int, c_uint, c_void, c_char, size_t, ssize_t, int64_t};
+use libc::{c_int, c_uint, c_void, c_char, size_t, ssize_t, int64_t, uint32_t};
 use std::mem::transmute;
 
 use ffi::types::{hid_t, htri_t, haddr_t, herr_t, hbool_t, hsize_t};
 use ffi::h5::{H5_index_t, H5_iter_order_t};
 use ffi::h5t::{H5T_cset_t};
+
+pub const H5L_MAX_LINK_NAME_LEN: uint32_t = -1;
+
+pub const H5L_SAME_LOC: hid_t = 0;
+
+pub const H5L_LINK_CLASS_T_VERS: c_uint = 0;
 
 #[repr(C)]
 #[derive(Copy)]
@@ -16,6 +22,9 @@ pub enum H5L_type_t {
     H5L_TYPE_EXTERNAL = 64,
     H5L_TYPE_MAX      = 255,
 }
+
+pub const H5L_TYPE_BUILTIN_MAX: H5L_type_t = H5L_TYPE_SOFT;
+pub const H5L_TYPE_UD_MIN:      H5L_type_t = H5L_TYPE_EXTERNAL;
 
 #[repr(C)]
 #[derive(Copy)]

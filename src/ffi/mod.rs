@@ -4,6 +4,7 @@ pub mod h5;
 pub mod h5e;
 pub mod h5i;
 pub mod h5l;
+pub mod h5o;
 pub mod h5t;
 
 pub mod types {
