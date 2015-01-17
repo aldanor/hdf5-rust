@@ -13,7 +13,7 @@ macro_rules! register_hid {
     ($rust_name:ident, $c_name:ident, $init:expr) => {
         #[link(name = "hdf5")]
         extern {
-            pub static $c_name: hid_t;
+            static $c_name: hid_t;
         }
         lazy_static! {
             pub static ref $rust_name: hid_t = {

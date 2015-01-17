@@ -7,12 +7,15 @@ pub mod h5c;
 pub mod h5d;
 pub mod h5e;
 pub mod h5f;
+pub mod h5fd;
 pub mod h5g;
 pub mod h5i;
 pub mod h5l;
 pub mod h5mm;
 pub mod h5o;
+pub mod h5p;
 pub mod h5t;
+pub mod h5z;
 
 pub mod types {
     pub use libc::{c_int, c_uint, c_void, c_char, c_ulonglong, c_longlong, size_t, ssize_t};
