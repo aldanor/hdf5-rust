@@ -6,5 +6,5 @@ extern crate libc;
 
 pub mod error;
 
-#[allow(non_camel_case_types, raw_pointer_derive)]
+#[allow(non_camel_case_types, non_snake_case, raw_pointer_derive, dead_code)]
 pub mod ffi;
