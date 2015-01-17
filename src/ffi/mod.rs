@@ -1,6 +1,7 @@
 mod macros;
 
 pub mod h5;
+pub mod h5a;
 pub mod h5e;
 pub mod h5i;
 pub mod h5l;
