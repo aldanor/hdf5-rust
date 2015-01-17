@@ -6,6 +6,7 @@ pub mod h5ac;
 pub mod h5c;
 pub mod h5d;
 pub mod h5e;
+pub mod h5f;
 pub mod h5i;
 pub mod h5l;
 pub mod h5o;
