@@ -29,9 +29,9 @@ pub type hid_t = c_int;
 
 pub const H5I_INVALID_HID: hid_t = -1;
 
-pub type H5I_free_t = Option<extern "C" fn(arg1: *mut c_void) -> herr_t>;
-pub type H5I_search_func_t = Option<extern "C" fn (obj: *mut c_void, id: hid_t, key: *mut c_void) ->
-                              c_int>;
+pub type H5I_free_t = Option<extern fn(arg1: *mut c_void) -> herr_t>;
+pub type H5I_search_func_t = Option<extern fn (obj: *mut c_void, id: hid_t, key: *mut c_void) ->
+                                               c_int>;
 
 #[link(name = "hdf5")]
 extern {
