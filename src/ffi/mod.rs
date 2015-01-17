@@ -19,6 +19,9 @@ pub mod h5s;
 pub mod h5t;
 pub mod h5z;
 
+#[allow(unstable)]
+pub mod util;
+
 pub mod types {
     pub use ffi::h5::{herr_t, hbool_t, htri_t, hsize_t, hssize_t, haddr_t};
     pub use ffi::h5i::hid_t;
