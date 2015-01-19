@@ -1,5 +1,3 @@
-mod macros;
-
 pub mod h5;
 pub mod h5a;
 pub mod h5ac;
@@ -26,13 +24,4 @@ pub mod types {
     pub use ffi::h5::{herr_t, hbool_t, htri_t, hsize_t, hssize_t, haddr_t};
     pub use ffi::h5i::hid_t;
     pub use ffi::h5r::hobj_ref_t;
-}
-
-#[allow(unstable, unused_unsafe)]
-fn h5sync<T, F>(func: F) -> T where F: FnOnce() -> T,
-{
-    use std::sync::{StaticMutex, MUTEX_INIT};
-    static LOCK: StaticMutex = MUTEX_INIT;
-    let _guard = LOCK.lock();
-    unsafe { func() }
 }
