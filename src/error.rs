@@ -26,9 +26,7 @@ impl H5ErrorFrame {
 pub fn silence_errors() {
     use ffi::h5e::{H5Eset_auto2, H5E_DEFAULT};
 
-    h5lock! { unsafe {
-        H5Eset_auto2(H5E_DEFAULT, None, ptr::null_mut::<c_void>())
-    }};
+    h5lock!(H5Eset_auto2(H5E_DEFAULT, None, ptr::null_mut::<c_void>()));
 }
 
 #[test]
@@ -37,19 +35,19 @@ fn test_error_stack_query() {
 
     silence_errors();
 
-    let result_no_error = h5lock! { unsafe {
+    let result_no_error = h5lock!({
         let plist_id = H5Pcreate(*H5P_CLS_ROOT_ID);
         H5Pclose(plist_id);
         H5ErrorStack::query()
-    }};
+    });
     assert!(result_no_error.ok().unwrap().is_none());
 
-    let result_error = h5lock! {unsafe {
+    let result_error = h5lock!({
         let plist_id = H5Pcreate(*H5P_CLS_ROOT_ID);
         H5Pclose(plist_id);
         H5Pclose(plist_id);
         H5ErrorStack::query()
-    }};
+    });
     let stack = result_error.ok().unwrap().unwrap();
     assert_eq!(stack.description(), "can't close");
     assert_eq!(stack.detail().unwrap().as_slice(),
@@ -231,18 +229,12 @@ fn test_h5check() {
 
     silence_errors();
 
-    let plist_id = h5lock! {
-        unsafe { H5Pcreate(*H5P_CLS_ROOT_ID) }
-    };
+    let plist_id = h5lock!(H5Pcreate(*H5P_CLS_ROOT_ID));
 
-    let result_no_error = h5lock! {
-        h5check(unsafe { H5Pclose(plist_id) })
-    };
+    let result_no_error = h5call!(H5Pclose(plist_id));
     assert!(result_no_error.is_ok());
 
-    let result_error = h5lock! {
-        h5check(unsafe { H5Pclose(plist_id) })
-    };
+    let result_error = h5call!(H5Pclose(plist_id));
     assert!(result_error.is_err());
 }
 
