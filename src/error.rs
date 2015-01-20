@@ -33,22 +33,20 @@ pub fn silence_errors() {
 
 #[test]
 fn test_error_stack_query() {
-    use ffi::types::hid_t;
     use ffi::h5p::{H5Pcreate, H5Pclose, H5P_CLS_ROOT_ID};
-
-    let cls_id = *H5P_CLS_ROOT_ID;
-    let mut plist_id: hid_t = 0;
 
     silence_errors();
 
     let result_no_error = h5lock! { unsafe {
-        plist_id = H5Pcreate(cls_id);
+        let plist_id = H5Pcreate(*H5P_CLS_ROOT_ID);
         H5Pclose(plist_id);
         H5ErrorStack::query()
     }};
     assert!(result_no_error.ok().unwrap().is_none());
 
     let result_error = h5lock! {unsafe {
+        let plist_id = H5Pcreate(*H5P_CLS_ROOT_ID);
+        H5Pclose(plist_id);
         H5Pclose(plist_id);
         H5ErrorStack::query()
     }};
