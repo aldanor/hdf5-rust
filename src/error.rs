@@ -233,29 +233,26 @@ fn test_h5check() {
 
     silence_errors();
 
-    let plist_id = h5lock! { unsafe {
-        H5Pcreate(*H5P_CLS_ROOT_ID)
-    }};
+    let plist_id = h5lock! {
+        unsafe { H5Pcreate(*H5P_CLS_ROOT_ID) }
+    };
 
     let result_no_error = h5lock! {
-        h5check(|| unsafe { H5Pclose(plist_id) })
+        h5check(unsafe { H5Pclose(plist_id) })
     };
     assert!(result_no_error.is_ok());
 
     let result_error = h5lock! {
-        h5check(|| unsafe { H5Pclose(plist_id) })
+        h5check(unsafe { H5Pclose(plist_id) })
     };
     assert!(result_error.is_err());
 }
 
 
-pub fn h5check<T, F>(func: F) -> H5Result<T> where F: FnOnce() -> T, T: Int,
+pub fn h5check<T>(value: T) -> H5Result<T> where T: Int,
 {
-    use sync::h5sync;
-
     let min_value: T = Int::min_value();
     let zero:      T = Int::zero();
-    let value:     T = func();
 
     let maybe_error = if min_value < zero {
         value < zero
@@ -273,11 +270,31 @@ pub fn h5check<T, F>(func: F) -> H5Result<T> where F: FnOnce() -> T, T: Int,
 }
 
 
-macro_rules! h5try {
-    ($expr:expr) => {
-        match h5check(unsafe { $expr }) {
-            Ok(value) => Ok(value),
-            Err(err) => return Err(::std::error::FromError::from_error(err)),
-        }
+#[test]
+fn test_h5try() {
+    use ffi::types::herr_t;
+    use ffi::h5p::{H5Pcreate, H5Pclose, H5P_CLS_ROOT_ID};
+
+    silence_errors();
+
+    fn f1() -> H5Result<herr_t> {
+        let plist_id = h5try!(H5Pcreate(*H5P_CLS_ROOT_ID));
+        h5try!(H5Pclose(plist_id));
+        Ok(100)
     }
+
+    let result1 = f1();
+    assert!(result1.is_ok());
+    assert_eq!(result1.ok().unwrap(), 100);
+
+    fn f2() -> H5Result<herr_t> {
+        let plist_id = h5try!(H5Pcreate(*H5P_CLS_ROOT_ID));
+        h5try!(H5Pclose(plist_id));
+        h5try!(H5Pclose(plist_id));
+        Ok(100)
+    }
+
+    let result2 = f2();
+    assert!(result2.is_err());
 }
+

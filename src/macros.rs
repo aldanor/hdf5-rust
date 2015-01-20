@@ -1,16 +1,29 @@
 macro_rules! ensure {
-    ($expr:expr, $err:expr) => {
+    ($expr:expr, $err:expr) => (
         if !($expr) { return Err(::std::error::FromError::from_error($err)); }
-    }
+    )
 }
 
 macro_rules! h5lock {
-    ($expr:expr) => {
-        {
-            use sync::h5sync;
-            h5sync(|| { $expr })
-        }
-    }
+    ($expr:expr) => ({
+        use sync::h5sync;
+        h5sync(|| { $expr })
+    })
+}
+
+macro_rules! h5call {
+    ($expr:expr) => (
+        h5lock!(h5check(unsafe { $expr }))
+    )
+}
+
+macro_rules! h5try {
+    ($expr:expr) => (match h5call!($expr) {
+        Ok(value) => value,
+        Err(err)  => {
+            return Err(::std::error::FromError::from_error(err))
+        },
+    })
 }
 
 macro_rules! register_hid {
