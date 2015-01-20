@@ -29,53 +29,6 @@ pub fn silence_errors() {
     h5lock!(H5Eset_auto2(H5E_DEFAULT, None, ptr::null_mut::<c_void>()));
 }
 
-#[test]
-fn test_error_stack_query() {
-    use ffi::h5p::{H5Pcreate, H5Pclose, H5P_CLS_ROOT_ID};
-
-    silence_errors();
-
-    let result_no_error = h5lock!({
-        let plist_id = H5Pcreate(*H5P_CLS_ROOT_ID);
-        H5Pclose(plist_id);
-        H5ErrorStack::query()
-    });
-    assert!(result_no_error.ok().unwrap().is_none());
-
-    let result_error = h5lock!({
-        let plist_id = H5Pcreate(*H5P_CLS_ROOT_ID);
-        H5Pclose(plist_id);
-        H5Pclose(plist_id);
-        H5ErrorStack::query()
-    });
-    let stack = result_error.ok().unwrap().unwrap();
-    assert_eq!(stack.description(), "can't close");
-    assert_eq!(stack.detail().unwrap().as_slice(),
-               "Error in H5Pclose(): can't close [Property lists: Unable to free object]");
-
-    assert_eq!(stack.len(), 3);
-    assert!(!stack.is_empty());
-
-    assert_eq!(stack[0].description(), "can't close");
-    assert_eq!(stack[0].detail().unwrap().as_slice(),
-               "Error in H5Pclose(): can't close \
-                [Property lists: Unable to free object]");
-
-    assert_eq!(stack[1].description(), "can't decrement ID ref count");
-    assert_eq!(stack[1].detail().unwrap().as_slice(),
-               "Error in H5I_dec_app_ref(): can't decrement ID ref count \
-                [Object atom: Unable to decrement reference count]");
-
-    assert_eq!(stack[2].description(), "can't locate ID");
-    assert_eq!(stack[2].detail().unwrap().as_slice(),
-               "Error in H5I_dec_ref(): can't locate ID \
-                [Object atom: Unable to find atom information (already closed?)]");
-
-    let empty_stack = H5ErrorStack::new();
-    assert!(empty_stack.is_empty());
-    assert_eq!(empty_stack.len(), 0);
-}
-
 pub struct H5ErrorStack {
     frames: Vec<H5ErrorFrame>
 }
@@ -223,22 +176,6 @@ impl Error for H5Error {
     }
 }
 
-#[test]
-fn test_h5check() {
-    use ffi::h5p::{H5Pcreate, H5Pclose, H5P_CLS_ROOT_ID};
-
-    silence_errors();
-
-    let plist_id = h5lock!(H5Pcreate(*H5P_CLS_ROOT_ID));
-
-    let result_no_error = h5call!(H5Pclose(plist_id));
-    assert!(result_no_error.is_ok());
-
-    let result_error = h5call!(H5Pclose(plist_id));
-    assert!(result_error.is_err());
-}
-
-
 pub fn h5check<T>(value: T) -> H5Result<T> where T: Int,
 {
     let min_value: T = Int::min_value();
@@ -259,6 +196,72 @@ pub fn h5check<T>(value: T) -> H5Result<T> where T: Int,
     }
 }
 
+#[test]
+fn test_error_stack() {
+    use ffi::h5p::{H5Pcreate, H5Pclose, H5P_CLS_ROOT_ID};
+
+    silence_errors();
+
+    let result_no_error = h5lock!({
+        let plist_id = H5Pcreate(*H5P_CLS_ROOT_ID);
+        H5Pclose(plist_id);
+        H5ErrorStack::query()
+    });
+    assert!(result_no_error.ok().unwrap().is_none());
+
+    let result_error = h5lock!({
+        let plist_id = H5Pcreate(*H5P_CLS_ROOT_ID);
+        H5Pclose(plist_id);
+        H5Pclose(plist_id);
+        H5ErrorStack::query()
+    });
+    let stack = result_error.ok().unwrap().unwrap();
+    assert_eq!(stack.description(), "can't close");
+    assert_eq!(stack.detail().unwrap().as_slice(),
+               "Error in H5Pclose(): can't close [Property lists: Unable to free object]");
+
+    assert_eq!(stack.len(), 3);
+    assert!(!stack.is_empty());
+
+    assert_eq!(stack[0].description(), "can't close");
+    assert_eq!(stack[0].detail().unwrap().as_slice(),
+               "Error in H5Pclose(): can't close \
+                [Property lists: Unable to free object]");
+
+    assert_eq!(stack[1].description(), "can't decrement ID ref count");
+    assert_eq!(stack[1].detail().unwrap().as_slice(),
+               "Error in H5I_dec_app_ref(): can't decrement ID ref count \
+                [Object atom: Unable to decrement reference count]");
+
+    assert_eq!(stack[2].description(), "can't locate ID");
+    assert_eq!(stack[2].detail().unwrap().as_slice(),
+               "Error in H5I_dec_ref(): can't locate ID \
+                [Object atom: Unable to find atom information (already closed?)]");
+
+    let empty_stack = H5ErrorStack::new();
+    assert!(empty_stack.is_empty());
+    assert_eq!(empty_stack.len(), 0);
+}
+
+#[test]
+fn test_h5call() {
+    use ffi::h5p::{H5Pcreate, H5Pclose, H5P_CLS_ROOT_ID};
+
+    silence_errors();
+
+    let result_no_error = h5call!({
+        let plist_id = H5Pcreate(*H5P_CLS_ROOT_ID);
+        H5Pclose(plist_id)
+    });
+    assert!(result_no_error.is_ok());
+
+    let result_error = h5call!({
+        let plist_id = H5Pcreate(*H5P_CLS_ROOT_ID);
+        H5Pclose(plist_id);
+        H5Pclose(plist_id)
+    });
+    assert!(result_error.is_err());
+}
 
 #[test]
 fn test_h5try() {
