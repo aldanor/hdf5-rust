@@ -1,9 +1,10 @@
 use libc::{c_uint, c_void};
 
-use std::error::{Error, FromError};
 use std::ops::Index;
 use std::num::Int;
+use std::error::{self, Error};
 use std::ptr;
+use std::fmt;
 
 pub struct H5ErrorFrame {
     pub desc: String,
@@ -72,7 +73,7 @@ impl H5ErrorStack {
                 };
                 match closure(*err_desc) {
                     Ok(frame) => { data.stack.push(frame); 0 },
-                    Err(err)  => { data.err = Some(FromError::from_error(err)); 0 },
+                    Err(err)  => { data.err = Some(error::FromError::from_error(err)); 0 },
                 }
             }
         }
@@ -143,36 +144,40 @@ pub type H5Result<T> = Result<T, H5Error>;
 impl H5Error {
     pub fn query() -> Option<H5Error> {
         match H5ErrorStack::query() {
-            Err(err)        => Some(FromError::from_error(err)),
+            Err(err)        => Some(error::FromError::from_error(err)),
             Ok(Some(stack)) => Some(H5Error::LibraryError(stack)),
             Ok(None)        => None,
         }
     }
 }
 
-impl FromError<&'static str> for H5Error {
+impl error::FromError<&'static str> for H5Error {
     fn from_error(desc: &'static str) -> H5Error {
         H5Error::InternalError(desc)
     }
 }
 
-impl Error for H5Error {
+impl fmt::Debug for H5Error {
+    fn fmt(&self, formatter: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        match *self {
+            H5Error::InternalError(desc)     => desc.fmt(formatter),
+            H5Error::LibraryError(ref stack) => stack.detail().fmt(formatter),
+        }
+    }
+}
+
+impl fmt::Display for H5Error {
+    fn fmt(&self, formatter: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        self.description().fmt(formatter)
+    }
+}
+
+impl error::Error for H5Error {
     fn description(&self) -> &str {
         match *self {
             H5Error::InternalError(desc)     => desc,
             H5Error::LibraryError(ref stack) => stack.description(),
         }
-    }
-
-    fn detail(&self) -> Option<String> {
-        match *self {
-            H5Error::InternalError(_)        => None,
-            H5Error::LibraryError(ref stack) => stack.detail()
-        }
-    }
-
-    fn cause(&self) -> Option<&Error> {
-        None
     }
 }
 
@@ -191,7 +196,7 @@ pub fn h5check<T>(value: T) -> H5Result<T> where T: Int,
         false => Ok(value),
         true  => match H5Error::query() {
             None       => Ok(value),
-            Some(err)  => Err(FromError::from_error(err)),
+            Some(err)  => Err(error::FromError::from_error(err)),
         },
     }
 }
