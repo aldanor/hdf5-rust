@@ -1,5 +1,7 @@
 #![feature(collections, std_misc, core)]
 
+#![feature(hash)] // temporarily, because of warnings in bitflags
+
 #![feature(libc)]
 extern crate libc;
 
