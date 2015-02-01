@@ -1,5 +1,6 @@
-#![allow(unstable)]
+#![feature(collections, std_misc, core)]
 
+#![feature(libc)]
 extern crate libc;
 
 #[macro_use]

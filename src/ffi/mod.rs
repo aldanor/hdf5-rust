@@ -17,7 +17,6 @@ pub mod h5s;
 pub mod h5t;
 pub mod h5z;
 
-#[allow(unstable)]
 pub mod util;
 
 pub mod types {
