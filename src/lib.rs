@@ -1,6 +1,8 @@
-#![feature(collections, std_misc, core)]
+#![feature(std_misc, core)]
 
 #![feature(hash)] // temporarily, because of warnings in bitflags
+
+#![feature(thread_local, optin_builtin_traits, unsafe_destructor)]
 
 #![feature(libc)]
 extern crate libc;
@@ -19,11 +21,13 @@ pub mod ffi;
 
 pub mod error;
 
+pub mod mutex;
+
 pub mod sync {
     pub fn h5sync<T, F>(func: F) -> T where F: FnOnce() -> T,
     {
-        use std::sync::{StaticMutex, MUTEX_INIT};
-        static LOCK: StaticMutex = MUTEX_INIT;
+        use mutex::{RecursiveMutex, RECURSIVE_MUTEX_INIT};
+        static LOCK: RecursiveMutex = RECURSIVE_MUTEX_INIT;
         let _guard = LOCK.lock();
         func()
     }
