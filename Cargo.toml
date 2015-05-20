@@ -8,3 +8,5 @@ description = "HDF5 library wrapper for Rust."
 [dependencies]
 lazy_static = "*"
 bitflags = "*"
+num = "*"
+libc = "*"

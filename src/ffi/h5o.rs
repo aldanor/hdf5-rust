@@ -55,7 +55,7 @@ pub const H5O_SHMESG_MAX_NINDEXES:  c_uint = 8;
 pub const H5O_SHMESG_MAX_LIST_SIZE: c_uint = 5000;
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub enum H5O_type_t {
     H5O_TYPE_UNKNOWN        = -1,
     H5O_TYPE_GROUP          = 0,
@@ -65,7 +65,7 @@ pub enum H5O_type_t {
 }
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub struct H5O_hdr_info_t {
     pub version: c_uint,
     pub nmesgs: c_uint,
@@ -76,7 +76,7 @@ pub struct H5O_hdr_info_t {
 }
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub struct __H5O_hdr_info_t__space {
     pub total: hsize_t,
     pub meta: hsize_t,
@@ -85,14 +85,14 @@ pub struct __H5O_hdr_info_t__space {
 }
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub struct __H5O_hdr_info_t__mesg {
     pub present: uint64_t,
     pub shared: uint64_t,
 }
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub struct H5O_info_t {
     pub fileno: c_ulong,
     pub addr: haddr_t,
@@ -108,7 +108,7 @@ pub struct H5O_info_t {
 }
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub struct __H5O_info_t__meta_size {
     pub obj: H5_ih_info_t,
     pub attr: H5_ih_info_t,
@@ -120,7 +120,7 @@ pub type H5O_iterate_t = Option<extern fn (obj: hid_t, name: *const c_char, info
                                            op_data: *mut c_void) -> herr_t>;
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub enum H5O_mcdt_search_ret_t {
     H5O_MCDT_SEARCH_ERROR = -1,
     H5O_MCDT_SEARCH_CONT  = 0,

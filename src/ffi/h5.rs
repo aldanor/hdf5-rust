@@ -17,7 +17,7 @@ pub type hssize_t = c_longlong;
 pub type haddr_t  = uint64_t;
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub enum H5_iter_order_t {
     H5_ITER_UNKNOWN = -1,
     H5_ITER_INC     = 0,
@@ -27,7 +27,7 @@ pub enum H5_iter_order_t {
 }
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub enum H5_index_t {
     H5_INDEX_UNKNOWN   = -1,
     H5_INDEX_NAME      = 0,
@@ -39,11 +39,11 @@ pub const H5_ITER_ERROR: c_int = -1;
 pub const H5_ITER_CONT:  c_int = 0;
 pub const H5_ITER_STOP:  c_int = -1;
 
-pub const HADDR_UNDEF: haddr_t = -1;
+pub const HADDR_UNDEF: haddr_t = !0;
 pub const HADDR_MAX:   haddr_t = HADDR_UNDEF - 1;
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub struct H5_ih_info_t {
     pub index_size: hsize_t,
     pub heap_size: hsize_t,

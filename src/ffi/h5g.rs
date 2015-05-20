@@ -21,7 +21,7 @@ pub const H5G_NUSERTYPES: c_uint = H5G_NTYPES - H5G_NLIBTYPES;
 pub fn H5G_USERTYPE(X: c_uint) -> c_uint { 8 + X }
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub enum H5G_storage_type_t {
     H5G_STORAGE_TYPE_UNKNOWN      = -1,
     H5G_STORAGE_TYPE_SYMBOL_TABLE = 0,
@@ -30,7 +30,7 @@ pub enum H5G_storage_type_t {
 }
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub struct H5G_info_t {
     pub storage_type: H5G_storage_type_t,
     pub nlinks: hsize_t,

@@ -19,7 +19,7 @@ fn test_ref_buf_size() {
 }
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub enum H5R_type_t {
     H5R_BADTYPE        = -1,
     H5R_OBJECT         = 0,
@@ -28,7 +28,7 @@ pub enum H5R_type_t {
 }
 
 pub type hobj_ref_t      = haddr_t;
-pub type hdset_reg_ref_t = [c_uchar; 12us];
+pub type hdset_reg_ref_t = [c_uchar; 12usize];
 
 #[link(name = "hdf5")]
 extern {

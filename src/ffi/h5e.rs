@@ -8,14 +8,14 @@ use ffi::types::{hid_t, herr_t};
 pub const H5E_DEFAULT: hid_t = 0;
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub enum H5E_type_t {
     H5E_MAJOR = 0,
     H5E_MINOR = 1,
 }
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub struct H5E_error2_t {
     pub cls_id: hid_t,
     pub maj_num: hid_t,
@@ -27,7 +27,7 @@ pub struct H5E_error2_t {
 }
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub enum H5E_direction_t {
     H5E_WALK_UPWARD = 0,
     H5E_WALK_DOWNWARD = 1,

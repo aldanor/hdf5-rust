@@ -17,7 +17,7 @@ use libc::{c_int, c_uint, c_void, c_char, size_t};
 use ffi::types::{herr_t, hid_t, htri_t, hsize_t, hbool_t};
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub enum H5T_class_t {
     H5T_NO_CLASS = -1,
     H5T_INTEGER = 0,
@@ -35,7 +35,7 @@ pub enum H5T_class_t {
 }
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub enum H5T_order_t {
     H5T_ORDER_ERROR = -1,
     H5T_ORDER_LE = 0,
@@ -46,7 +46,7 @@ pub enum H5T_order_t {
 }
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub enum H5T_sign_t {
     H5T_SGN_ERROR = -1,
     H5T_SGN_NONE = 0,
@@ -55,7 +55,7 @@ pub enum H5T_sign_t {
 }
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub enum H5T_norm_t {
     H5T_NORM_ERROR = -1,
     H5T_NORM_IMPLIED = 0,
@@ -64,7 +64,7 @@ pub enum H5T_norm_t {
 }
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub enum H5T_cset_t {
     H5T_CSET_ERROR = -1,
     H5T_CSET_ASCII = 0,
@@ -88,7 +88,7 @@ pub enum H5T_cset_t {
 pub const H5T_NCSET: H5T_cset_t = H5T_CSET_RESERVED_2;
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub enum H5T_str_t {
     H5T_STR_ERROR = -1,
     H5T_STR_NULLTERM = 0,
@@ -112,7 +112,7 @@ pub enum H5T_str_t {
 pub const H5T_NSTR: H5T_str_t = H5T_STR_RESERVED_3;
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub enum H5T_pad_t {
     H5T_PAD_ERROR = -1,
     H5T_PAD_ZERO = 0,
@@ -122,7 +122,7 @@ pub enum H5T_pad_t {
 }
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub enum H5T_cmd_t {
     H5T_CONV_INIT = 0,
     H5T_CONV_CONV = 1,
@@ -130,7 +130,7 @@ pub enum H5T_cmd_t {
 }
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub enum H5T_bkg_t {
     H5T_BKG_NO = 0,
     H5T_BKG_TEMP = 1,
@@ -138,7 +138,7 @@ pub enum H5T_bkg_t {
 }
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub struct H5T_cdata_t {
     pub command: H5T_cmd_t,
     pub need_bkg: H5T_bkg_t,
@@ -147,7 +147,7 @@ pub struct H5T_cdata_t {
 }
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub enum H5T_pers_t {
     H5T_PERS_DONTCARE = -1,
     H5T_PERS_HARD = 0,
@@ -155,7 +155,7 @@ pub enum H5T_pers_t {
 }
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub enum H5T_direction_t {
     H5T_DIR_DEFAULT = 0,
     H5T_DIR_ASCEND = 1,
@@ -163,7 +163,7 @@ pub enum H5T_direction_t {
 }
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub enum H5T_conv_except_t {
     H5T_CONV_EXCEPT_RANGE_HI = 0,
     H5T_CONV_EXCEPT_RANGE_LOW = 1,
@@ -175,7 +175,7 @@ pub enum H5T_conv_except_t {
 }
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub enum H5T_conv_ret_t {
     H5T_CONV_ABORT = -1,
     H5T_CONV_UNHANDLED = 0,
@@ -183,13 +183,13 @@ pub enum H5T_conv_ret_t {
 }
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub struct hvl_t {
     pub len: size_t,
     pub p: *mut c_void,
 }
 
-pub const H5T_VARIABLE: size_t = -1;
+pub const H5T_VARIABLE: size_t = !0;
 
 pub const H5T_OPAQUE_TAG_MAX: c_uint = 256;
 

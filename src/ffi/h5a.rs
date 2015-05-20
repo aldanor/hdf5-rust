@@ -6,7 +6,7 @@ use ffi::h5o::H5O_msg_crt_idx_t;
 use ffi::h5t::H5T_cset_t;
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub struct H5A_info_t {
     pub corder_valid: hbool_t,
     pub corder: H5O_msg_crt_idx_t,

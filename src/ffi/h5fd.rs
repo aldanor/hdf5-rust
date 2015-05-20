@@ -71,7 +71,7 @@ bitflags! {
 }
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub struct H5FD_class_t {
     pub name: *const c_char,
     pub maxaddr: haddr_t,
@@ -112,11 +112,11 @@ pub struct H5FD_class_t {
     pub lock: Option<extern fn (file: *mut H5FD_t, oid: *mut c_uchar, lock_type: c_uint, last:
                                 hbool_t) -> herr_t>,
     pub unlock: Option<extern fn (file: *mut H5FD_t, oid: *mut c_uchar, last: hbool_t) -> herr_t>,
-    pub fl_map: [H5FD_mem_t; 7us],
+    pub fl_map: [H5FD_mem_t; 7usize],
 }
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub struct H5FD_free_t {
     pub addr: haddr_t,
     pub size: hsize_t,
@@ -124,7 +124,7 @@ pub struct H5FD_free_t {
 }
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub struct H5FD_t {
     pub driver_id: hid_t,
     pub cls: *const H5FD_class_t,
@@ -137,7 +137,7 @@ pub struct H5FD_t {
 }
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub enum H5FD_file_image_op_t {
     H5FD_FILE_IMAGE_OP_NO_OP               = 0,
     H5FD_FILE_IMAGE_OP_PROPERTY_LIST_SET   = 1,
@@ -150,7 +150,7 @@ pub enum H5FD_file_image_op_t {
 }
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub struct H5FD_file_image_callbacks_t {
     pub image_malloc: Option<extern fn (size: size_t, file_image_op: H5FD_file_image_op_t, udata:
                                         *mut c_void) -> *mut c_void>,

@@ -1,11 +1,8 @@
-#![feature(std_misc, core)]
+#![feature(std_misc)]
+#![feature(core)]
 
-#![feature(hash)] // temporarily, because of warnings in bitflags
-
-#![feature(thread_local, optin_builtin_traits, unsafe_destructor)]
-
-#![feature(libc)]
 extern crate libc;
+extern crate num;
 
 #[macro_use]
 extern crate lazy_static;
@@ -20,7 +17,6 @@ pub mod macros;
 pub mod ffi;
 
 pub mod error;
-
 pub mod mutex;
 
 pub mod sync {

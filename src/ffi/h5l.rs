@@ -7,14 +7,14 @@ use ffi::types::{hid_t, htri_t, haddr_t, herr_t, hbool_t, hsize_t};
 use ffi::h5::{H5_index_t, H5_iter_order_t};
 use ffi::h5t::{H5T_cset_t};
 
-pub const H5L_MAX_LINK_NAME_LEN: uint32_t = -1;
+pub const H5L_MAX_LINK_NAME_LEN: uint32_t = !0;
 
 pub const H5L_SAME_LOC: hid_t = 0;
 
 pub const H5L_LINK_CLASS_T_VERS: c_uint = 0;
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub enum H5L_type_t {
     H5L_TYPE_ERROR    = -1,
     H5L_TYPE_HARD     = 0,
@@ -27,7 +27,7 @@ pub const H5L_TYPE_BUILTIN_MAX: H5L_type_t = H5L_TYPE_SOFT;
 pub const H5L_TYPE_UD_MIN:      H5L_type_t = H5L_TYPE_EXTERNAL;
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub struct H5L_info_t {
     pub _type: H5L_type_t,
     pub corder_valid: hbool_t,
@@ -37,9 +37,9 @@ pub struct H5L_info_t {
 }
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub struct __H5L_info_t__u {
-    pub _bindgen_data_: [u64; 1us],
+    pub _bindgen_data_: [u64; 1usize],
 }
 
 impl __H5L_info_t__u {
@@ -68,7 +68,7 @@ pub type H5L_query_func_t = Option<extern fn (link_name: *const c_char, lnkdata:
                                               size_t) -> ssize_t>;
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub struct H5L_class_t {
     pub version: c_int,
     pub id: H5L_type_t,

@@ -3,22 +3,22 @@ use libc::{self, c_char, c_void, size_t};
 use std::mem;
 use std::ptr;
 
-use std::num::{Int, NumCast};
-use std::ffi::c_str_to_bytes;
-use std::str::from_utf8_unchecked;
+use num::{Integer, NumCast};
+use num::traits::cast;
+use std::ffi::CStr;
 
 use error::H5Result;
 
 pub fn str_from_c(string: *const c_char) -> String {
     unsafe {
-        from_utf8_unchecked(c_str_to_bytes(&string)).clone().to_string()
+        String::from_utf8_unchecked(CStr::from_ptr(string).to_bytes().to_vec())
     }
 }
 
 pub fn get_h5_str<T, F>(func: F) -> H5Result<String>
-                 where F: Fn(*mut c_char, size_t) -> T, T: Int + NumCast {
+                 where F: Fn(*mut c_char, size_t) -> T, T: Integer + NumCast {
     unsafe {
-        let len: isize = 1 + NumCast::from(func(ptr::null_mut::<c_char>(), 0)).unwrap();
+        let len: isize = 1 + cast::<T, isize>(func(ptr::null_mut::<c_char>(), 0)).unwrap();
         ensure!(len > 0, "negative string length in get_h5_str()");
         let buf = libc::malloc((len as size_t) * mem::size_of::<c_char>() as size_t) as *mut c_char;
         func(buf, len as size_t);

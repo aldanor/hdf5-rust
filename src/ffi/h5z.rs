@@ -61,7 +61,7 @@ bitflags! {
 pub type H5Z_filter_t = c_int;
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub enum H5Z_SO_scale_type_t {
     H5Z_SO_FLOAT_DSCALE = 0,
     H5Z_SO_FLOAT_ESCALE = 1,
@@ -69,7 +69,7 @@ pub enum H5Z_SO_scale_type_t {
 }
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub enum H5Z_EDC_t {
     H5Z_ERROR_EDC   = -1,
     H5Z_DISABLE_EDC = 0,
@@ -78,7 +78,7 @@ pub enum H5Z_EDC_t {
 }
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub enum H5Z_cb_return_t {
     H5Z_CB_ERROR = -1,
     H5Z_CB_FAIL  = 0,
@@ -90,7 +90,7 @@ pub type H5Z_filter_func_t = Option<extern fn (filter: H5Z_filter_t, buf: *mut c
                                                size_t, op_data: *mut c_void) -> H5Z_cb_return_t>;
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub struct H5Z_cb_t {
     pub func: H5Z_filter_func_t,
     pub op_data: *mut c_void,
@@ -105,7 +105,7 @@ pub type H5Z_func_t = Option<extern fn (flags: c_uint, cd_nelmts: size_t, cd_val
                                         c_void) -> size_t>;
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub struct H5Z_class2_t {
     pub version: c_int,
     pub id: H5Z_filter_t,

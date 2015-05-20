@@ -16,7 +16,7 @@ pub struct H5AC_cache_config_t {
     pub rpt_fcn_enabled: hbool_t,
     pub open_trace_file: hbool_t,
     pub close_trace_file: hbool_t,
-    pub trace_file_name: [c_char; 1025us],
+    pub trace_file_name: [c_char; 1025usize],
     pub evictions_enabled: hbool_t,
     pub set_initial_size: hbool_t,
     pub initial_size: size_t,
@@ -42,4 +42,8 @@ pub struct H5AC_cache_config_t {
     pub empty_reserve: c_double,
     pub dirty_bytes_threshold: c_int,
     pub metadata_write_strategy: c_int,
+}
+
+impl Clone for H5AC_cache_config_t {
+    fn clone(&self) -> H5AC_cache_config_t { *self }
 }

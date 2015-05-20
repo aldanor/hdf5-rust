@@ -42,7 +42,7 @@ pub type H5P_iterate_t = Option<extern fn (id: hid_t, name: *const c_char, iter_
                                            -> herr_t>;
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub enum H5D_mpio_actual_chunk_opt_mode_t {
     H5D_MPIO_NO_CHUNK_OPTIMIZATION = 0,
     H5D_MPIO_LINK_CHUNK            = 1,
@@ -50,7 +50,7 @@ pub enum H5D_mpio_actual_chunk_opt_mode_t {
 }
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub enum H5D_mpio_actual_io_mode_t {
     H5D_MPIO_NO_COLLECTIVE         = 0,
     H5D_MPIO_CHUNK_INDEPENDENT     = 1,
@@ -60,7 +60,7 @@ pub enum H5D_mpio_actual_io_mode_t {
 }
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub enum H5D_mpio_no_collective_cause_t {
     H5D_MPIO_COLLECTIVE                        = 0,
     H5D_MPIO_SET_INDEPENDENT                   = 1,

@@ -8,8 +8,8 @@ use libc::{c_uint, c_void, c_char, c_float, size_t};
 
 use ffi::types::{hid_t, herr_t, hsize_t, haddr_t};
 
-pub const H5D_CHUNK_CACHE_NSLOTS_DEFAULT: size_t = -1;
-pub const H5D_CHUNK_CACHE_NBYTES_DEFAULT: size_t = -1;
+pub const H5D_CHUNK_CACHE_NSLOTS_DEFAULT: size_t = !0;
+pub const H5D_CHUNK_CACHE_NBYTES_DEFAULT: size_t = !0;
 
 pub const H5D_CHUNK_CACHE_W0_DEFAULT: c_float = -1.0;
 
@@ -19,7 +19,7 @@ pub const H5D_XFER_DIRECT_CHUNK_WRITE_OFFSET_NAME:   &'static str = "direct_chun
 pub const H5D_XFER_DIRECT_CHUNK_WRITE_DATASIZE_NAME: &'static str = "direct_chunk_datasize";
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub enum H5D_layout_t {
     H5D_LAYOUT_ERROR = -1,
     H5D_COMPACT      = 0,
@@ -32,7 +32,7 @@ pub type H5D_chunk_index_t = c_uint;
 pub const H5D_CHUNK_BTREE: H5D_chunk_index_t = 0;
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub enum H5D_alloc_time_t {
     H5D_ALLOC_TIME_ERROR   = -1,
     H5D_ALLOC_TIME_DEFAULT = 0,
@@ -42,7 +42,7 @@ pub enum H5D_alloc_time_t {
 }
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub enum H5D_space_status_t {
     H5D_SPACE_STATUS_ERROR          = -1,
     H5D_SPACE_STATUS_NOT_ALLOCATED  = 0,
@@ -51,7 +51,7 @@ pub enum H5D_space_status_t {
 }
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub enum H5D_fill_time_t {
     H5D_FILL_TIME_ERROR = -1,
     H5D_FILL_TIME_ALLOC = 0,
@@ -60,7 +60,7 @@ pub enum H5D_fill_time_t {
 }
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub enum H5D_fill_value_t {
     H5D_FILL_VALUE_ERROR        = -1,
     H5D_FILL_VALUE_UNDEFINED    = 0,

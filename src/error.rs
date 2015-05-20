@@ -1,7 +1,7 @@
 use libc::{c_uint, c_void};
 
 use std::ops::Index;
-use std::num::Int;
+use num::{Integer, Zero, Bounded};
 use std::error::{self, Error};
 use std::ptr;
 use std::fmt;
@@ -15,7 +15,7 @@ pub struct H5ErrorFrame {
 
 impl H5ErrorFrame {
     pub fn description(&self) -> &str {
-        self.desc.as_slice()
+        &self.desc
     }
 
     pub fn detail(&self) -> Option<String> {
@@ -37,8 +37,8 @@ pub struct H5ErrorStack {
 impl Index<usize> for H5ErrorStack {
     type Output = H5ErrorFrame;
 
-    fn index<'a>(&'a self, index: &usize) -> &'a H5ErrorFrame {
-        &self.frames[*index]
+    fn index<'a>(&'a self, index: usize) -> &'a H5ErrorFrame {
+        &self.frames[index]
     }
 }
 
@@ -61,7 +61,7 @@ impl H5ErrorStack {
                 if data.err.is_some() {
                     return 0;
                 }
-                let closure = |&: e: H5E_error2_t| -> H5Result<H5ErrorFrame> {
+                let closure = |e: H5E_error2_t| -> H5Result<H5ErrorFrame> {
                     let (desc, func) = (str_from_c(e.desc), str_from_c(e.func_name));
                     let major = try!(get_h5_str(|m, s| {
                         H5Eget_msg(e.maj_num, ptr::null_mut::<H5E_type_t>(), m, s)
@@ -73,7 +73,7 @@ impl H5ErrorStack {
                 };
                 match closure(*err_desc) {
                     Ok(frame) => { data.stack.push(frame); 0 },
-                    Err(err)  => { data.err = Some(error::FromError::from_error(err)); 0 },
+                    Err(err)  => { data.err = Some(From::from(err)); 0 }
                 }
             }
         }
@@ -81,7 +81,7 @@ impl H5ErrorStack {
         let mut data = CallbackData { stack: H5ErrorStack::new(), err: None };
         let data_ptr: *mut c_void = &mut data as *mut _ as *mut c_void;
 
-        // HDF5 bug: H5Eget_msg() may corrupt the current stack, so copy it first
+        // known HDF5 bug: H5Eget_msg() may corrupt the current stack, so we copy it first
         unsafe {
             let stack_id = H5Eget_current_stack();
             ensure!(stack_id >= 0, "failed to copy the current error stack");
@@ -144,15 +144,15 @@ pub type H5Result<T> = Result<T, H5Error>;
 impl H5Error {
     pub fn query() -> Option<H5Error> {
         match H5ErrorStack::query() {
-            Err(err)        => Some(error::FromError::from_error(err)),
+            Err(err)        => Some(From::from(err)),
             Ok(Some(stack)) => Some(H5Error::LibraryError(stack)),
             Ok(None)        => None,
         }
     }
 }
 
-impl error::FromError<&'static str> for H5Error {
-    fn from_error(desc: &'static str) -> H5Error {
+impl From<&'static str> for H5Error {
+    fn from(desc: &'static str) -> H5Error {
         H5Error::InternalError(desc)
     }
 }
@@ -181,10 +181,10 @@ impl error::Error for H5Error {
     }
 }
 
-pub fn h5check<T>(value: T) -> H5Result<T> where T: Int,
+pub fn h5check<T>(value: T) -> H5Result<T> where T: Integer + Zero + Bounded,
 {
-    let min_value: T = Int::min_value();
-    let zero:      T = Int::zero();
+    let min_value: T = Bounded::min_value();
+    let zero:      T = Zero::zero();
 
     let maybe_error = if min_value < zero {
         value < zero
@@ -196,7 +196,7 @@ pub fn h5check<T>(value: T) -> H5Result<T> where T: Int,
         false => Ok(value),
         true  => match H5Error::query() {
             None       => Ok(value),
-            Some(err)  => Err(error::FromError::from_error(err)),
+            Some(err)  => Err(From::from(err)),
         },
     }
 }
@@ -222,24 +222,24 @@ fn test_error_stack() {
     });
     let stack = result_error.ok().unwrap().unwrap();
     assert_eq!(stack.description(), "can't close");
-    assert_eq!(stack.detail().unwrap().as_slice(),
+    assert_eq!(&stack.detail().unwrap(),
                "Error in H5Pclose(): can't close [Property lists: Unable to free object]");
 
     assert_eq!(stack.len(), 3);
     assert!(!stack.is_empty());
 
     assert_eq!(stack[0].description(), "can't close");
-    assert_eq!(stack[0].detail().unwrap().as_slice(),
+    assert_eq!(&stack[0].detail().unwrap(),
                "Error in H5Pclose(): can't close \
                 [Property lists: Unable to free object]");
 
     assert_eq!(stack[1].description(), "can't decrement ID ref count");
-    assert_eq!(stack[1].detail().unwrap().as_slice(),
+    assert_eq!(&stack[1].detail().unwrap(),
                "Error in H5I_dec_app_ref(): can't decrement ID ref count \
                 [Object atom: Unable to decrement reference count]");
 
     assert_eq!(stack[2].description(), "can't locate ID");
-    assert_eq!(stack[2].detail().unwrap().as_slice(),
+    assert_eq!(&stack[2].detail().unwrap(),
                "Error in H5I_dec_ref(): can't locate ID \
                 [Object atom: Unable to find atom information (already closed?)]");
 

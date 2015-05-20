@@ -6,16 +6,15 @@
 
 use std::cell::UnsafeCell;
 use std::mem;
-use std::num::Int;
 use std::sync::{self, MutexGuard, StaticMutex};
 use std::sync::atomic::{self, AtomicUsize, Ordering};
+use std::marker::PhantomData;
 
 // This may seem useless but provided that each thread has a unique
 // thread local address, and this is created once per thread, it will
 // always be unique.
-#[thread_local] static THREAD_ID: () = ();
+thread_local!(static THREAD_ID: () = ());
 
-#[allow(missing_copy_implementations)]
 #[derive(Debug)]
 pub enum LockError {
     /// Mutex was poisoned,
@@ -24,7 +23,6 @@ pub enum LockError {
     WouldBlockRecursive,
 }
 
-#[allow(missing_copy_implementations)]
 #[derive(Debug)]
 pub enum TryLockError {
     /// Mutex was poisoned
@@ -55,16 +53,17 @@ unsafe impl Send for RecursiveMutex {}
 #[must_use]
 pub struct RecursiveMutexGuard<'a> {
     mutex: &'a RecursiveMutex,
+    marker: PhantomData<*mut ()>,  // for !Send
 }
 
 // Cannot implement Send because we rely on the guard being dropped in the
 // same thread (otherwise we can't use Relaxed).  We might be able to allow
 // it with Acquire / Release?
-impl<'a> !Send for RecursiveMutexGuard<'a> {}
 
 impl RecursiveMutex {
     pub fn lock(&'static self) -> Result<RecursiveMutexGuard, LockError> {
-        let tid = &THREAD_ID as *const _ as usize;
+        let tid = THREAD_ID.with(|x| x as *const _ as usize);
+
         // Relaxed is sufficient.  If tid == self.owner, it must have been set in the
         // same thread, and nothing else could have taken the lock in another thread;
         // hence, it is synchronized.  Similarly, if tid != self.owner, either the
@@ -94,7 +93,8 @@ impl RecursiveMutex {
             }
         }
         Ok(RecursiveMutexGuard {
-            mutex: self
+            mutex: self,
+            marker: PhantomData,
         })
     }
 
@@ -117,7 +117,7 @@ impl RecursiveMutex {
                     *self.guard.get() = mem::transmute(Box::new(guard));
                 },
                 Err(sync::TryLockError::Poisoned(_)) => return Err(TryLockError::Poisoned),
-                Err(sync::TryLockError::WouldBlock) => return Err(TryLockError::WouldBlockExclusive),
+                Err(sync::TryLockError::WouldBlock)  => return Err(TryLockError::WouldBlockExclusive),
             }
         }
         unsafe {
@@ -130,12 +130,12 @@ impl RecursiveMutex {
             }
         }
         Ok(RecursiveMutexGuard {
-            mutex: self
+            mutex: self,
+            marker: PhantomData,
         })
     }
 }
 
-#[unsafe_destructor]
 impl<'a> Drop for RecursiveMutexGuard<'a> {
     fn drop(&mut self) {
         // We can avoid the assertion here because Rust can statically guarantee
