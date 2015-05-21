@@ -6,8 +6,8 @@
 
 use std::cell::UnsafeCell;
 use std::mem;
-use std::sync::{self, MutexGuard, StaticMutex};
-use std::sync::atomic::{self, AtomicUsize, Ordering};
+use std::sync::{self, MutexGuard, Mutex};
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::marker::PhantomData;
 
 // This may seem useless but provided that each thread has a unique
@@ -36,16 +36,9 @@ pub enum TryLockError {
 pub struct RecursiveMutex {
     owner: AtomicUsize,
     recursion: UnsafeCell<u64>,
-    mutex: StaticMutex,
+    mutex: Mutex<()>,
     guard: UnsafeCell<*mut MutexGuard<'static, ()>>,
 }
-
-pub const RECURSIVE_MUTEX_INIT: RecursiveMutex = RecursiveMutex {
-    owner: atomic::ATOMIC_USIZE_INIT,
-    recursion: UnsafeCell { value: 0 },
-    mutex: sync::MUTEX_INIT,
-    guard: UnsafeCell { value: 0 as *mut _ },
-};
 
 unsafe impl Sync for RecursiveMutex {}
 unsafe impl Send for RecursiveMutex {}
@@ -61,6 +54,15 @@ pub struct RecursiveMutexGuard<'a> {
 // it with Acquire / Release?
 
 impl RecursiveMutex {
+    pub fn new() -> RecursiveMutex {
+        RecursiveMutex {
+            owner: AtomicUsize::new(0),
+            recursion: UnsafeCell::new(0),
+            mutex: Mutex::new(()),
+            guard: UnsafeCell::new(0 as *mut _),
+        }
+    }
+
     pub fn lock(&'static self) -> Result<RecursiveMutexGuard, LockError> {
         let tid = THREAD_ID.with(|x| x as *const _ as usize);
 

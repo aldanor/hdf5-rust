@@ -1,6 +1,3 @@
-#![feature(std_misc)]
-#![feature(core)]
-
 extern crate libc;
 extern crate num;
 
@@ -22,8 +19,10 @@ pub mod mutex;
 pub mod sync {
     pub fn h5sync<T, F>(func: F) -> T where F: FnOnce() -> T,
     {
-        use mutex::{RecursiveMutex, RECURSIVE_MUTEX_INIT};
-        static LOCK: RecursiveMutex = RECURSIVE_MUTEX_INIT;
+        use mutex::{RecursiveMutex};
+        lazy_static! {
+            static ref LOCK: RecursiveMutex = RecursiveMutex::new();
+        }
         let _guard = LOCK.lock();
         func()
     }
