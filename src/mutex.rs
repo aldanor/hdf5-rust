@@ -63,9 +63,35 @@ impl RecursiveMutex {
         }
     }
 
-    pub fn lock(&'static self) -> Result<RecursiveMutexGuard, LockError> {
-        let tid = THREAD_ID.with(|x| x as *const _ as usize);
+    fn get_thread_id(&self) -> usize {
+        THREAD_ID.with(|x| x as *const _ as usize)
+    }
 
+    fn is_same_thread(&self) -> bool {
+        self.get_thread_id() == self.owner.load(Ordering::Relaxed)
+    }
+
+    fn store_thread_id(&self, guard: MutexGuard<()>) {
+        unsafe {
+            let tid = self.get_thread_id();
+            self.owner.store(tid, Ordering::Relaxed);
+            *self.guard.get() = mem::transmute(Box::new(guard));
+        }
+    }
+
+    fn check_recursion(&self) -> Option<RecursiveMutexGuard> {
+        unsafe {
+            let recursion = self.recursion.get();
+            if let Some(n) = (*recursion).checked_add(1) {
+                *recursion = n;
+                Some(RecursiveMutexGuard { mutex: self, marker: PhantomData })
+            } else {
+                None
+            }
+        }
+    }
+
+    pub fn lock(&'static self) -> Result<RecursiveMutexGuard, LockError> {
         // Relaxed is sufficient.  If tid == self.owner, it must have been set in the
         // same thread, and nothing else could have taken the lock in another thread;
         // hence, it is synchronized.  Similarly, if tid != self.owner, either the
@@ -76,65 +102,31 @@ impl RecursiveMutex {
         // store aren't reordered around the acquire incorrectly (I believe this is why
         // Unordered is not suitable here, but I may be wrong since acquire() provides
         // a memory fence).
-        if tid != self.owner.load(Ordering::Relaxed) {
+        if !self.is_same_thread() {
             match self.mutex.lock() {
-                Ok(guard) => unsafe {
-                    self.owner.store(tid, Ordering::Relaxed);
-                    *self.guard.get() = mem::transmute(Box::new(guard));
-                },
-                Err(_) => return Err(LockError::Poisoned),
+                Ok(guard) => self.store_thread_id(guard),
+                Err(_)    => return Err(LockError::Poisoned),
             }
         }
-        unsafe {
-            let r = self.recursion.get();
-            match (*r).checked_add(1) {
-                Some(n) => {
-                    *r = n;
-                },
-                None => return Err(LockError::WouldBlockRecursive)
-            }
+        match self.check_recursion() {
+            Some(guard) => Ok(guard),
+            None        => Err(LockError::WouldBlockRecursive),
         }
-        Ok(RecursiveMutexGuard {
-            mutex: self,
-            marker: PhantomData,
-        })
     }
 
     pub fn try_lock(&'static self) -> Result<RecursiveMutexGuard, TryLockError> {
-        let tid = &THREAD_ID as *const _ as usize;
-        // Relaxed is sufficient.  If tid == self.owner, it must have been set in the
-        // same thread, and nothing else could have taken the lock in another thread;
-        // hence, it is synchronized.  Similarly, if tid != self.owner, either the
-        // lock was never taken by this thread, or the lock was taken by this thread
-        // and then dropped in the same thread (known because the guard is not Send),
-        // so that is synchronized as well.  The only reason it needs to be atomic at
-        // all is to ensure it doesn't see partial data, and to make sure the load and
-        // store aren't reordered around the acquire incorrectly (I believe this is why
-        // Unordered is not suitable here, but I may be wrong since acquire() provides
-        // a memory fence).
-        if tid != self.owner.load(Ordering::Relaxed) {
+        // Same reasoning as in lock().
+        if !self.is_same_thread() {
             match self.mutex.try_lock() {
-                Ok(guard) => unsafe {
-                    self.owner.store(tid, Ordering::Relaxed);
-                    *self.guard.get() = mem::transmute(Box::new(guard));
-                },
+                Ok(guard)                            => self.store_thread_id(guard),
                 Err(sync::TryLockError::Poisoned(_)) => return Err(TryLockError::Poisoned),
                 Err(sync::TryLockError::WouldBlock)  => return Err(TryLockError::WouldBlockExclusive),
             }
         }
-        unsafe {
-            let r = self.recursion.get();
-            match (*r).checked_add(1) {
-                Some(n) => {
-                    *r = n;
-                },
-                None => return Err(TryLockError::WouldBlockRecursive)
-            }
+        match self.check_recursion() {
+            Some(guard) => Ok(guard),
+            None        => Err(TryLockError::WouldBlockRecursive),
         }
-        Ok(RecursiveMutexGuard {
-            mutex: self,
-            marker: PhantomData,
-        })
     }
 }
 
@@ -143,9 +135,9 @@ impl<'a> Drop for RecursiveMutexGuard<'a> {
         // We can avoid the assertion here because Rust can statically guarantee
         // we are not running the destructor in the wrong thread.
         unsafe {
-            let recur = self.mutex.recursion.get();
-            *recur -= 1;
-            if *recur == 0 {
+            let recursion = self.mutex.recursion.get();
+            *recursion -= 1;
+            if *recursion == 0 {
                 self.mutex.owner.store(0, Ordering::Relaxed);
                 mem::transmute::<_,Box<MutexGuard<()>>>(*self.mutex.guard.get());
             }
