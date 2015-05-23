@@ -19,7 +19,7 @@ pub mod mutex;
 pub mod sync {
     pub fn h5sync<T, F>(func: F) -> T where F: FnOnce() -> T,
     {
-        use mutex::{RecursiveMutex};
+        use mutex::RecursiveMutex;
         lazy_static! {
             static ref LOCK: RecursiveMutex = RecursiveMutex::new();
         }
