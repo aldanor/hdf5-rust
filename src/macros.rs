@@ -19,9 +19,10 @@ macro_rules! h5lock {
 
 
 macro_rules! h5call_s {
-    ($expr:expr) => (
+    ($expr:expr) => ({
+        use error::h5check;
         h5lock_s!(h5check($expr))
-    )
+    })
 }
 
 macro_rules! h5call {
