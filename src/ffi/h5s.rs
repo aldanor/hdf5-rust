@@ -13,7 +13,7 @@ pub const H5S_UNLIMITED: hsize_t = (-1 as hssize_t) as hsize_t;
 pub const H5S_MAX_RANK: c_uint = 32;
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
 pub enum H5S_class_t {
     H5S_NO_CLASS = -1,
     H5S_SCALAR   = 0,
@@ -22,7 +22,7 @@ pub enum H5S_class_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
 pub enum H5S_seloper_t {
     H5S_SELECT_NOOP    = -1,
     H5S_SELECT_SET     = 0,
@@ -37,7 +37,7 @@ pub enum H5S_seloper_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
 pub enum H5S_sel_type {
     H5S_SEL_ERROR      = -1,
     H5S_SEL_NONE       = 0,

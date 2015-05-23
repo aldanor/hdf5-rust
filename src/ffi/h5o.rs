@@ -55,7 +55,7 @@ pub const H5O_SHMESG_MAX_NINDEXES:  c_uint = 8;
 pub const H5O_SHMESG_MAX_LIST_SIZE: c_uint = 5000;
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
 pub enum H5O_type_t {
     H5O_TYPE_UNKNOWN        = -1,
     H5O_TYPE_GROUP          = 0,
@@ -120,7 +120,7 @@ pub type H5O_iterate_t = Option<extern fn (obj: hid_t, name: *const c_char, info
                                            op_data: *mut c_void) -> herr_t>;
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
 pub enum H5O_mcdt_search_ret_t {
     H5O_MCDT_SEARCH_ERROR = -1,
     H5O_MCDT_SEARCH_CONT  = 0,

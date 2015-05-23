@@ -61,7 +61,7 @@ bitflags! {
 pub type H5Z_filter_t = c_int;
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
 pub enum H5Z_SO_scale_type_t {
     H5Z_SO_FLOAT_DSCALE = 0,
     H5Z_SO_FLOAT_ESCALE = 1,
@@ -69,7 +69,7 @@ pub enum H5Z_SO_scale_type_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
 pub enum H5Z_EDC_t {
     H5Z_ERROR_EDC   = -1,
     H5Z_DISABLE_EDC = 0,
@@ -78,7 +78,7 @@ pub enum H5Z_EDC_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
 pub enum H5Z_cb_return_t {
     H5Z_CB_ERROR = -1,
     H5Z_CB_FAIL  = 0,

@@ -17,7 +17,7 @@ pub type hssize_t = c_longlong;
 pub type haddr_t  = uint64_t;
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
 pub enum H5_iter_order_t {
     H5_ITER_UNKNOWN = -1,
     H5_ITER_INC     = 0,
@@ -27,7 +27,7 @@ pub enum H5_iter_order_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
 pub enum H5_index_t {
     H5_INDEX_UNKNOWN   = -1,
     H5_INDEX_NAME      = 0,

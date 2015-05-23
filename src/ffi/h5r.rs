@@ -19,7 +19,7 @@ fn test_ref_buf_size() {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
 pub enum H5R_type_t {
     H5R_BADTYPE        = -1,
     H5R_OBJECT         = 0,

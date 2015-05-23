@@ -137,7 +137,7 @@ pub struct H5FD_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
 pub enum H5FD_file_image_op_t {
     H5FD_FILE_IMAGE_OP_NO_OP               = 0,
     H5FD_FILE_IMAGE_OP_PROPERTY_LIST_SET   = 1,

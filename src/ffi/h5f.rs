@@ -44,14 +44,14 @@ pub const H5F_MPIO_DEBUG_KEY: &'static str = "H5F_mpio_debug_key";
 pub const H5F_UNLIMITED: hsize_t = !0;
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
 pub enum H5F_scope_t {
     H5F_SCOPE_LOCAL  = 0,
     H5F_SCOPE_GLOBAL = 1,
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
 pub enum H5F_close_degree_t {
     H5F_CLOSE_DEFAULT = 0,
     H5F_CLOSE_WEAK    = 1,
@@ -74,7 +74,7 @@ pub struct __H5F_info_t__sohm {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
 pub enum H5F_mem_t {
     H5FD_MEM_NOLIST  = -1,
     H5FD_MEM_DEFAULT = 0,
@@ -88,7 +88,7 @@ pub enum H5F_mem_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
 pub enum H5F_libver_t {
     H5F_LIBVER_EARLIEST = 0,
     H5F_LIBVER_LATEST   = 1,

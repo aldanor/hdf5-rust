@@ -8,7 +8,7 @@ use ffi::types::{hid_t, herr_t};
 pub const H5E_DEFAULT: hid_t = 0;
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
 pub enum H5E_type_t {
     H5E_MAJOR = 0,
     H5E_MINOR = 1,
@@ -27,7 +27,7 @@ pub struct H5E_error2_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
 pub enum H5E_direction_t {
     H5E_WALK_UPWARD = 0,
     H5E_WALK_DOWNWARD = 1,
