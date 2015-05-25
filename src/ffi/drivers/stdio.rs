@@ -1,4 +1,4 @@
-use ffi::types::hid_t;
+use ffi::types::{hid_t, herr_t};
 
 lazy_static! {
     pub static ref H5FD_STDIO: hid_t = unsafe { H5FD_stdio_init() };
@@ -8,5 +8,5 @@ lazy_static! {
 extern {
     pub fn H5FD_stdio_init() -> hid_t;
     pub fn H5FD_stdio_term();
-    pub fn H5Pset_fapl_stdio(fapl_id: hid_t);
+    pub fn H5Pset_fapl_stdio(fapl_id: hid_t) -> herr_t;
 }
