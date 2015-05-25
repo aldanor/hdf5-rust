@@ -15,9 +15,9 @@ pub fn string_from_cstr(string: *const c_char) -> String {
     }
 }
 
-pub fn string_to_cstr(string: String) -> *const c_char {
+pub fn str_to_cstr(string: &str) -> *const c_char {
     unsafe {
-        CString::from_vec_unchecked(string.into_bytes()).as_ptr()
+        CString::from_vec_unchecked(string.to_string().into_bytes()).as_ptr()
     }
 }
 
