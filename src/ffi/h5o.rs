@@ -6,50 +6,37 @@ use libc::{c_uint, c_void, c_char, c_ulong, size_t, ssize_t, uint32_t, uint64_t,
 use ffi::types::{hid_t, herr_t, hsize_t, haddr_t, htri_t};
 use ffi::h5::{H5_index_t, H5_iter_order_t, H5_ih_info_t};
 
-bitflags! {
-    flags H5O_copy_flags_t: c_uint {
-        const H5O_COPY_SHALLOW_HIERARCHY_FLAG     = 0x0001,
-        const H5O_COPY_EXPAND_SOFT_LINK_FLAG      = 0x0002,
-        const H5O_COPY_EXPAND_EXT_LINK_FLAG       = 0x0004,
-        const H5O_COPY_EXPAND_REFERENCE_FLAG      = 0x0008,
-        const H5O_COPY_WITHOUT_ATTR_FLAG          = 0x0010,
-        const H5O_COPY_PRESERVE_NULL_FLAG         = 0x0020,
-        const H5O_COPY_MERGE_COMMITTED_DTYPE_FLAG = 0x0040,
-        const H5O_COPY_ALL                        = 0x007F,
-    }
-}
+pub const H5O_COPY_SHALLOW_HIERARCHY_FLAG:     c_uint = 0x0001;
+pub const H5O_COPY_EXPAND_SOFT_LINK_FLAG:      c_uint = 0x0002;
+pub const H5O_COPY_EXPAND_EXT_LINK_FLAG:       c_uint = 0x0004;
+pub const H5O_COPY_EXPAND_REFERENCE_FLAG:      c_uint = 0x0008;
+pub const H5O_COPY_WITHOUT_ATTR_FLAG:          c_uint = 0x0010;
+pub const H5O_COPY_PRESERVE_NULL_FLAG:         c_uint = 0x0020;
+pub const H5O_COPY_MERGE_COMMITTED_DTYPE_FLAG: c_uint = 0x0040;
+pub const H5O_COPY_ALL:                        c_uint = 0x007F;
 
-bitflags! {
-    flags H5O_shmesg_flags_t: c_uint {
-        const H5O_SHMESG_NONE_FLAG    = 0x0000,
-        const H5O_SHMESG_SDSPACE_FLAG = 1 << 0x0001,
-        const H5O_SHMESG_DTYPE_FLAG   = 1 << 0x0003,
-        const H5O_SHMESG_FILL_FLAG    = 1 << 0x0005,
-        const H5O_SHMESG_PLINE_FLAG   = 1 << 0x000b,
-        const H5O_SHMESG_ATTR_FLAG    = 1 << 0x000c,
-        const H5O_SHMESG_ALL_FLAG     = H5O_SHMESG_SDSPACE_FLAG.bits |
-                                        H5O_SHMESG_DTYPE_FLAG.bits |
-                                        H5O_SHMESG_FILL_FLAG.bits |
-                                        H5O_SHMESG_PLINE_FLAG.bits |
-                                        H5O_SHMESG_ATTR_FLAG.bits,
-    }
-}
+pub const H5O_SHMESG_NONE_FLAG:    c_uint = 0x0000;
+pub const H5O_SHMESG_SDSPACE_FLAG: c_uint = 1 << 0x0001;
+pub const H5O_SHMESG_DTYPE_FLAG:   c_uint = 1 << 0x0003;
+pub const H5O_SHMESG_FILL_FLAG:    c_uint = 1 << 0x0005;
+pub const H5O_SHMESG_PLINE_FLAG:   c_uint = 1 << 0x000b;
+pub const H5O_SHMESG_ATTR_FLAG:    c_uint = 1 << 0x000c;
+pub const H5O_SHMESG_ALL_FLAG:     c_uint = H5O_SHMESG_SDSPACE_FLAG |
+                                            H5O_SHMESG_DTYPE_FLAG |
+                                            H5O_SHMESG_FILL_FLAG |
+                                            H5O_SHMESG_PLINE_FLAG |
+                                            H5O_SHMESG_ATTR_FLAG;
 
-
-bitflags! {
-    flags H5O_hdr_flags_t: c_uint {
-        const H5O_HDR_CHUNK0_SIZE             = 0x03,
-        const H5O_HDR_ATTR_CRT_ORDER_TRACKED  = 0x04,
-        const H5O_HDR_ATTR_CRT_ORDER_INDEXED  = 0x08,
-        const H5O_HDR_ATTR_STORE_PHASE_CHANGE = 0x10,
-        const H5O_HDR_STORE_TIMES             = 0x20,
-        const H5O_HDR_ALL_FLAGS               = H5O_HDR_CHUNK0_SIZE.bits |
-                                                H5O_HDR_ATTR_CRT_ORDER_TRACKED.bits |
-                                                H5O_HDR_ATTR_CRT_ORDER_INDEXED.bits |
-                                                H5O_HDR_ATTR_STORE_PHASE_CHANGE.bits |
-                                                H5O_HDR_STORE_TIMES.bits,
-    }
-}
+pub const H5O_HDR_CHUNK0_SIZE:             c_uint = 0x03;
+pub const H5O_HDR_ATTR_CRT_ORDER_TRACKED:  c_uint = 0x04;
+pub const H5O_HDR_ATTR_CRT_ORDER_INDEXED:  c_uint = 0x08;
+pub const H5O_HDR_ATTR_STORE_PHASE_CHANGE: c_uint = 0x10;
+pub const H5O_HDR_STORE_TIMES:             c_uint = 0x20;
+pub const H5O_HDR_ALL_FLAGS:               c_uint = H5O_HDR_CHUNK0_SIZE |
+                                                    H5O_HDR_ATTR_CRT_ORDER_TRACKED |
+                                                    H5O_HDR_ATTR_CRT_ORDER_INDEXED |
+                                                    H5O_HDR_ATTR_STORE_PHASE_CHANGE |
+                                                    H5O_HDR_STORE_TIMES;
 
 pub const H5O_SHMESG_MAX_NINDEXES:  c_uint = 8;
 pub const H5O_SHMESG_MAX_LIST_SIZE: c_uint = 5000;

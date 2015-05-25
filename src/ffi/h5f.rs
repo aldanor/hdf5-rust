@@ -9,33 +9,26 @@ use ffi::types::{hid_t, herr_t, hsize_t, htri_t, hssize_t};
 use ffi::h5::H5_ih_info_t;
 use ffi::h5ac::H5AC_cache_config_t;
 
-bitflags! {
-    flags H5F_acc_flags_t: c_uint { /* these flags call H5check() in the C library */
-        const H5F_ACC_RDONLY  = 0x0000,
-        const H5F_ACC_RDWR    = 0x0001,
-        const H5F_ACC_TRUNC   = 0x0002,
-        const H5F_ACC_EXCL    = 0x0004,
-        const H5F_ACC_DEBUG   = 0x0008,
-        const H5F_ACC_CREAT   = 0x0010,
-        const H5F_ACC_DEFAULT = 0xffff,
-    }
-}
+/* these flags call H5check() in the C library */
+pub const H5F_ACC_RDONLY:   c_uint = 0x0000;
+pub const H5F_ACC_RDWR:     c_uint = 0x0001;
+pub const H5F_ACC_TRUNC:    c_uint = 0x0002;
+pub const H5F_ACC_EXCL:     c_uint = 0x0004;
+pub const H5F_ACC_DEBUG:    c_uint = 0x0008;
+pub const H5F_ACC_CREAT:    c_uint = 0x0010;
+pub const H5F_ACC_DEFAULT:  c_uint = 0xffff;
 
-bitflags! {
-    flags H5F_obj_flags_t: c_uint {
-        const H5F_OBJ_FILE     = 0x0001,
-        const H5F_OBJ_DATASET  = 0x0002,
-        const H5F_OBJ_GROUP    = 0x0004,
-        const H5F_OBJ_DATATYPE = 0x0008,
-        const H5F_OBJ_ATTR     = 0x0010,
-        const H5F_OBJ_ALL      = H5F_OBJ_FILE.bits |
-                                 H5F_OBJ_DATASET.bits |
-                                 H5F_OBJ_GROUP.bits |
-                                 H5F_OBJ_DATATYPE.bits |
-                                 H5F_OBJ_ATTR.bits,
-        const H5F_OBJ_LOCAL    = 0x0020,
-    }
-}
+pub const H5F_OBJ_FILE:     c_uint = 0x0001;
+pub const H5F_OBJ_DATASET:  c_uint = 0x0002;
+pub const H5F_OBJ_GROUP:    c_uint = 0x0004;
+pub const H5F_OBJ_DATATYPE: c_uint = 0x0008;
+pub const H5F_OBJ_ATTR:     c_uint = 0x0010;
+pub const H5F_OBJ_ALL:      c_uint = H5F_OBJ_FILE |
+                                     H5F_OBJ_DATASET |
+                                     H5F_OBJ_GROUP |
+                                     H5F_OBJ_DATATYPE |
+                                     H5F_OBJ_ATTR;
+pub const H5F_OBJ_LOCAL:    c_uint = 0x0020;
 
 pub const H5F_FAMILY_DEFAULT: hsize_t = 0;
 

@@ -22,16 +22,12 @@ pub const H5Z_FILTER_ALL: c_uint = 0;
 
 pub const H5Z_MAX_NFILTERS: c_uint = 32;
 
-bitflags! {
-    flags H5Z_flags_t: c_uint {
-        const H5Z_FLAG_DEFMASK   = 0x00ff,
-        const H5Z_FLAG_MANDATORY = 0x0000,
-        const H5Z_FLAG_OPTIONAL  = 0x0001,
-        const H5Z_FLAG_INVMASK   = 0xff00,
-        const H5Z_FLAG_REVERSE   = 0x0100,
-        const H5Z_FLAG_SKIP_EDC  = 0x0200,
-    }
-}
+pub const H5Z_FLAG_DEFMASK:   c_uint = 0x00ff;
+pub const H5Z_FLAG_MANDATORY: c_uint = 0x0000;
+pub const H5Z_FLAG_OPTIONAL:  c_uint = 0x0001;
+pub const H5Z_FLAG_INVMASK:   c_uint = 0xff00;
+pub const H5Z_FLAG_REVERSE:   c_uint = 0x0100;
+pub const H5Z_FLAG_SKIP_EDC:  c_uint = 0x0200;
 
 pub const H5Z_SHUFFLE_USER_NPARMS:  c_uint = 0;
 pub const H5Z_SHUFFLE_TOTAL_NPARMS: c_uint = 1;
@@ -51,12 +47,8 @@ pub const H5Z_SO_INT_MINBITS_DEFAULT: c_uint = 0;
 
 pub const H5Z_CLASS_T_VERS: c_uint = 1;
 
-bitflags! {
-    flags H5Z_filter_config_flags_t: c_uint {
-        const H5Z_FILTER_CONFIG_ENCODE_ENABLED = 0x0001,
-        const H5Z_FILTER_CONFIG_DECODE_ENABLED = 0x0002,
-    }
-}
+pub const H5Z_FILTER_CONFIG_ENCODE_ENABLED: c_uint = 0x0001;
+pub const H5Z_FILTER_CONFIG_DECODE_ENABLED: c_uint = 0x0002;
 
 pub type H5Z_filter_t = c_int;
 

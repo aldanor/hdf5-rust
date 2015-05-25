@@ -5,9 +5,6 @@ extern crate num;
 extern crate lazy_static;
 
 #[macro_use]
-extern crate bitflags;
-
-#[macro_use]
 pub mod macros;
 
 #[allow(non_camel_case_types, non_snake_case, raw_pointer_derive, dead_code)]

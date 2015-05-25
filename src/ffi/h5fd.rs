@@ -53,22 +53,18 @@ pub static H5FD_FLMAP_DEFAULT: [H5FD_mem_t; 7] = [
     H5FD_MEM_DEFAULT,
 ];
 
-bitflags! {
-    flags H5FD_feat_flags_t: c_uint {
-        const H5FD_FEAT_AGGREGATE_METADATA           = 0x00000001,
-        const H5FD_FEAT_ACCUMULATE_METADATA_WRITE    = 0x00000002,
-        const H5FD_FEAT_ACCUMULATE_METADATA_READ     = 0x00000004,
-        const H5FD_FEAT_ACCUMULATE_METADATA          = H5FD_FEAT_ACCUMULATE_METADATA_WRITE.bits |
-                                                       H5FD_FEAT_ACCUMULATE_METADATA_READ.bits,
-        const H5FD_FEAT_DATA_SIEVE                   = 0x00000008,
-        const H5FD_FEAT_AGGREGATE_SMALLDATA          = 0x00000010,
-        const H5FD_FEAT_IGNORE_DRVRINFO              = 0x00000020,
-        const H5FD_FEAT_DIRTY_SBLK_LOAD              = 0x00000040,
-        const H5FD_FEAT_POSIX_COMPAT_HANDLE          = 0x00000080,
-        const H5FD_FEAT_ALLOW_FILE_IMAGE             = 0x00000400,
-        const H5FD_FEAT_CAN_USE_FILE_IMAGE_CALLBACKS = 0x00000800,
-    }
-}
+pub const H5FD_FEAT_AGGREGATE_METADATA:           c_uint = 0x00000001;
+pub const H5FD_FEAT_ACCUMULATE_METADATA_WRITE:    c_uint = 0x00000002;
+pub const H5FD_FEAT_ACCUMULATE_METADATA_READ:     c_uint = 0x00000004;
+pub const H5FD_FEAT_ACCUMULATE_METADATA:          c_uint = H5FD_FEAT_ACCUMULATE_METADATA_WRITE |
+                                                           H5FD_FEAT_ACCUMULATE_METADATA_READ;
+pub const H5FD_FEAT_DATA_SIEVE:                   c_uint = 0x00000008;
+pub const H5FD_FEAT_AGGREGATE_SMALLDATA:          c_uint = 0x00000010;
+pub const H5FD_FEAT_IGNORE_DRVRINFO:              c_uint = 0x00000020;
+pub const H5FD_FEAT_DIRTY_SBLK_LOAD:              c_uint = 0x00000040;
+pub const H5FD_FEAT_POSIX_COMPAT_HANDLE:          c_uint = 0x00000080;
+pub const H5FD_FEAT_ALLOW_FILE_IMAGE:             c_uint = 0x00000400;
+pub const H5FD_FEAT_CAN_USE_FILE_IMAGE_CALLBACKS: c_uint = 0x00000800;
 
 #[repr(C)]
 #[derive(Copy, Clone)]
