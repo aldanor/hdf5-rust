@@ -1,7 +1,13 @@
+macro_rules! fail {
+    ($err:expr) => (
+        return Err(From::from($err));
+    )
+}
+
 macro_rules! ensure {
     ($expr:expr, $err:expr) => (
         if !($expr) {
-            return Err(From::from($err));
+            fail!($err);
         }
     )
 }
