@@ -46,7 +46,7 @@ impl H5ErrorStack {
     // This low-level function is not thread-safe and has to be synchronized by the user
     pub fn query() -> H5Result<Option<H5ErrorStack>> {
         use ffi::types::herr_t;
-        use ffi::util::{get_h5_str, str_from_c};
+        use ffi::util::{get_h5_str, string_from_cstr};
         use ffi::h5e::{H5Ewalk2, H5Eget_msg, H5E_error2_t, H5E_type_t, H5E_WALK_DOWNWARD,
                        H5Eget_current_stack, H5Eclose_stack};
 
@@ -62,7 +62,7 @@ impl H5ErrorStack {
                     return 0;
                 }
                 let closure = |e: H5E_error2_t| -> H5Result<H5ErrorFrame> {
-                    let (desc, func) = (str_from_c(e.desc), str_from_c(e.func_name));
+                    let (desc, func) = (string_from_cstr(e.desc), string_from_cstr(e.func_name));
                     let major = try!(get_h5_str(|m, s| {
                         H5Eget_msg(e.maj_num, ptr::null_mut::<H5E_type_t>(), m, s)
                     }));

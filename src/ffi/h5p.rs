@@ -80,6 +80,7 @@ pub fn test_global_hids() {
     assert!(*H5P_LST_LINK_ACCESS_ID != H5I_INVALID_HID);
 }
 
+// Property list classes
 register_hid!(H5P_CLS_ROOT_ID,             H5P_CLS_ROOT_ID_g);
 register_hid!(H5P_CLS_OBJECT_CREATE_ID,    H5P_CLS_OBJECT_CREATE_ID_g);
 register_hid!(H5P_CLS_FILE_CREATE_ID,      H5P_CLS_FILE_CREATE_ID_g);
@@ -99,6 +100,7 @@ register_hid!(H5P_CLS_LINK_CREATE_ID,      H5P_CLS_LINK_CREATE_ID_g);
 register_hid!(H5P_CLS_LINK_ACCESS_ID,      H5P_CLS_LINK_ACCESS_ID_g);
 register_hid!(H5P_LST_FILE_CREATE_ID,      H5P_LST_FILE_CREATE_ID_g);
 
+// Default property lists
 register_hid!(H5P_LST_FILE_ACCESS_ID,      H5P_LST_FILE_ACCESS_ID_g);
 register_hid!(H5P_LST_DATASET_CREATE_ID,   H5P_LST_DATASET_CREATE_ID_g);
 register_hid!(H5P_LST_DATASET_ACCESS_ID,   H5P_LST_DATASET_ACCESS_ID_g);

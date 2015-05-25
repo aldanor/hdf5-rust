@@ -5,14 +5,18 @@ use std::ptr;
 
 use num::{Integer, NumCast};
 use num::traits::cast;
-use std::ffi::CStr;
+use std::ffi::{CStr, CString};
 
 use error::H5Result;
 
-pub fn str_from_c(string: *const c_char) -> String {
+pub fn string_from_cstr(string: *const c_char) -> String {
     unsafe {
         String::from_utf8_unchecked(CStr::from_ptr(string).to_bytes().to_vec())
     }
+}
+
+pub fn string_to_cstr(string: String) -> *const c_char {
+    CString::from_vec_unchecked(string.into_bytes()).as_ptr()
 }
 
 pub fn get_h5_str<T, F>(func: F) -> H5Result<String>
@@ -22,7 +26,7 @@ pub fn get_h5_str<T, F>(func: F) -> H5Result<String>
         ensure!(len > 0, "negative string length in get_h5_str()");
         let buf = libc::malloc((len as size_t) * mem::size_of::<c_char>() as size_t) as *mut c_char;
         func(buf, len as size_t);
-        let msg = str_from_c(buf);
+        let msg = string_from_cstr(buf);
         libc::free(buf as *mut c_void);
         Ok(msg)
     }
