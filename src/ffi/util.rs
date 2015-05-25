@@ -16,7 +16,9 @@ pub fn string_from_cstr(string: *const c_char) -> String {
 }
 
 pub fn string_to_cstr(string: String) -> *const c_char {
-    CString::from_vec_unchecked(string.into_bytes()).as_ptr()
+    unsafe {
+        CString::from_vec_unchecked(string.into_bytes()).as_ptr()
+    }
 }
 
 pub fn get_h5_str<T, F>(func: F) -> H5Result<String>
