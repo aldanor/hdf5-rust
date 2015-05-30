@@ -21,7 +21,7 @@ fn is_valid_user_id(id: hid_t) -> bool {
     h5lock!(H5Iis_valid(id)) == 1
 }
 
-struct Handle {
+pub struct Handle {
     id: Arc<RwLock<hid_t>>,
 }
 
