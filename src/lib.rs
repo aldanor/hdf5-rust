@@ -13,3 +13,4 @@ pub mod ffi;
 pub mod error;
 pub mod object;
 pub mod sync;
+pub mod plist;
