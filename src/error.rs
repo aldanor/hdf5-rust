@@ -203,19 +203,19 @@ pub fn h5check<T>(value: T) -> H5Result<T> where T: Integer + Zero + Bounded,
 
 #[test]
 fn test_error_stack() {
-    use ffi::h5p::{H5Pcreate, H5Pclose, H5P_CLS_ROOT_ID};
+    use ffi::h5p::{H5Pcreate, H5Pclose, H5P_ROOT};
 
     silence_errors();
 
     let result_no_error = h5lock!({
-        let plist_id = H5Pcreate(*H5P_CLS_ROOT_ID);
+        let plist_id = H5Pcreate(*H5P_ROOT);
         H5Pclose(plist_id);
         H5ErrorStack::query()
     });
     assert!(result_no_error.ok().unwrap().is_none());
 
     let result_error = h5lock!({
-        let plist_id = H5Pcreate(*H5P_CLS_ROOT_ID);
+        let plist_id = H5Pcreate(*H5P_ROOT);
         H5Pclose(plist_id);
         H5Pclose(plist_id);
         H5ErrorStack::query()
@@ -250,18 +250,18 @@ fn test_error_stack() {
 
 #[test]
 fn test_h5call() {
-    use ffi::h5p::{H5Pcreate, H5Pclose, H5P_CLS_ROOT_ID};
+    use ffi::h5p::{H5Pcreate, H5Pclose, H5P_ROOT};
 
     silence_errors();
 
     let result_no_error = h5call!({
-        let plist_id = H5Pcreate(*H5P_CLS_ROOT_ID);
+        let plist_id = H5Pcreate(*H5P_ROOT);
         H5Pclose(plist_id)
     });
     assert!(result_no_error.is_ok());
 
     let result_error = h5call!({
-        let plist_id = H5Pcreate(*H5P_CLS_ROOT_ID);
+        let plist_id = H5Pcreate(*H5P_ROOT);
         H5Pclose(plist_id);
         H5Pclose(plist_id)
     });
@@ -271,12 +271,12 @@ fn test_h5call() {
 #[test]
 fn test_h5try() {
     use ffi::types::herr_t;
-    use ffi::h5p::{H5Pcreate, H5Pclose, H5P_CLS_ROOT_ID};
+    use ffi::h5p::{H5Pcreate, H5Pclose, H5P_ROOT};
 
     silence_errors();
 
     fn f1() -> H5Result<herr_t> {
-        let plist_id = h5try!(H5Pcreate(*H5P_CLS_ROOT_ID));
+        let plist_id = h5try!(H5Pcreate(*H5P_ROOT));
         h5try!(H5Pclose(plist_id));
         Ok(100)
     }
@@ -286,7 +286,7 @@ fn test_h5try() {
     assert_eq!(result1.ok().unwrap(), 100);
 
     fn f2() -> H5Result<herr_t> {
-        let plist_id = h5try!(H5Pcreate(*H5P_CLS_ROOT_ID));
+        let plist_id = h5try!(H5Pcreate(*H5P_ROOT));
         h5try!(H5Pclose(plist_id));
         h5try!(H5Pclose(plist_id));
         Ok(100)
