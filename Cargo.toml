@@ -1,5 +1,5 @@
 [package]
-name = "hdf5-rs"
+name = "hdf5"
 version = "0.0.1"
 authors = ["Ivan Smirnov <i.s.smirnov@gmail.com>"]
 keywords = ["hdf5"]
