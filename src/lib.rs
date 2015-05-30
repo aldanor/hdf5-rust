@@ -11,17 +11,5 @@ pub mod macros;
 pub mod ffi;
 
 pub mod error;
-pub mod mutex;
 pub mod object;
-
-pub mod sync {
-    pub fn h5sync<T, F>(func: F) -> T where F: FnOnce() -> T,
-    {
-        use mutex::RecursiveMutex;
-        lazy_static! {
-            static ref LOCK: RecursiveMutex = RecursiveMutex::new();
-        }
-        let _guard = LOCK.lock();
-        func()
-    }
-}
+pub mod sync;

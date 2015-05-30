@@ -144,3 +144,12 @@ impl<'a> Drop for RecursiveMutexGuard<'a> {
         }
     }
 }
+
+pub fn sync<T, F>(func: F) -> T where F: FnOnce() -> T,
+{
+    lazy_static! {
+        static ref LOCK: RecursiveMutex = RecursiveMutex::new();
+    }
+    let _guard = LOCK.lock();
+    func()
+}
