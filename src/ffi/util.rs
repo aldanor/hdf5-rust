@@ -15,10 +15,18 @@ pub fn string_from_cstr(string: *const c_char) -> String {
     }
 }
 
-pub fn str_to_cstr(string: &str) -> *const c_char {
+pub fn string_to_cstr<S>(string: S) -> *const c_char where S: Into<String> {
     unsafe {
-        CString::from_vec_unchecked(string.to_string().into_bytes()).as_ptr()
+        CString::from_vec_unchecked(string.into().into_bytes()).as_ptr()
     }
+}
+
+#[test]
+fn test_string_cstr() {
+    let s1: String = "foo".to_string();
+    assert_eq!(s1, string_from_cstr(string_to_cstr(s1.clone())));
+    let s2: &str = "bar";
+    assert_eq!(s2, string_from_cstr(string_to_cstr(s2)));
 }
 
 pub fn get_h5_str<T, F>(func: F) -> H5Result<String>
