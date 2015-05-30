@@ -16,7 +16,7 @@ use std::marker::PhantomData;
 thread_local!(static THREAD_ID: () = ());
 
 #[derive(Debug)]
-pub enum LockError {
+enum LockError {
     /// Mutex was poisoned,
     Poisoned,
     /// Mutex would block due to exceeded recursion limits.
@@ -24,7 +24,7 @@ pub enum LockError {
 }
 
 #[derive(Debug)]
-pub enum TryLockError {
+enum TryLockError {
     /// Mutex was poisoned
     Poisoned,
     /// Mutex would block because it is taken by another thread.
@@ -33,7 +33,7 @@ pub enum TryLockError {
     WouldBlockRecursive,
 }
 
-pub struct RecursiveMutex {
+struct RecursiveMutex {
     owner: AtomicUsize,
     recursion: UnsafeCell<u64>,
     mutex: Mutex<()>,
@@ -44,9 +44,9 @@ unsafe impl Sync for RecursiveMutex {}
 unsafe impl Send for RecursiveMutex {}
 
 #[must_use]
-pub struct RecursiveMutexGuard<'a> {
+struct RecursiveMutexGuard<'a> {
     mutex: &'a RecursiveMutex,
-    marker: PhantomData<*mut ()>,  // for !Send
+    marker: PhantomData<*mut ()>,  // !Send
 }
 
 // Cannot implement Send because we rely on the guard being dropped in the
@@ -54,7 +54,7 @@ pub struct RecursiveMutexGuard<'a> {
 // it with Acquire / Release?
 
 impl RecursiveMutex {
-    pub fn new() -> RecursiveMutex {
+    fn new() -> RecursiveMutex {
         RecursiveMutex {
             owner: AtomicUsize::new(0),
             recursion: UnsafeCell::new(0),
@@ -114,7 +114,8 @@ impl RecursiveMutex {
         }
     }
 
-    pub fn try_lock(&'static self) -> Result<RecursiveMutexGuard, TryLockError> {
+    #[allow(dead_code)]
+    fn try_lock(&'static self) -> Result<RecursiveMutexGuard, TryLockError> {
         // Same reasoning as in lock().
         if !self.is_same_thread() {
             match self.mutex.try_lock() {
@@ -143,6 +144,17 @@ impl<'a> Drop for RecursiveMutexGuard<'a> {
             }
         }
     }
+}
+
+#[test]
+pub fn test_recursive_mutex() {
+    lazy_static! {
+        static ref LOCK: RecursiveMutex = RecursiveMutex::new();
+    }
+    let _g1 = LOCK.try_lock();
+    let _g2 = LOCK.lock();
+    let _g3 = LOCK.try_lock();
+    let _g4 = LOCK.lock();
 }
 
 pub fn sync<T, F>(func: F) -> T where F: FnOnce() -> T,

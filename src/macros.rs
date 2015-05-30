@@ -14,7 +14,7 @@ macro_rules! ensure {
 
 macro_rules! h5lock_s {
     ($expr:expr) => ({
-        use sync::sync;
+        use ::sync::sync;
         sync(|| { $expr })
     })
 }

@@ -147,7 +147,7 @@ impl Object for Handle {
 }
 
 #[test]
-fn test_handle() {
+pub fn test_handle() {
     use ffi::h5p::{H5P_ROOT, H5P_FILE_ACCESS, H5Pcreate};
     use ffi::h5i::H5I_INVALID_HID;
 

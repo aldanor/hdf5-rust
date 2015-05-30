@@ -21,7 +21,7 @@ pub fn string_to_cstr<S>(string: S) -> *const c_char where S: Into<String> {
 }
 
 #[test]
-fn test_string_cstr() {
+pub fn test_string_cstr() {
     let s1: String = "foo".to_string();
     assert_eq!(s1, string_from_cstr(string_to_cstr(s1.clone())));
     let s2: &str = "bar";

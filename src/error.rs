@@ -202,7 +202,7 @@ pub fn h5check<T>(value: T) -> Result<T> where T: Integer + Zero + Bounded,
 }
 
 #[test]
-fn test_error_stack() {
+pub fn test_error_stack() {
     use ffi::h5p::{H5Pcreate, H5Pclose, H5P_ROOT};
 
     silence_errors();
@@ -249,7 +249,7 @@ fn test_error_stack() {
 }
 
 #[test]
-fn test_h5call() {
+pub fn test_h5call() {
     use ffi::h5p::{H5Pcreate, H5Pclose, H5P_ROOT};
 
     silence_errors();
@@ -269,7 +269,7 @@ fn test_h5call() {
 }
 
 #[test]
-fn test_h5try() {
+pub fn test_h5try() {
     use ffi::types::herr_t;
     use ffi::h5p::{H5Pcreate, H5Pclose, H5P_ROOT};
 
@@ -295,4 +295,3 @@ fn test_h5try() {
     let result2 = f2();
     assert!(result2.is_err());
 }
-
