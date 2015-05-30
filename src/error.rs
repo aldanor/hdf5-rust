@@ -6,14 +6,14 @@ use std::error::{self, Error};
 use std::ptr;
 use std::fmt;
 
-pub struct H5ErrorFrame {
+pub struct ErrorFrame {
     pub desc: String,
     pub func: String,
     pub major: String,
     pub minor: String
 }
 
-impl H5ErrorFrame {
+impl ErrorFrame {
     pub fn description(&self) -> &str {
         &self.desc
     }
@@ -30,28 +30,28 @@ pub fn silence_errors() {
     h5lock!(H5Eset_auto2(H5E_DEFAULT, None, ptr::null_mut::<c_void>()));
 }
 
-pub struct H5ErrorStack {
-    frames: Vec<H5ErrorFrame>
+pub struct ErrorStack {
+    frames: Vec<ErrorFrame>
 }
 
-impl Index<usize> for H5ErrorStack {
-    type Output = H5ErrorFrame;
+impl Index<usize> for ErrorStack {
+    type Output = ErrorFrame;
 
-    fn index<'a>(&'a self, index: usize) -> &'a H5ErrorFrame {
+    fn index<'a>(&'a self, index: usize) -> &'a ErrorFrame {
         &self.frames[index]
     }
 }
 
-impl H5ErrorStack {
+impl ErrorStack {
     // This low-level function is not thread-safe and has to be synchronized by the user
-    pub fn query() -> H5Result<Option<H5ErrorStack>> {
+    pub fn query() -> Result<Option<ErrorStack>> {
         use ffi::types::herr_t;
         use ffi::util::{get_h5_str, string_from_cstr};
         use ffi::h5e::{H5Ewalk2, H5Eget_msg, H5E_error2_t, H5E_type_t, H5E_WALK_DOWNWARD,
                        H5Eget_current_stack, H5Eclose_stack};
 
         struct CallbackData {
-            stack: H5ErrorStack,
+            stack: ErrorStack,
             err: Option<H5Error>,
         }
 
@@ -61,7 +61,7 @@ impl H5ErrorStack {
                 if data.err.is_some() {
                     return 0;
                 }
-                let closure = |e: H5E_error2_t| -> H5Result<H5ErrorFrame> {
+                let closure = |e: H5E_error2_t| -> Result<ErrorFrame> {
                     let (desc, func) = (string_from_cstr(e.desc), string_from_cstr(e.func_name));
                     let major = try!(get_h5_str(|m, s| {
                         H5Eget_msg(e.maj_num, ptr::null_mut::<H5E_type_t>(), m, s)
@@ -69,7 +69,7 @@ impl H5ErrorStack {
                     let minor = try!(get_h5_str(|m, s| {
                         H5Eget_msg(e.min_num, ptr::null_mut::<H5E_type_t>(), m, s)
                     }));
-                    Ok(H5ErrorFrame { desc: desc, func: func, major: major, minor: minor })
+                    Ok(ErrorFrame { desc: desc, func: func, major: major, minor: minor })
                 };
                 match closure(*err_desc) {
                     Ok(frame) => { data.stack.push(frame); 0 },
@@ -78,7 +78,7 @@ impl H5ErrorStack {
             }
         }
 
-        let mut data = CallbackData { stack: H5ErrorStack::new(), err: None };
+        let mut data = CallbackData { stack: ErrorStack::new(), err: None };
         let data_ptr: *mut c_void = &mut data as *mut _ as *mut c_void;
 
         // known HDF5 bug: H5Eget_msg() may corrupt the current stack, so we copy it first
@@ -96,15 +96,15 @@ impl H5ErrorStack {
         }
     }
 
-    pub fn new() -> H5ErrorStack {
-        H5ErrorStack { frames: Vec::new() }
+    pub fn new() -> ErrorStack {
+        ErrorStack { frames: Vec::new() }
     }
 
     pub fn len(&self) -> usize {
         self.frames.len()
     }
 
-    pub fn push(&mut self, frame: H5ErrorFrame) {
+    pub fn push(&mut self, frame: ErrorFrame) {
         self.frames.push(frame)
     }
 
@@ -112,7 +112,7 @@ impl H5ErrorStack {
         self.len() == 0
     }
 
-    pub fn top(&self) -> Option<&H5ErrorFrame> {
+    pub fn top(&self) -> Option<&ErrorFrame> {
         match !self.is_empty() {
             false => None,
             true  => Some(&self.frames[0]),
@@ -135,15 +135,15 @@ impl H5ErrorStack {
 }
 
 pub enum H5Error {
-    LibraryError(H5ErrorStack),
+    LibraryError(ErrorStack),
     InternalError(&'static str),
 }
 
-pub type H5Result<T> = Result<T, H5Error>;
+pub type Result<T> = ::std::result::Result<T, H5Error>;
 
 impl H5Error {
     pub fn query() -> Option<H5Error> {
-        match H5ErrorStack::query() {
+        match ErrorStack::query() {
             Err(err)        => Some(From::from(err)),
             Ok(Some(stack)) => Some(H5Error::LibraryError(stack)),
             Ok(None)        => None,
@@ -158,7 +158,7 @@ impl From<&'static str> for H5Error {
 }
 
 impl fmt::Debug for H5Error {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, formatter: &mut fmt::Formatter) -> ::std::result::Result<(), fmt::Error> {
         match *self {
             H5Error::InternalError(desc)     => desc.fmt(formatter),
             H5Error::LibraryError(ref stack) => stack.detail().fmt(formatter),
@@ -167,7 +167,7 @@ impl fmt::Debug for H5Error {
 }
 
 impl fmt::Display for H5Error {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, formatter: &mut fmt::Formatter) -> ::std::result::Result<(), fmt::Error> {
         self.description().fmt(formatter)
     }
 }
@@ -181,7 +181,7 @@ impl error::Error for H5Error {
     }
 }
 
-pub fn h5check<T>(value: T) -> H5Result<T> where T: Integer + Zero + Bounded,
+pub fn h5check<T>(value: T) -> Result<T> where T: Integer + Zero + Bounded,
 {
     let min_value: T = Bounded::min_value();
     let zero:      T = Zero::zero();
@@ -210,7 +210,7 @@ fn test_error_stack() {
     let result_no_error = h5lock!({
         let plist_id = H5Pcreate(*H5P_ROOT);
         H5Pclose(plist_id);
-        H5ErrorStack::query()
+        ErrorStack::query()
     });
     assert!(result_no_error.ok().unwrap().is_none());
 
@@ -218,7 +218,7 @@ fn test_error_stack() {
         let plist_id = H5Pcreate(*H5P_ROOT);
         H5Pclose(plist_id);
         H5Pclose(plist_id);
-        H5ErrorStack::query()
+        ErrorStack::query()
     });
     let stack = result_error.ok().unwrap().unwrap();
     assert_eq!(stack.description(), "can't close");
@@ -243,7 +243,7 @@ fn test_error_stack() {
                "Error in H5I_dec_ref(): can't locate ID \
                 [Object atom: Unable to find atom information (already closed?)]");
 
-    let empty_stack = H5ErrorStack::new();
+    let empty_stack = ErrorStack::new();
     assert!(empty_stack.is_empty());
     assert_eq!(empty_stack.len(), 0);
 }
@@ -275,7 +275,7 @@ fn test_h5try() {
 
     silence_errors();
 
-    fn f1() -> H5Result<herr_t> {
+    fn f1() -> Result<herr_t> {
         let plist_id = h5try!(H5Pcreate(*H5P_ROOT));
         h5try!(H5Pclose(plist_id));
         Ok(100)
@@ -285,7 +285,7 @@ fn test_h5try() {
     assert!(result1.is_ok());
     assert_eq!(result1.ok().unwrap(), 100);
 
-    fn f2() -> H5Result<herr_t> {
+    fn f2() -> Result<herr_t> {
         let plist_id = h5try!(H5Pcreate(*H5P_ROOT));
         h5try!(H5Pclose(plist_id));
         h5try!(H5Pclose(plist_id));
