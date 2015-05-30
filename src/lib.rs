@@ -12,6 +12,7 @@ pub mod ffi;
 
 pub mod error;
 pub mod mutex;
+pub mod object;
 
 pub mod sync {
     pub fn h5sync<T, F>(func: F) -> T where F: FnOnce() -> T,
