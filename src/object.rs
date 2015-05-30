@@ -99,6 +99,7 @@ impl Registry {
 
 pub trait Object {
     fn id(&self) -> hid_t;
+    fn from_id(id: hid_t) -> Self;
 
     /// Returns reference count if the handle is valid, 0 otherwise.
     fn refcount(&self) -> u32 {
@@ -139,6 +140,10 @@ impl Object for Handle {
     fn id(&self) -> hid_t {
         self.id()
     }
+
+    fn from_id(id: hid_t) -> Handle {
+        Handle::new(id)
+    }
 }
 
 #[test]
@@ -152,10 +157,6 @@ fn test_handle() {
     }
 
     impl TestObject {
-        fn new(id: hid_t) -> TestObject {
-            TestObject { handle: Handle::new(id) }
-        }
-
         fn incref(&self) {
             self.handle.incref()
         }
@@ -169,10 +170,14 @@ fn test_handle() {
         fn id(&self) -> hid_t {
             self.handle.id()
         }
+
+        fn from_id(id: hid_t) -> TestObject {
+            TestObject { handle: Handle::new(id) }
+        }
     }
 
     // invalid id
-    let mut obj = TestObject::new(H5I_INVALID_HID);
+    let mut obj = TestObject::from_id(H5I_INVALID_HID);
     assert_eq!(obj.id(), H5I_INVALID_HID);
     assert!(!obj.is_valid());
     assert!(!is_valid_id(obj.id()));
@@ -181,7 +186,7 @@ fn test_handle() {
     assert_eq!(obj.refcount(), 0);
 
     // existing generic id
-    obj = TestObject::new(*H5P_ROOT);
+    obj = TestObject::from_id(*H5P_ROOT);
     assert_eq!(obj.id(), *H5P_ROOT);
     assert!(is_valid_id(obj.id()));
     assert!(!is_valid_user_id(obj.id()));
@@ -192,7 +197,7 @@ fn test_handle() {
     assert!(is_valid_id(obj.id()));
 
     // new user id
-    obj = TestObject::new(h5call!(H5Pcreate(*H5P_FILE_ACCESS)).unwrap());
+    obj = TestObject::from_id(h5call!(H5Pcreate(*H5P_FILE_ACCESS)).unwrap());
     assert!(obj.id() > 0);
     assert!(obj.is_valid());
     assert!(is_valid_id(obj.id()));
@@ -225,9 +230,9 @@ fn test_handle() {
     assert!(!is_valid_id(obj.id()));
 
     // cloning and dropping
-    obj = TestObject::new(h5call!(H5Pcreate(*H5P_FILE_ACCESS)).unwrap());
+    obj = TestObject::from_id(h5call!(H5Pcreate(*H5P_FILE_ACCESS)).unwrap());
     let obj_id = obj.id();
-    obj = TestObject::new(h5call!(H5Pcreate(*H5P_FILE_ACCESS)).unwrap());
+    obj = TestObject::from_id(h5call!(H5Pcreate(*H5P_FILE_ACCESS)).unwrap());
     assert!(!is_valid_id(obj_id));
     assert!(!is_valid_user_id(obj_id));
     assert!(obj.id() > 0);
