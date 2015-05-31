@@ -1,0 +1,7 @@
+language: rust
+rust:
+    - stabl
+addons:
+    apt:
+        packages:
+            - libhdf5-serial-dev
