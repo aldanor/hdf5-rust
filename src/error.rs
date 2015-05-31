@@ -2,9 +2,9 @@ use libc::{c_uint, c_void};
 
 use std::ops::Index;
 use num::{Integer, Zero, Bounded};
-use std::error::{self, Error};
 use std::ptr;
 use std::fmt;
+use std::error::Error as BaseError;
 
 pub struct ErrorFrame {
     pub desc: String,
@@ -52,7 +52,7 @@ impl ErrorStack {
 
         struct CallbackData {
             stack: ErrorStack,
-            err: Option<H5Error>,
+            err: Option<Error>,
         }
 
         extern fn callback(_: c_uint, err_desc: *const H5E_error2_t, data: *mut c_void) -> herr_t {
@@ -134,49 +134,49 @@ impl ErrorStack {
     }
 }
 
-pub enum H5Error {
+pub enum Error {
     LibraryError(ErrorStack),
     InternalError(String),
 }
 
-pub type Result<T> = ::std::result::Result<T, H5Error>;
+pub type Result<T> = ::std::result::Result<T, Error>;
 
-impl H5Error {
-    pub fn query() -> Option<H5Error> {
+impl Error {
+    pub fn query() -> Option<Error> {
         match ErrorStack::query() {
             Err(err)        => Some(From::from(err)),
-            Ok(Some(stack)) => Some(H5Error::LibraryError(stack)),
+            Ok(Some(stack)) => Some(Error::LibraryError(stack)),
             Ok(None)        => None,
         }
     }
 }
 
-impl<S> From<S> for H5Error where S: Into<String> {
-    fn from(desc: S) -> H5Error {
-        H5Error::InternalError(desc.into())
+impl<S> From<S> for Error where S: Into<String> {
+    fn from(desc: S) -> Error {
+        Error::InternalError(desc.into())
     }
 }
 
-impl fmt::Debug for H5Error {
+impl fmt::Debug for Error {
     fn fmt(&self, formatter: &mut fmt::Formatter) -> ::std::result::Result<(), fmt::Error> {
         match *self {
-            H5Error::InternalError(ref desc) => desc.fmt(formatter),
-            H5Error::LibraryError(ref stack) => stack.detail().fmt(formatter),
+            Error::InternalError(ref desc) => desc.fmt(formatter),
+            Error::LibraryError(ref stack) => stack.detail().fmt(formatter),
         }
     }
 }
 
-impl fmt::Display for H5Error {
+impl fmt::Display for Error {
     fn fmt(&self, formatter: &mut fmt::Formatter) -> ::std::result::Result<(), fmt::Error> {
         self.description().fmt(formatter)
     }
 }
 
-impl error::Error for H5Error {
+impl ::std::error::Error for Error {
     fn description(&self) -> &str {
         match *self {
-            H5Error::InternalError(ref desc) => desc.as_ref(),
-            H5Error::LibraryError(ref stack) => stack.description(),
+            Error::InternalError(ref desc) => desc.as_ref(),
+            Error::LibraryError(ref stack) => stack.description(),
         }
     }
 }
@@ -194,7 +194,7 @@ pub fn h5check<T>(value: T) -> Result<T> where T: Integer + Zero + Bounded,
 
     match maybe_error {
         false => Ok(value),
-        true  => match H5Error::query() {
+        true  => match Error::query() {
             None       => Ok(value),
             Some(err)  => Err(From::from(err)),
         },
