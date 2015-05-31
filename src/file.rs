@@ -189,17 +189,29 @@ mod tests {
     use super::File;
     use std::path::PathBuf;
     use tempdir::TempDir;
+    use std::fs;
+    use std::io::Write;
 
-    fn with_tmpdir<F: Fn(PathBuf)>(f: F) {
+    fn with_tmpdir<F: Fn(PathBuf)>(func: F) {
         let dir = TempDir::new_in(".", "tmp").unwrap();
         let path = dir.path().to_path_buf();
-        f(path);
+        func(path);
     }
 
     #[test]
     pub fn test_invalid_mode() {
         with_tmpdir(|dir| {
             assert_err!(File::open(&dir, "foo"), "Invalid file access mode");
+        })
+    }
+
+    #[test]
+    pub fn test_non_hdf5_file() {
+        with_tmpdir(|dir| {
+            let path = dir.join("foo.h5");
+            fs::File::create(&path).unwrap().write_all(b"foo");
+            assert!(fs::metadata(&path).is_ok());
+            assert_err!(File::open(&path, "r"), "unable to open file");
         })
     }
 
