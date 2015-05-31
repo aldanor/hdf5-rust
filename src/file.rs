@@ -40,7 +40,7 @@ impl File {
     /// | `w-`, `x` | Create file, fail if exists
     /// | `a`       | Read/write if exists, create otherwise
     pub fn open<P: AsRef<Path>, S: Into<String>>(filename: P, mode: S) -> Result<File> {
-        FileBuilder::new(filename).mode(mode).open()
+        FileBuilder::new().mode(mode).open(filename)
     }
 
     pub fn size(&self) -> u64 {
@@ -78,7 +78,6 @@ impl Drop for File {
 }
 
 pub struct FileBuilder {
-    filename: PathBuf,
     driver: String,
     mode: String,
     userblock: size_t,
@@ -88,9 +87,8 @@ pub struct FileBuilder {
 
 
 impl FileBuilder {
-    pub fn new<P: AsRef<Path>>(filename: P) -> FileBuilder {
+    pub fn new() -> FileBuilder {
         FileBuilder {
-            filename: filename.as_ref().to_path_buf(),
             driver: "sec2".to_string(),
             mode: "r".to_string(),
             userblock: 0,
@@ -133,30 +131,32 @@ impl FileBuilder {
         })
     }
 
-    fn open_file(&self, write: bool) -> Result<File> {
+    fn open_file<P: AsRef<Path>>(&self, filename: P, write: bool) -> Result<File> {
         ensure!(self.userblock == 0, "Cannot specify userblock when opening a file");
         h5lock_s!({
             let fapl = try!(self.make_fapl());
             let flags = if write { H5F_ACC_RDWR } else { H5F_ACC_RDONLY };
-            match self.filename.to_str() {
+            let filename = filename.as_ref();
+            match filename.to_str() {
                 Some(filename) => {
                     let c_filename = string_to_cstr(filename);
                     let file = File::from_id(h5try!(H5Fopen(c_filename, flags, fapl.id())));
                     ensure!(file.is_valid(), "Invalid id for opened file");
                     Ok(file)
                 },
-                None          => fail!("Invalid UTF-8 in file name: {:?}", self.filename)
+                None          => fail!("Invalid UTF-8 in file name: {:?}", filename)
             }
         })
     }
 
-    fn create_file(&self, exclusive: bool) -> Result<File> {
+    fn create_file<P: AsRef<Path>>(&self, filename: P, exclusive: bool) -> Result<File> {
         h5lock_s!({
             let fcpl = PropertyList::from_id(h5try!(H5Pcreate(*H5P_FILE_CREATE)));
             h5try!(H5Pset_userblock(fcpl.id(), self.userblock));
             let fapl = try!(self.make_fapl());
             let flags = if exclusive { H5F_ACC_EXCL } else { H5F_ACC_TRUNC };
-            match self.filename.to_str() {
+            let filename = filename.as_ref();
+            match filename.to_str() {
                 Some(filename) => {
                     let c_filename = string_to_cstr(filename);
                     let file = File::from_id(h5try!(H5Fcreate(c_filename, flags,
@@ -164,20 +164,20 @@ impl FileBuilder {
                     ensure!(file.is_valid(), "Invalid id for created file");
                     Ok(file)
                 },
-                None          => fail!("Invalid UTF-8 in file name: {:?}", self.filename)
+                None          => fail!("Invalid UTF-8 in file name: {:?}", filename)
             }
         })
     }
 
-    pub fn open(&self) -> Result<File> {
+    pub fn open<P: AsRef<Path>>(&self, filename: P) -> Result<File> {
         match self.mode.as_ref() {
-            "r"        => self.open_file(false),
-            "r+"       => self.open_file(true),
-            "w"        => self.create_file(false),
-            "w-" | "x" => self.create_file(true),
-            "a"        => match self.open_file(true) {
+            "r"        => self.open_file(&filename, false),
+            "r+"       => self.open_file(&filename, true),
+            "w"        => self.create_file(&filename, false),
+            "w-" | "x" => self.create_file(&filename, true),
+            "a"        => match self.open_file(&filename, true) {
                             Ok(file) => Ok(file),
-                            _        => self.create_file(true),
+                            _        => self.create_file(&filename, true),
                           },
             _          => fail!("Invalid file access mode, expected r|r+|w|w-|x|a"),
         }
