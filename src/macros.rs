@@ -1,7 +1,10 @@
 macro_rules! fail {
     ($err:expr) => (
         return Err(From::from($err));
-    )
+    );
+    ($fmt:expr, $($arg:tt)*) => (
+        return Err(From::from(format!($fmt, $($arg)*)));
+    );
 }
 
 macro_rules! ensure {
