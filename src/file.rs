@@ -30,6 +30,19 @@ impl Object for File {
 }
 
 impl File {
+    /// Create a new file object.
+    ///
+    /// | `mode`    | File access mode
+    /// |-----------|-----------------
+    /// | `r`       | Read-only, file must exist
+    /// | `r+`      | Read/write, file must exist
+    /// | `w`       | Create file, truncate if exists
+    /// | `w-`, `x` | Create file, fail if exists
+    /// | `a`       | Read/write if exists, create otherwise
+    pub fn open<P: AsRef<Path>, S: Into<String>>(filename: P, mode: S) -> Result<File> {
+        FileBuilder::new(filename).mode(mode).open()
+    }
+
     pub fn size(&self) -> u64 {
         unsafe {
             let size: *mut hsize_t = &mut 0;
@@ -38,16 +51,13 @@ impl File {
         }
     }
 
+    /// Returns true if the file was opened in a read-only mode.
     pub fn is_read_only(&self) -> bool {
         unsafe {
             let mode: *mut c_uint = &mut 0;
             h5lock_s!(H5Fget_intent(self.id(), mode));
             *mode != H5F_ACC_RDWR
         }
-    }
-
-    pub fn open<P: AsRef<Path>, S: Into<String>>(filename: P, mode: S) -> Result<File> {
-        FileBuilder::new(filename).mode(mode).open()
     }
 
     fn fapl(&self) -> PropertyList {
