@@ -16,21 +16,25 @@ pub struct ErrorFrame {
     func: String,
     major: String,
     minor: String,
+    description: String,
 }
 
 impl ErrorFrame {
     pub fn new<S1, S2, S3, S4>(desc: S1, func: S2, major: S3, minor: S4) -> ErrorFrame
               where S1: Into<String>, S2: Into<String>, S3: Into<String>, S4: Into<String> {
+        let (s_func, s_desc) = (func.into(), desc.into());
+        let description = format!("{}(): {}", s_func.clone(), s_desc.clone());
         ErrorFrame {
-            desc: desc.into(),
-            func: func.into(),
+            desc: s_desc,
+            func: s_func,
             major: major.into(),
-            minor: minor.into()
+            minor: minor.into(),
+            description: description,
         }
     }
 
     pub fn description(&self) -> &str {
-        self.desc.as_ref()
+        self.description.as_ref()
     }
 
     pub fn detail(&self) -> Option<String> {
@@ -237,24 +241,24 @@ mod tests {
             ErrorStack::query()
         });
         let stack = result_error.ok().unwrap().unwrap();
-        assert_eq!(stack.description(), "can't close");
+        assert_eq!(stack.description(), "H5Pclose(): can't close");
         assert_eq!(&stack.detail().unwrap(),
                    "Error in H5Pclose(): can't close [Property lists: Unable to free object]");
 
         assert_eq!(stack.len(), 3);
         assert!(!stack.is_empty());
 
-        assert_eq!(stack[0].description(), "can't close");
+        assert_eq!(stack[0].description(), "H5Pclose(): can't close");
         assert_eq!(&stack[0].detail().unwrap(),
                    "Error in H5Pclose(): can't close \
                     [Property lists: Unable to free object]");
 
-        assert_eq!(stack[1].description(), "can't decrement ID ref count");
+        assert_eq!(stack[1].description(), "H5I_dec_app_ref(): can't decrement ID ref count");
         assert_eq!(&stack[1].detail().unwrap(),
                    "Error in H5I_dec_app_ref(): can't decrement ID ref count \
                     [Object atom: Unable to decrement reference count]");
 
-        assert_eq!(stack[2].description(), "can't locate ID");
+        assert_eq!(stack[2].description(), "H5I_dec_ref(): can't locate ID");
         assert_eq!(&stack[2].detail().unwrap(),
                    "Error in H5I_dec_ref(): can't locate ID \
                     [Object atom: Unable to find atom information (already closed?)]");
