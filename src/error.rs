@@ -1,21 +1,36 @@
-use libc::{c_uint, c_void};
+use ffi::types::herr_t;
+use ffi::util::{get_h5_str, string_from_cstr};
+use ffi::h5e::{H5Ewalk2, H5Eget_msg, H5E_error2_t, H5Eset_auto2, H5Eget_current_stack,
+               H5Eclose_stack, H5E_WALK_DOWNWARD, H5E_DEFAULT};
 
-use std::ops::Index;
-use num::{Integer, Zero, Bounded};
 use std::ptr;
 use std::fmt;
+use std::ops::Index;
 use std::error::Error as BaseError;
 
+use libc::{c_uint, c_void};
+use num::{Integer, Zero, Bounded};
+
 pub struct ErrorFrame {
-    pub desc: String,
-    pub func: String,
-    pub major: String,
-    pub minor: String
+    desc: String,
+    func: String,
+    major: String,
+    minor: String,
 }
 
 impl ErrorFrame {
+    pub fn new<S1, S2, S3, S4>(desc: S1, func: S2, major: S3, minor: S4) -> ErrorFrame
+              where S1: Into<String>, S2: Into<String>, S3: Into<String>, S4: Into<String> {
+        ErrorFrame {
+            desc: desc.into(),
+            func: func.into(),
+            major: major.into(),
+            minor: minor.into()
+        }
+    }
+
     pub fn description(&self) -> &str {
-        &self.desc
+        self.desc.as_ref()
     }
 
     pub fn detail(&self) -> Option<String> {
@@ -25,9 +40,7 @@ impl ErrorFrame {
 }
 
 pub fn silence_errors() {
-    use ffi::h5e::{H5Eset_auto2, H5E_DEFAULT};
-
-    h5lock!(H5Eset_auto2(H5E_DEFAULT, None, ptr::null_mut::<c_void>()));
+    h5lock!(H5Eset_auto2(H5E_DEFAULT, None, ptr::null_mut()));
 }
 
 pub struct ErrorStack {
@@ -45,11 +58,6 @@ impl Index<usize> for ErrorStack {
 impl ErrorStack {
     // This low-level function is not thread-safe and has to be synchronized by the user
     pub fn query() -> Result<Option<ErrorStack>> {
-        use ffi::types::herr_t;
-        use ffi::util::{get_h5_str, string_from_cstr};
-        use ffi::h5e::{H5Ewalk2, H5Eget_msg, H5E_error2_t, H5E_type_t, H5E_WALK_DOWNWARD,
-                       H5Eget_current_stack, H5Eclose_stack};
-
         struct CallbackData {
             stack: ErrorStack,
             err: Option<Error>,
@@ -64,12 +72,12 @@ impl ErrorStack {
                 let closure = |e: H5E_error2_t| -> Result<ErrorFrame> {
                     let (desc, func) = (string_from_cstr(e.desc), string_from_cstr(e.func_name));
                     let major = try!(get_h5_str(|m, s| {
-                        H5Eget_msg(e.maj_num, ptr::null_mut::<H5E_type_t>(), m, s)
+                        H5Eget_msg(e.maj_num, ptr::null_mut(), m, s)
                     }));
                     let minor = try!(get_h5_str(|m, s| {
-                        H5Eget_msg(e.min_num, ptr::null_mut::<H5E_type_t>(), m, s)
+                        H5Eget_msg(e.min_num, ptr::null_mut(), m, s)
                     }));
-                    Ok(ErrorFrame { desc: desc, func: func, major: major, minor: minor })
+                    Ok(ErrorFrame::new(desc, func, major, minor))
                 };
                 match closure(*err_desc) {
                     Ok(frame) => { data.stack.push(frame); 0 },
@@ -205,97 +213,97 @@ pub fn h5check<T>(value: T) -> Result<T> where T: Integer + Zero + Bounded,
     }
 }
 
-#[test]
-pub fn test_error_stack() {
-    use ffi::h5p::{H5Pcreate, H5Pclose, H5P_ROOT};
-
-    silence_errors();
-
-    let result_no_error = h5lock!({
-        let plist_id = H5Pcreate(*H5P_ROOT);
-        H5Pclose(plist_id);
-        ErrorStack::query()
-    });
-    assert!(result_no_error.ok().unwrap().is_none());
-
-    let result_error = h5lock!({
-        let plist_id = H5Pcreate(*H5P_ROOT);
-        H5Pclose(plist_id);
-        H5Pclose(plist_id);
-        ErrorStack::query()
-    });
-    let stack = result_error.ok().unwrap().unwrap();
-    assert_eq!(stack.description(), "can't close");
-    assert_eq!(&stack.detail().unwrap(),
-               "Error in H5Pclose(): can't close [Property lists: Unable to free object]");
-
-    assert_eq!(stack.len(), 3);
-    assert!(!stack.is_empty());
-
-    assert_eq!(stack[0].description(), "can't close");
-    assert_eq!(&stack[0].detail().unwrap(),
-               "Error in H5Pclose(): can't close \
-                [Property lists: Unable to free object]");
-
-    assert_eq!(stack[1].description(), "can't decrement ID ref count");
-    assert_eq!(&stack[1].detail().unwrap(),
-               "Error in H5I_dec_app_ref(): can't decrement ID ref count \
-                [Object atom: Unable to decrement reference count]");
-
-    assert_eq!(stack[2].description(), "can't locate ID");
-    assert_eq!(&stack[2].detail().unwrap(),
-               "Error in H5I_dec_ref(): can't locate ID \
-                [Object atom: Unable to find atom information (already closed?)]");
-
-    let empty_stack = ErrorStack::new();
-    assert!(empty_stack.is_empty());
-    assert_eq!(empty_stack.len(), 0);
-}
-
-#[test]
-pub fn test_h5call() {
-    use ffi::h5p::{H5Pcreate, H5Pclose, H5P_ROOT};
-
-    silence_errors();
-
-    let result_no_error = h5call!({
-        let plist_id = H5Pcreate(*H5P_ROOT);
-        H5Pclose(plist_id)
-    });
-    assert!(result_no_error.is_ok());
-
-    let result_error = h5call!({
-        let plist_id = H5Pcreate(*H5P_ROOT);
-        H5Pclose(plist_id);
-        H5Pclose(plist_id)
-    });
-    assert!(result_error.is_err());
-}
-
-#[test]
-pub fn test_h5try() {
+#[cfg(test)]
+mod tests {
     use ffi::types::herr_t;
     use ffi::h5p::{H5Pcreate, H5Pclose, H5P_ROOT};
+    use super::{ErrorStack, Result, silence_errors};
 
-    silence_errors();
+    #[test]
+    pub fn test_error_stack() {
+        silence_errors();
 
-    fn f1() -> Result<herr_t> {
-        let plist_id = h5try!(H5Pcreate(*H5P_ROOT));
-        h5try!(H5Pclose(plist_id));
-        Ok(100)
+        let result_no_error = h5lock!({
+            let plist_id = H5Pcreate(*H5P_ROOT);
+            H5Pclose(plist_id);
+            ErrorStack::query()
+        });
+        assert!(result_no_error.ok().unwrap().is_none());
+
+        let result_error = h5lock!({
+            let plist_id = H5Pcreate(*H5P_ROOT);
+            H5Pclose(plist_id);
+            H5Pclose(plist_id);
+            ErrorStack::query()
+        });
+        let stack = result_error.ok().unwrap().unwrap();
+        assert_eq!(stack.description(), "can't close");
+        assert_eq!(&stack.detail().unwrap(),
+                   "Error in H5Pclose(): can't close [Property lists: Unable to free object]");
+
+        assert_eq!(stack.len(), 3);
+        assert!(!stack.is_empty());
+
+        assert_eq!(stack[0].description(), "can't close");
+        assert_eq!(&stack[0].detail().unwrap(),
+                   "Error in H5Pclose(): can't close \
+                    [Property lists: Unable to free object]");
+
+        assert_eq!(stack[1].description(), "can't decrement ID ref count");
+        assert_eq!(&stack[1].detail().unwrap(),
+                   "Error in H5I_dec_app_ref(): can't decrement ID ref count \
+                    [Object atom: Unable to decrement reference count]");
+
+        assert_eq!(stack[2].description(), "can't locate ID");
+        assert_eq!(&stack[2].detail().unwrap(),
+                   "Error in H5I_dec_ref(): can't locate ID \
+                    [Object atom: Unable to find atom information (already closed?)]");
+
+        let empty_stack = ErrorStack::new();
+        assert!(empty_stack.is_empty());
+        assert_eq!(empty_stack.len(), 0);
     }
 
-    let result1 = f1();
-    assert!(result1.is_ok());
-    assert_eq!(result1.ok().unwrap(), 100);
+    #[test]
+    pub fn test_h5call() {
+        silence_errors();
 
-    fn f2() -> Result<herr_t> {
-        let plist_id = h5try!(H5Pcreate(*H5P_ROOT));
-        h5try!(H5Pclose(plist_id));
-        h5try!(H5Pclose(plist_id));
-        Ok(100)
+        let result_no_error = h5call!({
+            let plist_id = H5Pcreate(*H5P_ROOT);
+            H5Pclose(plist_id)
+        });
+        assert!(result_no_error.is_ok());
+
+        let result_error = h5call!({
+            let plist_id = H5Pcreate(*H5P_ROOT);
+            H5Pclose(plist_id);
+            H5Pclose(plist_id)
+        });
+        assert!(result_error.is_err());
     }
 
-    let result2 = f2();
-    assert!(result2.is_err());
+    #[test]
+    pub fn test_h5try() {
+        silence_errors();
+
+        fn f1() -> Result<herr_t> {
+            let plist_id = h5try!(H5Pcreate(*H5P_ROOT));
+            h5try!(H5Pclose(plist_id));
+            Ok(100)
+        }
+
+        let result1 = f1();
+        assert!(result1.is_ok());
+        assert_eq!(result1.ok().unwrap(), 100);
+
+        fn f2() -> Result<herr_t> {
+            let plist_id = h5try!(H5Pcreate(*H5P_ROOT));
+            h5try!(H5Pclose(plist_id));
+            h5try!(H5Pclose(plist_id));
+            Ok(100)
+        }
+
+        let result2 = f2();
+        assert!(result2.is_err());
+    }
 }
