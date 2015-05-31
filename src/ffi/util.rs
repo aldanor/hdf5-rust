@@ -1,7 +1,7 @@
 use libc::{self, c_char, c_void, size_t};
 
-use std::mem::size_of;
-use std::ptr::null_mut;
+use std::mem;
+use std::ptr;
 use num::{Integer, NumCast};
 use num::traits::cast;
 use std::ffi::{CStr, CString};
@@ -31,9 +31,9 @@ pub fn test_string_cstr() {
 pub fn get_h5_str<T, F>(func: F) -> Result<String>
                  where F: Fn(*mut c_char, size_t) -> T, T: Integer + NumCast {
     unsafe {
-        let len: isize = 1 + cast::<T, isize>(func(null_mut(), 0)).unwrap();
+        let len: isize = 1 + cast::<T, isize>(func(ptr::null_mut(), 0)).unwrap();
         ensure!(len > 0, "negative string length in get_h5_str()");
-        let buf = libc::malloc((len as size_t) * size_of::<c_char>() as size_t) as *mut c_char;
+        let buf = libc::malloc((len as size_t) * mem::size_of::<c_char>() as size_t) as *mut c_char;
         func(buf, len as size_t);
         let msg = string_from_cstr(buf);
         libc::free(buf as *mut c_void);
@@ -46,7 +46,7 @@ pub fn test_get_h5_str() {
     use ffi::h5e::{H5Eget_msg, H5E_CANTOPENOBJ};
     let s = unsafe {
         get_h5_str(|msg, size| {
-            H5Eget_msg(*H5E_CANTOPENOBJ, null_mut(), msg, size)
+            H5Eget_msg(*H5E_CANTOPENOBJ, ptr::null_mut(), msg, size)
         }).ok().unwrap()
     };
     assert_eq!(s, "Can't open object");

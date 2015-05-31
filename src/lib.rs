@@ -21,3 +21,6 @@ pub mod file;
 pub mod object;
 pub mod plist;
 pub mod sync;
+
+#[cfg(test)]
+pub mod test;

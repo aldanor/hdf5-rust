@@ -5,11 +5,12 @@ use ffi::h5f::{H5F_ACC_RDONLY, H5F_ACC_RDWR, H5F_ACC_EXCL, H5F_ACC_TRUNC,
                H5Fopen, H5Fcreate, H5Fclose, H5Fget_filesize, H5Fget_intent,
                H5Fget_access_plist, H5Fget_create_plist, H5Fget_freespace};
 use ffi::drivers::{H5Pset_fapl_sec2, H5Pset_fapl_stdio, H5Pset_fapl_core};
-
-use object::{Handle, Object};
-use error::Result;
-use plist::PropertyList;
 use ffi::util::string_to_cstr;
+
+use error::Result;
+use object::{Handle, Object};
+use plist::PropertyList;
+
 use std::path::Path;
 
 use libc::{size_t, c_uint};
@@ -196,28 +197,20 @@ impl FileBuilder {
 #[cfg(test)]
 mod tests {
     use super::File;
-    use std::path::PathBuf;
-    use tempdir::TempDir;
     use std::fs;
     use std::io::Write;
-
-    fn with_tmpdir<F: Fn(PathBuf)>(func: F) {
-        let dir = TempDir::new_in(".", "tmp").unwrap();
-        let path = dir.path().to_path_buf();
-        func(path);
-    }
+    use test::{with_tmp_dir, with_tmp_path};
 
     #[test]
     pub fn test_invalid_mode() {
-        with_tmpdir(|dir| {
+        with_tmp_dir(|dir| {
             assert_err!(File::open(&dir, "foo"), "Invalid file access mode");
         })
     }
 
     #[test]
     pub fn test_non_hdf5_file() {
-        with_tmpdir(|dir| {
-            let path = dir.join("foo.h5");
+        with_tmp_path("foo.h5", |path| {
             fs::File::create(&path).unwrap().write_all(b"foo").unwrap();
             assert!(fs::metadata(&path).is_ok());
             assert_err!(File::open(&path, "r"), "unable to open file");
@@ -226,24 +219,23 @@ mod tests {
 
     #[test]
     pub fn test_is_read_only() {
-        with_tmpdir(|dir| {
-            let path = dir.join("foo.h5");
+        with_tmp_path("foo.h5", |path| {
             assert!(!File::open(&path, "w").unwrap().is_read_only());
             assert!(File::open(&path, "r").unwrap().is_read_only());
             assert!(!File::open(&path, "r+").unwrap().is_read_only());
             assert!(!File::open(&path, "a").unwrap().is_read_only());
         });
-        with_tmpdir(|dir| {
-            assert!(!File::open(dir.join("foo.h"), "a").unwrap().is_read_only());
+        with_tmp_path("foo.h5", |path| {
+            assert!(!File::open(&path, "a").unwrap().is_read_only());
         });
-        with_tmpdir(|dir| {
-            assert!(!File::open(dir.join("foo.h"), "x").unwrap().is_read_only());
+        with_tmp_path("foo.h5", |path| {
+            assert!(!File::open(&path, "x").unwrap().is_read_only());
         });
     }
 
     #[test]
-    pub fn test_invalid_filename() {
-        with_tmpdir(|dir| {
+    pub fn test_unable_to_open() {
+        with_tmp_dir(|dir| {
             assert_err!(File::open(&dir, "r"), "unable to open file");
             assert_err!(File::open(&dir, "r+"), "unable to open file");
             assert_err!(File::open(&dir, "x"), "unable to create file");
