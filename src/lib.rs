@@ -4,6 +4,9 @@ extern crate num;
 #[macro_use]
 extern crate lazy_static;
 
+#[cfg(test)]
+extern crate regex;
+
 #[macro_use]
 pub mod macros;
 

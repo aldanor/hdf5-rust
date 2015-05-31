@@ -12,6 +12,26 @@ macro_rules! ensure {
     )
 }
 
+macro_rules! assert_err {
+    ($expr:expr, $err:expr) => {
+        match &($expr) {
+            &Ok(ref value)  => {
+                panic!("assertion failed: `{}` is not an error", stringify!($expr));
+            }
+            &Err(ref value) => {
+                use regex::Regex;
+                use std::error::Error as Error_;
+                let re = Regex::new($err).unwrap();
+                let desc = value.description().to_string();
+                if !re.is_match(desc.as_ref()) {
+                    panic!("assertion failed: \"{}\" doesn't match \"{}\" in `{}`",
+                           desc, re, stringify!($expr));
+                }
+            }
+        }
+    }
+}
+
 macro_rules! h5lock_s {
     ($expr:expr) => ({
         use ::sync::sync;

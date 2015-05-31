@@ -9,3 +9,6 @@ description = "HDF5 library wrapper for Rust."
 lazy_static = "*"
 num = "*"
 libc = "*"
+
+[dev_dependencies]
+regex = "*"

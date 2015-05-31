@@ -149,6 +149,13 @@ impl Error {
             Ok(None)        => None,
         }
     }
+
+    pub fn description(&self) -> &str {
+        match *self {
+            Error::InternalError(ref desc) => desc.as_ref(),
+            Error::LibraryError(ref stack) => stack.description(),
+        }
+    }
 }
 
 impl<S> From<S> for Error where S: Into<String> {
@@ -174,10 +181,7 @@ impl fmt::Display for Error {
 
 impl ::std::error::Error for Error {
     fn description(&self) -> &str {
-        match *self {
-            Error::InternalError(ref desc) => desc.as_ref(),
-            Error::LibraryError(ref stack) => stack.description(),
-        }
+        self.description()
     }
 }
 
