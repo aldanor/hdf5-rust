@@ -42,7 +42,7 @@ impl File {
         unsafe {
             let mode: *mut c_uint = &mut 0;
             h5lock_s!(H5Fget_intent(self.id(), mode));
-            *mode == H5F_ACC_RDONLY
+            *mode != H5F_ACC_RDWR
         }
     }
 
