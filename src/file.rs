@@ -106,15 +106,17 @@ impl FileBuilder {
     }
 
     fn make_fapl(&self) -> Result<PropertyList> {
-        let fapl = PropertyList::from_id(h5try!(H5Pcreate(*H5P_FILE_ACCESS)));
-        match self.driver.as_ref() {
-            "sec2"  => h5try!(H5Pset_fapl_sec2(fapl.id())),
-            "stdio" => h5try!(H5Pset_fapl_stdio(fapl.id())),
-            "core"  => h5try!(H5Pset_fapl_core(fapl.id(), self.increment,
-                                               self.filebacked as hbool_t)),
-            _       => fail!(format!("Invalid file driver: {}", self.driver)),
-        };
-        Ok(fapl)
+        h5lock_s!({
+            let fapl = PropertyList::from_id(h5try!(H5Pcreate(*H5P_FILE_ACCESS)));
+            match self.driver.as_ref() {
+                "sec2"  => h5try!(H5Pset_fapl_sec2(fapl.id())),
+                "stdio" => h5try!(H5Pset_fapl_stdio(fapl.id())),
+                "core"  => h5try!(H5Pset_fapl_core(fapl.id(), self.increment,
+                                                   self.filebacked as hbool_t)),
+                _       => fail!(format!("Invalid file driver: {}", self.driver)),
+            };
+            Ok(fapl)
+        })
     }
 
     fn open_file(&self, write: bool) -> Result<File> {
