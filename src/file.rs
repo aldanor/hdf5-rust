@@ -3,14 +3,14 @@ use ffi::h5i::H5I_INVALID_HID;
 use ffi::h5p::{H5P_FILE_CREATE, H5P_FILE_ACCESS, H5Pcreate, H5Pset_userblock};
 use ffi::h5f::{H5F_ACC_RDONLY, H5F_ACC_RDWR, H5F_ACC_EXCL, H5F_ACC_TRUNC,
                H5Fopen, H5Fcreate, H5Fclose, H5Fget_filesize, H5Fget_intent,
-               H5Fget_access_plist, H5Fget_create_plist};
+               H5Fget_access_plist, H5Fget_create_plist, H5Fget_freespace};
 use ffi::drivers::{H5Pset_fapl_sec2, H5Pset_fapl_stdio, H5Pset_fapl_core};
 
 use object::{Handle, Object};
 use error::Result;
 use plist::PropertyList;
 use ffi::util::string_to_cstr;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use libc::{size_t, c_uint};
 
@@ -43,11 +43,20 @@ impl File {
         FileBuilder::new().mode(mode).open(filename)
     }
 
+    /// Returns the file size in bytes.
     pub fn size(&self) -> u64 {
         unsafe {
             let size: *mut hsize_t = &mut 0;
             h5lock_s!(H5Fget_filesize(self.id(), size));
             if *size > 0 { *size as u64 } else { 0 }
+        }
+    }
+
+    /// Returns the free space in the file in bytes.
+    pub fn free_space(&self) -> u64 {
+        match h5call!(H5Fget_freespace(self.id())) {
+            Ok(size) => size as u64,
+            _        => 0,
         }
     }
 
@@ -209,7 +218,7 @@ mod tests {
     pub fn test_non_hdf5_file() {
         with_tmpdir(|dir| {
             let path = dir.join("foo.h5");
-            fs::File::create(&path).unwrap().write_all(b"foo");
+            fs::File::create(&path).unwrap().write_all(b"foo").unwrap();
             assert!(fs::metadata(&path).is_ok());
             assert_err!(File::open(&path, "r"), "unable to open file");
         })
