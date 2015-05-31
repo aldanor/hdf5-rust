@@ -5,6 +5,9 @@ extern crate num;
 extern crate lazy_static;
 
 #[cfg(test)]
+extern crate tempdir;
+
+#[cfg(test)]
 extern crate regex;
 
 #[macro_use]
@@ -14,6 +17,7 @@ pub mod macros;
 pub mod ffi;
 
 pub mod error;
+pub mod file;
 pub mod object;
 pub mod plist;
 pub mod sync;
