@@ -146,17 +146,6 @@ impl<'a> Drop for RecursiveMutexGuard<'a> {
     }
 }
 
-#[test]
-pub fn test_recursive_mutex() {
-    lazy_static! {
-        static ref LOCK: RecursiveMutex = RecursiveMutex::new();
-    }
-    let _g1 = LOCK.try_lock();
-    let _g2 = LOCK.lock();
-    let _g3 = LOCK.try_lock();
-    let _g4 = LOCK.lock();
-}
-
 pub fn sync<T, F>(func: F) -> T where F: FnOnce() -> T,
 {
     lazy_static! {
@@ -164,4 +153,20 @@ pub fn sync<T, F>(func: F) -> T where F: FnOnce() -> T,
     }
     let _guard = LOCK.lock();
     func()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::RecursiveMutex;
+
+    #[test]
+    pub fn test_recursive_mutex() {
+        lazy_static! {
+            static ref LOCK: RecursiveMutex = RecursiveMutex::new();
+        }
+        let _g1 = LOCK.try_lock();
+        let _g2 = LOCK.lock();
+        let _g3 = LOCK.try_lock();
+        let _g4 = LOCK.lock();
+    }
 }

@@ -15,16 +15,16 @@ macro_rules! ensure {
 macro_rules! assert_err {
     ($expr:expr, $err:expr) => {
         match &($expr) {
-            &Ok(ref value)  => {
-                panic!("assertion failed: `{}` is not an error", stringify!($expr));
+            &Ok(_) => {
+                panic!("assertion failed: not an error in `{}`", stringify!($expr));
             }
             &Err(ref value) => {
                 use regex::Regex;
-                use std::error::Error as Error_;
+                use std::error::Error as BaseError;
                 let re = Regex::new($err).unwrap();
                 let desc = value.description().to_string();
                 if !re.is_match(desc.as_ref()) {
-                    panic!("assertion failed: \"{}\" doesn't match \"{}\" in `{}`",
+                    panic!("assertion failed: error message \"{}\" doesn't match \"{}\" in `{}`",
                            desc, re, stringify!($expr));
                 }
             }
