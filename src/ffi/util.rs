@@ -14,7 +14,7 @@ pub fn string_from_cstr(string: *const c_char) -> String {
     }
 }
 
-pub fn string_to_cstr<S>(string: S) -> *const c_char where S: Into<String> {
+pub fn string_to_cstr<S: Into<String>>(string: S) -> *const c_char {
     unsafe {
         CString::from_vec_unchecked(string.into().into_bytes()).as_ptr()
     }

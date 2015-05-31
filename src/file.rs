@@ -8,6 +8,7 @@ use ffi::drivers::{H5Pset_fapl_sec2, H5Pset_fapl_stdio, H5Pset_fapl_core};
 use ffi::util::string_to_cstr;
 
 use error::Result;
+use location::Location;
 use object::{Handle, Object};
 use plist::PropertyList;
 
@@ -29,6 +30,8 @@ impl Object for File {
         File { handle: Handle::new(id) }
     }
 }
+
+impl Location for File {}
 
 impl File {
     /// Create a new file object.
