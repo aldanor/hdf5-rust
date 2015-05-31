@@ -1,7 +1,9 @@
 use ffi::types::{hid_t, hsize_t, hbool_t};
+use ffi::h5i::H5I_INVALID_HID;
 use ffi::h5p::{H5P_FILE_CREATE, H5P_FILE_ACCESS, H5Pcreate, H5Pset_userblock};
 use ffi::h5f::{H5F_ACC_RDONLY, H5F_ACC_RDWR, H5F_ACC_EXCL, H5F_ACC_TRUNC,
-               H5Fopen, H5Fcreate, H5Fclose, H5Fget_filesize, H5Fget_intent};
+               H5Fopen, H5Fcreate, H5Fclose, H5Fget_filesize, H5Fget_intent,
+               H5Fget_access_plist};
 use ffi::drivers::{H5Pset_fapl_sec2, H5Pset_fapl_stdio, H5Pset_fapl_core};
 
 use object::{Handle, Object};
@@ -49,7 +51,7 @@ impl File {
     }
 
     fn fapl(&self) -> PropertyList {
-
+        PropertyList::from_id(h5call!(H5Fget_access_plist(self.id())).unwrap_or(H5I_INVALID_HID))
     }
 }
 
