@@ -1,6 +1,9 @@
 language: rust
+sudo: required
 rust:
-    - stabl
+    - stable
+    - beta
+    - nightly
 addons:
     apt:
         packages:
