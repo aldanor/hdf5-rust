@@ -136,7 +136,7 @@ impl ErrorStack {
 
 pub enum H5Error {
     LibraryError(ErrorStack),
-    InternalError(&'static str),
+    InternalError(String),
 }
 
 pub type Result<T> = ::std::result::Result<T, H5Error>;
@@ -151,16 +151,16 @@ impl H5Error {
     }
 }
 
-impl From<&'static str> for H5Error {
-    fn from(desc: &'static str) -> H5Error {
-        H5Error::InternalError(desc)
+impl<S> From<S> for H5Error where S: Into<String> {
+    fn from(desc: S) -> H5Error {
+        H5Error::InternalError(desc.into())
     }
 }
 
 impl fmt::Debug for H5Error {
     fn fmt(&self, formatter: &mut fmt::Formatter) -> ::std::result::Result<(), fmt::Error> {
         match *self {
-            H5Error::InternalError(desc)     => desc.fmt(formatter),
+            H5Error::InternalError(ref desc) => desc.fmt(formatter),
             H5Error::LibraryError(ref stack) => stack.detail().fmt(formatter),
         }
     }
@@ -175,7 +175,7 @@ impl fmt::Display for H5Error {
 impl error::Error for H5Error {
     fn description(&self) -> &str {
         match *self {
-            H5Error::InternalError(desc)     => desc,
+            H5Error::InternalError(ref desc) => desc.as_ref(),
             H5Error::LibraryError(ref stack) => stack.description(),
         }
     }
