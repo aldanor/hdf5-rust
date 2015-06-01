@@ -1,7 +1,7 @@
 use libc::{c_int, c_char, c_long, c_double, size_t};
 
-use ffi::types::hbool_t;
-use ffi::h5c::{H5C_cache_incr_mode, H5C_cache_decr_mode, H5C_cache_flash_incr_mode};
+use h5::hbool_t;
+use h5c::{H5C_cache_incr_mode, H5C_cache_decr_mode, H5C_cache_flash_incr_mode};
 
 pub const H5AC__CURR_CACHE_CONFIG_VERSION: c_int = 1;
 pub const H5AC__MAX_TRACE_FILE_NAME_LEN:   c_int = 1024;

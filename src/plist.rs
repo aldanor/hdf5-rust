@@ -1,4 +1,4 @@
-use ffi::types::hid_t;
+use ffi::h5i::hid_t;
 use ffi::h5p::H5Pclose;
 
 use object::{Handle, Object};

@@ -70,19 +70,3 @@ macro_rules! h5try_s {
 macro_rules! h5try {
     ($expr:expr) => (h5try_s!(unsafe { $expr }))
 }
-
-macro_rules! register_hid {
-    ($rust_name:ident, $c_name:ident) => {
-        #[link(name = "hdf5")]
-        extern {
-            static $c_name: hid_t;
-        }
-        lazy_static! {
-            pub static ref $rust_name: hid_t = {
-                use ffi::h5;
-                h5lock!(h5::H5open());
-                $c_name
-            };
-        }
-    }
-}

@@ -6,7 +6,8 @@ pub use self::H5D_fill_value_t::*;
 
 use libc::{c_uint, c_void, c_char, c_float, size_t};
 
-use ffi::types::{hid_t, herr_t, hsize_t, haddr_t};
+use h5::{herr_t, hsize_t, haddr_t};
+use h5i::hid_t;
 
 pub const H5D_CHUNK_CACHE_NSLOTS_DEFAULT: size_t = !0;
 pub const H5D_CHUNK_CACHE_NBYTES_DEFAULT: size_t = !0;
@@ -75,7 +76,6 @@ pub type H5D_scatter_func_t = Option<extern fn (src_buf: *mut *const c_void, src
 pub type H5D_gather_func_t = Option<extern fn (dst_buf: *const c_void, dst_buf_bytes_used: size_t,
                                                op_data: *mut c_void) -> herr_t>;
 
-#[link(name = "hdf5")]
 extern {
     pub fn H5Dcreate2(loc_id: hid_t, name: *const c_char, type_id: hid_t, space_id: hid_t, lcpl_id:
                       hid_t, dcpl_id: hid_t, dapl_id: hid_t) -> hid_t;

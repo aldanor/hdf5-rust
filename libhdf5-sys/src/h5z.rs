@@ -4,7 +4,8 @@ pub use self::H5Z_cb_return_t::*;
 
 use libc::{c_int, c_uint, c_void, c_char, size_t};
 
-use ffi::types::{hid_t, herr_t, htri_t};
+use h5::{herr_t, htri_t};
+use h5i::hid_t;
 
 pub const H5Z_FILTER_ERROR:       hid_t = -1;
 pub const H5Z_FILTER_NONE:        hid_t = 0;
@@ -109,7 +110,6 @@ pub struct H5Z_class2_t {
     pub filter: H5Z_func_t,
 }
 
-#[link(name = "hdf5")]
 extern {
     pub fn H5Zregister(cls: *const c_void) -> herr_t;
     pub fn H5Zunregister(id: H5Z_filter_t) -> herr_t;

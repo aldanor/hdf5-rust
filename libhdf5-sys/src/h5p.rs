@@ -4,16 +4,17 @@ pub use self::H5D_mpio_no_collective_cause_t::*;
 
 use libc::{c_int, c_uint, c_void, c_char, c_double, size_t, ssize_t, off_t};
 
-use ffi::types::{hid_t, herr_t, hsize_t, htri_t, hbool_t};
-use ffi::h5ac::H5AC_cache_config_t;
-use ffi::h5d::{H5D_alloc_time_t, H5D_fill_time_t, H5D_fill_value_t, H5D_layout_t};
-use ffi::h5f::{H5F_libver_t, H5F_close_degree_t};
-use ffi::h5fd::{H5FD_mem_t, H5FD_file_image_callbacks_t};
-use ffi::h5l::H5L_elink_traverse_t;
-use ffi::h5mm::{H5MM_allocate_t, H5MM_free_t};
-use ffi::h5o::{H5O_mcdt_search_cb_t};
-use ffi::h5t::{H5T_cset_t, H5T_conv_except_func_t};
-use ffi::h5z::{H5Z_filter_t, H5Z_EDC_t, H5Z_filter_func_t, H5Z_SO_scale_type_t};
+use h5::{herr_t, hsize_t, htri_t, hbool_t};
+use h5ac::H5AC_cache_config_t;
+use h5d::{H5D_alloc_time_t, H5D_fill_time_t, H5D_fill_value_t, H5D_layout_t};
+use h5f::{H5F_libver_t, H5F_close_degree_t};
+use h5fd::{H5FD_mem_t, H5FD_file_image_callbacks_t};
+use h5i::hid_t;
+use h5l::H5L_elink_traverse_t;
+use h5mm::{H5MM_allocate_t, H5MM_free_t};
+use h5o::{H5O_mcdt_search_cb_t};
+use h5t::{H5T_cset_t, H5T_conv_except_func_t};
+use h5z::{H5Z_filter_t, H5Z_EDC_t, H5Z_filter_func_t, H5Z_SO_scale_type_t};
 
 pub const H5P_CRT_ORDER_TRACKED: c_uint = 0x0001;
 pub const H5P_CRT_ORDER_INDEXED: c_uint = 0x0002;
@@ -72,50 +73,43 @@ pub enum H5D_mpio_no_collective_cause_t {
     H5D_MPIO_FILTERS                           = 64,
 }
 
-#[test]
-pub fn test_global_hids() {
-    use ffi::h5i::H5I_INVALID_HID;
+extern {
+    // Property list classes
+    pub static H5P_CLS_ROOT_ID_g: hid_t;
+    pub static H5P_CLS_OBJECT_CREATE_ID_g: hid_t;
+    pub static H5P_CLS_FILE_CREATE_ID_g: hid_t;
+    pub static H5P_CLS_FILE_ACCESS_ID_g: hid_t;
+    pub static H5P_CLS_DATASET_CREATE_ID_g: hid_t;
+    pub static H5P_CLS_DATASET_ACCESS_ID_g: hid_t;
+    pub static H5P_CLS_DATASET_XFER_ID_g: hid_t;
+    pub static H5P_CLS_FILE_MOUNT_ID_g: hid_t;
+    pub static H5P_CLS_GROUP_CREATE_ID_g: hid_t;
+    pub static H5P_CLS_GROUP_ACCESS_ID_g: hid_t;
+    pub static H5P_CLS_DATATYPE_CREATE_ID_g: hid_t;
+    pub static H5P_CLS_DATATYPE_ACCESS_ID_g: hid_t;
+    pub static H5P_CLS_STRING_CREATE_ID_g: hid_t;
+    pub static H5P_CLS_ATTRIBUTE_CREATE_ID_g: hid_t;
+    pub static H5P_CLS_OBJECT_COPY_ID_g: hid_t;
+    pub static H5P_CLS_LINK_CREATE_ID_g: hid_t;
+    pub static H5P_CLS_LINK_ACCESS_ID_g: hid_t;
 
-    assert!(*H5P_ROOT != H5I_INVALID_HID);
-    assert!(*H5P_LST_LINK_ACCESS_ID != H5I_INVALID_HID);
+    // Default property lists
+    pub static H5P_LST_FILE_CREATE_ID_g: hid_t;
+    pub static H5P_LST_FILE_ACCESS_ID_g: hid_t;
+    pub static H5P_LST_DATASET_CREATE_ID_g: hid_t;
+    pub static H5P_LST_DATASET_ACCESS_ID_g: hid_t;
+    pub static H5P_LST_DATASET_XFER_ID_g: hid_t;
+    pub static H5P_LST_FILE_MOUNT_ID_g: hid_t;
+    pub static H5P_LST_GROUP_CREATE_ID_g: hid_t;
+    pub static H5P_LST_GROUP_ACCESS_ID_g: hid_t;
+    pub static H5P_LST_DATATYPE_CREATE_ID_g: hid_t;
+    pub static H5P_LST_DATATYPE_ACCESS_ID_g: hid_t;
+    pub static H5P_LST_ATTRIBUTE_CREATE_ID_g: hid_t;
+    pub static H5P_LST_OBJECT_COPY_ID_g: hid_t;
+    pub static H5P_LST_LINK_CREATE_ID_g: hid_t;
+    pub static H5P_LST_LINK_ACCESS_ID_g: hid_t;
 }
 
-// Property list classes
-register_hid!(H5P_ROOT,             H5P_CLS_ROOT_ID_g);
-register_hid!(H5P_OBJECT_CREATE,    H5P_CLS_OBJECT_CREATE_ID_g);
-register_hid!(H5P_FILE_CREATE,      H5P_CLS_FILE_CREATE_ID_g);
-register_hid!(H5P_FILE_ACCESS,      H5P_CLS_FILE_ACCESS_ID_g);
-register_hid!(H5P_DATASET_CREATE,   H5P_CLS_DATASET_CREATE_ID_g);
-register_hid!(H5P_DATASET_ACCESS,   H5P_CLS_DATASET_ACCESS_ID_g);
-register_hid!(H5P_DATASET_XFER,     H5P_CLS_DATASET_XFER_ID_g);
-register_hid!(H5P_FILE_MOUNT,       H5P_CLS_FILE_MOUNT_ID_g);
-register_hid!(H5P_GROUP_CREATE,     H5P_CLS_GROUP_CREATE_ID_g);
-register_hid!(H5P_GROUP_ACCESS,     H5P_CLS_GROUP_ACCESS_ID_g);
-register_hid!(H5P_DATATYPE_CREATE,  H5P_CLS_DATATYPE_CREATE_ID_g);
-register_hid!(H5P_DATATYPE_ACCESS,  H5P_CLS_DATATYPE_ACCESS_ID_g);
-register_hid!(H5P_STRING_CREATE,    H5P_CLS_STRING_CREATE_ID_g);
-register_hid!(H5P_ATTRIBUTE_CREATE, H5P_CLS_ATTRIBUTE_CREATE_ID_g);
-register_hid!(H5P_OBJECT_COPY,      H5P_CLS_OBJECT_COPY_ID_g);
-register_hid!(H5P_LINK_CREATE,      H5P_CLS_LINK_CREATE_ID_g);
-register_hid!(H5P_LINK_ACCESS,      H5P_CLS_LINK_ACCESS_ID_g);
-
-// Default property lists
-register_hid!(H5P_LST_FILE_CREATE_ID,      H5P_LST_FILE_CREATE_ID_g);
-register_hid!(H5P_LST_FILE_ACCESS_ID,      H5P_LST_FILE_ACCESS_ID_g);
-register_hid!(H5P_LST_DATASET_CREATE_ID,   H5P_LST_DATASET_CREATE_ID_g);
-register_hid!(H5P_LST_DATASET_ACCESS_ID,   H5P_LST_DATASET_ACCESS_ID_g);
-register_hid!(H5P_LST_DATASET_XFER_ID,     H5P_LST_DATASET_XFER_ID_g);
-register_hid!(H5P_LST_FILE_MOUNT_ID,       H5P_LST_FILE_MOUNT_ID_g);
-register_hid!(H5P_LST_GROUP_CREATE_ID,     H5P_LST_GROUP_CREATE_ID_g);
-register_hid!(H5P_LST_GROUP_ACCESS_ID,     H5P_LST_GROUP_ACCESS_ID_g);
-register_hid!(H5P_LST_DATATYPE_CREATE_ID,  H5P_LST_DATATYPE_CREATE_ID_g);
-register_hid!(H5P_LST_DATATYPE_ACCESS_ID,  H5P_LST_DATATYPE_ACCESS_ID_g);
-register_hid!(H5P_LST_ATTRIBUTE_CREATE_ID, H5P_LST_ATTRIBUTE_CREATE_ID_g);
-register_hid!(H5P_LST_OBJECT_COPY_ID,      H5P_LST_OBJECT_COPY_ID_g);
-register_hid!(H5P_LST_LINK_CREATE_ID,      H5P_LST_LINK_CREATE_ID_g);
-register_hid!(H5P_LST_LINK_ACCESS_ID,      H5P_LST_LINK_ACCESS_ID_g);
-
-#[link(name = "hdf5")]
 extern {
     pub fn H5Pcreate_class(parent: hid_t, name: *const c_char, cls_create: H5P_cls_create_func_t,
                            create_data: *mut c_void, cls_copy: H5P_cls_copy_func_t, copy_data: *mut

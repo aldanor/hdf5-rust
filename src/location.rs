@@ -1,11 +1,11 @@
 use ffi::h5o::{H5Oget_comment, H5Oset_comment};
 use ffi::h5i::{H5Iget_name, H5Iget_file_id, H5I_INVALID_HID};
 use ffi::h5f::{H5Fget_name, H5Fflush, H5F_SCOPE_LOCAL, H5F_SCOPE_GLOBAL};
-use ffi::util::{get_h5_str, string_to_cstr};
 
 use error::Result;
 use file::File;
 use object::Object;
+use util::{get_h5_str, string_to_cstr};
 
 use std::ptr;
 

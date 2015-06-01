@@ -1,10 +1,19 @@
 language: rust
-sudo: required
+sudo: false
 rust:
-    - stable
+    - 1.0.0
     - beta
     - nightly
+scripts:
+    - cargo build --verbose
+    - cargo test --verbose
 addons:
     apt:
         packages:
             - libhdf5-serial-dev
+            - pkg-config
+notifications:
+    email: false
+os:
+    - linux
+    - osx

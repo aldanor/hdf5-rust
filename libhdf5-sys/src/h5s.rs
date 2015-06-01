@@ -4,7 +4,8 @@ pub use self::H5S_sel_type::*;
 
 use libc::{c_int, c_uint, c_void, size_t};
 
-use ffi::types::{hid_t, herr_t, hsize_t, hssize_t, htri_t};
+use h5::{herr_t, hsize_t, hssize_t, htri_t};
+use h5i::hid_t;
 
 pub const H5S_ALL: hid_t = 0;
 
@@ -47,7 +48,6 @@ pub enum H5S_sel_type {
     H5S_SEL_N          = 4,
 }
 
-#[link(name = "hdf5")]
 extern {
     pub fn H5Screate(_type: H5S_class_t) -> hid_t;
     pub fn H5Screate_simple(rank: c_int, dims: *const hsize_t, maxdims: *const hsize_t) -> hid_t;
