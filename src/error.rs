@@ -247,7 +247,7 @@ mod tests {
         assert_eq!(&stack.detail().unwrap(),
                    "Error in H5Pclose(): can't close [Property lists: Unable to free object]");
 
-        assert_eq!(stack.len(), 3);
+        assert!(stack.len() >= 2 && stack.len() <= 3); // depending on HDF5 version
         assert!(!stack.is_empty());
 
         assert_eq!(stack[0].description(), "H5Pclose(): can't close");
@@ -255,13 +255,8 @@ mod tests {
                    "Error in H5Pclose(): can't close \
                     [Property lists: Unable to free object]");
 
-        assert_eq!(stack[1].description(), "H5I_dec_app_ref(): can't decrement ID ref count");
-        assert_eq!(&stack[1].detail().unwrap(),
-                   "Error in H5I_dec_app_ref(): can't decrement ID ref count \
-                    [Object atom: Unable to decrement reference count]");
-
-        assert_eq!(stack[2].description(), "H5I_dec_ref(): can't locate ID");
-        assert_eq!(&stack[2].detail().unwrap(),
+        assert_eq!(stack[stack.len() - 1].description(), "H5I_dec_ref(): can't locate ID");
+        assert_eq!(&stack[stack.len() - 1].detail().unwrap(),
                    "Error in H5I_dec_ref(): can't locate ID \
                     [Object atom: Unable to find atom information (already closed?)]");
 
