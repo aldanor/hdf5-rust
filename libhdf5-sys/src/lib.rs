@@ -27,13 +27,14 @@ pub mod h5z;
 #[cfg(test)]
 mod tests {
     use super::h5::H5open;
-    use super::h5p::H5P_CLS_ROOT_ID_g;
+    #[cfg(target_os = "linux")] use super::h5p::H5P_CLS_ROOT_g as H5P_ROOT;
+    #[cfg(target_os = "macos")] use super::h5p::H5P_CLS_ROOT_ID_g as H5P_ROOT;
 
     #[test]
     pub fn test_smoke() {
         unsafe {
             H5open();
-            assert!(H5P_CLS_ROOT_ID_g > 0);
+            assert!(H5P_ROOT > 0);
         }
     }
 }
