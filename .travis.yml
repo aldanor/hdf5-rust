@@ -1,5 +1,5 @@
 language: rust
-sudo: false
+sudo: required
 rust:
     - 1.0.0
     - beta
@@ -17,9 +17,6 @@ addons:
         packages:
             - libhdf5-serial-dev
             - pkg-config
-            - libcurl4-openssl-dev
-            - libelf-dev
-            - libdw-dev
 notifications:
     email: false
 os:
