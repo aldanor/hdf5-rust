@@ -73,8 +73,47 @@ pub enum H5D_mpio_no_collective_cause_t {
     H5D_MPIO_FILTERS                           = 64,
 }
 
+#[cfg(target_os = "linux")]
 extern {
-    // Property list classes
+    // Property list classes (Linux version of the library)
+    pub static H5P_CLS_ROOT_g: hid_t;
+    pub static H5P_CLS_OBJECT_CREATE_g: hid_t;
+    pub static H5P_CLS_FILE_CREATE_g: hid_t;
+    pub static H5P_CLS_FILE_ACCESS_g: hid_t;
+    pub static H5P_CLS_DATASET_CREATE_g: hid_t;
+    pub static H5P_CLS_DATASET_ACCESS_g: hid_t;
+    pub static H5P_CLS_DATASET_XFER_g: hid_t;
+    pub static H5P_CLS_FILE_MOUNT_g: hid_t;
+    pub static H5P_CLS_GROUP_CREATE_g: hid_t;
+    pub static H5P_CLS_GROUP_ACCESS_g: hid_t;
+    pub static H5P_CLS_DATATYPE_CREATE_g: hid_t;
+    pub static H5P_CLS_DATATYPE_ACCESS_g: hid_t;
+    pub static H5P_CLS_STRING_CREATE_g: hid_t;
+    pub static H5P_CLS_ATTRIBUTE_CREATE_g: hid_t;
+    pub static H5P_CLS_OBJECT_COPY_g: hid_t;
+    pub static H5P_CLS_LINK_CREATE_g: hid_t;
+    pub static H5P_CLS_LINK_ACCESS_g: hid_t;
+
+    // Default property lists (Linux version of the library)
+    pub static H5P_LST_FILE_CREATE_g: hid_t;
+    pub static H5P_LST_FILE_ACCESS_g: hid_t;
+    pub static H5P_LST_DATASET_CREATE_g: hid_t;
+    pub static H5P_LST_DATASET_ACCESS_g: hid_t;
+    pub static H5P_LST_DATASET_XFER_g: hid_t;
+    pub static H5P_LST_FILE_MOUNT_g: hid_t;
+    pub static H5P_LST_GROUP_CREATE_g: hid_t;
+    pub static H5P_LST_GROUP_ACCESS_g: hid_t;
+    pub static H5P_LST_DATATYPE_CREATE_g: hid_t;
+    pub static H5P_LST_DATATYPE_ACCESS_g: hid_t;
+    pub static H5P_LST_ATTRIBUTE_CREATE_g: hid_t;
+    pub static H5P_LST_OBJECT_COPY_g: hid_t;
+    pub static H5P_LST_LINK_CREATE_g: hid_t;
+    pub static H5P_LST_LINK_ACCESS_g: hid_t;
+}
+
+#[cfg(target_os = "macos")]
+extern {
+    // Property list classes (OSX version of the library)
     pub static H5P_CLS_ROOT_ID_g: hid_t;
     pub static H5P_CLS_OBJECT_CREATE_ID_g: hid_t;
     pub static H5P_CLS_FILE_CREATE_ID_g: hid_t;
@@ -93,7 +132,7 @@ extern {
     pub static H5P_CLS_LINK_CREATE_ID_g: hid_t;
     pub static H5P_CLS_LINK_ACCESS_ID_g: hid_t;
 
-    // Default property lists
+    // Default property lists (OSX version of the library)
     pub static H5P_LST_FILE_CREATE_ID_g: hid_t;
     pub static H5P_LST_FILE_ACCESS_ID_g: hid_t;
     pub static H5P_LST_DATASET_CREATE_ID_g: hid_t;
