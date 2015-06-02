@@ -1,11 +1,11 @@
 use ffi::h5o::{H5Oget_comment, H5Oset_comment};
 use ffi::h5i::{H5Iget_name, H5Iget_file_id, H5I_INVALID_HID};
 use ffi::h5f::{H5Fget_name, H5Fflush, H5F_SCOPE_LOCAL, H5F_SCOPE_GLOBAL};
-use ffi::util::{get_h5_str, string_to_cstr};
 
 use error::Result;
 use file::File;
 use object::Object;
+use util::{get_h5_str, string_to_cstr};
 
 use std::ptr;
 
@@ -29,9 +29,9 @@ pub trait Location: Object {
     }
 
     /// Flushes the file containing the named object to storage medium.
-    fn flush(&self, global: bool) {
+    fn flush(&self, global: bool) -> Result<()> {
         let scope = if global { H5F_SCOPE_GLOBAL } else { H5F_SCOPE_LOCAL };
-        h5call!(H5Fflush(self.id(), scope));
+        h5call!(H5Fflush(self.id(), scope)).and(Ok(()))
     }
 
     /// Returns the commment attached to the named object, if any.
@@ -88,7 +88,7 @@ mod tests {
         with_tmp_file(|file| {
             assert!(file.size() > 0);
             assert_eq!(fs::metadata(file.filename()).unwrap().len(), 0);
-            file.flush(false);
+            assert!(file.flush(false).is_ok());
             assert!(file.size() > 0);
             assert_eq!(file.size(), fs::metadata(file.filename()).unwrap().len());
         })

@@ -49,7 +49,6 @@ pub struct H5_ih_info_t {
     pub heap_size: hsize_t,
 }
 
-#[link(name = "hdf5")]
 extern {
     pub fn H5open() -> herr_t;
     pub fn H5close() -> herr_t;

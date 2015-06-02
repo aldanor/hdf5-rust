@@ -14,7 +14,8 @@ pub use self::H5T_conv_ret_t::*;
 
 use libc::{c_int, c_uint, c_void, c_char, size_t};
 
-use ffi::types::{herr_t, hid_t, htri_t, hsize_t, hbool_t};
+use h5::{herr_t, htri_t, hsize_t, hbool_t};
+use h5i::hid_t;
 
 #[repr(C)]
 #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
@@ -202,7 +203,6 @@ pub type H5T_conv_except_func_t = Option<extern fn (except_type: H5T_conv_except
                                                     dst_buf: *mut c_void, user_data: *mut c_void) ->
                                                     H5T_conv_ret_t>;
 
-#[link(name = "hdf5")]
 extern {
     pub fn H5Tcreate(_type: H5T_class_t, size: size_t) -> hid_t;
     pub fn H5Tcopy(type_id: hid_t) -> hid_t;
@@ -279,96 +279,91 @@ extern {
                       *mut c_void, plist_id: hid_t) -> herr_t;
 }
 
-#[test]
-pub fn test_global_hids() {
-    use ffi::h5i::H5I_INVALID_HID;
-
-    assert!(*H5T_IEEE_F32BE != H5I_INVALID_HID);
-    assert!(*H5T_NATIVE_INT != H5I_INVALID_HID);
+extern {
+    // Datatypes
+    pub static H5T_IEEE_F32BE_g: hid_t;
+    pub static H5T_IEEE_F32LE_g: hid_t;
+    pub static H5T_IEEE_F64BE_g: hid_t;
+    pub static H5T_IEEE_F64LE_g: hid_t;
+    pub static H5T_STD_I8BE_g: hid_t;
+    pub static H5T_STD_I8LE_g: hid_t;
+    pub static H5T_STD_I16BE_g: hid_t;
+    pub static H5T_STD_I16LE_g: hid_t;
+    pub static H5T_STD_I32BE_g: hid_t;
+    pub static H5T_STD_I32LE_g: hid_t;
+    pub static H5T_STD_I64BE_g: hid_t;
+    pub static H5T_STD_I64LE_g: hid_t;
+    pub static H5T_STD_U8BE_g: hid_t;
+    pub static H5T_STD_U8LE_g: hid_t;
+    pub static H5T_STD_U16BE_g: hid_t;
+    pub static H5T_STD_U16LE_g: hid_t;
+    pub static H5T_STD_U32BE_g: hid_t;
+    pub static H5T_STD_U32LE_g: hid_t;
+    pub static H5T_STD_U64BE_g: hid_t;
+    pub static H5T_STD_U64LE_g: hid_t;
+    pub static H5T_STD_B8BE_g: hid_t;
+    pub static H5T_STD_B8LE_g: hid_t;
+    pub static H5T_STD_B16BE_g: hid_t;
+    pub static H5T_STD_B16LE_g: hid_t;
+    pub static H5T_STD_B32BE_g: hid_t;
+    pub static H5T_STD_B32LE_g: hid_t;
+    pub static H5T_STD_B64BE_g: hid_t;
+    pub static H5T_STD_B64LE_g: hid_t;
+    pub static H5T_STD_REF_OBJ_g: hid_t;
+    pub static H5T_STD_REF_DSETREG_g: hid_t;
+    pub static H5T_UNIX_D32BE_g: hid_t;
+    pub static H5T_UNIX_D32LE_g: hid_t;
+    pub static H5T_UNIX_D64BE_g: hid_t;
+    pub static H5T_UNIX_D64LE_g: hid_t;
+    pub static H5T_C_S1_g: hid_t;
+    pub static H5T_FORTRAN_S1_g: hid_t;
+    pub static H5T_VAX_F32_g: hid_t;
+    pub static H5T_VAX_F64_g: hid_t;
+    pub static H5T_NATIVE_SCHAR_g: hid_t;
+    pub static H5T_NATIVE_UCHAR_g: hid_t;
+    pub static H5T_NATIVE_SHORT_g: hid_t;
+    pub static H5T_NATIVE_USHORT_g: hid_t;
+    pub static H5T_NATIVE_INT_g: hid_t;
+    pub static H5T_NATIVE_UINT_g: hid_t;
+    pub static H5T_NATIVE_LONG_g: hid_t;
+    pub static H5T_NATIVE_ULONG_g: hid_t;
+    pub static H5T_NATIVE_LLONG_g: hid_t;
+    pub static H5T_NATIVE_ULLONG_g: hid_t;
+    pub static H5T_NATIVE_FLOAT_g: hid_t;
+    pub static H5T_NATIVE_DOUBLE_g: hid_t;
+    pub static H5T_NATIVE_LDOUBLE_g: hid_t;
+    pub static H5T_NATIVE_B8_g: hid_t;
+    pub static H5T_NATIVE_B16_g: hid_t;
+    pub static H5T_NATIVE_B32_g: hid_t;
+    pub static H5T_NATIVE_B64_g: hid_t;
+    pub static H5T_NATIVE_OPAQUE_g: hid_t;
+    pub static H5T_NATIVE_HADDR_g: hid_t;
+    pub static H5T_NATIVE_HSIZE_g: hid_t;
+    pub static H5T_NATIVE_HSSIZE_g: hid_t;
+    pub static H5T_NATIVE_HERR_g: hid_t;
+    pub static H5T_NATIVE_HBOOL_g: hid_t;
+    pub static H5T_NATIVE_INT8_g: hid_t;
+    pub static H5T_NATIVE_UINT8_g: hid_t;
+    pub static H5T_NATIVE_INT_LEAST8_g: hid_t;
+    pub static H5T_NATIVE_UINT_LEAST8_g: hid_t;
+    pub static H5T_NATIVE_INT_FAST8_g: hid_t;
+    pub static H5T_NATIVE_UINT_FAST8_g: hid_t;
+    pub static H5T_NATIVE_INT16_g: hid_t;
+    pub static H5T_NATIVE_UINT16_g: hid_t;
+    pub static H5T_NATIVE_INT_LEAST16_g: hid_t;
+    pub static H5T_NATIVE_UINT_LEAST16_g: hid_t;
+    pub static H5T_NATIVE_INT_FAST16_g: hid_t;
+    pub static H5T_NATIVE_UINT_FAST16_g: hid_t;
+    pub static H5T_NATIVE_INT32_g: hid_t;
+    pub static H5T_NATIVE_UINT32_g: hid_t;
+    pub static H5T_NATIVE_INT_LEAST32_g: hid_t;
+    pub static H5T_NATIVE_UINT_LEAST32_g: hid_t;
+    pub static H5T_NATIVE_INT_FAST32_g: hid_t;
+    pub static H5T_NATIVE_UINT_FAST32_g: hid_t;
+    pub static H5T_NATIVE_INT64_g: hid_t;
+    pub static H5T_NATIVE_UINT64_g: hid_t;
+    pub static H5T_NATIVE_INT_LEAST64_g: hid_t;
+    pub static H5T_NATIVE_UINT_LEAST64_g: hid_t;
+    pub static H5T_NATIVE_INT_FAST64_g: hid_t;
+    pub static H5T_NATIVE_UINT_FAST64_g: hid_t;
 }
-
-register_hid!(H5T_IEEE_F32BE,          H5T_IEEE_F32BE_g);
-register_hid!(H5T_IEEE_F32LE,          H5T_IEEE_F32LE_g);
-register_hid!(H5T_IEEE_F64BE,          H5T_IEEE_F64BE_g);
-register_hid!(H5T_IEEE_F64LE,          H5T_IEEE_F64LE_g);
-register_hid!(H5T_STD_I8BE,            H5T_STD_I8BE_g);
-register_hid!(H5T_STD_I8LE,            H5T_STD_I8LE_g);
-register_hid!(H5T_STD_I16BE,           H5T_STD_I16BE_g);
-register_hid!(H5T_STD_I16LE,           H5T_STD_I16LE_g);
-register_hid!(H5T_STD_I32BE,           H5T_STD_I32BE_g);
-register_hid!(H5T_STD_I32LE,           H5T_STD_I32LE_g);
-register_hid!(H5T_STD_I64BE,           H5T_STD_I64BE_g);
-register_hid!(H5T_STD_I64LE,           H5T_STD_I64LE_g);
-register_hid!(H5T_STD_U8BE,            H5T_STD_U8BE_g);
-register_hid!(H5T_STD_U8LE,            H5T_STD_U8LE_g);
-register_hid!(H5T_STD_U16BE,           H5T_STD_U16BE_g);
-register_hid!(H5T_STD_U16LE,           H5T_STD_U16LE_g);
-register_hid!(H5T_STD_U32BE,           H5T_STD_U32BE_g);
-register_hid!(H5T_STD_U32LE,           H5T_STD_U32LE_g);
-register_hid!(H5T_STD_U64BE,           H5T_STD_U64BE_g);
-register_hid!(H5T_STD_U64LE,           H5T_STD_U64LE_g);
-register_hid!(H5T_STD_B8BE,            H5T_STD_B8BE_g);
-register_hid!(H5T_STD_B8LE,            H5T_STD_B8LE_g);
-register_hid!(H5T_STD_B16BE,           H5T_STD_B16BE_g);
-register_hid!(H5T_STD_B16LE,           H5T_STD_B16LE_g);
-register_hid!(H5T_STD_B32BE,           H5T_STD_B32BE_g);
-register_hid!(H5T_STD_B32LE,           H5T_STD_B32LE_g);
-register_hid!(H5T_STD_B64BE,           H5T_STD_B64BE_g);
-register_hid!(H5T_STD_B64LE,           H5T_STD_B64LE_g);
-register_hid!(H5T_STD_REF_OBJ,         H5T_STD_REF_OBJ_g);
-register_hid!(H5T_STD_REF_DSETREG,     H5T_STD_REF_DSETREG_g);
-register_hid!(H5T_UNIX_D32BE,          H5T_UNIX_D32BE_g);
-register_hid!(H5T_UNIX_D32LE,          H5T_UNIX_D32LE_g);
-register_hid!(H5T_UNIX_D64BE,          H5T_UNIX_D64BE_g);
-register_hid!(H5T_UNIX_D64LE,          H5T_UNIX_D64LE_g);
-register_hid!(H5T_C_S1,                H5T_C_S1_g);
-register_hid!(H5T_FORTRAN_S1,          H5T_FORTRAN_S1_g);
-register_hid!(H5T_VAX_F32,             H5T_VAX_F32_g);
-register_hid!(H5T_VAX_F64,             H5T_VAX_F64_g);
-register_hid!(H5T_NATIVE_SCHAR,        H5T_NATIVE_SCHAR_g);
-register_hid!(H5T_NATIVE_UCHAR,        H5T_NATIVE_UCHAR_g);
-register_hid!(H5T_NATIVE_SHORT,        H5T_NATIVE_SHORT_g);
-register_hid!(H5T_NATIVE_USHORT,       H5T_NATIVE_USHORT_g);
-register_hid!(H5T_NATIVE_INT,          H5T_NATIVE_INT_g);
-register_hid!(H5T_NATIVE_UINT,         H5T_NATIVE_UINT_g);
-register_hid!(H5T_NATIVE_LONG,         H5T_NATIVE_LONG_g);
-register_hid!(H5T_NATIVE_ULONG,        H5T_NATIVE_ULONG_g);
-register_hid!(H5T_NATIVE_LLONG,        H5T_NATIVE_LLONG_g);
-register_hid!(H5T_NATIVE_ULLONG,       H5T_NATIVE_ULLONG_g);
-register_hid!(H5T_NATIVE_FLOAT,        H5T_NATIVE_FLOAT_g);
-register_hid!(H5T_NATIVE_DOUBLE,       H5T_NATIVE_DOUBLE_g);
-register_hid!(H5T_NATIVE_LDOUBLE,      H5T_NATIVE_LDOUBLE_g);
-register_hid!(H5T_NATIVE_B8,           H5T_NATIVE_B8_g);
-register_hid!(H5T_NATIVE_B16,          H5T_NATIVE_B16_g);
-register_hid!(H5T_NATIVE_B32,          H5T_NATIVE_B32_g);
-register_hid!(H5T_NATIVE_B64,          H5T_NATIVE_B64_g);
-register_hid!(H5T_NATIVE_OPAQUE,       H5T_NATIVE_OPAQUE_g);
-register_hid!(H5T_NATIVE_HADDR,        H5T_NATIVE_HADDR_g);
-register_hid!(H5T_NATIVE_HSIZE,        H5T_NATIVE_HSIZE_g);
-register_hid!(H5T_NATIVE_HSSIZE,       H5T_NATIVE_HSSIZE_g);
-register_hid!(H5T_NATIVE_HERR,         H5T_NATIVE_HERR_g);
-register_hid!(H5T_NATIVE_HBOOL,        H5T_NATIVE_HBOOL_g);
-register_hid!(H5T_NATIVE_INT8,         H5T_NATIVE_INT8_g);
-register_hid!(H5T_NATIVE_UINT8,        H5T_NATIVE_UINT8_g);
-register_hid!(H5T_NATIVE_INT_LEAST8,   H5T_NATIVE_INT_LEAST8_g);
-register_hid!(H5T_NATIVE_UINT_LEAST8,  H5T_NATIVE_UINT_LEAST8_g);
-register_hid!(H5T_NATIVE_INT_FAST8,    H5T_NATIVE_INT_FAST8_g);
-register_hid!(H5T_NATIVE_UINT_FAST8,   H5T_NATIVE_UINT_FAST8_g);
-register_hid!(H5T_NATIVE_INT16,        H5T_NATIVE_INT16_g);
-register_hid!(H5T_NATIVE_UINT16,       H5T_NATIVE_UINT16_g);
-register_hid!(H5T_NATIVE_INT_LEAST16,  H5T_NATIVE_INT_LEAST16_g);
-register_hid!(H5T_NATIVE_UINT_LEAST16, H5T_NATIVE_UINT_LEAST16_g);
-register_hid!(H5T_NATIVE_INT_FAST16,   H5T_NATIVE_INT_FAST16_g);
-register_hid!(H5T_NATIVE_UINT_FAST16,  H5T_NATIVE_UINT_FAST16_g);
-register_hid!(H5T_NATIVE_INT32,        H5T_NATIVE_INT32_g);
-register_hid!(H5T_NATIVE_UINT32,       H5T_NATIVE_UINT32_g);
-register_hid!(H5T_NATIVE_INT_LEAST32,  H5T_NATIVE_INT_LEAST32_g);
-register_hid!(H5T_NATIVE_UINT_LEAST32, H5T_NATIVE_UINT_LEAST32_g);
-register_hid!(H5T_NATIVE_INT_FAST32,   H5T_NATIVE_INT_FAST32_g);
-register_hid!(H5T_NATIVE_UINT_FAST32,  H5T_NATIVE_UINT_FAST32_g);
-register_hid!(H5T_NATIVE_INT64,        H5T_NATIVE_INT64_g);
-register_hid!(H5T_NATIVE_UINT64,       H5T_NATIVE_UINT64_g);
-register_hid!(H5T_NATIVE_INT_LEAST64,  H5T_NATIVE_INT_LEAST64_g);
-register_hid!(H5T_NATIVE_UINT_LEAST64, H5T_NATIVE_UINT_LEAST64_g);
-register_hid!(H5T_NATIVE_INT_FAST64,   H5T_NATIVE_INT_FAST64_g);
-register_hid!(H5T_NATIVE_UINT_FAST64,  H5T_NATIVE_UINT_FAST64_g);

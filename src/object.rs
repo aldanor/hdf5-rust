@@ -1,6 +1,5 @@
-use ffi::types::hid_t;
-use ffi::h5i::{H5I_type_t, H5Iget_type, H5Iis_valid, H5Iinc_ref, H5Idec_ref, H5Iget_ref,
-               H5I_INVALID_HID};
+use ffi::h5i::{hid_t, H5I_type_t, H5Iget_type, H5Iis_valid, H5Iinc_ref, H5Idec_ref,
+               H5Iget_ref, H5I_INVALID_HID};
 use ffi::h5i::H5I_type_t::*;
 
 use std::collections::HashMap;
@@ -148,8 +147,9 @@ impl Object for Handle {
 
 #[test]
 pub fn test_handle() {
-    use ffi::h5p::{H5P_ROOT, H5P_FILE_ACCESS, H5Pcreate};
     use ffi::h5i::H5I_INVALID_HID;
+    use ffi::h5p::H5Pcreate;
+    use globals::{H5P_ROOT, H5P_FILE_ACCESS};
 
     #[derive(Clone)]
     struct TestObject {

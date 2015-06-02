@@ -3,8 +3,9 @@ pub use self::H5FD_file_image_op_t::*;
 
 use libc::{c_int, c_uint, c_void, c_char, c_uchar, c_ulong, size_t};
 
-use ffi::types::{hid_t, herr_t, haddr_t, hsize_t, hbool_t};
-use ffi::h5f::{H5F_mem_t, H5F_close_degree_t};
+use h5::{herr_t, haddr_t, hsize_t, hbool_t};
+use h5f::{H5F_mem_t, H5F_close_degree_t};
+use h5i::hid_t;
 
 pub const H5_HAVE_VFL: c_uint = 1;
 
@@ -162,7 +163,6 @@ pub struct H5FD_file_image_callbacks_t {
     pub udata: *mut c_void,
 }
 
-#[link(name = "hdf5")]
 extern {
     pub fn H5FDregister(cls: *const H5FD_class_t) -> hid_t;
     pub fn H5FDunregister(driver_id: hid_t) -> herr_t;
@@ -186,4 +186,27 @@ extern {
                      size_t, buf: *const c_void) -> herr_t;
     pub fn H5FDflush(file: *mut H5FD_t, dxpl_id: hid_t, closing: c_uint) -> herr_t;
     pub fn H5FDtruncate(file: *mut H5FD_t, dxpl_id: hid_t, closing: hbool_t) -> herr_t;
+}
+
+// sec2 driver
+extern {
+    pub fn H5FD_sec2_init() -> hid_t;
+    pub fn H5FD_sec2_term();
+    pub fn H5Pset_fapl_sec2(fapl_id: hid_t) -> herr_t;
+}
+
+// core driver
+extern {
+    pub fn H5FD_core_init() -> hid_t;
+    pub fn H5FD_core_term();
+    pub fn H5Pset_fapl_core(fapl_id: hid_t, increment: size_t, backing_store: hbool_t) -> herr_t;
+    pub fn H5Pget_fapl_core(fapl_id: hid_t, increment: *mut size_t,
+                            backing_store: *mut hbool_t) -> herr_t;
+}
+
+// stdio driver
+extern {
+    pub fn H5FD_stdio_init() -> hid_t;
+    pub fn H5FD_stdio_term();
+    pub fn H5Pset_fapl_stdio(fapl_id: hid_t) -> herr_t;
 }

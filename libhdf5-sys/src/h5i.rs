@@ -2,7 +2,7 @@ pub use self::H5I_type_t::*;
 
 use libc::{c_int, c_uint, c_void, c_char, size_t, ssize_t};
 
-use ffi::types::{htri_t, hbool_t, herr_t, hsize_t};
+use h5::{htri_t, hbool_t, herr_t, hsize_t};
 
 #[repr(C)]
 #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
@@ -33,7 +33,6 @@ pub type H5I_free_t = Option<extern fn(arg1: *mut c_void) -> herr_t>;
 pub type H5I_search_func_t = Option<extern fn (obj: *mut c_void, id: hid_t, key: *mut c_void) ->
                                                c_int>;
 
-#[link(name = "hdf5")]
 extern {
     pub fn H5Iregister(_type: H5I_type_t, object: *const c_void) -> hid_t;
     pub fn H5Iobject_verify(id: hid_t, id_type: H5I_type_t) -> *mut c_void;

@@ -3,8 +3,8 @@ pub use self::H5O_mcdt_search_ret_t::*;
 
 use libc::{c_uint, c_void, c_char, c_ulong, size_t, ssize_t, uint32_t, uint64_t, time_t};
 
-use ffi::types::{hid_t, herr_t, hsize_t, haddr_t, htri_t};
-use ffi::h5::{H5_index_t, H5_iter_order_t, H5_ih_info_t};
+use h5::{herr_t, hsize_t, haddr_t, htri_t, H5_index_t, H5_iter_order_t, H5_ih_info_t};
+use h5i::hid_t;
 
 pub const H5O_COPY_SHALLOW_HIERARCHY_FLAG:     c_uint = 0x0001;
 pub const H5O_COPY_EXPAND_SOFT_LINK_FLAG:      c_uint = 0x0002;
@@ -116,7 +116,6 @@ pub enum H5O_mcdt_search_ret_t {
 
 pub type H5O_mcdt_search_cb_t = Option<extern fn(op_data: *mut c_void) -> H5O_mcdt_search_ret_t>;
 
-#[link(name = "hdf5")]
 extern {
     pub fn H5Oopen(loc_id: hid_t, name: *const c_char, lapl_id: hid_t) -> hid_t;
     pub fn H5Oopen_by_addr(loc_id: hid_t, addr: haddr_t) -> hid_t;

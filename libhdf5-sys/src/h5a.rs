@@ -1,9 +1,9 @@
 use libc::{c_void, c_char, size_t, ssize_t};
 
-use ffi::types::{hid_t, herr_t, hbool_t, hsize_t, htri_t};
-use ffi::h5::{H5_index_t, H5_iter_order_t};
-use ffi::h5o::H5O_msg_crt_idx_t;
-use ffi::h5t::H5T_cset_t;
+use h5::{herr_t, hbool_t, hsize_t, htri_t, H5_index_t, H5_iter_order_t};
+use h5i::hid_t;
+use h5o::H5O_msg_crt_idx_t;
+use h5t::H5T_cset_t;
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -17,7 +17,6 @@ pub struct H5A_info_t {
 pub type H5A_operator2_t = Option<extern fn (location_id: hid_t, attr_name: *const c_char, ainfo:
                                              *const H5A_info_t, op_data: *mut c_void) -> herr_t>;
 
-#[link(name = "hdf5")]
 extern {
     pub fn H5Acreate2(loc_id: hid_t, attr_name: *const c_char, type_id: hid_t, space_id: hid_t,
                       acpl_id: hid_t, aapl_id: hid_t) -> hid_t;

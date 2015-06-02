@@ -5,9 +5,9 @@ pub use self::H5F_libver_t::*;
 
 use libc::{c_int, c_uint, c_void, c_char, c_double, size_t, ssize_t};
 
-use ffi::types::{hid_t, herr_t, hsize_t, htri_t, hssize_t};
-use ffi::h5::H5_ih_info_t;
-use ffi::h5ac::H5AC_cache_config_t;
+use h5::{herr_t, hsize_t, htri_t, hssize_t, H5_ih_info_t};
+use h5i::hid_t;
+use h5ac::H5AC_cache_config_t;
 
 /* these flags call H5check() in the C library */
 pub const H5F_ACC_RDONLY:   c_uint = 0x0000;
@@ -89,8 +89,6 @@ pub enum H5F_libver_t {
 
 pub const H5F_LIBVER_18: H5F_libver_t = H5F_LIBVER_LATEST;
 
-
-#[link(name = "hdf5")]
 extern {
     pub fn H5Fis_hdf5(filename: *const c_char) -> htri_t;
     pub fn H5Fcreate(filename: *const c_char, flags: c_uint, create_plist: hid_t, access_plist:

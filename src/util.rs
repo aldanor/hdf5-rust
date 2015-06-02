@@ -43,7 +43,9 @@ pub fn get_h5_str<T, F>(func: F) -> Result<String>
 
 #[test]
 pub fn test_get_h5_str() {
-    use ffi::h5e::{H5Eget_msg, H5E_CANTOPENOBJ};
+    use ffi::h5e::H5Eget_msg;
+    use globals::H5E_CANTOPENOBJ;
+
     let s = unsafe {
         get_h5_str(|msg, size| {
             H5Eget_msg(*H5E_CANTOPENOBJ, ptr::null_mut(), msg, size)
