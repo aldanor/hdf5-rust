@@ -75,10 +75,12 @@ impl File {
         }
     }
 
+    #[allow(dead_code)]
     fn fapl(&self) -> PropertyList {
         PropertyList::from_id(h5call!(H5Fget_access_plist(self.id())).unwrap_or(H5I_INVALID_HID))
     }
 
+    #[allow(dead_code)]
     fn fcpl(&self) -> PropertyList {
         PropertyList::from_id(h5call!(H5Fget_create_plist(self.id())).unwrap_or(H5I_INVALID_HID))
     }
