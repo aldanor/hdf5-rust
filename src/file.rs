@@ -205,9 +205,11 @@ mod tests {
     use std::fs;
     use std::io::Write;
     use test::{with_tmp_dir, with_tmp_path};
+    use error::silence_errors;
 
     #[test]
     pub fn test_invalid_mode() {
+        silence_errors();
         with_tmp_dir(|dir| {
             assert_err!(File::open(&dir, "foo"), "Invalid file access mode");
         })
@@ -215,6 +217,7 @@ mod tests {
 
     #[test]
     pub fn test_non_hdf5_file() {
+        silence_errors();
         with_tmp_path("foo.h5", |path| {
             fs::File::create(&path).unwrap().write_all(b"foo").unwrap();
             assert!(fs::metadata(&path).is_ok());
@@ -224,6 +227,7 @@ mod tests {
 
     #[test]
     pub fn test_is_read_only() {
+        silence_errors();
         with_tmp_path("foo.h5", |path| {
             assert!(!File::open(&path, "w").unwrap().is_read_only());
             assert!(File::open(&path, "r").unwrap().is_read_only());
@@ -240,6 +244,7 @@ mod tests {
 
     #[test]
     pub fn test_unable_to_open() {
+        silence_errors();
         with_tmp_dir(|dir| {
             assert_err!(File::open(&dir, "r"), "unable to open file");
             assert_err!(File::open(&dir, "r+"), "unable to open file");
