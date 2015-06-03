@@ -34,6 +34,10 @@ impl ErrorFrame {
         }
     }
 
+    pub fn desc(&self) -> &str {
+        self.desc.as_ref()
+    }
+
     pub fn description(&self) -> &str {
         self.description.as_ref()
     }
@@ -49,7 +53,8 @@ pub fn silence_errors() {
 }
 
 pub struct ErrorStack {
-    frames: Vec<ErrorFrame>
+    frames: Vec<ErrorFrame>,
+    description: Option<String>,
 }
 
 impl Index<usize> for ErrorStack {
@@ -110,7 +115,7 @@ impl ErrorStack {
     }
 
     pub fn new() -> ErrorStack {
-        ErrorStack { frames: Vec::new() }
+        ErrorStack { frames: Vec::new(), description: None }
     }
 
     pub fn len(&self) -> usize {
@@ -118,7 +123,16 @@ impl ErrorStack {
     }
 
     pub fn push(&mut self, frame: ErrorFrame) {
-        self.frames.push(frame)
+        self.frames.push(frame);
+        if self.len() >= 1 {
+            let top_desc = self.frames[0].description().to_string();
+            if self.len() == 1 {
+                self.description = Some(top_desc);
+            } else {
+                self.description = Some(format!("{}: {}", top_desc,
+                                                self.frames[self.len() - 1].desc()));
+            }
+        }
     }
 
     pub fn is_empty(&self) -> bool {
@@ -133,17 +147,14 @@ impl ErrorStack {
     }
 
     pub fn description(&self) -> &str {
-        match self.top() {
-            None        => "unknown library error",
-            Some(frame) => frame.description(),
+        match self.description {
+            None            => "unknown library error",
+            Some(ref desc)  => desc.as_ref(), //frame.description(),
         }
     }
 
     pub fn detail(&self) -> Option<String> {
-        match self.top() {
-            None        => None,
-            Some(frame) => frame.detail(),
-        }
+        self.top().and_then(|frame| frame.detail())
     }
 }
 
@@ -181,7 +192,7 @@ impl fmt::Debug for Error {
     fn fmt(&self, formatter: &mut fmt::Formatter) -> ::std::result::Result<(), fmt::Error> {
         match *self {
             Error::InternalError(ref desc) => desc.fmt(formatter),
-            Error::LibraryError(ref stack) => stack.detail().fmt(formatter),
+            Error::LibraryError(ref stack) => stack.description().fmt(formatter),
         }
     }
 }
@@ -200,13 +211,10 @@ impl ::std::error::Error for Error {
 
 pub fn h5check<T>(value: T) -> Result<T> where T: Integer + Zero + Bounded,
 {
-    let min_value: T = Bounded::min_value();
-    let zero:      T = Zero::zero();
-
-    let maybe_error = if min_value < zero {
-        value < zero
+    let maybe_error = if T::min_value() < T::zero() {
+        value < T::zero()
     } else {
-        value == zero
+        value == T::zero()
     };
 
     match maybe_error {
@@ -243,7 +251,7 @@ mod tests {
             ErrorStack::query()
         });
         let stack = result_error.ok().unwrap().unwrap();
-        assert_eq!(stack.description(), "H5Pclose(): can't close");
+        assert_eq!(stack.description(), "H5Pclose(): can't close: can't locate ID");
         assert_eq!(&stack.detail().unwrap(),
                    "Error in H5Pclose(): can't close [Property lists: Unable to free object]");
 
