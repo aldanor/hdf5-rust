@@ -89,6 +89,10 @@ pub struct H5Z_cb_t {
     pub op_data: *mut c_void,
 }
 
+impl ::std::default::Default for H5Z_cb_t {
+    fn default() -> H5Z_cb_t { unsafe { ::std::mem::zeroed() } }
+}
+
 pub type H5Z_can_apply_func_t = Option<extern fn (dcpl_id: hid_t, type_id: hid_t, space_id: hid_t)
                                                   -> htri_t>;
 pub type H5Z_set_local_func_t = Option<extern fn (dcpl_id: hid_t, type_id: hid_t, space_id: hid_t)
@@ -108,6 +112,10 @@ pub struct H5Z_class2_t {
     pub can_apply: H5Z_can_apply_func_t,
     pub set_local: H5Z_set_local_func_t,
     pub filter: H5Z_func_t,
+}
+
+impl ::std::default::Default for H5Z_class2_t {
+    fn default() -> H5Z_class2_t { unsafe { ::std::mem::zeroed() } }
 }
 
 extern {
