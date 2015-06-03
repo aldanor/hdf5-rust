@@ -8,12 +8,14 @@ use std::ffi::{CStr, CString};
 
 use error::Result;
 
+/// Convert a zero-terminated string (`const char *`) into a `String`.
 pub fn string_from_cstr(string: *const c_char) -> String {
     unsafe {
         String::from_utf8_unchecked(CStr::from_ptr(string).to_bytes().to_vec())
     }
 }
 
+/// Convert a `String` or an `&str` into a zero-terminated string (`const char *`).
 pub fn string_to_cstr<S: Into<String>>(string: S) -> *const c_char {
     unsafe {
         CString::from_vec_unchecked(string.into().into_bytes()).as_ptr()
@@ -28,6 +30,7 @@ pub fn test_string_cstr() {
     assert_eq!(s2, string_from_cstr(string_to_cstr(s2)));
 }
 
+#[doc(hidden)]
 pub fn get_h5_str<T, F>(func: F) -> Result<String>
                  where F: Fn(*mut c_char, size_t) -> T, T: Integer + NumCast {
     unsafe {

@@ -146,6 +146,7 @@ impl<'a> Drop for RecursiveMutexGuard<'a> {
     }
 }
 
+/// Guards the execution of the provided closure with a recursive static mutex.
 pub fn sync<T, F>(func: F) -> T where F: FnOnce() -> T,
 {
     lazy_static! {
