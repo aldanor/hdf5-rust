@@ -15,6 +15,7 @@ use plist::PropertyList;
 use util::string_to_cstr;
 
 use std::path::Path;
+use std::process::Command;
 
 use libc::{size_t, c_uint};
 
@@ -83,6 +84,12 @@ impl File {
     #[allow(dead_code)]
     fn fcpl(&self) -> PropertyList {
         PropertyList::from_id(h5call!(H5Fget_create_plist(self.id())).unwrap_or(H5I_INVALID_HID))
+    }
+
+    /// Returns the output of the `h5dump` tool.
+    pub fn dump(&self) -> Option<String> {
+        self.flush(true).ok().and(Command::new("h5dump").arg(self.filename()).output().ok()
+                                  .map(|out| String::from_utf8_lossy(&out.stdout).to_string()))
     }
 }
 
