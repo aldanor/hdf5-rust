@@ -17,9 +17,14 @@ pub trait Container: Location {
         h5call!(H5Gget_info(self.id(), info)).and(Ok(unsafe { *info }))
     }
 
-    /// Returns the number of objects in the container (0 if the container is invalid).
+    /// Returns the number of objects in the container (or 0 if the container is invalid).
     fn len(&self) -> u64 {
         self.group_info().map(|info| info.nlinks).unwrap_or(0)
+    }
+
+    /// Returns true if the container has no linked objects (or if the container is invalid).
+    fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 
     /// Create a new group in a container which can be a file or another group.
@@ -69,9 +74,12 @@ mod tests {
     pub fn test_len() {
         with_tmp_file(|file| {
             assert_eq!(file.len(), 0);
+            assert!(file.is_empty());
             file.create_group("foo").unwrap();
             assert_eq!(file.len(), 1);
+            assert!(!file.is_empty());
             assert_eq!(file.group("foo").unwrap().len(), 0);
+            assert!(file.group("foo").unwrap().is_empty());
             file.create_group("bar").unwrap().create_group("baz").unwrap();
             assert_eq!(file.len(), 2);
             assert_eq!(file.group("bar").unwrap().len(), 1);
