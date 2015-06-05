@@ -8,6 +8,7 @@ use ffi::h5fd::{H5Pset_fapl_sec2, H5Pset_fapl_stdio, H5Pset_fapl_core};
 
 use globals::{H5P_FILE_CREATE, H5P_FILE_ACCESS};
 
+use container::Container;
 use error::Result;
 use location::Location;
 use object::{Handle, Object};
@@ -35,6 +36,8 @@ impl Object for File {
 }
 
 impl Location for File {}
+
+impl Container for File {}
 
 impl File {
     /// Create a new file object.
