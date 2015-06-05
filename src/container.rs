@@ -53,7 +53,7 @@ mod tests {
     pub fn test_group() {
         silence_errors();
         with_tmp_file(|file| {
-            assert_err!(file.group("a"), "unable to open group: object 'a' doesn't exist");
+            assert_err!(file.group("a"), "unable to open group: object.+doesn't exist");
             file.create_group("a");
             let a = file.group("a").unwrap();
             assert!(a.name() == "/a");
@@ -93,7 +93,7 @@ mod tests {
             file.relink("test", "/foo/test").unwrap();
             file.group("/foo/test").unwrap();
             assert_err!(file.group("test"),
-                        "unable to open group: object 'test' doesn't exist");
+                        "unable to open group: object.+doesn't exist");
         })
     }
 }
