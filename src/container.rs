@@ -46,6 +46,24 @@ mod tests {
     use error::silence_errors;
     use test::with_tmp_file;
     use super::Container;
+    use location::Location;
+    use object::Object;
+
+    #[test]
+    pub fn test_group() {
+        silence_errors();
+        with_tmp_file(|file| {
+            assert_err!(file.group("a"), "unable to open group: object 'a' doesn't exist");
+            file.create_group("a");
+            let a = file.group("a").unwrap();
+            assert!(a.name() == "/a");
+            assert!(a.file().id() == file.id());
+            a.create_group("b");
+            let b = file.group("/a/b").unwrap();
+            assert!(b.name() == "/a/b");
+            assert!(b.file().id() == file.id());
+        })
+    }
 
     #[test]
     pub fn test_len() {
