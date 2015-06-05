@@ -2,7 +2,7 @@ use ffi::h5::{hsize_t, hbool_t};
 use ffi::h5i::{hid_t, H5I_INVALID_HID};
 use ffi::h5p::{H5Pcreate, H5Pset_userblock};
 use ffi::h5f::{H5F_ACC_RDONLY, H5F_ACC_RDWR, H5F_ACC_EXCL, H5F_ACC_TRUNC,
-               H5Fopen, H5Fcreate, H5Fclose, H5Fget_filesize, H5Fget_intent,
+               H5Fopen, H5Fcreate, H5Fget_filesize, H5Fget_intent,
                H5Fget_access_plist, H5Fget_create_plist, H5Fget_freespace};
 use ffi::h5fd::{H5Pset_fapl_sec2, H5Pset_fapl_stdio, H5Pset_fapl_core};
 
@@ -90,14 +90,6 @@ impl File {
     pub fn dump(&self) -> Option<String> {
         self.flush(true).ok().and(Command::new("h5dump").arg(self.filename()).output().ok()
                                   .map(|out| String::from_utf8_lossy(&out.stdout).to_string()))
-    }
-}
-
-impl Drop for File {
-    fn drop(&mut self) {
-        if self.refcount() == 1 {
-            h5lock!(H5Fclose(self.id()));
-        }
     }
 }
 
