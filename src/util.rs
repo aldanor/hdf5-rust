@@ -28,6 +28,10 @@ pub fn test_string_cstr() {
     assert_eq!(s1, string_from_cstr(string_to_cstr(s1.clone())));
     let s2: &str = "bar";
     assert_eq!(s2, string_from_cstr(string_to_cstr(s2)));
+    let s3 = string_to_cstr("33");
+    let s4 = string_to_cstr("44");
+    assert_eq!(string_from_cstr(s3), "33");
+    assert_eq!(string_from_cstr(s4), "44");
 }
 
 #[doc(hidden)]
