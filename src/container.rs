@@ -1,6 +1,6 @@
 use ffi::h5g::{H5G_info_t, H5Gget_info, H5Gcreate2, H5Gopen2};
 use ffi::h5i::hid_t;
-use ffi::h5l::{H5Lmove, H5Lcreate_soft, H5Lcreate_hard, H5L_SAME_LOC};
+use ffi::h5l::{H5Lmove, H5Lcreate_soft, H5Lcreate_hard, H5Ldelete, H5L_SAME_LOC};
 use ffi::h5p::{H5Pcreate, H5Pset_create_intermediate_group, H5P_DEFAULT};
 use globals::H5P_LINK_CREATE;
 
@@ -76,6 +76,11 @@ pub trait Container: Location {
         h5call!(H5Lmove(self.id(), to_cstring(name).as_ptr(), H5L_SAME_LOC,
                         to_cstring(path).as_ptr(), H5P_DEFAULT, H5P_DEFAULT)).and(Ok(()))
     }
+
+    /// Removes a link to an object from this file or group.
+    fn unlink<S: Into<String>>(&self, name: S) -> Result<()> {
+        h5call!(H5Ldelete(self.id(), to_cstring(name).as_ptr(), H5P_DEFAULT)).and(Ok(()))
+    }
 }
 
 #[cfg(test)]
@@ -140,6 +145,11 @@ mod tests {
             file.relink("/foo/test", "/foo/baz").unwrap();
             file.group("/foo/baz/inner").unwrap();
             file.group("/foo/hard2/inner").unwrap();
+            file.unlink("/foo/baz").unwrap();
+            assert_err!(file.group("/foo/baz"), "unable to open group");
+            file.group("/foo/hard2/inner").unwrap();
+            file.unlink("/foo/hard2").unwrap();
+            assert_err!(file.group("/foo/hard2/inner"), "unable to open group");
         })
     }
 
@@ -158,6 +168,9 @@ mod tests {
             assert_err!(file.group("/a/baz"), "unable to open group");
             file.create_group("/a/bar").unwrap();
             file.group("/a/baz").unwrap();
+            file.unlink("/a/bar").unwrap();
+            assert_err!(file.group("/a/bar"), "unable to open group");
+            assert_err!(file.group("/a/baz"), "unable to open group");
         })
     }
 
@@ -176,6 +189,17 @@ mod tests {
             file.group("/foo/test").unwrap();
             assert_err!(file.group("test"),
                         "unable to open group: object.+doesn't exist");
+        })
+    }
+
+    #[test]
+    pub fn test_unlink() {
+        silence_errors();
+        with_tmp_file(|file| {
+            file.create_group("/foo/bar").unwrap();
+            file.unlink("foo/bar").unwrap();
+            assert_err!(file.group("/foo/bar"), "unable to open group");
+            assert!(file.group("foo").unwrap().is_empty());
         })
     }
 }
