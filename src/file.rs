@@ -1,6 +1,6 @@
 use ffi::h5::{hsize_t, hbool_t};
 use ffi::h5i::{hid_t, H5I_INVALID_HID};
-use ffi::h5p::{H5Pcreate, H5Pset_userblock};
+use ffi::h5p::{H5Pcreate, H5Pset_userblock, H5Pget_userblock};
 use ffi::h5f::{H5F_ACC_RDONLY, H5F_ACC_RDWR, H5F_ACC_EXCL, H5F_ACC_TRUNC,
                H5Fopen, H5Fcreate, H5Fget_filesize, H5Fget_intent,
                H5Fget_access_plist, H5Fget_create_plist, H5Fget_freespace};
@@ -53,7 +53,7 @@ impl File {
         FileBuilder::new().mode(mode).open(filename)
     }
 
-    /// Returns the file size in bytes.
+    /// Returns the file size in bytes (or 0 if the file handle is invalid).
     pub fn size(&self) -> u64 {
         unsafe {
             let size: *mut hsize_t = &mut 0;
@@ -62,7 +62,7 @@ impl File {
         }
     }
 
-    /// Returns the free space in the file in bytes.
+    /// Returns the free space in the file in bytes (or 0 if the file handle is invalid).
     pub fn free_space(&self) -> u64 {
         match h5call!(H5Fget_freespace(self.id())) {
             Ok(size) => size as u64,
@@ -84,7 +84,6 @@ impl File {
         PropertyList::from_id(h5call!(H5Fget_access_plist(self.id())).unwrap_or(H5I_INVALID_HID))
     }
 
-    #[allow(dead_code)]
     fn fcpl(&self) -> PropertyList {
         PropertyList::from_id(h5call!(H5Fget_create_plist(self.id())).unwrap_or(H5I_INVALID_HID))
     }
@@ -93,6 +92,15 @@ impl File {
     pub fn dump(&self) -> Option<String> {
         self.flush(true).ok().and(Command::new("h5dump").arg(self.filename()).output().ok()
                                   .map(|out| String::from_utf8_lossy(&out.stdout).to_string()))
+    }
+
+    /// Returns the userblock size in bytes (or 0 if the file handle is invalid).
+    pub fn userblock(&self) -> size_t {
+        unsafe {
+            let userblock: *mut hsize_t = &mut 0;
+            h5lock_s!(H5Pget_userblock(self.fcpl().id(), userblock));
+            *userblock as size_t
+        }
     }
 }
 
