@@ -9,7 +9,7 @@ use group::Group;
 use location::Location;
 use object::Object;
 use plist::PropertyList;
-use util::string_to_cstr;
+use util::to_cstring;
 
 use std::default::Default;
 
@@ -41,20 +41,20 @@ pub trait Container: Location {
         h5lock_s!({
             let lcpl = try!(make_lcpl());
             Ok(Group::from_id(h5try!(H5Gcreate2(
-                self.id(), string_to_cstr(name), lcpl.id(), H5P_DEFAULT, H5P_DEFAULT))))
+                self.id(), to_cstring(name).as_ptr(), lcpl.id(), H5P_DEFAULT, H5P_DEFAULT))))
         })
     }
 
     /// Opens an existing group in a container which can be a file or another group.
     fn group<S: Into<String>>(&self, name: S) -> Result<Group> {
         Ok(Group::from_id(h5try!(H5Gopen2(
-            self.id(), string_to_cstr(name), H5P_DEFAULT))))
+            self.id(), to_cstring(name).as_ptr(), H5P_DEFAULT))))
     }
 
     /// Relinks an object. Note: `from` and `to` are relative to the current object.
     fn relink<S1: Into<String>, S2: Into<String>>(&self, name: S1, path: S2) -> Result<()> {
-        h5call!(H5Lmove(self.id(), string_to_cstr(name), H5L_SAME_LOC,
-                        string_to_cstr(path), H5P_DEFAULT, H5P_DEFAULT)).and(Ok(()))
+        h5call!(H5Lmove(self.id(), to_cstring(name).as_ptr(), H5L_SAME_LOC,
+                        to_cstring(path).as_ptr(), H5P_DEFAULT, H5P_DEFAULT)).and(Ok(()))
     }
 }
 

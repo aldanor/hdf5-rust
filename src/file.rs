@@ -13,7 +13,7 @@ use error::Result;
 use location::Location;
 use object::{Handle, Object};
 use plist::PropertyList;
-use util::string_to_cstr;
+use util::to_cstring;
 
 use std::path::Path;
 use std::process::Command;
@@ -158,7 +158,7 @@ impl FileBuilder {
             let filename = filename.as_ref();
             match filename.to_str() {
                 Some(filename) => {
-                    let c_filename = string_to_cstr(filename);
+                    let c_filename = to_cstring(filename).as_ptr();
                     let file = File::from_id(h5try!(H5Fopen(c_filename, flags, fapl.id())));
                     ensure!(file.is_valid(), "Invalid id for opened file");
                     Ok(file)
@@ -177,7 +177,7 @@ impl FileBuilder {
             let filename = filename.as_ref();
             match filename.to_str() {
                 Some(filename) => {
-                    let c_filename = string_to_cstr(filename);
+                    let c_filename = to_cstring(filename).as_ptr();
                     let file = File::from_id(h5try!(H5Fcreate(c_filename, flags,
                                                               fcpl.id(), fapl.id())));
                     ensure!(file.is_valid(), "Invalid id for created file");

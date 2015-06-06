@@ -16,22 +16,22 @@ pub fn string_from_cstr(string: *const c_char) -> String {
 }
 
 /// Convert a `String` or an `&str` into a zero-terminated string (`const char *`).
-pub fn string_to_cstr<S: Into<String>>(string: S) -> *const c_char {
+pub fn to_cstring<S: Into<String>>(string: S) -> CString {
     unsafe {
-        CString::from_vec_unchecked(string.into().into_bytes()).as_ptr()
+        CString::from_vec_unchecked(string.into().into_bytes())
     }
 }
 
 #[test]
 pub fn test_string_cstr() {
     let s1: String = "foo".to_string();
-    assert_eq!(s1, string_from_cstr(string_to_cstr(s1.clone())));
+    assert_eq!(s1, string_from_cstr(to_cstring(s1.clone()).as_ptr()));
     let s2: &str = "bar";
-    assert_eq!(s2, string_from_cstr(string_to_cstr(s2)));
-    let s3 = string_to_cstr("33");
-    let s4 = string_to_cstr("44");
-    assert_eq!(string_from_cstr(s3), "33");
-    assert_eq!(string_from_cstr(s4), "44");
+    assert_eq!(s2, string_from_cstr(to_cstring(s2).as_ptr()));
+    let s3 = to_cstring("33");
+    let s4 = to_cstring("44");
+    assert_eq!(string_from_cstr(s3.as_ptr()), "33");
+    assert_eq!(string_from_cstr(s4.as_ptr()), "44");
 }
 
 #[doc(hidden)]
