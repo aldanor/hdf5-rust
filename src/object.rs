@@ -53,13 +53,15 @@ impl Handle {
     }
 
     fn decref(&self) {
-        if self.is_valid() {
-            h5lock!(H5Idec_ref(self.id()));
-        }
-        // must invalidate all linked IDs because the library reuses them internally
-        if !self.is_valid() && !is_valid_id(self.id()) {
-            self.invalidate();
-        }
+        h5lock!({
+            if self.is_valid() {
+                H5Idec_ref(self.id());
+            }
+            // must invalidate all linked IDs because the library reuses them internally
+            if !self.is_valid() && !is_valid_id(self.id()) {
+                self.invalidate();
+            }
+        })
     }
 }
 
@@ -72,7 +74,7 @@ impl Clone for Handle {
 
 impl Drop for Handle {
     fn drop(&mut self) {
-        self.decref();
+        h5lock_s!(self.decref());
     }
 }
 

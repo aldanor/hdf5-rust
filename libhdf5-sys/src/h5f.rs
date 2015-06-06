@@ -59,11 +59,19 @@ pub struct H5F_info_t {
     pub sohm: __H5F_info_t__sohm,
 }
 
+impl ::std::default::Default for H5F_info_t {
+    fn default() -> H5F_info_t { unsafe { ::std::mem::zeroed() } }
+}
+
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct __H5F_info_t__sohm {
     pub hdr_size: hsize_t,
     pub msgs_info: H5_ih_info_t,
+}
+
+impl ::std::default::Default for __H5F_info_t__sohm {
+    fn default() -> __H5F_info_t__sohm { unsafe { ::std::mem::zeroed() } }
 }
 
 #[repr(C)]

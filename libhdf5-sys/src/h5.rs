@@ -49,6 +49,10 @@ pub struct H5_ih_info_t {
     pub heap_size: hsize_t,
 }
 
+impl ::std::default::Default for H5_ih_info_t {
+    fn default() -> H5_ih_info_t { unsafe { ::std::mem::zeroed() } }
+}
+
 extern {
     pub fn H5open() -> herr_t;
     pub fn H5close() -> herr_t;

@@ -36,10 +36,18 @@ pub struct H5L_info_t {
     pub u: __H5L_info_t__u,
 }
 
+impl ::std::default::Default for H5L_info_t {
+    fn default() -> H5L_info_t { unsafe { ::std::mem::zeroed() } }
+}
+
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct __H5L_info_t__u {
     pub _bindgen_data_: [u64; 1usize],
+}
+
+impl ::std::default::Default for __H5L_info_t__u {
+    fn default() -> __H5L_info_t__u { unsafe { ::std::mem::zeroed() } }
 }
 
 impl __H5L_info_t__u {
@@ -79,6 +87,10 @@ pub struct H5L_class_t {
     pub trav_func: H5L_traverse_func_t,
     pub del_func: H5L_delete_func_t,
     pub query_func: H5L_query_func_t,
+}
+
+impl ::std::default::Default for H5L_class_t {
+    fn default() -> H5L_class_t { unsafe { ::std::mem::zeroed() } }
 }
 
 pub type H5L_iterate_t = Option<extern fn (group: hid_t, name: *const c_char, info: *const

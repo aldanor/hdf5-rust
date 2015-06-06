@@ -14,6 +14,10 @@ pub struct H5A_info_t {
     pub data_size: hsize_t,
 }
 
+impl ::std::default::Default for H5A_info_t {
+    fn default() -> H5A_info_t { unsafe { ::std::mem::zeroed() } }
+}
+
 pub type H5A_operator2_t = Option<extern fn (location_id: hid_t, attr_name: *const c_char, ainfo:
                                              *const H5A_info_t, op_data: *mut c_void) -> herr_t>;
 

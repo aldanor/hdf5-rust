@@ -5,7 +5,7 @@ use ffi::h5f::{H5Fget_name, H5Fflush, H5F_SCOPE_LOCAL, H5F_SCOPE_GLOBAL};
 use error::Result;
 use file::File;
 use object::Object;
-use util::{get_h5_str, string_to_cstr};
+use util::{get_h5_str, to_cstring};
 
 use std::ptr;
 
@@ -44,7 +44,7 @@ pub trait Location: Object {
     /// Set or the commment attached to the named object.
     fn set_comment<S: Into<String>>(&self, comment: S) -> Result<()> {
         let c: String = comment.into();
-        h5call!(H5Oset_comment(self.id(), string_to_cstr(c.as_ref()))).and(Ok(()))
+        h5call!(H5Oset_comment(self.id(), to_cstring(c.as_ref()).as_ptr())).and(Ok(()))
     }
 
     /// Clear the commment attached to the named object.

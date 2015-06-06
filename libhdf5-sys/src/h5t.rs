@@ -147,6 +147,10 @@ pub struct H5T_cdata_t {
     pub _priv: *mut c_void,
 }
 
+impl ::std::default::Default for H5T_cdata_t {
+    fn default() -> H5T_cdata_t { unsafe { ::std::mem::zeroed() } }
+}
+
 #[repr(C)]
 #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
 pub enum H5T_pers_t {
@@ -188,6 +192,10 @@ pub enum H5T_conv_ret_t {
 pub struct hvl_t {
     pub len: size_t,
     pub p: *mut c_void,
+}
+
+impl ::std::default::Default for hvl_t {
+    fn default() -> hvl_t { unsafe { ::std::mem::zeroed() } }
 }
 
 pub const H5T_VARIABLE: size_t = !0;

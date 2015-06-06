@@ -8,26 +8,33 @@ use std::ffi::{CStr, CString};
 
 use error::Result;
 
+/// Convert a zero-terminated string (`const char *`) into a `String`.
 pub fn string_from_cstr(string: *const c_char) -> String {
     unsafe {
         String::from_utf8_unchecked(CStr::from_ptr(string).to_bytes().to_vec())
     }
 }
 
-pub fn string_to_cstr<S: Into<String>>(string: S) -> *const c_char {
+/// Convert a `String` or an `&str` into a zero-terminated string (`const char *`).
+pub fn to_cstring<S: Into<String>>(string: S) -> CString {
     unsafe {
-        CString::from_vec_unchecked(string.into().into_bytes()).as_ptr()
+        CString::from_vec_unchecked(string.into().into_bytes())
     }
 }
 
 #[test]
 pub fn test_string_cstr() {
     let s1: String = "foo".to_string();
-    assert_eq!(s1, string_from_cstr(string_to_cstr(s1.clone())));
+    assert_eq!(s1, string_from_cstr(to_cstring(s1.clone()).as_ptr()));
     let s2: &str = "bar";
-    assert_eq!(s2, string_from_cstr(string_to_cstr(s2)));
+    assert_eq!(s2, string_from_cstr(to_cstring(s2).as_ptr()));
+    let s3 = to_cstring("33");
+    let s4 = to_cstring("44");
+    assert_eq!(string_from_cstr(s3.as_ptr()), "33");
+    assert_eq!(string_from_cstr(s4.as_ptr()), "44");
 }
 
+#[doc(hidden)]
 pub fn get_h5_str<T, F>(func: F) -> Result<String>
                  where F: Fn(*mut c_char, size_t) -> T, T: Integer + NumCast {
     unsafe {

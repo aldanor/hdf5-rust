@@ -2,19 +2,21 @@ use ffi::h5::{hsize_t, hbool_t};
 use ffi::h5i::{hid_t, H5I_INVALID_HID};
 use ffi::h5p::{H5Pcreate, H5Pset_userblock};
 use ffi::h5f::{H5F_ACC_RDONLY, H5F_ACC_RDWR, H5F_ACC_EXCL, H5F_ACC_TRUNC,
-               H5Fopen, H5Fcreate, H5Fclose, H5Fget_filesize, H5Fget_intent,
+               H5Fopen, H5Fcreate, H5Fget_filesize, H5Fget_intent,
                H5Fget_access_plist, H5Fget_create_plist, H5Fget_freespace};
 use ffi::h5fd::{H5Pset_fapl_sec2, H5Pset_fapl_stdio, H5Pset_fapl_core};
 
 use globals::{H5P_FILE_CREATE, H5P_FILE_ACCESS};
 
+use container::Container;
 use error::Result;
 use location::Location;
 use object::{Handle, Object};
 use plist::PropertyList;
-use util::string_to_cstr;
+use util::to_cstring;
 
 use std::path::Path;
+use std::process::Command;
 
 use libc::{size_t, c_uint};
 
@@ -34,6 +36,8 @@ impl Object for File {
 }
 
 impl Location for File {}
+
+impl Container for File {}
 
 impl File {
     /// Create a new file object.
@@ -84,13 +88,11 @@ impl File {
     fn fcpl(&self) -> PropertyList {
         PropertyList::from_id(h5call!(H5Fget_create_plist(self.id())).unwrap_or(H5I_INVALID_HID))
     }
-}
 
-impl Drop for File {
-    fn drop(&mut self) {
-        if self.refcount() == 1 {
-            h5lock!(H5Fclose(self.id()));
-        }
+    /// Returns the output of the `h5dump` tool. Note that this wouldn't work with core driver.
+    pub fn dump(&self) -> Option<String> {
+        self.flush(true).ok().and(Command::new("h5dump").arg(self.filename()).output().ok()
+                                  .map(|out| String::from_utf8_lossy(&out.stdout).to_string()))
     }
 }
 
@@ -156,7 +158,7 @@ impl FileBuilder {
             let filename = filename.as_ref();
             match filename.to_str() {
                 Some(filename) => {
-                    let c_filename = string_to_cstr(filename);
+                    let c_filename = to_cstring(filename).as_ptr();
                     let file = File::from_id(h5try!(H5Fopen(c_filename, flags, fapl.id())));
                     ensure!(file.is_valid(), "Invalid id for opened file");
                     Ok(file)
@@ -175,7 +177,7 @@ impl FileBuilder {
             let filename = filename.as_ref();
             match filename.to_str() {
                 Some(filename) => {
-                    let c_filename = string_to_cstr(filename);
+                    let c_filename = to_cstring(filename).as_ptr();
                     let file = File::from_id(h5try!(H5Fcreate(c_filename, flags,
                                                               fcpl.id(), fapl.id())));
                     ensure!(file.is_valid(), "Invalid id for created file");
