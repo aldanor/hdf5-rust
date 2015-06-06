@@ -53,13 +53,8 @@ pub trait Container: Location {
 
     /// Creates a soft link. Note: `name` and `path` are relative to the current object.
     fn link_soft<S1: Into<String>, S2: Into<String>>(&self, name: S1, path: S2) -> Result<()> {
-        // use std::ffi::CString;
-        // let name = CString::new("./a").unwrap();
-        // let path = CString::new("soft").unwrap();
         h5lock_s!({
             let lcpl = try!(make_lcpl());
-            // h5call!(H5Lcreate_soft(name.as_ptr(), self.id(), path.as_ptr(),
-            //                        lcpl.id(), H5P_DEFAULT)).and(Ok(()))
             h5call!(H5Lcreate_soft(to_cstring(name).as_ptr(), self.id(), to_cstring(path).as_ptr(),
                                    lcpl.id(), H5P_DEFAULT)).and(Ok(()))
         })
