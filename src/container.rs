@@ -1,25 +1,34 @@
 use ffi::h5g::{H5G_info_t, H5Gget_info, H5Gcreate2, H5Gopen2};
 use ffi::h5l::{H5Lmove, H5L_SAME_LOC};
-use ffi::h5p::H5P_DEFAULT;
+use ffi::h5i::hid_t;
+use ffi::h5p::{H5Pcreate, H5Pset_create_intermediate_group, H5P_DEFAULT};
+use globals::H5P_LINK_CREATE;
 
 use error::Result;
 use group::Group;
 use location::Location;
 use object::Object;
+use plist::PropertyList;
 use util::string_to_cstr;
 
 use std::default::Default;
 
-pub trait Container: Location {
-    #[doc(hidden)]
-    fn group_info(&self) -> Result<H5G_info_t> {
-        let info: *mut H5G_info_t = &mut H5G_info_t::default();
-        h5call!(H5Gget_info(self.id(), info)).and(Ok(unsafe { *info }))
-    }
+fn group_info(id: hid_t) -> Result<H5G_info_t> {
+    let info: *mut H5G_info_t = &mut H5G_info_t::default();
+    h5call!(H5Gget_info(id, info)).and(Ok(unsafe { *info }))
+}
 
+fn make_lcpl() -> Result<PropertyList> {
+    h5lock_s!({
+        let lcpl = PropertyList::from_id(h5try!(H5Pcreate(*H5P_LINK_CREATE)));
+        h5call!(H5Pset_create_intermediate_group(lcpl.id(), 1)).and(Ok(lcpl))
+    })
+}
+
+pub trait Container: Location {
     /// Returns the number of objects in the container (or 0 if the container is invalid).
     fn len(&self) -> u64 {
-        self.group_info().map(|info| info.nlinks).unwrap_or(0)
+        group_info(self.id()).map(|info| info.nlinks).unwrap_or(0)
     }
 
     /// Returns true if the container has no linked objects (or if the container is invalid).
@@ -29,8 +38,11 @@ pub trait Container: Location {
 
     /// Create a new group in a container which can be a file or another group.
     fn create_group<S: Into<String>>(&self, name: S) -> Result<Group> {
-        Ok(Group::from_id(h5try!(H5Gcreate2(
-            self.id(), string_to_cstr(name), H5P_DEFAULT, 0, H5P_DEFAULT))))
+        h5lock_s!({
+            let lcpl = try!(make_lcpl());
+            Ok(Group::from_id(h5try!(H5Gcreate2(
+                self.id(), string_to_cstr(name), lcpl.id(), H5P_DEFAULT, H5P_DEFAULT))))
+        })
     }
 
     /// Opens an existing group in a container which can be a file or another group.
@@ -59,14 +71,18 @@ mod tests {
         silence_errors();
         with_tmp_file(|file| {
             assert_err!(file.group("a"), "unable to open group: object.+doesn't exist");
-            file.create_group("a");
+            file.create_group("a").unwrap();
             let a = file.group("a").unwrap();
             assert!(a.name() == "/a");
             assert!(a.file().id() == file.id());
-            a.create_group("b");
+            a.create_group("b").unwrap();
             let b = file.group("/a/b").unwrap();
             assert!(b.name() == "/a/b");
             assert!(b.file().id() == file.id());
+            file.create_group("/foo/bar").unwrap();
+            file.group("foo").unwrap().group("bar").unwrap();
+            file.create_group("x/y/").unwrap();
+            file.group("/x").unwrap().group("./y/").unwrap();
         })
     }
 

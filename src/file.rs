@@ -89,7 +89,7 @@ impl File {
         PropertyList::from_id(h5call!(H5Fget_create_plist(self.id())).unwrap_or(H5I_INVALID_HID))
     }
 
-    /// Returns the output of the `h5dump` tool.
+    /// Returns the output of the `h5dump` tool. Note that this wouldn't work with core driver.
     pub fn dump(&self) -> Option<String> {
         self.flush(true).ok().and(Command::new("h5dump").arg(self.filename()).output().ok()
                                   .map(|out| String::from_utf8_lossy(&out.stdout).to_string()))
