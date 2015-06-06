@@ -217,6 +217,7 @@ mod tests {
     use std::fs;
     use std::io::Write;
     use test::{with_tmp_dir, with_tmp_path};
+    use container::Container;
     use error::silence_errors;
 
     #[test]
@@ -224,16 +225,6 @@ mod tests {
         silence_errors();
         with_tmp_dir(|dir| {
             assert_err!(File::open(&dir, "foo"), "Invalid file access mode");
-        })
-    }
-
-    #[test]
-    pub fn test_non_hdf5_file() {
-        silence_errors();
-        with_tmp_path("foo.h5", |path| {
-            fs::File::create(&path).unwrap().write_all(b"foo").unwrap();
-            assert!(fs::metadata(&path).is_ok());
-            assert_err!(File::open(&path, "r"), "unable to open file");
         })
     }
 
@@ -264,6 +255,56 @@ mod tests {
             assert_err!(File::open(&dir, "w-"), "unable to create file");
             assert_err!(File::open(&dir, "w"), "unable to create file");
             assert_err!(File::open(&dir, "a"), "unable to create file");
+        });
+
+        with_tmp_path("foo.h5", |path| {
+            fs::File::create(&path).unwrap().write_all(b"foo").unwrap();
+            assert!(fs::metadata(&path).is_ok());
+            assert_err!(File::open(&path, "r"), "unable to open file");
+        })
+    }
+
+    #[test]
+    pub fn test_access_modes() {
+        silence_errors();
+
+        // "w" means overwrite
+        with_tmp_path("foo.h5", |path| {
+            File::open(&path, "w").unwrap().create_group("foo").unwrap();
+            assert_err!(File::open(&path, "w").unwrap().group("foo"), "unable to open group");
+        });
+
+        // "w-"/"x-" means exclusive write
+        with_tmp_path("foo.h5", |path| {
+            File::open(&path, "w-").unwrap();
+            assert_err!(File::open(&path, "w-"), "unable to create file");
+        });
+        with_tmp_path("foo.h5", |path| {
+            File::open(&path, "x").unwrap();
+            assert_err!(File::open(&path, "x"), "unable to create file");
+        });
+
+        // "a" means append
+        with_tmp_path("foo.h5", |path| {
+            File::open(&path, "a").unwrap().create_group("foo").unwrap();
+            File::open(&path, "a").unwrap().group("foo").unwrap();
+        });
+
+        // "r" means read-only
+        with_tmp_path("foo.h5", |path| {
+            File::open(&path, "w").unwrap().create_group("foo").unwrap();
+            let file = File::open(&path, "r").unwrap();
+            file.group("foo").unwrap();
+            assert_err!(file.create_group("bar"),
+                        "unable to create group: no write intent on file");
+        });
+
+        // "r+" means read-write
+        with_tmp_path("foo.h5", |path| {
+            File::open(&path, "w").unwrap().create_group("foo").unwrap();
+            let file = File::open(&path, "r+").unwrap();
+            file.group("foo").unwrap();
+            file.create_group("bar").unwrap();
         });
     }
 }
