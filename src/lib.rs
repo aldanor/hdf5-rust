@@ -16,13 +16,14 @@ extern crate regex;
 #[macro_use]
 pub mod macros;
 
+mod object;
+
 pub mod container;
 pub mod error;
 pub mod file;
 pub mod globals;
 pub mod group;
 pub mod location;
-pub mod object;
 pub mod plist;
 pub mod sync;
 pub mod util;
