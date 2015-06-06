@@ -1,5 +1,4 @@
 use ffi::h5i::hid_t;
-use ffi::h5p::H5Pclose;
 
 use object::{Handle, Object};
 
@@ -15,13 +14,5 @@ impl Object for PropertyList {
 
     fn from_id(id: hid_t) -> PropertyList {
         PropertyList { handle: Handle::new(id) }
-    }
-}
-
-impl Drop for PropertyList {
-    fn drop(&mut self) {
-        if self.refcount() == 1 {
-            h5lock!(H5Pclose(self.id()));
-        }
     }
 }
