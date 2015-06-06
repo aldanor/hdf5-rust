@@ -5,5 +5,11 @@
 
 Thread-safe Rust bindings and high-level wrappers for the HDF5 library API.
 
-This project is in its early development stage and things are likely to change
+Note that this project is in its early development stage and hence things are likely to change
 and break on a regular basis.
+
+## License
+
+`hdf5-rs` is primarily distributed under the terms of both the MIT license and the
+Apache License (Version 2.0). See [LICENSE-APACHE](LICENSE-APACHE) and
+[LICENSE-MIT](LICENSE-MIT) for details.
