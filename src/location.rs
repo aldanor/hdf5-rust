@@ -57,7 +57,7 @@ mod tests {
 
     #[test]
     pub fn test_filename() {
-        with_tmp_path("foo.h5", |path| {
+        with_tmp_path(|path| {
             assert_eq!(File::open(&path, "w").unwrap().filename(), path.to_str().unwrap());
         })
     }

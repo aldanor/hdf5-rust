@@ -1,6 +1,6 @@
 use file::File;
 
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use tempdir::TempDir;
 
 pub fn with_tmp_dir<F: Fn(PathBuf)>(func: F) {
@@ -9,14 +9,14 @@ pub fn with_tmp_dir<F: Fn(PathBuf)>(func: F) {
     func(path);
 }
 
-pub fn with_tmp_path<P: AsRef<Path>, F: Fn(PathBuf)>(path: P, func: F) {
+pub fn with_tmp_path<F: Fn(PathBuf)>(func: F) {
     with_tmp_dir(|dir| {
-        func(dir.join(path.as_ref()))
+        func(dir.join("foo.h5"))
     })
 }
 
 pub fn with_tmp_file<F: Fn(File)>(func: F) {
-    with_tmp_path("foo.h5", |path| {
+    with_tmp_path(|path| {
         let file = File::open(&path, "w").unwrap();
         func(file);
     })

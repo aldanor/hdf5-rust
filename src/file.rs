@@ -283,16 +283,16 @@ mod tests {
     #[test]
     pub fn test_is_read_only() {
         silence_errors();
-        with_tmp_path("foo.h5", |path| {
+        with_tmp_path(|path| {
             assert!(!File::open(&path, "w").unwrap().is_read_only());
             assert!(File::open(&path, "r").unwrap().is_read_only());
             assert!(!File::open(&path, "r+").unwrap().is_read_only());
             assert!(!File::open(&path, "a").unwrap().is_read_only());
         });
-        with_tmp_path("foo.h5", |path| {
+        with_tmp_path(|path| {
             assert!(!File::open(&path, "a").unwrap().is_read_only());
         });
-        with_tmp_path("foo.h5", |path| {
+        with_tmp_path(|path| {
             assert!(!File::open(&path, "x").unwrap().is_read_only());
         });
     }
@@ -309,7 +309,7 @@ mod tests {
             assert_err!(File::open(&dir, "a"), "unable to create file");
         });
 
-        with_tmp_path("foo.h5", |path| {
+        with_tmp_path(|path| {
             fs::File::create(&path).unwrap().write_all(b"foo").unwrap();
             assert!(fs::metadata(&path).is_ok());
             assert_err!(File::open(&path, "r"), "unable to open file");
@@ -321,29 +321,29 @@ mod tests {
         silence_errors();
 
         // "w" means overwrite
-        with_tmp_path("foo.h5", |path| {
+        with_tmp_path(|path| {
             File::open(&path, "w").unwrap().create_group("foo").unwrap();
             assert_err!(File::open(&path, "w").unwrap().group("foo"), "unable to open group");
         });
 
         // "w-"/"x-" means exclusive write
-        with_tmp_path("foo.h5", |path| {
+        with_tmp_path(|path| {
             File::open(&path, "w-").unwrap();
             assert_err!(File::open(&path, "w-"), "unable to create file");
         });
-        with_tmp_path("foo.h5", |path| {
+        with_tmp_path(|path| {
             File::open(&path, "x").unwrap();
             assert_err!(File::open(&path, "x"), "unable to create file");
         });
 
         // "a" means append
-        with_tmp_path("foo.h5", |path| {
+        with_tmp_path(|path| {
             File::open(&path, "a").unwrap().create_group("foo").unwrap();
             File::open(&path, "a").unwrap().group("foo").unwrap();
         });
 
         // "r" means read-only
-        with_tmp_path("foo.h5", |path| {
+        with_tmp_path(|path| {
             File::open(&path, "w").unwrap().create_group("foo").unwrap();
             let file = File::open(&path, "r").unwrap();
             file.group("foo").unwrap();
@@ -353,7 +353,7 @@ mod tests {
         });
 
         // "r+" means read-write
-        with_tmp_path("foo.h5", |path| {
+        with_tmp_path(|path| {
             File::open(&path, "w").unwrap().create_group("foo").unwrap();
             let file = File::open(&path, "r+").unwrap();
             file.group("foo").unwrap();
@@ -380,7 +380,7 @@ mod tests {
         with_tmp_file(|file| {
             assert_eq!(file.userblock(), 0);
         });
-        with_tmp_path("foo.h5", |path| {
+        with_tmp_path(|path| {
             assert_err!(FileBuilder::new().userblock(512).mode("r").open(&path),
                         "Cannot specify userblock when opening a file");
             assert_err!(FileBuilder::new().userblock(512).mode("r+").open(&path),
@@ -417,9 +417,9 @@ mod tests {
     }
 
     #[test]
-    pub fn test_close() {
+    pub fn test_close_automatic() {
         // File going out of scope should just close its own handle
-        with_tmp_path("foo.h5", |path| {
+        with_tmp_path(|path| {
             let file = File::open(&path, "w").unwrap();
             let group = file.create_group("foo").unwrap();
             let file_copy = group.file();
@@ -427,9 +427,12 @@ mod tests {
             assert!(group.is_valid());
             assert!(file_copy.is_valid());
         });
+    }
 
+    #[test]
+    pub fn test_close_manual() {
         // File::close() should close handles of all related objects
-        with_tmp_path("foo.h5", |path| {
+        with_tmp_path(|path| {
             let file = File::open(&path, "w").unwrap();
             let group = file.create_group("foo").unwrap();
             let file_copy = group.file();
@@ -437,6 +440,62 @@ mod tests {
             assert!(!file.is_valid());
             assert!(!group.is_valid());
             assert!(!file_copy.is_valid());
-        });
+        })
+    }
+
+    #[test]
+    pub fn test_core_fd_non_filebacked() {
+        silence_errors();
+        with_tmp_path(|path| {
+            let file = FileBuilder::new().driver("core").filebacked(false).mode("w")
+                                         .open(&path).unwrap();
+            file.create_group("x").unwrap();
+            assert!(file.is_valid());
+            file.close();
+            assert!(fs::metadata(&path).is_err());
+            assert_err!(FileBuilder::new().driver("core").mode("r").open(&path),
+                        "unable to open file");
+        })
+    }
+
+    #[test]
+    pub fn test_core_fd_filebacked() {
+        with_tmp_path(|path| {
+            let file = FileBuilder::new().driver("core").filebacked(true).mode("w")
+                                         .open(&path).unwrap();
+            assert!(file.is_valid());
+            file.create_group("bar").unwrap();
+            file.close();
+            assert!(fs::metadata(&path).is_ok());
+            File::open(&path, "r").unwrap().group("bar").unwrap();
+        })
+    }
+
+    #[test]
+    pub fn test_core_fd_existing_file() {
+        with_tmp_path(|path| {
+            File::open(&path, "w").unwrap().create_group("baz").unwrap();
+            FileBuilder::new().driver("core").mode("r").open(&path).unwrap().group("baz").unwrap();
+        })
+    }
+
+    #[test]
+    pub fn test_sec2_fd() {
+        with_tmp_path(|path| {
+            FileBuilder::new().driver("sec2").mode("w").open(&path).unwrap()
+                              .create_group("foo").unwrap();
+            FileBuilder::new().driver("sec2").mode("r").open(&path).unwrap()
+                              .group("foo").unwrap();
+        })
+    }
+
+    #[test]
+    pub fn test_stdio_fd() {
+        with_tmp_path(|path| {
+            FileBuilder::new().driver("stdio").mode("w").open(&path).unwrap()
+                              .create_group("qwe").unwrap();
+            FileBuilder::new().driver("stdio").mode("r").open(&path).unwrap()
+                              .group("qwe").unwrap();
+        })
     }
 }
