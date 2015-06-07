@@ -20,7 +20,7 @@ fn group_info(id: hid_t) -> Result<H5G_info_t> {
 
 fn make_lcpl() -> Result<PropertyList> {
     h5lock_s!({
-        let lcpl = PropertyList::from_id(h5try!(H5Pcreate(*H5P_LINK_CREATE)));
+        let lcpl = try!(PropertyList::from_id(h5try!(H5Pcreate(*H5P_LINK_CREATE))));
         h5call!(H5Pset_create_intermediate_group(lcpl.id(), 1)).and(Ok(lcpl))
     })
 }
@@ -40,15 +40,15 @@ pub trait Container: Location {
     fn create_group<S: Into<String>>(&self, name: S) -> Result<Group> {
         h5lock_s!({
             let lcpl = try!(make_lcpl());
-            Ok(Group::from_id(h5try!(H5Gcreate2(
-                self.id(), to_cstring(name).as_ptr(), lcpl.id(), H5P_DEFAULT, H5P_DEFAULT))))
+            Group::from_id(h5try!(H5Gcreate2(
+                self.id(), to_cstring(name).as_ptr(), lcpl.id(), H5P_DEFAULT, H5P_DEFAULT)))
         })
     }
 
     /// Opens an existing group in a container which can be a file or another group.
     fn group<S: Into<String>>(&self, name: S) -> Result<Group> {
-        Ok(Group::from_id(h5try!(H5Gopen2(
-            self.id(), to_cstring(name).as_ptr(), H5P_DEFAULT))))
+        Group::from_id(h5try!(H5Gopen2(
+            self.id(), to_cstring(name).as_ptr(), H5P_DEFAULT)))
     }
 
     /// Creates a soft link. Note: `name` and `path` are relative to the current object.
@@ -94,11 +94,11 @@ mod tests {
             file.create_group("a").unwrap();
             let a = file.group("a").unwrap();
             assert!(a.name() == "/a");
-            assert!(a.file().id() == file.id());
+            assert!(a.file().unwrap().id() == file.id());
             a.create_group("b").unwrap();
             let b = file.group("/a/b").unwrap();
             assert!(b.name() == "/a/b");
-            assert!(b.file().id() == file.id());
+            assert!(b.file().unwrap().id() == file.id());
             file.create_group("/foo/bar").unwrap();
             file.group("foo").unwrap().group("bar").unwrap();
             file.create_group("x/y/").unwrap();

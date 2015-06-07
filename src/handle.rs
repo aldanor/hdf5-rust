@@ -2,6 +2,7 @@ use ffi::h5i::{hid_t, H5I_type_t, H5Iget_type, H5Iis_valid, H5Iinc_ref, H5Idec_r
                H5I_INVALID_HID};
 use ffi::h5i::H5I_type_t::*;
 
+use error::Result;
 use object::Object;
 
 use std::sync::{Arc, Mutex, RwLock};
@@ -30,7 +31,7 @@ pub fn is_valid_user_id(id: hid_t) -> bool {
 
 pub trait ID {
     fn id(&self) -> hid_t;
-    fn from_id(id: hid_t) -> Self;
+    fn from_id(id: hid_t) -> Result<Self>;
 }
 
 struct Registry {
@@ -58,17 +59,16 @@ pub struct Handle {
 }
 
 impl Handle {
-    pub fn new(id: hid_t) -> Handle {
+    pub fn new(id: hid_t) -> Result<Handle> {
         lazy_static! {
             static ref REGISTRY: Registry = Registry::new();
         }
-        Handle {
-            // if the id is not registered with the library, do not share it
-            id: match is_valid_user_id(id) {
-                false => Arc::new(RwLock::new(id)),
-                true  => REGISTRY.new_handle(id),
+        h5lock_s!({
+            match is_valid_user_id(id) {
+                false => Err(From::from(format!("Invalid handle id: {}", id))),
+                true  => Ok(Handle{ id: REGISTRY.new_handle(id) })
             }
-        }
+        })
     }
 
     pub fn id(&self) -> hid_t {
@@ -110,7 +110,7 @@ impl ID for Handle {
         self.id()
     }
 
-    fn from_id(id: hid_t) -> Handle {
+    fn from_id(id: hid_t) -> Result<Handle> {
         Handle::new(id)
     }
 }

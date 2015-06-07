@@ -1,5 +1,5 @@
 use ffi::h5o::{H5Oget_comment, H5Oset_comment};
-use ffi::h5i::{H5Iget_name, H5Iget_file_id, H5I_INVALID_HID};
+use ffi::h5i::{H5Iget_name, H5Iget_file_id};
 use ffi::h5f::H5Fget_name;
 
 use error::Result;
@@ -24,9 +24,8 @@ pub trait Location: Object {
     }
 
     /// Returns a handle to the file containing the named object (or the file itself).
-    fn file(&self) -> File {
-        // Result<File> or File::from_id(H5I_INVALID_HID)?
-        File::from_id(h5call!(H5Iget_file_id(self.id())).unwrap_or(H5I_INVALID_HID))
+    fn file(&self) -> Result<File> {
+        File::from_id(h5try!(H5Iget_file_id(self.id())))
     }
 
     /// Returns the commment attached to the named object, if any.
@@ -72,7 +71,7 @@ mod tests {
     #[test]
     pub fn test_file() {
         with_tmp_file(|file| {
-            assert_eq!(file.file().id(), file.id());
+            assert_eq!(file.file().unwrap().id(), file.id());
         })
     }
 

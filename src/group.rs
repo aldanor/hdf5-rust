@@ -1,6 +1,7 @@
-use ffi::h5i::hid_t;
+use ffi::h5i::{H5I_GROUP, hid_t};
 
-use handle::{Handle, ID};
+use error::Result;
+use handle::{Handle, ID, get_id_type};
 use object::Object;
 use container::Container;
 use location::Location;
@@ -14,8 +15,11 @@ impl ID for Group {
         self.handle.id()
     }
 
-    fn from_id(id: hid_t) -> Group {
-        Group { handle: Handle::new(id) }
+    fn from_id(id: hid_t) -> Result<Group> {
+        match get_id_type(id) {
+            H5I_GROUP => Ok(Group { handle: try!(Handle::new(id)) }),
+            _         => Err(From::from(format!("Invalid group id: {}", id))),
+        }
     }
 }
 

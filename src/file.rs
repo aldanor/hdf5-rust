@@ -1,5 +1,5 @@
 use ffi::h5::{hsize_t, hbool_t};
-use ffi::h5i::{H5I_INVALID_HID, hid_t};
+use ffi::h5i::{H5I_FILE, hid_t};
 use ffi::h5p::{H5Pcreate, H5Pset_userblock, H5Pget_userblock};
 use ffi::h5f::{H5F_ACC_RDONLY, H5F_ACC_RDWR, H5F_ACC_EXCL, H5F_ACC_TRUNC, H5F_SCOPE_LOCAL,
                H5F_OBJ_FILE, H5F_OBJ_ALL, H5Fopen, H5Fcreate, H5Fget_filesize, H5Fget_freespace,
@@ -13,7 +13,7 @@ use container::Container;
 use error::Result;
 use location::Location;
 use object::Object;
-use handle::{Handle, ID};
+use handle::{Handle, ID, get_id_type};
 use plist::PropertyList;
 use util::to_cstring;
 
@@ -31,8 +31,11 @@ impl ID for File {
         self.handle.id()
     }
 
-    fn from_id(id: hid_t) -> File {
-        File { handle: Handle::new(id) }
+    fn from_id(id: hid_t) -> Result<File> {
+        match get_id_type(id) {
+            H5I_FILE => Ok(File { handle: try!(Handle::new(id)) }),
+            _        => Err(From::from(format!("Invalid file id: {}", id))),
+        }
     }
 }
 
@@ -83,12 +86,12 @@ impl File {
     }
 
     #[allow(dead_code)]
-    fn fapl(&self) -> PropertyList {
-        PropertyList::from_id(h5call!(H5Fget_access_plist(self.id())).unwrap_or(H5I_INVALID_HID))
+    fn fapl(&self) -> Result<PropertyList> {
+        PropertyList::from_id(h5try!(H5Fget_access_plist(self.id())))
     }
 
-    fn fcpl(&self) -> PropertyList {
-        PropertyList::from_id(h5call!(H5Fget_create_plist(self.id())).unwrap_or(H5I_INVALID_HID))
+    fn fcpl(&self) -> Result<PropertyList> {
+        PropertyList::from_id(h5try!(H5Fget_create_plist(self.id())))
     }
 
     /// Returns the output of the `h5dump` tool. Note that this wouldn't work with core driver.
@@ -101,7 +104,9 @@ impl File {
     pub fn userblock(&self) -> size_t {
         unsafe {
             let userblock: *mut hsize_t = &mut 0;
-            h5lock_s!(H5Pget_userblock(self.fcpl().id(), userblock));
+            if let Ok(fcpl) = self.fcpl() {
+                h5lock_s!(H5Pget_userblock(fcpl.id(), userblock));
+            }
             *userblock as size_t
         }
     }
@@ -134,14 +139,18 @@ impl File {
             let object_ids = self.get_obj_ids(H5F_OBJ_ALL & !H5F_OBJ_FILE);
             for file_id in file_ids.iter() {
                 let handle = Handle::from_id(*file_id);
-                while handle.is_valid() {
-                    handle.decref();
+                if let Ok(handle) = handle {
+                    while handle.is_valid() {
+                        handle.decref();
+                    }
                 }
             }
             for object_id in object_ids.iter() {
                 let handle = Handle::from_id(*object_id);
-                while handle.is_valid() {
-                    handle.decref();
+                if let Ok(handle) = handle {
+                    while handle.is_valid() {
+                        handle.decref();
+                    }
                 }
             }
             unsafe { H5Fclose(self.id()); }
@@ -195,7 +204,7 @@ impl FileBuilder {
 
     fn make_fapl(&self) -> Result<PropertyList> {
         h5lock_s!({
-            let fapl = PropertyList::from_id(h5try!(H5Pcreate(*H5P_FILE_ACCESS)));
+            let fapl = try!(PropertyList::from_id(h5try!(H5Pcreate(*H5P_FILE_ACCESS))));
             match self.driver.as_ref() {
                 "sec2"  => h5try!(H5Pset_fapl_sec2(fapl.id())),
                 "stdio" => h5try!(H5Pset_fapl_stdio(fapl.id())),
@@ -216,9 +225,7 @@ impl FileBuilder {
             match filename.to_str() {
                 Some(filename) => {
                     let c_filename = to_cstring(filename).as_ptr();
-                    let file = File::from_id(h5try!(H5Fopen(c_filename, flags, fapl.id())));
-                    ensure!(file.is_valid(), "Invalid id for opened file");
-                    Ok(file)
+                    File::from_id(h5try!(H5Fopen(c_filename, flags, fapl.id())))
                 },
                 None          => fail!("Invalid UTF-8 in file name: {:?}", filename)
             }
@@ -227,7 +234,7 @@ impl FileBuilder {
 
     fn create_file<P: AsRef<Path>>(&self, filename: P, exclusive: bool) -> Result<File> {
         h5lock_s!({
-            let fcpl = PropertyList::from_id(h5try!(H5Pcreate(*H5P_FILE_CREATE)));
+            let fcpl = try!(PropertyList::from_id(h5try!(H5Pcreate(*H5P_FILE_CREATE))));
             h5try!(H5Pset_userblock(fcpl.id(), self.userblock));
             let fapl = try!(self.make_fapl());
             let flags = if exclusive { H5F_ACC_EXCL } else { H5F_ACC_TRUNC };
@@ -235,10 +242,7 @@ impl FileBuilder {
             match filename.to_str() {
                 Some(filename) => {
                     let c_filename = to_cstring(filename).as_ptr();
-                    let file = File::from_id(h5try!(H5Fcreate(c_filename, flags,
-                                                              fcpl.id(), fapl.id())));
-                    ensure!(file.is_valid(), "Invalid id for created file");
-                    Ok(file)
+                    File::from_id(h5try!(H5Fcreate(c_filename, flags, fcpl.id(), fapl.id())))
                 },
                 None          => fail!("Invalid UTF-8 in file name: {:?}", filename)
             }
@@ -422,7 +426,7 @@ mod tests {
         with_tmp_path(|path| {
             let file = File::open(&path, "w").unwrap();
             let group = file.create_group("foo").unwrap();
-            let file_copy = group.file();
+            let file_copy = group.file().unwrap();
             drop(file);
             assert!(group.is_valid());
             assert!(file_copy.is_valid());
@@ -435,7 +439,7 @@ mod tests {
         with_tmp_path(|path| {
             let file = File::open(&path, "w").unwrap();
             let group = file.create_group("foo").unwrap();
-            let file_copy = group.file();
+            let file_copy = group.file().unwrap();
             file.close();
             assert!(!file.is_valid());
             assert!(!group.is_valid());
