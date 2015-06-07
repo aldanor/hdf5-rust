@@ -213,11 +213,11 @@ impl FileBuilder {
 
 #[cfg(test)]
 mod tests {
-    use super::File;
+    use super::{File, FileBuilder};
     use std::fs;
-    use std::io::Write;
-    use test::{with_tmp_dir, with_tmp_path};
+    use std::io::{Read, Write};
     use container::Container;
+    use test::{with_tmp_dir, with_tmp_path, with_tmp_file};
     use error::silence_errors;
 
     #[test]
@@ -297,6 +297,7 @@ mod tests {
             file.group("foo").unwrap();
             assert_err!(file.create_group("bar"),
                         "unable to create group: no write intent on file");
+            assert_err!(File::open("/foo/bar/baz", "r"), "unable to open file");
         });
 
         // "r+" means read-write
@@ -305,6 +306,47 @@ mod tests {
             let file = File::open(&path, "r+").unwrap();
             file.group("foo").unwrap();
             file.create_group("bar").unwrap();
+            assert_err!(File::open("/foo/bar/baz", "r+"), "unable to open file");
         });
+    }
+
+    #[test]
+    pub fn test_userblock() {
+        with_tmp_file(|file| {
+            assert_eq!(file.userblock(), 0);
+        });
+        with_tmp_path("foo.h5", |path| {
+            assert_err!(FileBuilder::new().userblock(512).mode("r").open(&path),
+                        "Cannot specify userblock when opening a file");
+            assert_err!(FileBuilder::new().userblock(512).mode("r+").open(&path),
+                        "Cannot specify userblock when opening a file");
+            assert_err!(FileBuilder::new().userblock(1).mode("w").open(&path),
+                        "userblock size is non-zero and less than 512");
+            FileBuilder::new().userblock(512).mode("w").open(&path).unwrap();
+            assert_eq!(File::open(&path, "r").unwrap().userblock(), 512);
+
+            // writing to userblock doesn't corrupt the file
+            File::open(&path, "r+").unwrap().create_group("foo").unwrap();
+            {
+                let mut file = fs::OpenOptions::new().read(true).write(true)
+                                                     .create(false).open(&path).unwrap();
+                for i in 0usize..512usize {
+                    file.write_all(&[(i % 256) as u8]).unwrap();
+                }
+                file.flush().unwrap();
+            }
+            File::open(&path, "r").unwrap().group("foo").unwrap();
+
+            // writing to file doesn't corrupt the userblock
+            File::open(&path, "r+").unwrap().create_group("bar").unwrap();
+            {
+                let mut reader = fs::File::open(&path).unwrap().take(512);
+                let mut data: Vec<u8> = Vec::new();
+                assert_eq!(reader.read_to_end(&mut data).unwrap(), 512);
+                for i in 0usize..512usize {
+                    assert_eq!(data[i], (i % 256) as u8);
+                }
+            }
+        })
     }
 }
