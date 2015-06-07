@@ -6,8 +6,8 @@ use globals::H5P_LINK_CREATE;
 
 use error::Result;
 use group::Group;
+use handle::ID;
 use location::Location;
-use object::Object;
 use plist::PropertyList;
 use util::to_cstring;
 
@@ -81,10 +81,10 @@ pub trait Container: Location {
 #[cfg(test)]
 mod tests {
     use error::silence_errors;
+    use handle::ID;
     use test::with_tmp_file;
     use super::Container;
     use location::Location;
-    use object::Object;
 
     #[test]
     pub fn test_group() {
