@@ -48,45 +48,46 @@ mod tests {
     use super::Object;
     use handle::{Handle, ID, is_valid_id, is_valid_user_id};
 
+    struct TestObject {
+        handle: Handle,
+    }
+
+    impl TestObject {
+        fn incref(&self) {
+            self.handle.incref()
+        }
+
+        fn decref(&self) {
+            self.handle.decref()
+        }
+    }
+
+    impl ID for TestObject {
+        fn id(&self) -> hid_t {
+            self.handle.id()
+        }
+
+        fn from_id(id: hid_t) -> TestObject {
+            TestObject { handle: Handle::new(id) }
+        }
+    }
+
+    impl Object for TestObject {}
+
     #[test]
-    pub fn test_object_handle() {
-        struct TestObject {
-            handle: Handle,
-        }
-
-        impl TestObject {
-            fn incref(&self) {
-                self.handle.incref()
-            }
-
-            fn decref(&self) {
-                self.handle.decref()
-            }
-        }
-
-        impl ID for TestObject {
-            fn id(&self) -> hid_t {
-                self.handle.id()
-            }
-
-            fn from_id(id: hid_t) -> TestObject {
-                TestObject { handle: Handle::new(id) }
-            }
-        }
-
-        impl Object for TestObject {}
-
-        // invalid id
-        let mut obj = TestObject::from_id(H5I_INVALID_HID);
+    pub fn test_invalid_id() {
+        let obj = TestObject::from_id(H5I_INVALID_HID);
         assert_eq!(obj.id(), H5I_INVALID_HID);
         assert!(!obj.is_valid());
         assert!(!is_valid_id(obj.id()));
         assert!(!is_valid_user_id(obj.id()));
         assert_eq!(obj.id_type(), H5I_BADID);
         assert_eq!(obj.refcount(), 0);
+    }
 
-        // existing generic id
-        obj = TestObject::from_id(*H5P_ROOT);
+    #[test]
+    pub fn test_existing_generic_id() {
+        let obj = TestObject::from_id(*H5P_ROOT);
         assert_eq!(obj.id(), *H5P_ROOT);
         assert!(is_valid_id(obj.id()));
         assert!(!is_valid_user_id(obj.id()));
@@ -95,9 +96,11 @@ mod tests {
         assert_eq!(obj.refcount(), 0);
         obj.decref();
         assert!(is_valid_id(obj.id()));
+    }
 
-        // new user id
-        obj = TestObject::from_id(h5call!(H5Pcreate(*H5P_FILE_ACCESS)).unwrap());
+    #[test]
+    pub fn test_new_user_id() {
+        let obj = TestObject::from_id(h5call!(H5Pcreate(*H5P_FILE_ACCESS)).unwrap());
         assert!(obj.id() > 0);
         assert!(obj.is_valid());
         assert!(is_valid_id(obj.id()));
@@ -128,9 +131,11 @@ mod tests {
         assert!(!obj.is_valid());
         assert!(!is_valid_user_id(obj.id()));
         assert!(!is_valid_id(obj.id()));
+    }
 
-        // cloning and dropping
-        obj = TestObject::from_id(h5call!(H5Pcreate(*H5P_FILE_ACCESS)).unwrap());
+    #[test]
+    pub fn test_incref_decref_drop() {
+        let mut obj = TestObject::from_id(h5call!(H5Pcreate(*H5P_FILE_ACCESS)).unwrap());
         let obj_id = obj.id();
         obj = TestObject::from_id(h5call!(H5Pcreate(*H5P_FILE_ACCESS)).unwrap());
         assert!(!is_valid_id(obj_id));
