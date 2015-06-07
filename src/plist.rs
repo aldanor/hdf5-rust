@@ -3,7 +3,6 @@ use ffi::h5i::hid_t;
 use handle::{Handle, ID};
 use object::Object;
 
-#[derive(Clone)]
 pub struct PropertyList {
     handle: Handle,
 }

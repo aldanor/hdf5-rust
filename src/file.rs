@@ -22,7 +22,6 @@ use std::process::Command;
 
 use libc::{size_t, c_uint};
 
-#[derive(Clone)]
 pub struct File {
     handle: Handle,
 }

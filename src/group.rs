@@ -5,7 +5,6 @@ use object::Object;
 use container::Container;
 use location::Location;
 
-#[derive(Clone)]
 pub struct Group {
     handle: Handle,
 }

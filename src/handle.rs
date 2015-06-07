@@ -79,29 +79,23 @@ impl Handle {
         *self.id.write().unwrap() = H5I_INVALID_HID;
     }
 
+    #[allow(dead_code)]  // FIXME: spurious rustc warning
     pub fn incref(&self) {
-        if self.is_valid() {
+        if is_valid_user_id(self.id()) {
             h5lock!(H5Iinc_ref(self.id()));
         }
     }
 
     pub fn decref(&self) {
         h5lock!({
-            if self.is_valid() {
+            if is_valid_user_id(self.id()) {
                 H5Idec_ref(self.id());
             }
             // must invalidate all linked IDs because the library reuses them internally
-            if !self.is_valid() && !is_valid_id(self.id()) {
+            if !is_valid_user_id(self.id()) && !is_valid_id(self.id()) {
                 self.invalidate();
             }
         })
-    }
-}
-
-impl Clone for Handle {
-    fn clone(&self) -> Handle {
-        self.incref();
-        Handle::new(self.id())
     }
 }
 

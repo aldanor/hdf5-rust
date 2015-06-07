@@ -50,7 +50,6 @@ mod tests {
 
     #[test]
     pub fn test_object_handle() {
-        #[derive(Clone)]
         struct TestObject {
             handle: Handle,
         }
@@ -141,13 +140,15 @@ mod tests {
         assert!(is_valid_id(obj.id()));
         assert!(is_valid_user_id(obj.id()));
         assert_eq!(obj.refcount(), 1);
-        let mut obj2 = obj.clone();
+        let mut obj2 = TestObject::from_id(obj.id());
+        obj2.incref();
         assert_eq!(obj.refcount(), 2);
         assert_eq!(obj2.refcount(), 2);
         drop(obj2);
         assert!(obj.is_valid());
         assert_eq!(obj.refcount(), 1);
-        obj2 = obj.clone();
+        obj2 = TestObject::from_id(obj.id());
+        obj2.incref();
         obj.decref();
         obj.decref();
         assert_eq!(obj.id(), H5I_INVALID_HID);
