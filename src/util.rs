@@ -22,18 +22,6 @@ pub fn to_cstring<S: Into<String>>(string: S) -> CString {
     }
 }
 
-#[test]
-pub fn test_string_cstr() {
-    let s1: String = "foo".to_string();
-    assert_eq!(s1, string_from_cstr(to_cstring(s1.clone()).as_ptr()));
-    let s2: &str = "bar";
-    assert_eq!(s2, string_from_cstr(to_cstring(s2).as_ptr()));
-    let s3 = to_cstring("33");
-    let s4 = to_cstring("44");
-    assert_eq!(string_from_cstr(s3.as_ptr()), "33");
-    assert_eq!(string_from_cstr(s4.as_ptr()), "44");
-}
-
 #[doc(hidden)]
 pub fn get_h5_str<T, F>(func: F) -> Result<String>
                  where F: Fn(*mut c_char, size_t) -> T, T: Integer + NumCast {
@@ -48,15 +36,33 @@ pub fn get_h5_str<T, F>(func: F) -> Result<String>
     }
 }
 
-#[test]
-pub fn test_get_h5_str() {
+#[cfg(test)]
+mod tests {
     use ffi::h5e::H5Eget_msg;
     use globals::H5E_CANTOPENOBJ;
+    use super::{string_from_cstr, to_cstring, get_h5_str};
 
-    let s = unsafe {
-        get_h5_str(|msg, size| {
-            H5Eget_msg(*H5E_CANTOPENOBJ, ptr::null_mut(), msg, size)
-        }).ok().unwrap()
-    };
-    assert_eq!(s, "Can't open object");
+    use std::ptr;
+
+    #[test]
+    pub fn test_string_cstr() {
+        let s1: String = "foo".to_string();
+        assert_eq!(s1, string_from_cstr(to_cstring(s1.clone()).as_ptr()));
+        let s2: &str = "bar";
+        assert_eq!(s2, string_from_cstr(to_cstring(s2).as_ptr()));
+        let s3 = to_cstring("33");
+        let s4 = to_cstring("44");
+        assert_eq!(string_from_cstr(s3.as_ptr()), "33");
+        assert_eq!(string_from_cstr(s4.as_ptr()), "44");
+    }
+
+    #[test]
+    pub fn test_get_h5_str() {
+        let s = unsafe {
+            get_h5_str(|msg, size| {
+                H5Eget_msg(*H5E_CANTOPENOBJ, ptr::null_mut(), msg, size)
+            }).ok().unwrap()
+        };
+        assert_eq!(s, "Can't open object");
+    }
 }
