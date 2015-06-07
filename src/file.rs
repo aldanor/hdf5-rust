@@ -1,8 +1,8 @@
 use ffi::h5::{hsize_t, hbool_t};
 use ffi::h5i::{hid_t, H5I_INVALID_HID};
 use ffi::h5p::{H5Pcreate, H5Pset_userblock, H5Pget_userblock};
-use ffi::h5f::{H5F_ACC_RDONLY, H5F_ACC_RDWR, H5F_ACC_EXCL, H5F_ACC_TRUNC,
-               H5Fopen, H5Fcreate, H5Fget_filesize, H5Fget_intent,
+use ffi::h5f::{H5F_ACC_RDONLY, H5F_ACC_RDWR, H5F_ACC_EXCL, H5F_ACC_TRUNC, H5F_SCOPE_LOCAL,
+               H5Fopen, H5Fcreate, H5Fget_filesize, H5Fget_intent, H5Fflush,
                H5Fget_access_plist, H5Fget_create_plist, H5Fget_freespace};
 use ffi::h5fd::{H5Pset_fapl_sec2, H5Pset_fapl_stdio, H5Pset_fapl_core};
 
@@ -90,8 +90,8 @@ impl File {
 
     /// Returns the output of the `h5dump` tool. Note that this wouldn't work with core driver.
     pub fn dump(&self) -> Option<String> {
-        self.flush(true).ok().and(Command::new("h5dump").arg(self.filename()).output().ok()
-                                  .map(|out| String::from_utf8_lossy(&out.stdout).to_string()))
+        self.flush().ok().and(Command::new("h5dump").arg(self.filename()).output().ok()
+                              .map(|out| String::from_utf8_lossy(&out.stdout).to_string()))
     }
 
     /// Returns the userblock size in bytes (or 0 if the file handle is invalid).
@@ -101,6 +101,11 @@ impl File {
             h5lock_s!(H5Pget_userblock(self.fcpl().id(), userblock));
             *userblock as size_t
         }
+    }
+
+    /// Flushes the file to the storage medium.
+    fn flush(&self) -> Result<()> {
+        h5call!(H5Fflush(self.id(), H5F_SCOPE_LOCAL)).and(Ok(()))
     }
 }
 
@@ -214,11 +219,13 @@ impl FileBuilder {
 #[cfg(test)]
 mod tests {
     use super::{File, FileBuilder};
+    use container::Container;
+    use error::silence_errors;
+    use location::Location;
+    use test::{with_tmp_dir, with_tmp_path, with_tmp_file};
+
     use std::fs;
     use std::io::{Read, Write};
-    use container::Container;
-    use test::{with_tmp_dir, with_tmp_path, with_tmp_file};
-    use error::silence_errors;
 
     #[test]
     pub fn test_invalid_mode() {
@@ -308,6 +315,17 @@ mod tests {
             file.create_group("bar").unwrap();
             assert_err!(File::open("/foo/bar/baz", "r+"), "unable to open file");
         });
+    }
+
+    #[test]
+    pub fn test_flush() {
+        with_tmp_file(|file| {
+            assert!(file.size() > 0);
+            assert_eq!(fs::metadata(file.filename()).unwrap().len(), 0);
+            assert!(file.flush().is_ok());
+            assert!(file.size() > 0);
+            assert_eq!(file.size(), fs::metadata(file.filename()).unwrap().len());
+        })
     }
 
     #[test]

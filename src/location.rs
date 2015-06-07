@@ -1,6 +1,6 @@
 use ffi::h5o::{H5Oget_comment, H5Oset_comment};
 use ffi::h5i::{H5Iget_name, H5Iget_file_id, H5I_INVALID_HID};
-use ffi::h5f::{H5Fget_name, H5Fflush, H5F_SCOPE_LOCAL, H5F_SCOPE_GLOBAL};
+use ffi::h5f::H5Fget_name;
 
 use error::Result;
 use file::File;
@@ -26,12 +26,6 @@ pub trait Location: Object {
     fn file(&self) -> File {
         // Result<File> or File::from_id(H5I_INVALID_HID)?
         File::from_id(h5call!(H5Iget_file_id(self.id())).unwrap_or(H5I_INVALID_HID))
-    }
-
-    /// Flushes the file containing the named object to storage medium.
-    fn flush(&self, global: bool) -> Result<()> {
-        let scope = if global { H5F_SCOPE_GLOBAL } else { H5F_SCOPE_LOCAL };
-        h5call!(H5Fflush(self.id(), scope)).and(Ok(()))
     }
 
     /// Returns the commment attached to the named object, if any.
@@ -60,8 +54,6 @@ mod tests {
     use object::Object;
     use test::{with_tmp_path, with_tmp_file};
 
-    use std::fs;
-
     #[test]
     pub fn test_filename() {
         with_tmp_path("foo.h5", |path| {
@@ -80,17 +72,6 @@ mod tests {
     pub fn test_file() {
         with_tmp_file(|file| {
             assert_eq!(file.file().id(), file.id());
-        })
-    }
-
-    #[test]
-    pub fn test_flush() {
-        with_tmp_file(|file| {
-            assert!(file.size() > 0);
-            assert_eq!(fs::metadata(file.filename()).unwrap().len(), 0);
-            assert!(file.flush(false).is_ok());
-            assert!(file.size() > 0);
-            assert_eq!(file.size(), fs::metadata(file.filename()).unwrap().len());
         })
     }
 
