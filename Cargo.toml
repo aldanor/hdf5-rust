@@ -18,6 +18,9 @@ libc = "*"
 path = "libhdf5-sys"
 version = "0.0.1"
 
+[dependencies.remutex]
+path = "remutex"
+
 [dev-dependencies]
 regex = "*"
 tempdir = "*"

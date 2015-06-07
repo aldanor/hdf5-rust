@@ -1,17 +1,12 @@
 language: rust
-sudo: required
+sudo: false
 rust:
     - 1.0.0
     - beta
     - nightly
-before_script:
-    - pip install 'travis-cargo<0.2' --user
-    - export PATH=$HOME/.local/bin:$PATH
-scripts:
-    - travis-cargo build
-    - travis-cargo test
-after_success:
-    - travis-cargo coveralls
+script:
+    - cd $TRAVIS_BUILD_DIR/remutex && cargo build --verbose && cargo test --verbose
+    - cd $TRAVIS_BUILD_DIR && cargo build --verbose && cargo test --verbose
 addons:
     apt:
         packages:
