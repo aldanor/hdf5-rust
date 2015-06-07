@@ -104,7 +104,7 @@ impl File {
     }
 
     /// Flushes the file to the storage medium.
-    fn flush(&self) -> Result<()> {
+    pub fn flush(&self) -> Result<()> {
         h5call!(H5Fflush(self.id(), H5F_SCOPE_LOCAL)).and(Ok(()))
     }
 }
