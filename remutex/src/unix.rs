@@ -109,6 +109,17 @@ mod ffi {
     mod os {
         use libc;
 
+        #[cfg(target_arch = "x86_64")]
+        const __SIZEOF_PTHREAD_MUTEX_T: usize = 40 - 8;
+        #[cfg(any(target_arch = "x86",
+                  target_arch = "arm",
+                  target_arch = "mips",
+                  target_arch = "mipsel",
+                  target_arch = "powerpc"))]
+        const __SIZEOF_PTHREAD_MUTEX_T: usize = 24 - 8;
+        #[cfg(target_arch = "aarch64")]
+        const __SIZEOF_PTHREAD_MUTEX_T: usize = 48 - 8;
+
         #[repr(C)]
         pub struct pthread_mutex_t {
             __align: libc::c_longlong,
