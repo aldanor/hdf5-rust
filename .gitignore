@@ -1,4 +1,5 @@
 Cargo.lock
-/target
-/libhdf5-sys/target
+**/target/doc
+**/target/debug
+**/target/release
 /tmp.*

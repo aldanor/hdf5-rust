@@ -4,6 +4,8 @@
   https://gist.github.com/pythonesque/5bdf071d3617b61b3fed
 */
 
+#![allow(dead_code)]
+
 use std::cell::UnsafeCell;
 use std::mem;
 use std::sync::{self, MutexGuard, Mutex};
@@ -149,8 +151,12 @@ impl<'a> Drop for RecursiveMutexGuard<'a> {
 /// Guards the execution of the provided closure with a recursive static mutex.
 pub fn sync<T, F>(func: F) -> T where F: FnOnce() -> T,
 {
+    use remutex::ReentrantMutex;
     lazy_static! {
-        static ref LOCK: RecursiveMutex = RecursiveMutex::new();
+        // static ref LOCK: RecursiveMutex = RecursiveMutex::new();
+
+        // use temporary implementation of ReentrantMutex from nightly libstd
+        static ref LOCK: ReentrantMutex<()> = ReentrantMutex::new(());
     }
     let _guard = LOCK.lock();
     func()
