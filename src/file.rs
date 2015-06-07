@@ -312,6 +312,8 @@ mod tests {
 
     #[test]
     pub fn test_userblock() {
+        silence_errors();
+
         with_tmp_file(|file| {
             assert_eq!(file.userblock(), 0);
         });
@@ -338,7 +340,7 @@ mod tests {
             File::open(&path, "r").unwrap().group("foo").unwrap();
 
             // writing to file doesn't corrupt the userblock
-            File::open(&path, "r+").unwrap().create_group("bar").unwrap();
+            File::open(&path, "r+").unwrap().create_group("foo/bar").unwrap();
             {
                 let mut reader = fs::File::open(&path).unwrap().take(512);
                 let mut data: Vec<u8> = Vec::new();
@@ -347,6 +349,7 @@ mod tests {
                     assert_eq!(data[i], (i % 256) as u8);
                 }
             }
+            File::open(&path, "r").unwrap().group("foo/bar").unwrap();
         })
     }
 }
