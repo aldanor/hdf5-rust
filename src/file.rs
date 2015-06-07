@@ -1,9 +1,10 @@
 use ffi::h5::{hsize_t, hbool_t};
-use ffi::h5i::{hid_t, H5I_INVALID_HID};
+use ffi::h5i::{H5I_INVALID_HID, hid_t};
 use ffi::h5p::{H5Pcreate, H5Pset_userblock, H5Pget_userblock};
 use ffi::h5f::{H5F_ACC_RDONLY, H5F_ACC_RDWR, H5F_ACC_EXCL, H5F_ACC_TRUNC, H5F_SCOPE_LOCAL,
-               H5Fopen, H5Fcreate, H5Fget_filesize, H5Fget_intent, H5Fflush,
-               H5Fget_access_plist, H5Fget_create_plist, H5Fget_freespace};
+               H5F_OBJ_FILE, H5F_OBJ_ALL, H5Fopen, H5Fcreate, H5Fget_filesize, H5Fget_freespace,
+               H5Fflush, H5Fget_obj_ids, H5Fget_access_plist, H5Fget_create_plist, H5Fget_intent,
+               H5Fget_obj_count};
 use ffi::h5fd::{H5Pset_fapl_sec2, H5Pset_fapl_stdio, H5Pset_fapl_core};
 
 use globals::{H5P_FILE_CREATE, H5P_FILE_ACCESS};
@@ -11,7 +12,8 @@ use globals::{H5P_FILE_CREATE, H5P_FILE_ACCESS};
 use container::Container;
 use error::Result;
 use location::Location;
-use object::{Handle, Object};
+use object::Object;
+use handle::{Handle, ID};
 use plist::PropertyList;
 use util::to_cstring;
 
@@ -25,7 +27,7 @@ pub struct File {
     handle: Handle,
 }
 
-impl Object for File {
+impl ID for File {
     fn id(&self) -> hid_t {
         self.handle.id()
     }
@@ -34,6 +36,8 @@ impl Object for File {
         File { handle: Handle::new(id) }
     }
 }
+
+impl Object for File {}
 
 impl Location for File {}
 
@@ -106,6 +110,45 @@ impl File {
     /// Flushes the file to the storage medium.
     pub fn flush(&self) -> Result<()> {
         h5call!(H5Fflush(self.id(), H5F_SCOPE_LOCAL)).and(Ok(()))
+    }
+
+    /// Get objects ids of the contained objects. Note: these are borrowed references.
+    fn get_obj_ids(&self, types: c_uint) -> Vec<hid_t> {
+        h5lock_s!({
+            let count = h5call!(H5Fget_obj_count(self.id(), types)).unwrap_or(0) as size_t;
+            if count > 0 {
+                let mut ids: Vec<hid_t> = Vec::with_capacity(count as usize);
+                unsafe { ids.set_len(count as usize); }
+                if h5call!(H5Fget_obj_ids(self.id(), types, count, ids.as_mut_ptr())).is_ok() {
+                    ids.retain(|id| *id != self.id());
+                    return ids;
+                }
+            }
+            Vec::new()
+        })
+    }
+
+    /// Closes the file and invalidates all open handles for contained objects.
+    pub fn close(&self) {
+        h5lock_s!({
+            let file_ids = self.get_obj_ids(H5F_OBJ_FILE);
+            let object_ids = self.get_obj_ids(H5F_OBJ_ALL & !H5F_OBJ_FILE);
+            for file_id in file_ids.iter() {
+                let handle = Handle::from_id(*file_id);
+                while handle.is_valid() {
+                    handle.decref();
+                }
+            }
+            for object_id in object_ids.iter() {
+                let handle = Handle::from_id(*object_id);
+                while handle.is_valid() {
+                    handle.decref();
+                }
+            }
+            while self.is_valid() {
+                self.handle.decref();
+            }
+        })
     }
 }
 
@@ -222,6 +265,7 @@ mod tests {
     use container::Container;
     use error::silence_errors;
     use location::Location;
+    use object::Object;
     use test::{with_tmp_dir, with_tmp_path, with_tmp_file};
 
     use std::fs;
@@ -369,5 +413,29 @@ mod tests {
             }
             File::open(&path, "r").unwrap().group("foo/bar").unwrap();
         })
+    }
+
+    #[test]
+    pub fn test_close() {
+        // File going out of scope should just close its own handle
+        with_tmp_path("foo.h5", |path| {
+            let file = File::open(&path, "w").unwrap();
+            let group = file.create_group("foo").unwrap();
+            let file_copy = group.file();
+            drop(file);
+            assert!(group.is_valid());
+            assert!(file_copy.is_valid());
+        });
+
+        // File::close() should close handles of all related objects
+        with_tmp_path("foo.h5", |path| {
+            let file = File::open(&path, "w").unwrap();
+            let group = file.create_group("foo").unwrap();
+            let file_copy = group.file();
+            file.close();
+            assert!(!file.is_valid());
+            assert!(!group.is_valid());
+            assert!(!file_copy.is_valid());
+        });
     }
 }

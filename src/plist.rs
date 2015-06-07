@@ -1,13 +1,14 @@
 use ffi::h5i::hid_t;
 
-use object::{Handle, Object};
+use handle::{Handle, ID};
+use object::Object;
 
 #[derive(Clone)]
 pub struct PropertyList {
     handle: Handle,
 }
 
-impl Object for PropertyList {
+impl ID for PropertyList {
     fn id(&self) -> hid_t {
         self.handle.id()
     }
@@ -16,3 +17,5 @@ impl Object for PropertyList {
         PropertyList { handle: Handle::new(id) }
     }
 }
+
+impl Object for PropertyList {}

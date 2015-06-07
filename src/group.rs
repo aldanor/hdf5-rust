@@ -1,6 +1,7 @@
 use ffi::h5i::hid_t;
 
-use object::{Handle, Object};
+use handle::{Handle, ID};
+use object::Object;
 use container::Container;
 use location::Location;
 
@@ -9,7 +10,7 @@ pub struct Group {
     handle: Handle,
 }
 
-impl Object for Group {
+impl ID for Group {
     fn id(&self) -> hid_t {
         self.handle.id()
     }
@@ -18,6 +19,8 @@ impl Object for Group {
         Group { handle: Handle::new(id) }
     }
 }
+
+impl Object for Group {}
 
 impl Location for Group {}
 

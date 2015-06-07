@@ -15,6 +15,7 @@ macro_rules! ensure {
     )
 }
 
+/// Panics if `$expr` is not an Err(err) with err.description() matching regexp `$err`.
 macro_rules! assert_err {
     ($expr:expr, $err:expr) => {
         match &($expr) {
@@ -35,6 +36,7 @@ macro_rules! assert_err {
     }
 }
 
+/// Run a safe expression in a closure synchronized by a global reentrant mutex.
 macro_rules! h5lock_s {
     ($expr:expr) => ({
         use ::sync::sync;
@@ -42,6 +44,7 @@ macro_rules! h5lock_s {
     })
 }
 
+/// Run an unsafe expression in a closure synchronized by a global reentrant mutex.
 macro_rules! h5lock {
     ($expr:expr) => (h5lock_s!(unsafe { $expr }))
 }

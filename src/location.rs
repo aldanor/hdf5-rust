@@ -4,6 +4,7 @@ use ffi::h5f::H5Fget_name;
 
 use error::Result;
 use file::File;
+use handle::ID;
 use object::Object;
 use util::{get_h5_str, to_cstring};
 
@@ -51,7 +52,7 @@ pub trait Location: Object {
 mod tests {
     use super::Location;
     use file::File;
-    use object::Object;
+    use handle::ID;
     use test::{with_tmp_path, with_tmp_file};
 
     #[test]
