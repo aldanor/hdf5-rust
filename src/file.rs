@@ -534,6 +534,9 @@ mod tests {
             assert_eq!(format!("{}", file), "<HDF5 file: invalid id>");
             assert_eq!(format!("{:?}", file), "<HDF5 file: invalid id>");
             drop(file);
+            let file = File::open(&path, "r").unwrap();
+            assert_eq!(format!("{}", file), "<HDF5 file: \"qwe.h5\" (read-only)>");
+            assert_eq!(format!("{:?}", file), "<HDF5 file: \"qwe.h5\" (read-only)>");
         })
     }
 }
