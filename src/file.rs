@@ -17,6 +17,7 @@ use handle::{Handle, ID, get_id_type};
 use plist::PropertyList;
 use util::to_cstring;
 
+use std::fmt;
 use std::path::Path;
 use std::process::Command;
 
@@ -162,6 +163,26 @@ impl File {
     }
 }
 
+impl fmt::Debug for File {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(self, f)
+    }
+}
+
+impl fmt::Display for File {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if !self.is_valid() {
+            return "<HDF5 file: invalid id>".fmt(f);
+        }
+        let basename = match Path::new(&self.filename()).file_name() {
+            Some(s) => s.to_string_lossy().into_owned(),
+            None    => "".to_string(),
+        };
+        let mode = if self.is_read_only() { "read-only" } else { "read/write" };
+        format!("<HDF5 file: \"{}\" ({})>", basename, mode).fmt(f)
+    }
+}
+
 pub struct FileBuilder {
     driver: String,
     mode: String,
@@ -169,7 +190,6 @@ pub struct FileBuilder {
     filebacked: bool,
     increment: size_t,
 }
-
 
 impl FileBuilder {
     pub fn new() -> FileBuilder {
@@ -500,6 +520,20 @@ mod tests {
                               .create_group("qwe").unwrap();
             FileBuilder::new().driver("stdio").mode("r").open(&path).unwrap()
                               .group("qwe").unwrap();
+        })
+    }
+
+    #[test]
+    pub fn test_debug_display() {
+        with_tmp_dir(|dir| {
+            let path = dir.join("qwe.h5");
+            let file = File::open(&path, "w").unwrap();
+            assert_eq!(format!("{}", file), "<HDF5 file: \"qwe.h5\" (read/write)>");
+            assert_eq!(format!("{:?}", file), "<HDF5 file: \"qwe.h5\" (read/write)>");
+            file.close();
+            assert_eq!(format!("{}", file), "<HDF5 file: invalid id>");
+            assert_eq!(format!("{:?}", file), "<HDF5 file: invalid id>");
+            drop(file);
         })
     }
 }
