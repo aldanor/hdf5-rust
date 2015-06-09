@@ -31,5 +31,7 @@ pub mod plist;
 pub mod sync;
 pub mod util;
 
+pub mod prelude;
+
 #[cfg(test)]
 pub mod test;
