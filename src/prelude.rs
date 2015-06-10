@@ -4,3 +4,4 @@
 pub use object::Object;
 pub use location::Location;
 pub use container::Container;
+pub use space::Dimension;
