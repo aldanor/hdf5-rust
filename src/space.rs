@@ -70,8 +70,8 @@ impl Dimension for Dataspace {
         if ndim > 0 {
             let mut dims: Vec<hsize_t> = Vec::with_capacity(ndim);
             unsafe { dims.set_len(ndim); }
-            if let Ok(_) = h5call!(H5Sget_simple_extent_dims(self.id(), dims.as_mut_ptr(),
-                                                             ptr::null_mut())) {
+            if h5call!(H5Sget_simple_extent_dims(self.id(), dims.as_mut_ptr(),
+                                                 ptr::null_mut())).is_ok() {
                 return dims.iter().cloned().map(|x| x as usize).collect();
             }
         }
