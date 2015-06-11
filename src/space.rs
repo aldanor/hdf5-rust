@@ -16,7 +16,7 @@ pub trait Dimension {
     fn ndim(&self) -> usize;
     fn dims(&self) -> Vec<Ix>;
 
-    fn size(&self) -> usize {
+    fn size(&self) -> Ix {
         let dims = self.dims();
         if dims.is_empty() { 0 } else { dims.iter().fold(1, |acc, &el| acc * el) }
     }
@@ -103,3 +103,24 @@ impl ID for Dataspace {
 }
 
 impl Object for Dataspace {}
+
+#[cfg(test)]
+mod tests {
+    use super::{Dimension, Ix};
+
+    #[test]
+    pub fn test_dimension() {
+        fn f<D: Dimension>(d: D) -> (usize, Vec<Ix>, Ix) { (d.ndim(), d.dims(), d.size()) }
+
+        assert_eq!(f(()), (0, vec![], 0));
+        assert_eq!(f(&()), (0, vec![], 0));
+        assert_eq!(f(2), (1, vec![2], 2));
+        assert_eq!(f(&3), (1, vec![3], 3));
+        assert_eq!(f((4,)), (1, vec![4], 4));
+        assert_eq!(f(&(5,)), (1, vec![5], 5));
+        assert_eq!(f((1, 2)), (2, vec![1, 2], 2));
+        assert_eq!(f(&(3, 4)), (2, vec![3, 4], 12));
+        assert_eq!(f(vec![2, 3]), (2, vec![2, 3], 6));
+        assert_eq!(f(&vec![4, 5]), (2, vec![4, 5], 20));
+    }
+}
