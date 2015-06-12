@@ -1,6 +1,6 @@
 use ffi::h5::hsize_t;
-use ffi::h5i::{H5I_DATASPACE, hid_t};
-use ffi::h5s::{H5S_UNLIMITED, H5Sget_simple_extent_dims, H5Sget_simple_extent_ndims,
+use ffi::h5i::{H5I_DATASPACE, H5I_INVALID_HID, hid_t};
+use ffi::h5s::{H5S_UNLIMITED, H5Sget_simple_extent_dims, H5Sget_simple_extent_ndims, H5Scopy,
                H5Screate_simple};
 
 use error::Result;
@@ -105,6 +105,13 @@ impl ID for Dataspace {
 
 impl Object for Dataspace {}
 
+impl Clone for Dataspace {
+    fn clone(&self) -> Dataspace {
+        let id = h5call!(H5Scopy(self.id())).unwrap_or(H5I_INVALID_HID);
+        Dataspace::from_id(id).unwrap_or(Dataspace { handle: Handle::invalid() })
+    }
+}
+
 impl fmt::Debug for Dataspace {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::Display::fmt(self, f)
@@ -135,6 +142,7 @@ mod tests {
     use super::{Dimension, Ix, Dataspace};
     use error::silence_errors;
     use handle::ID;
+    use object::Object;
     use ffi::h5i::H5I_INVALID_HID;
     use ffi::h5s::H5S_UNLIMITED;
 
@@ -173,5 +181,8 @@ mod tests {
         assert_eq!((d.ndim(), d.dims(), d.size()), (2, vec![5, 6], 30));
         assert_eq!(Dataspace::new(()).unwrap().dims(), vec![]);
         assert_err!(Dataspace::from_id(H5I_INVALID_HID), "Invalid dataspace id");
+        let dc = d.clone();
+        assert!(dc.is_valid() && dc.id() != d.id());
+        assert_eq!((d.ndim(), d.dims(), d.size()), (dc.ndim(), dc.dims(), dc.size()));
     }
 }

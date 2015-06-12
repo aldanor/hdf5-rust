@@ -71,6 +71,10 @@ impl Handle {
         })
     }
 
+    pub fn invalid() -> Handle {
+        Handle { id: Arc::new(RwLock::new(H5I_INVALID_HID)) }
+    }
+
     pub fn id(&self) -> hid_t {
         *self.id.read().unwrap()
     }
