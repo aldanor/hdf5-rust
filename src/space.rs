@@ -7,6 +7,7 @@ use error::Result;
 use handle::{Handle, ID, get_id_type};
 use object::Object;
 
+use std::fmt;
 use std::ptr;
 use libc::c_int;
 
@@ -104,9 +105,34 @@ impl ID for Dataspace {
 
 impl Object for Dataspace {}
 
+impl fmt::Debug for Dataspace {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(self, f)
+    }
+}
+
+impl fmt::Display for Dataspace {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if !self.is_valid() {
+            return "<HDF5 dataspace: invalid id>".fmt(f);
+        }
+        let mut dims = String::new();
+        for (i, dim) in self.dims().iter().enumerate() {
+            if i > 0 {
+                dims.push_str(", ");
+            }
+            dims.push_str(&format!("{}", dim));
+        }
+        if self.ndim() == 1 {
+            dims.push_str(",");
+        }
+        format!("<HDF5 dataspace: ({})>", dims).fmt(f)
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{Dimension, Ix};
+    use super::{Dimension, Ix, Dataspace};
 
     #[test]
     pub fn test_dimension() {
@@ -122,5 +148,15 @@ mod tests {
         assert_eq!(f(&(3, 4)), (2, vec![3, 4], 12));
         assert_eq!(f(vec![2, 3]), (2, vec![2, 3], 6));
         assert_eq!(f(&vec![4, 5]), (2, vec![4, 5], 20));
+    }
+
+    #[test]
+    pub fn test_debug_display() {
+        assert_eq!(format!("{}", Dataspace::new(()).unwrap()), "<HDF5 dataspace: ()>");
+        assert_eq!(format!("{:?}", Dataspace::new(()).unwrap()), "<HDF5 dataspace: ()>");
+        assert_eq!(format!("{}", Dataspace::new(3).unwrap()), "<HDF5 dataspace: (3,)>");
+        assert_eq!(format!("{:?}", Dataspace::new(3).unwrap()), "<HDF5 dataspace: (3,)>");
+        assert_eq!(format!("{}", Dataspace::new((1, 2)).unwrap()), "<HDF5 dataspace: (1, 2)>");
+        assert_eq!(format!("{:?}", Dataspace::new((1, 2)).unwrap()), "<HDF5 dataspace: (1, 2)>");
     }
 }
