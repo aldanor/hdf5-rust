@@ -28,6 +28,7 @@ pub mod group;
 pub mod location;
 pub mod object;
 pub mod plist;
+pub mod space;
 pub mod sync;
 pub mod util;
 
