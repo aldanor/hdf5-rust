@@ -133,6 +133,10 @@ impl fmt::Display for Dataspace {
 #[cfg(test)]
 mod tests {
     use super::{Dimension, Ix, Dataspace};
+    use error::silence_errors;
+    use handle::ID;
+    use ffi::h5i::H5I_INVALID_HID;
+    use ffi::h5s::H5S_UNLIMITED;
 
     #[test]
     pub fn test_dimension() {
@@ -158,5 +162,16 @@ mod tests {
         assert_eq!(format!("{:?}", Dataspace::new(3).unwrap()), "<HDF5 dataspace: (3,)>");
         assert_eq!(format!("{}", Dataspace::new((1, 2)).unwrap()), "<HDF5 dataspace: (1, 2)>");
         assert_eq!(format!("{:?}", Dataspace::new((1, 2)).unwrap()), "<HDF5 dataspace: (1, 2)>");
+    }
+
+    #[test]
+    pub fn test_dataspace() {
+        silence_errors();
+        assert_err!(Dataspace::new(H5S_UNLIMITED as usize),
+                    "current dimension must have a specific size");
+        let d = Dataspace::new((5, 6)).unwrap();
+        assert_eq!((d.ndim(), d.dims(), d.size()), (2, vec![5, 6], 30));
+        assert_eq!(Dataspace::new(()).unwrap().dims(), vec![]);
+        assert_err!(Dataspace::from_id(H5I_INVALID_HID), "Invalid dataspace id");
     }
 }
