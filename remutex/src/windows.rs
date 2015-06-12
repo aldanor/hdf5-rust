@@ -19,7 +19,10 @@ impl ReentrantMutex {
         mem::uninitialized()
     }
 
-    pub unsafe fn init(&mut self) -> ReentrantMutex {
+    //pub unsafe fn init(&mut self) -> ReentrantMutex {
+    //    ffi::InitializeCriticalSection(self.inner.get());
+    //}
+    pub unsafe fn init(&mut self) {
         ffi::InitializeCriticalSection(self.inner.get());
     }
 
@@ -42,7 +45,7 @@ impl ReentrantMutex {
 }
 
 mod ffi {
-    use libc::{LPVOID, LONG, HANDLE, c_ulong};
+    use libc::{LPVOID, LONG, HANDLE, c_ulong, BOOLEAN};
     pub type ULONG_PTR = c_ulong;
 
     #[repr(C)]
