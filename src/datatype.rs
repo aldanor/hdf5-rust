@@ -116,6 +116,8 @@ macro_rules! impl_atomic {
     )
 }
 
+impl_atomic!(bool, H5T_STD_U8BE, H5T_STD_U8LE);
+
 impl_atomic!(i8, H5T_STD_I8BE, H5T_STD_I8LE);
 impl_atomic!(i16, H5T_STD_I16BE, H5T_STD_I16LE);
 impl_atomic!(i32, H5T_STD_I32BE, H5T_STD_I32LE);
@@ -129,15 +131,11 @@ impl_atomic!(u64, H5T_STD_U64BE, H5T_STD_U64LE);
 impl_atomic!(f32, H5T_IEEE_F32BE, H5T_IEEE_F32LE);
 impl_atomic!(f64, H5T_IEEE_F64BE, H5T_IEEE_F64LE);
 
-#[cfg(target_pointer_width = "32")]
-impl_atomic!(usize, H5T_STD_U32BE, H5T_STD_U32LE);
-#[cfg(target_pointer_width = "32")]
-impl_atomic!(isize, H5T_STD_I32BE, H5T_STD_I32LE);
+#[cfg(target_pointer_width = "32")] impl_atomic!(usize, H5T_STD_U32BE, H5T_STD_U32LE);
+#[cfg(target_pointer_width = "32")] impl_atomic!(isize, H5T_STD_I32BE, H5T_STD_I32LE);
 
-#[cfg(target_pointer_width = "64")]
-impl_atomic!(usize, H5T_STD_U64BE, H5T_STD_U64LE);
-#[cfg(target_pointer_width = "64")]
-impl_atomic!(isize, H5T_STD_I64BE, H5T_STD_I64LE);
+#[cfg(target_pointer_width = "64")] impl_atomic!(usize, H5T_STD_U64BE, H5T_STD_U64LE);
+#[cfg(target_pointer_width = "64")] impl_atomic!(isize, H5T_STD_I64BE, H5T_STD_I64LE);
 
 impl ID for Datatype {
     fn id(&self) -> hid_t {
@@ -173,6 +171,10 @@ impl Object for Datatype {}
 mod tests {
     use super::{Datatype, AtomicDatatype, ToDatatype};
     use super::Datatype::*;
+    use handle::FromID;
+    use ffi::h5i::H5I_INVALID_HID;
+    use ffi::h5t::H5Tcopy;
+    use globals::H5T_STD_REF_OBJ;
 
     #[cfg(target_endian = "big")] const IS_BE: bool = true;
     #[cfg(target_endian = "big")] const IS_LE: bool = false;
@@ -184,34 +186,43 @@ mod tests {
     #[cfg(target_pointer_width = "64")] const POINTER_WIDTH: usize = 64;
 
     #[test]
-    pub fn test_datatype() {
-        macro_rules! test_atomic {
-            ($tp:ty, $variant:ident, $precision:expr, $block:expr) => (
+    pub fn test_invalid_datatype() {
+        assert_err!(Datatype::from_id(H5I_INVALID_HID), "Invalid datatype id");
+        assert_err!(Datatype::from_id(h5lock!(H5Tcopy(*H5T_STD_REF_OBJ))), "Unsupported datatype");
+    }
+
+    #[test]
+    pub fn test_atomic_datatype() {
+        macro_rules! test_integer {
+            ($tp:ty, $signed:expr, $precision:expr) => (
                 match <$tp as ToDatatype>::to_datatype().unwrap() {
-                    Datatype::$variant(dt) => {
+                    Datatype::Integer(dt) => {
                         assert_eq!(dt.is_be(), IS_BE);
                         assert_eq!(dt.is_le(), IS_LE);
                         assert_eq!(dt.offset(), 0);
                         assert_eq!(dt.precision(), $precision);
+                        assert_eq!(dt.is_signed(), $signed);
                     },
-                    _ => panic!("Invalid datatype object")
+                    _ => panic!("Integer datatype expected")
                 }
-            )
-        }
-
-        macro_rules! test_integer {
-            ($tp:ty, $signed:expr, $precision:expr) => (
-                test_atomic!($tp, Integer, $precision, |dt| {
-                    assert_eq!(dt.is_signed(), $signed)
-                })
             )
         }
 
         macro_rules! test_float {
             ($tp:ty, $precision:expr) => (
-                test_atomic!($tp, Float, $precision, |dt| {});
+                match <$tp as ToDatatype>::to_datatype().unwrap() {
+                    Datatype::Float(dt) => {
+                        assert_eq!(dt.is_be(), IS_BE);
+                        assert_eq!(dt.is_le(), IS_LE);
+                        assert_eq!(dt.offset(), 0);
+                        assert_eq!(dt.precision(), $precision)
+                    },
+                    _ => panic!("Float datatype expected")
+                }
             )
         }
+
+        test_integer!(bool, false, 8);
 
         test_integer!(i8, true, 8);
         test_integer!(i16, true, 16);
