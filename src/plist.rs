@@ -2,7 +2,7 @@ use ffi::h5i::{H5I_GENPROP_LST, H5I_INVALID_HID, hid_t};
 use ffi::h5p::{H5Pcopy, H5Pequal};
 
 use error::Result;
-use handle::{Handle, ID, get_id_type};
+use handle::{Handle, ID, FromID, get_id_type};
 use object::Object;
 
 pub struct PropertyList {
@@ -13,7 +13,9 @@ impl ID for PropertyList {
     fn id(&self) -> hid_t {
         self.handle.id()
     }
+}
 
+impl FromID for PropertyList {
     fn from_id(id: hid_t) -> Result<PropertyList> {
         match get_id_type(id) {
             H5I_GENPROP_LST => Ok(PropertyList { handle: try!(Handle::new(id)) }),
@@ -42,7 +44,7 @@ mod tests {
     use super::PropertyList;
     use globals::{H5P_FILE_ACCESS, H5P_FILE_CREATE};
     use ffi::h5p::H5Pcreate;
-    use handle::ID;
+    use handle::{ID, FromID};
     use object::Object;
 
     #[test]

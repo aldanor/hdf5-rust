@@ -6,7 +6,7 @@ use globals::H5P_LINK_CREATE;
 
 use error::Result;
 use group::Group;
-use handle::ID;
+use handle::{ID, FromID};
 use location::Location;
 use plist::PropertyList;
 use util::to_cstring;

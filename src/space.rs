@@ -4,7 +4,7 @@ use ffi::h5s::{H5S_UNLIMITED, H5Sget_simple_extent_dims, H5Sget_simple_extent_nd
                H5Screate_simple};
 
 use error::Result;
-use handle::{Handle, ID, get_id_type};
+use handle::{Handle, ID, FromID, get_id_type};
 use object::Object;
 
 use std::{fmt, ptr, slice};
@@ -112,7 +112,9 @@ impl ID for Dataspace {
     fn id(&self) -> hid_t {
         self.handle.id()
     }
+}
 
+impl FromID for Dataspace {
     fn from_id(id: hid_t) -> Result<Dataspace> {
         match get_id_type(id) {
             H5I_DATASPACE => Ok(Dataspace { handle: try!(Handle::new(id)) }),
@@ -159,7 +161,7 @@ impl fmt::Display for Dataspace {
 mod tests {
     use super::{Dimension, Ix, Dataspace};
     use error::silence_errors;
-    use handle::ID;
+    use handle::{ID, FromID};
     use object::Object;
     use ffi::h5i::H5I_INVALID_HID;
     use ffi::h5s::H5S_UNLIMITED;
