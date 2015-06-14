@@ -47,7 +47,7 @@ mod tests {
 
     use super::Object;
     use error::Result;
-    use handle::{Handle, ID, is_valid_id, is_valid_user_id};
+    use handle::{Handle, ID, FromID, is_valid_id, is_valid_user_id};
 
     struct TestObject {
         handle: Handle,
@@ -67,7 +67,9 @@ mod tests {
         fn id(&self) -> hid_t {
             self.handle.id()
         }
+    }
 
+    impl FromID for TestObject{
         fn from_id(id: hid_t) -> Result<TestObject> {
             Ok(TestObject { handle: try!(Handle::new(id)) })
         }

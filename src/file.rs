@@ -13,7 +13,7 @@ use container::Container;
 use error::Result;
 use location::Location;
 use object::Object;
-use handle::{Handle, ID, get_id_type};
+use handle::{Handle, ID, FromID, get_id_type};
 use plist::PropertyList;
 use util::to_cstring;
 
@@ -31,7 +31,9 @@ impl ID for File {
     fn id(&self) -> hid_t {
         self.handle.id()
     }
+}
 
+impl FromID for File {
     fn from_id(id: hid_t) -> Result<File> {
         match get_id_type(id) {
             H5I_FILE => Ok(File { handle: try!(Handle::new(id)) }),

@@ -31,6 +31,9 @@ pub fn is_valid_user_id(id: hid_t) -> bool {
 
 pub trait ID {
     fn id(&self) -> hid_t;
+}
+
+pub trait FromID {
     fn from_id(id: hid_t) -> Result<Self>;
 }
 
@@ -113,7 +116,9 @@ impl ID for Handle {
     fn id(&self) -> hid_t {
         self.id()
     }
+}
 
+impl FromID for Handle {
     fn from_id(id: hid_t) -> Result<Handle> {
         Handle::new(id)
     }
