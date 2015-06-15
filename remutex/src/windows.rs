@@ -46,8 +46,10 @@ impl ReentrantMutex {
 
 mod ffi {
     use libc::{LPVOID, LONG, HANDLE, c_ulong, BOOLEAN};
+    #[allow(non_camel_case_types)]
     pub type ULONG_PTR = c_ulong;
 
+    #[allow(non_snake_case)]
     #[repr(C)]
     pub struct CRITICAL_SECTION {
         CriticalSectionDebug: LPVOID,
