@@ -21,6 +21,7 @@ pub mod macros;
 mod handle;
 
 pub mod container;
+pub mod datatype;
 pub mod error;
 pub mod file;
 pub mod globals;
@@ -28,6 +29,7 @@ pub mod group;
 pub mod location;
 pub mod object;
 pub mod plist;
+pub mod space;
 pub mod sync;
 pub mod util;
 
