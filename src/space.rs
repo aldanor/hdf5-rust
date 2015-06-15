@@ -12,7 +12,7 @@ use libc::c_int;
 
 pub type Ix = usize;
 
-pub trait Dimension {
+pub trait Dimension: Clone {
     fn ndim(&self) -> usize;
     fn dims(&self) -> Vec<Ix>;
 
