@@ -297,6 +297,7 @@ mod tests {
     use datatype::ToDatatype;
     use error::{Result, silence_errors};
     use ffi::h5z::{H5Z_FILTER_SZIP, H5Zfilter_avail};
+    use num::Bounded;
 
     fn szip_available() -> bool {
         h5lock!(H5Zfilter_avail(H5Z_FILTER_SZIP) == 1)
@@ -331,8 +332,10 @@ mod tests {
         assert!(!Filters::new().get_shuffle());
         assert!(Filters::new().shuffle(true).get_shuffle());
         assert!(!Filters::new().shuffle(true).shuffle(false).get_shuffle());
+
         check_roundtrip::<u32>(Filters::new().shuffle(false));
         check_roundtrip::<u32>(Filters::new().shuffle(true));
+
         check_roundtrip::<f32>(Filters::new().shuffle(false));
         check_roundtrip::<f32>(Filters::new().shuffle(true));
     }
@@ -342,8 +345,10 @@ mod tests {
         assert!(!Filters::new().get_fletcher32());
         assert!(Filters::new().fletcher32(true).get_fletcher32());
         assert!(!Filters::new().fletcher32(true).fletcher32(false).get_fletcher32());
+
         check_roundtrip::<u32>(Filters::new().fletcher32(false));
         check_roundtrip::<u32>(Filters::new().fletcher32(true));
+
         check_roundtrip::<f32>(Filters::new().fletcher32(false));
         check_roundtrip::<f32>(Filters::new().fletcher32(true));
     }
@@ -354,13 +359,20 @@ mod tests {
         assert!(Filters::new().get_scale_offset().is_none());
         assert_eq!(Filters::new().scale_offset(8).get_scale_offset(), Some(8));
         assert!(Filters::new().scale_offset(8).no_scale_offset().get_scale_offset().is_none());
+
         check_roundtrip::<u32>(Filters::new().no_scale_offset());
         check_roundtrip::<u32>(Filters::new().scale_offset(0));
         check_roundtrip::<u32>(Filters::new().scale_offset(8));
         check_roundtrip::<f32>(Filters::new().no_scale_offset());
+
         assert_err!(make_filters::<f32>(&Filters::new().scale_offset(0)),
                     "Can only use positive scale-offset factor with floats");
         check_roundtrip::<f32>(Filters::new().scale_offset(8));
+
+        assert_err!(make_filters::<u32>(&Filters::new().scale_offset(u32::max_value())),
+                    "Scale-offset factor too large");
+        assert_err!(make_filters::<u32>(&Filters::new().scale_offset(0).fletcher32(true)),
+                    "Cannot use lossy scale-offset filter with fletcher32");
     }
 
     #[test]
