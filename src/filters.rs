@@ -156,7 +156,7 @@ impl Filters {
                         filters.fletcher32(true);
                     },
                     H5Z_FILTER_SCALEOFFSET => {
-                        filters.scale_offset(values[0]);
+                        filters.scale_offset(values[1]);
                     },
                     _ => fail!("Unsupported filter: {:?}", code),
                 };
@@ -295,19 +295,23 @@ pub fn infer_chunk_size<D: Dimension>(shape: D, typesize: usize) -> Vec<Ix> {
 mod tests {
     use super::Filters;
     use datatype::ToDatatype;
-    use error::silence_errors;
+    use error::{Result, silence_errors};
     use ffi::h5z::{H5Z_FILTER_SZIP, H5Zfilter_avail};
 
     fn szip_available() -> bool {
         h5lock!(H5Zfilter_avail(H5Z_FILTER_SZIP) == 1)
     }
 
-    fn check_roundtrip<T: ToDatatype>(filters: &Filters) {
+    fn make_filters<T: ToDatatype>(filters: &Filters) -> Result<Filters> {
         let datatype = T::to_datatype().unwrap();
         let shape = (10, 20);
         let chunks = Some(());
-        let dcpl = filters.to_dcpl(&datatype, &shape, chunks).unwrap();
-        assert_eq!(Filters::from_dcpl(&dcpl).unwrap(), *filters);
+        let dcpl = try!(filters.to_dcpl(&datatype, &shape, chunks));
+        Filters::from_dcpl(&dcpl)
+    }
+
+    fn check_roundtrip<T: ToDatatype>(filters: &Filters) {
+        assert_eq!(make_filters::<T>(filters).unwrap(), *filters);
     }
 
     #[test]
@@ -342,6 +346,21 @@ mod tests {
         check_roundtrip::<u32>(Filters::new().fletcher32(true));
         check_roundtrip::<f32>(Filters::new().fletcher32(false));
         check_roundtrip::<f32>(Filters::new().fletcher32(true));
+    }
+
+    #[test]
+    pub fn test_scale_offset() {
+        silence_errors();
+        assert!(Filters::new().get_scale_offset().is_none());
+        assert_eq!(Filters::new().scale_offset(8).get_scale_offset(), Some(8));
+        assert!(Filters::new().scale_offset(8).no_scale_offset().get_scale_offset().is_none());
+        check_roundtrip::<u32>(Filters::new().no_scale_offset());
+        check_roundtrip::<u32>(Filters::new().scale_offset(0));
+        check_roundtrip::<u32>(Filters::new().scale_offset(8));
+        check_roundtrip::<f32>(Filters::new().no_scale_offset());
+        assert_err!(make_filters::<f32>(&Filters::new().scale_offset(0)),
+                    "Can only use positive scale-offset factor with floats");
+        check_roundtrip::<f32>(Filters::new().scale_offset(8));
     }
 
     #[test]
