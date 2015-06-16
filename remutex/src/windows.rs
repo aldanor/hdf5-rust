@@ -6,60 +6,45 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
+extern crate winapi;
+extern crate kernel32;
+
 use std::mem;
 use std::cell::UnsafeCell;
 
-pub struct ReentrantMutex { inner: UnsafeCell<ffi::CRITICAL_SECTION> }
+pub struct ReentrantMutex { inner: UnsafeCell<winapi::CRITICAL_SECTION> }
 
 unsafe impl Send for ReentrantMutex {}
 unsafe impl Sync for ReentrantMutex {}
 
 impl ReentrantMutex {
+    #[inline]
     pub unsafe fn uninitialized() -> ReentrantMutex {
         mem::uninitialized()
     }
 
-    pub unsafe fn init(&mut self) -> ReentrantMutex {
-        ffi::InitializeCriticalSection(self.inner.get());
+    #[inline]
+    pub unsafe fn init(&mut self) {
+        kernel32::InitializeCriticalSection(self.inner.get());
     }
 
+    #[inline]
     pub unsafe fn lock(&self) {
-        ffi::EnterCriticalSection(self.inner.get());
+        kernel32::EnterCriticalSection(self.inner.get());
     }
 
     #[inline]
     pub unsafe fn try_lock(&self) -> bool {
-        ffi::TryEnterCriticalSection(self.inner.get()) != 0
+        kernel32::TryEnterCriticalSection(self.inner.get()) != 0
     }
 
+    #[inline]
     pub unsafe fn unlock(&self) {
-        ffi::LeaveCriticalSection(self.inner.get());
+        kernel32::LeaveCriticalSection(self.inner.get());
     }
 
+    #[inline]
     pub unsafe fn destroy(&self) {
-        ffi::DeleteCriticalSection(self.inner.get());
-    }
-}
-
-mod ffi {
-    use libc::{LPVOID, LONG, HANDLE, c_ulong};
-    pub type ULONG_PTR = c_ulong;
-
-    #[repr(C)]
-    pub struct CRITICAL_SECTION {
-        CriticalSectionDebug: LPVOID,
-        LockCount: LONG,
-        RecursionCount: LONG,
-        OwningThread: HANDLE,
-        LockSemaphore: HANDLE,
-        SpinCount: ULONG_PTR
-    }
-
-    extern "system" {
-        pub fn InitializeCriticalSection(CriticalSection: *mut CRITICAL_SECTION);
-        pub fn EnterCriticalSection(CriticalSection: *mut CRITICAL_SECTION);
-        pub fn TryEnterCriticalSection(CriticalSection: *mut CRITICAL_SECTION) -> BOOLEAN;
-        pub fn LeaveCriticalSection(CriticalSection: *mut CRITICAL_SECTION);
-        pub fn DeleteCriticalSection(CriticalSection: *mut CRITICAL_SECTION);
+        kernel32::DeleteCriticalSection(self.inner.get());
     }
 }
