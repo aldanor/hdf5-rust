@@ -295,11 +295,35 @@ pub fn infer_chunk_size<D: Dimension>(shape: D, typesize: usize) -> Vec<Ix> {
 mod tests {
     use super::Filters;
     use datatype::ToDatatype;
+    use ffi::h5z::{H5Z_FILTER_SZIP, H5Zfilter_avail};
+
+    fn szip_available() -> bool {
+        h5lock!(H5Zfilter_avail(H5Z_FILTER_SZIP) == 1)
+    }
+
+    fn check_roundtrip<T: ToDatatype>(filters: &Filters) {
+        let datatype = T::to_datatype().unwrap();
+        let shape = (10, 20);
+        let chunks = Some(());
+        let dcpl = filters.to_dcpl(&datatype, &shape, chunks).unwrap();
+        assert_eq!(Filters::from_dcpl(&dcpl).unwrap(), *filters);
+    }
+
+    #[test]
+    pub fn test_szip() {
+        if !szip_available() {
+            let datatype = u32::to_datatype().unwrap();
+            assert_err!(Filters::new().szip_default().to_dcpl(&datatype, (10, 20), Some(())),
+                        "Filter not available: szip");
+        } else {
+            check_roundtrip::<u32>(&Filters::new().szip_default());
+        }
+    }
 
     #[test]
     pub fn test_filters() {
         let mut filters = Filters::new();
-        filters.shuffle(true).szip_default();
+        filters.shuffle(true).gzip_default();
         let datatype = u32::to_datatype().unwrap();
         let dcpl = filters.to_dcpl(&datatype, (10, 20), Some(())).unwrap();
         let filters2 = Filters::from_dcpl(&dcpl).unwrap();
