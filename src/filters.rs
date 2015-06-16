@@ -328,6 +328,27 @@ mod tests {
     }
 
     #[test]
+    pub fn test_gzip() {
+        silence_errors();
+
+        assert!(Filters::new().get_gzip().is_none());
+        assert_eq!(Filters::new().gzip(7).get_gzip(), Some(7));
+        assert!(Filters::new().gzip(7).no_gzip().get_gzip().is_none());
+        assert_eq!(Filters::new().gzip_default().get_gzip(), Some(4));
+
+        check_roundtrip::<u32>(Filters::new().no_gzip());
+        check_roundtrip::<u32>(Filters::new().gzip(7));
+
+        check_roundtrip::<f32>(Filters::new().no_gzip());
+        check_roundtrip::<f32>(Filters::new().gzip(7));
+
+        assert_err!(make_filters::<u32>(&Filters::new().gzip_default().szip_default()),
+                    "Cannot specify two compression options at once");
+        assert_err!(make_filters::<u32>(&Filters::new().gzip(42)),
+                    "Invalid level for gzip compression, expected 0-9 integer");
+    }
+
+    #[test]
     pub fn test_shuffle() {
         assert!(!Filters::new().get_shuffle());
         assert!(Filters::new().shuffle(true).get_shuffle());
@@ -356,6 +377,7 @@ mod tests {
     #[test]
     pub fn test_scale_offset() {
         silence_errors();
+
         assert!(Filters::new().get_scale_offset().is_none());
         assert_eq!(Filters::new().scale_offset(8).get_scale_offset(), Some(8));
         assert!(Filters::new().scale_offset(8).no_scale_offset().get_scale_offset().is_none());
@@ -363,8 +385,8 @@ mod tests {
         check_roundtrip::<u32>(Filters::new().no_scale_offset());
         check_roundtrip::<u32>(Filters::new().scale_offset(0));
         check_roundtrip::<u32>(Filters::new().scale_offset(8));
-        check_roundtrip::<f32>(Filters::new().no_scale_offset());
 
+        check_roundtrip::<f32>(Filters::new().no_scale_offset());
         assert_err!(make_filters::<f32>(&Filters::new().scale_offset(0)),
                     "Can only use positive scale-offset factor with floats");
         check_roundtrip::<f32>(Filters::new().scale_offset(8));
