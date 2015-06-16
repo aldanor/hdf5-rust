@@ -295,6 +295,7 @@ pub fn infer_chunk_size<D: Dimension>(shape: D, typesize: usize) -> Vec<Ix> {
 mod tests {
     use super::Filters;
     use datatype::ToDatatype;
+    use error::silence_errors;
     use ffi::h5z::{H5Z_FILTER_SZIP, H5Zfilter_avail};
 
     fn szip_available() -> bool {
@@ -312,12 +313,35 @@ mod tests {
     #[test]
     pub fn test_szip() {
         if !szip_available() {
+            silence_errors();
             let datatype = u32::to_datatype().unwrap();
             assert_err!(Filters::new().szip_default().to_dcpl(&datatype, (10, 20), Some(())),
                         "Filter not available: szip");
         } else {
             check_roundtrip::<u32>(&Filters::new().szip_default());
         }
+    }
+
+    #[test]
+    pub fn test_shuffle() {
+        assert!(!Filters::new().get_shuffle());
+        assert!(Filters::new().shuffle(true).get_shuffle());
+        assert!(!Filters::new().shuffle(true).shuffle(false).get_shuffle());
+        check_roundtrip::<u32>(Filters::new().shuffle(false));
+        check_roundtrip::<u32>(Filters::new().shuffle(true));
+        check_roundtrip::<f32>(Filters::new().shuffle(false));
+        check_roundtrip::<f32>(Filters::new().shuffle(true));
+    }
+
+    #[test]
+    pub fn test_fletcher32() {
+        assert!(!Filters::new().get_fletcher32());
+        assert!(Filters::new().fletcher32(true).get_fletcher32());
+        assert!(!Filters::new().fletcher32(true).fletcher32(false).get_fletcher32());
+        check_roundtrip::<u32>(Filters::new().fletcher32(false));
+        check_roundtrip::<u32>(Filters::new().fletcher32(true));
+        check_roundtrip::<f32>(Filters::new().fletcher32(false));
+        check_roundtrip::<f32>(Filters::new().fletcher32(true));
     }
 
     #[test]
