@@ -10,7 +10,9 @@ use ffi::h5p::{H5Pcreate, H5Pset_chunk, H5Pset_fletcher32, H5Pset_scaleoffset, H
                H5Pset_deflate, H5Pset_szip, H5Pset_fill_time, H5Pget_nfilters, H5Pget_filter2};
 use ffi::h5z::{H5Z_SO_INT, H5Z_SO_FLOAT_DSCALE, H5_SZIP_EC_OPTION_MASK, H5_SZIP_NN_OPTION_MASK,
                H5Z_FILTER_DEFLATE, H5Z_FILTER_SZIP, H5Z_FILTER_SHUFFLE, H5Z_FILTER_FLETCHER32,
-               H5Z_FILTER_SCALEOFFSET};
+               H5Z_FILTER_SCALEOFFSET, H5Z_FILTER_CONFIG_ENCODE_ENABLED,
+               H5Z_FILTER_CONFIG_DECODE_ENABLED, H5Zfilter_avail, H5Zget_filter_info,
+               H5Z_filter_t};
 use globals::H5P_DATASET_CREATE;
 
 use libc::{c_int, c_uint, size_t, c_char};
@@ -164,6 +166,17 @@ impl Filters {
         }).and(filters.validate().and(Ok(filters)))
     }
 
+    fn ensure_available(&self, name: &str, code: H5Z_filter_t) -> Result<()> {
+        ensure!(h5lock!(H5Zfilter_avail(code) == 1), "Filter not available: {}", name);
+        let flags: *mut c_uint = &mut 0;
+        h5try!(H5Zget_filter_info(code, flags));
+        ensure!(unsafe { *flags & H5Z_FILTER_CONFIG_ENCODE_ENABLED != 0 },
+                "Encoding is not enabled for filter: {}", name);
+        ensure!(unsafe { *flags & H5Z_FILTER_CONFIG_DECODE_ENABLED != 0 },
+                "Decoding is not enabled for filter: {}", name);
+        Ok(())
+    }
+
     pub fn to_dcpl<D1: Dimension, D2: Dimension>(&self, datatype: &Datatype, shape: D1,
                                                    chunks: Option<D2>) -> Result<PropertyList> {
         try!(self.validate());
@@ -194,11 +207,13 @@ impl Filters {
 
             // fletcher32
             if self.fletcher32 {
+                try!(self.ensure_available("fletcher32", H5Z_FILTER_FLETCHER32));
                 H5Pset_fletcher32(id);
             }
 
             // scale-offset
             if let &Some(offset) = &self.scale_offset {
+                try!(self.ensure_available("scaleoffset", H5Z_FILTER_SCALEOFFSET));
                 match datatype {
                     &Datatype::Integer(_) => {
                         H5Pset_scaleoffset(id, H5Z_SO_INT, offset as c_int);
@@ -216,13 +231,16 @@ impl Filters {
 
             // shuffle
             if self.shuffle {
+                try!(self.ensure_available("shuffle", H5Z_FILTER_SHUFFLE));
                 h5try_s!(H5Pset_shuffle(id));
             }
 
             // compression
             if let Some(level) = self.gzip {
+                try!(self.ensure_available("gzip", H5Z_FILTER_DEFLATE));
                 h5try_s!(H5Pset_deflate(id, level as c_uint));
             } else if let Some((method, pixels_per_block)) = self.szip {
+                try!(self.ensure_available("szip", H5Z_FILTER_SZIP));
                 let options = match method {
                     Szip::EntropyCoding   => H5_SZIP_EC_OPTION_MASK,
                     Szip::NearestNeighbor => H5_SZIP_NN_OPTION_MASK,
