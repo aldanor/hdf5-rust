@@ -53,46 +53,82 @@ impl Default for Filters {
     }
 }
 
-macro_rules! impl_property {
-    ($name:ident: Option<$tp:ty> => $get:ident, $no:ident) => (
-        pub fn $name(&mut self, $name: $tp) -> &mut Filters {
-            self.$name = Some($name); self
-        }
-
-        pub fn $no(&mut self) -> &mut Filters {
-            self.$name = None; self
-        }
-
-        pub fn $get(&self) -> Option<$tp> {
-            self.$name
-        }
-    );
-    ($name:ident: $tp:ty => $get:ident) => (
-        pub fn $name(&mut self, $name: $tp) -> &mut Filters {
-            self.$name = $name; self
-        }
-
-        pub fn $get(&self) -> $tp {
-            self.$name
-        }
-    )
-}
-
 impl Filters {
     pub fn new() -> Filters {
         Filters::default()
     }
 
-    impl_property!(gzip: Option<u8> => get_gzip, no_gzip);
-    impl_property!(szip: Option<(Szip, u8)> => get_szip, no_szip);
-    impl_property!(shuffle: bool => get_shuffle);
-    impl_property!(fletcher32: bool => get_fletcher32);
-    impl_property!(scale_offset: Option<u32> => get_scale_offset, no_scale_offset);
+    /// Enable gzip compression with a specified level (0-9).
+    pub fn gzip(&mut self, level: u8) -> &mut Filters {
+        self.gzip = Some(level); self
+    }
 
+    /// Disable gzip compression.
+    pub fn no_gzip(&mut self) -> &mut Filters {
+        self.gzip = None; self
+    }
+
+    /// Get the current settings for gzip filter.
+    pub fn get_gzip(&self) -> Option<u8> {
+        self.gzip
+    }
+
+    /// Enable szip compression with a specified method (EC, NN) and level (0-32).
+    pub fn szip(&mut self, method: Szip, level: u8) -> &mut Filters {
+        self.szip = Some((method, level)); self
+    }
+
+    /// Disable szip compression.
+    pub fn no_szip(&mut self) -> &mut Filters {
+        self.szip = None; self
+    }
+
+    /// Get the current settings for szip filter.
+    pub fn get_szip(&self) -> Option<(Szip, u8)> {
+        self.szip
+    }
+
+    /// Enable or disable shuffle filter.
+    pub fn shuffle(&mut self, shuffle: bool) -> &mut Filters {
+        self.shuffle = shuffle; self
+    }
+
+    /// Get the current settings for shuffle filter.
+    pub fn get_shuffle(&self) -> bool {
+        self.shuffle
+    }
+
+    /// Enable or disable fletcher32 filter.
+    pub fn fletcher32(&mut self, fletcher32: bool) -> &mut Filters {
+        self.fletcher32 = fletcher32; self
+    }
+
+    /// Get the current settings for fletcher32 filter.
+    pub fn get_fletcher32(&self) -> bool {
+        self.fletcher32
+    }
+
+    /// Enable scale-offset filter with a specified factor (0 means automatic).
+    pub fn scale_offset(&mut self, scale_offset: u32) -> &mut Filters {
+        self.scale_offset = Some(scale_offset); self
+    }
+
+    /// Disable scale_offset compression.
+    pub fn no_scale_offset(&mut self) -> &mut Filters {
+        self.scale_offset = None; self
+    }
+
+    /// Get the current settings for scale_offset filter.
+    pub fn get_scale_offset(&self) -> Option<u32> {
+        self.scale_offset
+    }
+
+    /// Enable gzip filter with default settings (compression level 4).
     pub fn gzip_default(&mut self) -> &mut Filters {
         self.gzip = Some(4); self
     }
 
+    /// Enable szip filter with default settings (NN method, compression level 8).
     pub fn szip_default(&mut self) -> &mut Filters {
         self.szip = Some((Szip::NearestNeighbor, 8)); self
     }
@@ -147,7 +183,7 @@ impl Filters {
                             v if v & H5_SZIP_NN_OPTION_MASK != 0 => Szip::NearestNeighbor,
                             _ => fail!("Unknown szip method: {:?}", values[0]),
                         };
-                        filters.szip((method, values[1] as u8));
+                        filters.szip(method, values[1] as u8);
                     },
                     H5Z_FILTER_SHUFFLE => {
                         filters.shuffle(true);
@@ -324,23 +360,23 @@ mod tests {
                         "Filter not available: szip");
         } else {
             assert!(Filters::new().get_szip().is_none());
-            assert_eq!(Filters::new().szip((Szip::EntropyCoding, 4)).get_szip(),
+            assert_eq!(Filters::new().szip(Szip::EntropyCoding, 4).get_szip(),
                        Some((Szip::EntropyCoding, 4)));
-            assert!(Filters::new().szip((Szip::EntropyCoding, 4)).no_szip().get_szip().is_none());
+            assert!(Filters::new().szip(Szip::EntropyCoding, 4).no_szip().get_szip().is_none());
             assert_eq!(Filters::new().szip_default().get_szip(),
                        Some((Szip::NearestNeighbor, 8)));
 
             check_roundtrip::<u32>(Filters::new().no_szip());
-            check_roundtrip::<u32>(Filters::new().szip((Szip::EntropyCoding, 4)));
-            check_roundtrip::<u32>(Filters::new().szip((Szip::NearestNeighbor, 4)));
+            check_roundtrip::<u32>(Filters::new().szip(Szip::EntropyCoding, 4));
+            check_roundtrip::<u32>(Filters::new().szip(Szip::NearestNeighbor, 4));
 
             check_roundtrip::<f32>(Filters::new().no_szip());
-            check_roundtrip::<f32>(Filters::new().szip((Szip::EntropyCoding, 4)));
-            check_roundtrip::<f32>(Filters::new().szip((Szip::NearestNeighbor, 4)));
+            check_roundtrip::<f32>(Filters::new().szip(Szip::EntropyCoding, 4));
+            check_roundtrip::<f32>(Filters::new().szip(Szip::NearestNeighbor, 4));
 
-            assert_err!(make_filters::<u32>(&Filters::new().szip((Szip::EntropyCoding, 1))),
+            assert_err!(make_filters::<u32>(&Filters::new().szip(Szip::EntropyCoding, 1)),
                         "Invalid pixels per block for szip compression");
-            assert_err!(make_filters::<u32>(&Filters::new().szip((Szip::NearestNeighbor, 34))),
+            assert_err!(make_filters::<u32>(&Filters::new().szip(Szip::NearestNeighbor, 34)),
                         "Invalid pixels per block for szip compression");
         }
     }
