@@ -293,7 +293,7 @@ pub fn infer_chunk_size<D: Dimension>(shape: D, typesize: usize) -> Vec<Ix> {
 
 #[cfg(test)]
 mod tests {
-    use super::Filters;
+    use super::{Filters, Szip};
     use datatype::ToDatatype;
     use error::{Result, silence_errors};
     use ffi::h5z::{H5Z_FILTER_SZIP, H5Zfilter_avail};
@@ -317,13 +317,31 @@ mod tests {
 
     #[test]
     pub fn test_szip() {
+        silence_errors();
+
         if !szip_available() {
-            silence_errors();
-            let datatype = u32::to_datatype().unwrap();
-            assert_err!(Filters::new().szip_default().to_dcpl(&datatype, (10, 20), Some(())),
+            assert_err!(make_filters::<u32>(&Filters::new().szip_default()),
                         "Filter not available: szip");
         } else {
-            check_roundtrip::<u32>(&Filters::new().szip_default());
+            assert!(Filters::new().get_szip().is_none());
+            assert_eq!(Filters::new().szip((Szip::EntropyCoding, 4)).get_szip(),
+                       Some((Szip::EntropyCoding, 4)));
+            assert!(Filters::new().szip((Szip::EntropyCoding, 4)).no_szip().get_szip().is_none());
+            assert_eq!(Filters::new().szip_default().get_szip(),
+                       Some((Szip::NearestNeighbor, 8)));
+
+            check_roundtrip::<u32>(Filters::new().no_szip());
+            check_roundtrip::<u32>(Filters::new().szip((Szip::EntropyCoding, 4)));
+            check_roundtrip::<u32>(Filters::new().szip((Szip::NearestNeighbor, 4)));
+
+            check_roundtrip::<f32>(Filters::new().no_szip());
+            check_roundtrip::<f32>(Filters::new().szip((Szip::EntropyCoding, 4)));
+            check_roundtrip::<f32>(Filters::new().szip((Szip::NearestNeighbor, 4)));
+
+            assert_err!(make_filters::<u32>(&Filters::new().szip((Szip::EntropyCoding, 1))),
+                        "Invalid pixels per block for szip compression");
+            assert_err!(make_filters::<u32>(&Filters::new().szip((Szip::NearestNeighbor, 34))),
+                        "Invalid pixels per block for szip compression");
         }
     }
 
@@ -345,7 +363,7 @@ mod tests {
         assert_err!(make_filters::<u32>(&Filters::new().gzip_default().szip_default()),
                     "Cannot specify two compression options at once");
         assert_err!(make_filters::<u32>(&Filters::new().gzip(42)),
-                    "Invalid level for gzip compression, expected 0-9 integer");
+                    "Invalid level for gzip compression");
     }
 
     #[test]
