@@ -15,17 +15,17 @@ unsafe impl Send for ReentrantMutex {}
 unsafe impl Sync for ReentrantMutex {}
 
 impl ReentrantMutex {
+    #[inline]
     pub unsafe fn uninitialized() -> ReentrantMutex {
         mem::uninitialized()
     }
 
-    //pub unsafe fn init(&mut self) -> ReentrantMutex {
-    //    ffi::InitializeCriticalSection(self.inner.get());
-    //}
+    #[inline]
     pub unsafe fn init(&mut self) {
         ffi::InitializeCriticalSection(self.inner.get());
     }
 
+    #[inline]
     pub unsafe fn lock(&self) {
         ffi::EnterCriticalSection(self.inner.get());
     }
@@ -35,10 +35,12 @@ impl ReentrantMutex {
         ffi::TryEnterCriticalSection(self.inner.get()) != 0
     }
 
+    #[inline]
     pub unsafe fn unlock(&self) {
         ffi::LeaveCriticalSection(self.inner.get());
     }
 
+    #[inline]
     pub unsafe fn destroy(&self) {
         ffi::DeleteCriticalSection(self.inner.get());
     }
