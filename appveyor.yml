@@ -18,7 +18,7 @@ install:
 
   # get hdf5 binary (just get a prebuild binary for now)
   #- ps: Start-FileDownload "https://www.dropbox.com/s/8i2dkznq2bpu0js/hdf5.dll?dl=0"
-  #- mkdir C:\hdf5_bin
+  - mkdir C:\hdf5_bin
   #- move .\hdf5.dll C:\hdf5_bin
   - ps: Invoke-WebRequest "https://www.dropbox.com/s/8i2dkznq2bpu0js/hdf5.dll?dl=0" -OutFile "C:\hdf5_bin\hdf5.dll"
   - set PATH=C:\hdf5_bin;%PATH%
