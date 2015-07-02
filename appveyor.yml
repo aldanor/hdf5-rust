@@ -17,11 +17,15 @@ install:
   - set PATH=%PATH%;C:\Program Files\Rust\bin
 
   # get hdf5 binary (just get a prebuild binary for now)
-  - ps: Start-FileDownload "https://www.dropbox.com/s/8i2dkznq2bpu0js/hdf5.dll?dl=0"
-  - dir
-  - mkdir C:\hdf5_bin
-  - move .\hdf5.dll C:\hdf5_bin
+  #- ps: Start-FileDownload "https://www.dropbox.com/s/8i2dkznq2bpu0js/hdf5.dll?dl=0"
+  #- mkdir C:\hdf5_bin
+  #- move .\hdf5.dll C:\hdf5_bin
+  - ps: |
+  $src = "https://www.dropbox.com/s/8i2dkznq2bpu0js/hdf5.dll?dl=0" 
+  $dst = "C:\hdf5_bin\hdf5.dll"
+  Invoke-WebRequest $src -OutFile $dst
   - set PATH=C:\hdf5_bin;%PATH%
+  - dir C:\hdf5_bin
 
   # output version info
   - rustc --version
@@ -30,5 +34,5 @@ install:
 build: false
 
 test_script:
-  - cargo test
+  - cargo test --verbose
 
