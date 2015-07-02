@@ -4,12 +4,11 @@
 #
 environment:
     RUST_TARGET: x86_64-pc-windows-gnu
-    CARGO_TARGET: x86_64-pc-windows-gnu
     HDF5_LIBDIR: C:\hdf5_bin
 
 install:
     # get rust & cargo
-    - ps: Start-FileDownload "https://static.rust-lang.org/dist/rustc-1.1.0-${RUST_TARGET}.exe"
+    - ps: Start-FileDownload "https://static.rust-lang.org/dist/rustc-1.1.0-${env:RUST_TARGET}.exe"
     - rustc-1.1.0-%RUST_TARGET%.exe /VERYSILENT /NORESTART /DIR="C:\Program Files\Rust"
 
     - set PATH=%PATH%;C:\Program Files\Rust\bin
