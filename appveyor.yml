@@ -9,9 +9,12 @@ environment:
 install:
     # get rust & cargo
     - ps: Start-FileDownload "https://static.rust-lang.org/dist/rust-1.1.0-${env:RUST_TARGET}.exe"
-    - rustc-1.1.0-%RUST_TARGET%.exe /VERYSILENT /NORESTART /DIR="C:\Program Files\Rust"
+    - rust-1.1.0-%RUST_TARGET%.exe /VERYSILENT /NORESTART /DIR="C:\Program Files\Rust"
 
     - set PATH=%PATH%;C:\Program Files\Rust\bin
+
+    # get hdf5 binary (first approach, later this should be build locally)
+    - ps: Start-FileDownload "https://www.dropbox.com/s/8i2dkznq2bpu0js/hdf5.dll?dl=0"
 
     # output version info
     - rustc --version
