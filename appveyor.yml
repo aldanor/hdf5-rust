@@ -17,7 +17,7 @@ environment:
 install:
   # get rust & cargo
   - ps: Start-FileDownload "https://static.rust-lang.org/dist/rust-${env:RUST_VERSION}-${env:RUST_TARGET}.exe"
-  - rust-1.1.0-%RUST_TARGET%.exe /VERYSILENT /NORESTART /DIR="C:\Program Files\Rust-%RUST_VERSION%"
+  - rust-%RUST_VERSION%-%RUST_TARGET%.exe /VERYSILENT /NORESTART /DIR="C:\Program Files\Rust-%RUST_VERSION%"
   - set PATH=%PATH%;C:\Program Files\Rust-%RUST_VERSION%\bin
 
   # get hdf5 binary (just get a prebuild binary for now)
