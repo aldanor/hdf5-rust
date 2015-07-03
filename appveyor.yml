@@ -7,19 +7,22 @@ version: 0.1.{build}
 
 environment:
   RUST_TARGET: x86_64-pc-windows-gnu
+  RUST_VERSION: 1.1.0
   HDF5_LIBDIR: C:\hdf5_bin
+
+#matrix:
+#  - RUST_VERSION: 1.1.0
+#  - RUST_VERSION: nightly
 
 install:
   # get rust & cargo
-  - ps: Start-FileDownload "https://static.rust-lang.org/dist/rust-1.1.0-${env:RUST_TARGET}.exe"
-  - rust-1.1.0-%RUST_TARGET%.exe /VERYSILENT /NORESTART /DIR="C:\Program Files\Rust"
+  - ps: Start-FileDownload "https://static.rust-lang.org/dist/rust-${env:RUST_VERSION}-${env:RUST_TARGET}.exe"
+  - rust-1.1.0-%RUST_TARGET%.exe /VERYSILENT /NORESTART /DIR="C:\Program Files\Rust-%RUST_VERSION%"
 
-  - set PATH=%PATH%;C:\Program Files\Rust\bin
+  - set PATH=%PATH%;C:\Program Files\Rust-%RUST_VERSION%\bin
 
   # get hdf5 binary (just get a prebuild binary for now)
-  #- ps: Start-FileDownload "https://www.dropbox.com/s/8i2dkznq2bpu0js/hdf5.dll?dl=0"
   - mkdir C:\hdf5_bin
-  #- move .\hdf5.dll C:\hdf5_bin
   - ps: Invoke-WebRequest "https://github.com/kkirstein/hdf5-rs/releases/download/alpha/hdf5.dll" -OutFile "C:\hdf5_bin\hdf5.dll"
   - set PATH=C:\hdf5_bin;%PATH%
   - dir C:\hdf5_bin
