@@ -20,7 +20,7 @@ install:
   #- ps: Start-FileDownload "https://www.dropbox.com/s/8i2dkznq2bpu0js/hdf5.dll?dl=0"
   - mkdir C:\hdf5_bin
   #- move .\hdf5.dll C:\hdf5_bin
-  - ps: Invoke-WebRequest "https://www.dropbox.com/s/8i2dkznq2bpu0js/hdf5.dll?dl=0" -OutFile "C:\hdf5_bin\hdf5.dll"
+  - ps: Invoke-WebRequest "https://github.com/kkirstein/hdf5-rs/releases/download/alpha/hdf5.dll" -OutFile "C:\hdf5_bin\hdf5.dll"
   - set PATH=C:\hdf5_bin;%PATH%
   - dir C:\hdf5_bin
 
