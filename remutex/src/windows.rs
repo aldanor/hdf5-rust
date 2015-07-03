@@ -15,14 +15,17 @@ unsafe impl Send for ReentrantMutex {}
 unsafe impl Sync for ReentrantMutex {}
 
 impl ReentrantMutex {
+    #[inline]
     pub unsafe fn uninitialized() -> ReentrantMutex {
         mem::uninitialized()
     }
 
-    pub unsafe fn init(&mut self) -> ReentrantMutex {
+    #[inline]
+    pub unsafe fn init(&mut self) {
         ffi::InitializeCriticalSection(self.inner.get());
     }
 
+    #[inline]
     pub unsafe fn lock(&self) {
         ffi::EnterCriticalSection(self.inner.get());
     }
@@ -32,19 +35,23 @@ impl ReentrantMutex {
         ffi::TryEnterCriticalSection(self.inner.get()) != 0
     }
 
+    #[inline]
     pub unsafe fn unlock(&self) {
         ffi::LeaveCriticalSection(self.inner.get());
     }
 
+    #[inline]
     pub unsafe fn destroy(&self) {
         ffi::DeleteCriticalSection(self.inner.get());
     }
 }
 
 mod ffi {
-    use libc::{LPVOID, LONG, HANDLE, c_ulong};
+    use libc::{LPVOID, LONG, HANDLE, c_ulong, BOOLEAN};
+    #[allow(non_camel_case_types)]
     pub type ULONG_PTR = c_ulong;
 
+    #[allow(non_snake_case)]
     #[repr(C)]
     pub struct CRITICAL_SECTION {
         CriticalSectionDebug: LPVOID,
