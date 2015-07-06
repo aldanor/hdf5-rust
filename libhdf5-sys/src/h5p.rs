@@ -111,7 +111,7 @@ extern {
     pub static H5P_LST_LINK_ACCESS_g: hid_t;
 }
 
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", target_os = "windows"))]
 extern {
     // Property list classes (OSX version of the library)
     pub static H5P_CLS_ROOT_ID_g: hid_t;

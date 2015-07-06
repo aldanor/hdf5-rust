@@ -176,6 +176,41 @@ link_hid!(H5T_NATIVE_UINT_FAST64,      H5T_NATIVE_UINT_FAST64_g);
 #[cfg(target_os = "macos")] link_hid!(H5P_LST_LINK_CREATE_ID,      H5P_LST_LINK_CREATE_ID_g);
 #[cfg(target_os = "macos")] link_hid!(H5P_LST_LINK_ACCESS_ID,      H5P_LST_LINK_ACCESS_ID_g);
 
+// Property list classes (Windows version of the library)
+#[cfg(target_os = "windows")] link_hid!(H5P_ROOT,                    H5P_CLS_ROOT_ID_g);
+#[cfg(target_os = "windows")] link_hid!(H5P_OBJECT_CREATE,           H5P_CLS_OBJECT_CREATE_ID_g);
+#[cfg(target_os = "windows")] link_hid!(H5P_FILE_CREATE,             H5P_CLS_FILE_CREATE_ID_g);
+#[cfg(target_os = "windows")] link_hid!(H5P_FILE_ACCESS,             H5P_CLS_FILE_ACCESS_ID_g);
+#[cfg(target_os = "windows")] link_hid!(H5P_DATASET_CREATE,          H5P_CLS_DATASET_CREATE_ID_g);
+#[cfg(target_os = "windows")] link_hid!(H5P_DATASET_ACCESS,          H5P_CLS_DATASET_ACCESS_ID_g);
+#[cfg(target_os = "windows")] link_hid!(H5P_DATASET_XFER,            H5P_CLS_DATASET_XFER_ID_g);
+#[cfg(target_os = "windows")] link_hid!(H5P_FILE_MOUNT,              H5P_CLS_FILE_MOUNT_ID_g);
+#[cfg(target_os = "windows")] link_hid!(H5P_GROUP_CREATE,            H5P_CLS_GROUP_CREATE_ID_g);
+#[cfg(target_os = "windows")] link_hid!(H5P_GROUP_ACCESS,            H5P_CLS_GROUP_ACCESS_ID_g);
+#[cfg(target_os = "windows")] link_hid!(H5P_DATATYPE_CREATE,         H5P_CLS_DATATYPE_CREATE_ID_g);
+#[cfg(target_os = "windows")] link_hid!(H5P_DATATYPE_ACCESS,         H5P_CLS_DATATYPE_ACCESS_ID_g);
+#[cfg(target_os = "windows")] link_hid!(H5P_STRING_CREATE,           H5P_CLS_STRING_CREATE_ID_g);
+#[cfg(target_os = "windows")] link_hid!(H5P_ATTRIBUTE_CREATE,        H5P_CLS_ATTRIBUTE_CREATE_ID_g);
+#[cfg(target_os = "windows")] link_hid!(H5P_OBJECT_COPY,             H5P_CLS_OBJECT_COPY_ID_g);
+#[cfg(target_os = "windows")] link_hid!(H5P_LINK_CREATE,             H5P_CLS_LINK_CREATE_ID_g);
+#[cfg(target_os = "windows")] link_hid!(H5P_LINK_ACCESS,             H5P_CLS_LINK_ACCESS_ID_g);
+
+// Default property lists (Windows version of the library)
+#[cfg(target_os = "windows")] link_hid!(H5P_LST_FILE_CREATE_ID,      H5P_LST_FILE_CREATE_ID_g);
+#[cfg(target_os = "windows")] link_hid!(H5P_LST_FILE_ACCESS_ID,      H5P_LST_FILE_ACCESS_ID_g);
+#[cfg(target_os = "windows")] link_hid!(H5P_LST_DATASET_CREATE_ID,   H5P_LST_DATASET_CREATE_ID_g);
+#[cfg(target_os = "windows")] link_hid!(H5P_LST_DATASET_ACCESS_ID,   H5P_LST_DATASET_ACCESS_ID_g);
+#[cfg(target_os = "windows")] link_hid!(H5P_LST_DATASET_XFER_ID,     H5P_LST_DATASET_XFER_ID_g);
+#[cfg(target_os = "windows")] link_hid!(H5P_LST_FILE_MOUNT_ID,       H5P_LST_FILE_MOUNT_ID_g);
+#[cfg(target_os = "windows")] link_hid!(H5P_LST_GROUP_CREATE_ID,     H5P_LST_GROUP_CREATE_ID_g);
+#[cfg(target_os = "windows")] link_hid!(H5P_LST_GROUP_ACCESS_ID,     H5P_LST_GROUP_ACCESS_ID_g);
+#[cfg(target_os = "windows")] link_hid!(H5P_LST_DATATYPE_CREATE_ID,  H5P_LST_DATATYPE_CREATE_ID_g);
+#[cfg(target_os = "windows")] link_hid!(H5P_LST_DATATYPE_ACCESS_ID,  H5P_LST_DATATYPE_ACCESS_ID_g);
+#[cfg(target_os = "windows")] link_hid!(H5P_LST_ATTRIBUTE_CREATE_ID, H5P_LST_ATTRIBUTE_CREATE_ID_g);
+#[cfg(target_os = "windows")] link_hid!(H5P_LST_OBJECT_COPY_ID,      H5P_LST_OBJECT_COPY_ID_g);
+#[cfg(target_os = "windows")] link_hid!(H5P_LST_LINK_CREATE_ID,      H5P_LST_LINK_CREATE_ID_g);
+#[cfg(target_os = "windows")] link_hid!(H5P_LST_LINK_ACCESS_ID,      H5P_LST_LINK_ACCESS_ID_g);
+
 // Error class
 link_hid!(H5E_ERR_CLS,                 H5E_ERR_CLS_g);
 
