@@ -19,11 +19,14 @@ use libc::{c_int, c_uint, size_t, c_char};
 use num::Bounded;
 use num::integer::div_floor;
 
+/// Disables chunking.
 pub const CHUNK_NONE: () = ();
+
+/// Enables automatic chunking.
 pub const CHUNK_AUTO: Ix = 0;
 
 #[derive(Copy, Clone, PartialEq, Debug)]
-pub enum Szip {
+pub enum SzipMethod {
     EntropyCoding,
     NearestNeighbor,
 }
@@ -31,7 +34,7 @@ pub enum Szip {
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Filters {
     gzip: Option<u8>,
-    szip: Option<(Szip, u8)>,
+    szip: Option<(SzipMethod, u8)>,
     shuffle: bool,
     fletcher32: bool,
     scale_offset: Option<u32>,
@@ -70,7 +73,7 @@ impl Filters {
     }
 
     /// Enable szip compression with a specified method (EC, NN) and level (0-32).
-    pub fn szip(&mut self, method: Szip, level: u8) -> &mut Filters {
+    pub fn szip(&mut self, method: SzipMethod, level: u8) -> &mut Filters {
         self.szip = Some((method, level)); self
     }
 
@@ -80,7 +83,7 @@ impl Filters {
     }
 
     /// Get the current settings for szip filter.
-    pub fn get_szip(&self) -> Option<(Szip, u8)> {
+    pub fn get_szip(&self) -> Option<(SzipMethod, u8)> {
         self.szip
     }
 
@@ -126,7 +129,7 @@ impl Filters {
 
     /// Enable szip filter with default settings (NN method, compression level 8).
     pub fn szip_default(&mut self) -> &mut Filters {
-        self.szip = Some((Szip::NearestNeighbor, 8)); self
+        self.szip = Some((SzipMethod::NearestNeighbor, 8)); self
     }
 
     pub fn validate(&self) -> Result<()> {
@@ -175,8 +178,8 @@ impl Filters {
                     },
                     H5Z_FILTER_SZIP => {
                         let method = match values[0] {
-                            v if v & H5_SZIP_EC_OPTION_MASK != 0 => Szip::EntropyCoding,
-                            v if v & H5_SZIP_NN_OPTION_MASK != 0 => Szip::NearestNeighbor,
+                            v if v & H5_SZIP_EC_OPTION_MASK != 0 => SzipMethod::EntropyCoding,
+                            v if v & H5_SZIP_NN_OPTION_MASK != 0 => SzipMethod::NearestNeighbor,
                             _ => fail!("Unknown szip method: {:?}", values[0]),
                         };
                         filters.szip(method, values[1] as u8);
@@ -275,8 +278,8 @@ impl Filters {
             } else if let Some((method, pixels_per_block)) = self.szip {
                 try!(self.ensure_available("szip", H5Z_FILTER_SZIP));
                 let options = match method {
-                    Szip::EntropyCoding   => H5_SZIP_EC_OPTION_MASK,
-                    Szip::NearestNeighbor => H5_SZIP_NN_OPTION_MASK,
+                    SzipMethod::EntropyCoding   => H5_SZIP_EC_OPTION_MASK,
+                    SzipMethod::NearestNeighbor => H5_SZIP_NN_OPTION_MASK,
                 };
                 h5try_s!(H5Pset_szip(id, options, pixels_per_block as c_uint));
             }
@@ -327,7 +330,7 @@ pub fn infer_chunk_size<D: Dimension>(shape: D, typesize: usize) -> Vec<Ix> {
 
 #[cfg(test)]
 mod tests {
-    use super::{Filters, Szip, infer_chunk_size, CHUNK_AUTO};
+    use super::{Filters, SzipMethod, infer_chunk_size, CHUNK_AUTO};
     use datatype::ToDatatype;
     use error::{Result, silence_errors};
     use ffi::h5z::{H5Z_FILTER_SZIP, H5Zfilter_avail};
@@ -358,23 +361,24 @@ mod tests {
                         "Filter not available: szip");
         } else {
             assert!(Filters::new().get_szip().is_none());
-            assert_eq!(Filters::new().szip(Szip::EntropyCoding, 4).get_szip(),
-                       Some((Szip::EntropyCoding, 4)));
-            assert!(Filters::new().szip(Szip::EntropyCoding, 4).no_szip().get_szip().is_none());
+            assert_eq!(Filters::new().szip(SzipMethod::EntropyCoding, 4).get_szip(),
+                       Some((SzipMethod::EntropyCoding, 4)));
+            assert!(Filters::new().szip(SzipMethod::EntropyCoding, 4)
+                                  .no_szip().get_szip().is_none());
             assert_eq!(Filters::new().szip_default().get_szip(),
-                       Some((Szip::NearestNeighbor, 8)));
+                       Some((SzipMethod::NearestNeighbor, 8)));
 
             check_roundtrip::<u32>(Filters::new().no_szip());
-            check_roundtrip::<u32>(Filters::new().szip(Szip::EntropyCoding, 4));
-            check_roundtrip::<u32>(Filters::new().szip(Szip::NearestNeighbor, 4));
+            check_roundtrip::<u32>(Filters::new().szip(SzipMethod::EntropyCoding, 4));
+            check_roundtrip::<u32>(Filters::new().szip(SzipMethod::NearestNeighbor, 4));
 
             check_roundtrip::<f32>(Filters::new().no_szip());
-            check_roundtrip::<f32>(Filters::new().szip(Szip::EntropyCoding, 4));
-            check_roundtrip::<f32>(Filters::new().szip(Szip::NearestNeighbor, 4));
+            check_roundtrip::<f32>(Filters::new().szip(SzipMethod::EntropyCoding, 4));
+            check_roundtrip::<f32>(Filters::new().szip(SzipMethod::NearestNeighbor, 4));
 
-            assert_err!(make_filters::<u32>(&Filters::new().szip(Szip::EntropyCoding, 1)),
+            assert_err!(make_filters::<u32>(&Filters::new().szip(SzipMethod::EntropyCoding, 1)),
                         "Invalid pixels per block for szip compression");
-            assert_err!(make_filters::<u32>(&Filters::new().szip(Szip::NearestNeighbor, 34)),
+            assert_err!(make_filters::<u32>(&Filters::new().szip(SzipMethod::NearestNeighbor, 34)),
                         "Invalid pixels per block for szip compression");
         }
     }
