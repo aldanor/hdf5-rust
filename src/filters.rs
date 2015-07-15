@@ -291,7 +291,7 @@ impl Filters {
     }
 }
 
-pub fn infer_chunk_size<D: Dimension>(shape: D, typesize: usize) -> Vec<Ix> {
+fn infer_chunk_size<D: Dimension>(shape: D, typesize: usize) -> Vec<Ix> {
     // This algorithm is borrowed from h5py, though the idea originally comes from PyTables.
 
     const CHUNK_BASE: f64 = (16 * 1024) as f64;
