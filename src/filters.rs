@@ -340,11 +340,15 @@ mod tests {
     use error::{Result, silence_errors};
     use handle::ID;
     use ffi::h5p::H5Pget_chunk;
-    use ffi::h5z::{H5Z_FILTER_SZIP, H5Zfilter_avail};
+    use ffi::h5z::{H5Z_FILTER_DEFLATE, H5Z_FILTER_SZIP, H5Zfilter_avail};
     use ffi::h5::hsize_t;
     use libc::c_int;
     use plist::PropertyList;
     use num::Bounded;
+
+    fn gzip_available() -> bool {
+        h5lock!(H5Zfilter_avail(H5Z_FILTER_DEFLATE) == 1)
+    }
 
     fn szip_available() -> bool {
         h5lock!(H5Zfilter_avail(H5Z_FILTER_SZIP) == 1)
@@ -397,21 +401,26 @@ mod tests {
     pub fn test_gzip() {
         silence_errors();
 
-        assert!(Filters::new().get_gzip().is_none());
-        assert_eq!(Filters::new().gzip(7).get_gzip(), Some(7));
-        assert!(Filters::new().gzip(7).no_gzip().get_gzip().is_none());
-        assert_eq!(Filters::new().gzip_default().get_gzip(), Some(4));
+        if !gzip_available() {
+            assert_err!(make_filters::<u32>(&Filters::new().gzip_default()),
+                        "Filter not available: gzip");
+        } else {
+            assert!(Filters::new().get_gzip().is_none());
+            assert_eq!(Filters::new().gzip(7).get_gzip(), Some(7));
+            assert!(Filters::new().gzip(7).no_gzip().get_gzip().is_none());
+            assert_eq!(Filters::new().gzip_default().get_gzip(), Some(4));
 
-        check_roundtrip::<u32>(Filters::new().no_gzip());
-        check_roundtrip::<u32>(Filters::new().gzip(7));
+            check_roundtrip::<u32>(Filters::new().no_gzip());
+            check_roundtrip::<u32>(Filters::new().gzip(7));
 
-        check_roundtrip::<f32>(Filters::new().no_gzip());
-        check_roundtrip::<f32>(Filters::new().gzip(7));
+            check_roundtrip::<f32>(Filters::new().no_gzip());
+            check_roundtrip::<f32>(Filters::new().gzip(7));
 
-        assert_err!(make_filters::<u32>(&Filters::new().gzip_default().szip_default()),
-                    "Cannot specify two compression options at once");
-        assert_err!(make_filters::<u32>(&Filters::new().gzip(42)),
-                    "Invalid level for gzip compression");
+            assert_err!(make_filters::<u32>(&Filters::new().gzip_default().szip_default()),
+                        "Cannot specify two compression options at once");
+            assert_err!(make_filters::<u32>(&Filters::new().gzip(42)),
+                        "Invalid level for gzip compression");
+        }
     }
 
     #[test]
@@ -466,7 +475,10 @@ mod tests {
     #[test]
     pub fn test_filters_dcpl() {
         let mut filters = Filters::new();
-        filters.shuffle(true).gzip_default();
+        filters.shuffle(true);
+        if gzip_available() {
+            filters.gzip_default();
+        }
         let datatype = u32::to_datatype().unwrap();
         let dcpl = filters.to_dcpl(&datatype, (10, 20), CHUNK_AUTO).unwrap();
         let filters2 = Filters::from_dcpl(&dcpl).unwrap();
