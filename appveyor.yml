@@ -1,17 +1,11 @@
-# appveyor.yml
-# 
-# vim: sw=2 ts=2 et
-#
-
 version: 0.1.{build}
 
 environment:
   RUST_TARGET: x86_64-pc-windows-gnu
-  #RUST_VERSION: 1.1.0
   HDF5_LIBDIR: C:\hdf5_bin
-
   matrix:
     - RUST_VERSION: 1.1.0
+    - RUST_VERSION: beta
     - RUST_VERSION: nightly
 
 install:
@@ -20,7 +14,7 @@ install:
   - rust-%RUST_VERSION%-%RUST_TARGET%.exe /VERYSILENT /NORESTART /DIR="C:\Program Files\Rust-%RUST_VERSION%"
   - set PATH=%PATH%;C:\Program Files\Rust-%RUST_VERSION%\bin
 
-  # get hdf5 binary (just get a prebuild binary for now)
+  # get hdf5 binary (just get a prebuilt binary for now)
   - mkdir C:\hdf5_bin
   - ps: Invoke-WebRequest "https://github.com/kkirstein/hdf5-rs/releases/download/alpha/hdf5.dll" -OutFile "C:\hdf5_bin\hdf5.dll"
   - set PATH=C:\hdf5_bin;%PATH%
@@ -33,4 +27,3 @@ build: false
 
 test_script:
   - cargo test --verbose
-
