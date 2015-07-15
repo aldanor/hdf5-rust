@@ -259,6 +259,8 @@ impl Filters {
                                 "Can only use positive scale-offset factor with floats.");
                         H5Pset_scaleoffset(id, H5Z_SO_FLOAT_DSCALE, offset as c_int);
                     },
+
+                    // FIXME: uncomment when datatypes other than Integer/Float are implemented
                     // _ => {
                     //     fail!("Can only use scale/offset with integer/float datatypes.");
                     // }
