@@ -1,5 +1,4 @@
 use ffi::h5i::{H5I_type_t, H5Iget_ref};
-use ffi::h5i::H5I_type_t::*;
 
 use handle::{ID, is_valid_user_id, get_id_type};
 
@@ -23,20 +22,6 @@ pub trait Object: ID {
     fn id_type(&self) -> H5I_type_t {
         get_id_type(self.id())
     }
-
-    fn is_file(&self) -> bool          { self.id_type() == H5I_FILE }
-    fn is_group(&self) -> bool         { self.id_type() == H5I_GROUP }
-    fn is_datatype(&self) -> bool      { self.id_type() == H5I_DATATYPE }
-    fn is_dataspace(&self) -> bool     { self.id_type() == H5I_DATASPACE }
-    fn is_dataset(&self) -> bool       { self.id_type() == H5I_DATASET }
-    fn is_attribute(&self) -> bool     { self.id_type() == H5I_ATTR }
-    fn is_reference(&self) -> bool     { self.id_type() == H5I_REFERENCE }
-    fn is_vfl(&self) -> bool           { self.id_type() == H5I_VFL }
-    fn is_plist_class(&self) -> bool   { self.id_type() == H5I_GENPROP_CLS }
-    fn is_plist(&self) -> bool         { self.id_type() == H5I_GENPROP_LST }
-    fn is_error_class(&self) -> bool   { self.id_type() == H5I_ERROR_CLASS }
-    fn is_error_message(&self) -> bool { self.id_type() == H5I_ERROR_MSG }
-    fn is_error_stack(&self) -> bool   { self.id_type() == H5I_ERROR_STACK }
 }
 
 #[cfg(test)]
@@ -90,20 +75,6 @@ mod tests {
         assert!(obj.is_valid());
         assert!(is_valid_id(obj.id()));
         assert!(is_valid_user_id(obj.id()));
-
-        assert!(!obj.is_file());
-        assert!(!obj.is_group());
-        assert!(!obj.is_datatype());
-        assert!(!obj.is_dataspace());
-        assert!(!obj.is_dataset());
-        assert!(!obj.is_attribute());
-        assert!(!obj.is_reference());
-        assert!(!obj.is_vfl());
-        assert!(!obj.is_plist_class());
-        assert!(obj.is_plist());
-        assert!(!obj.is_error_class());
-        assert!(!obj.is_error_message());
-        assert!(!obj.is_error_stack());
 
         assert_eq!(obj.refcount(), 1);
         obj.incref();

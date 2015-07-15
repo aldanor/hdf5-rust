@@ -26,9 +26,16 @@ pub const H5Z_MAX_NFILTERS: c_uint = 32;
 pub const H5Z_FLAG_DEFMASK:   c_uint = 0x00ff;
 pub const H5Z_FLAG_MANDATORY: c_uint = 0x0000;
 pub const H5Z_FLAG_OPTIONAL:  c_uint = 0x0001;
+
 pub const H5Z_FLAG_INVMASK:   c_uint = 0xff00;
 pub const H5Z_FLAG_REVERSE:   c_uint = 0x0100;
 pub const H5Z_FLAG_SKIP_EDC:  c_uint = 0x0200;
+
+pub const H5_SZIP_ALLOW_K13_OPTION_MASK: c_uint = 1;
+pub const H5_SZIP_CHIP_OPTION_MASK:      c_uint = 2;
+pub const H5_SZIP_EC_OPTION_MASK:        c_uint = 4;
+pub const H5_SZIP_NN_OPTION_MASK:        c_uint = 32;
+pub const H5_SZIP_MAX_PIXELS_PER_BLOCK:  c_uint = 32;
 
 pub const H5Z_SHUFFLE_USER_NPARMS:  c_uint = 0;
 pub const H5Z_SHUFFLE_TOTAL_NPARMS: c_uint = 1;

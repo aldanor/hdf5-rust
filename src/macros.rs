@@ -12,7 +12,12 @@ macro_rules! ensure {
         if !($expr) {
             fail!($err);
         }
-    )
+    );
+    ($expr: expr, $fmt:expr, $($arg:tt)*) => (
+        if !($expr) {
+            fail!(format!($fmt, $($arg)*));
+        }
+    );
 }
 
 /// Panics if `$expr` is not an Err(err) with err.description() matching regexp `$err`.

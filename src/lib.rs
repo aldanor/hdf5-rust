@@ -24,6 +24,7 @@ pub mod container;
 pub mod datatype;
 pub mod error;
 pub mod file;
+pub mod filters;
 pub mod globals;
 pub mod group;
 pub mod location;
