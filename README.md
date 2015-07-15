@@ -23,7 +23,7 @@ As of now, building `hdf5-rs` on Windows requires a few manual steps:
 
 - gcc-compatible HDF5 binary (`hdf5.dll` shared library) is required for linking.
 
-- Set `HDF5_LIBDIR` environment variable to point to the folder containing `hdf5.dll`. (Avoid paths
+- Set `HDF5_LIBDIR` environment variable to point to the folder containing `hdf5.dll` (avoid paths
   with spaces as they are difficult to escape correctly).
 
 - Make sure that `hdf5.dll` is on your search path, otherwise the tests will fail.

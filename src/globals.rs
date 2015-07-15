@@ -3,10 +3,11 @@ use ffi::h5fd::{H5FD_core_init, H5FD_sec2_init, H5FD_stdio_init};
 use ffi::h5i::hid_t;
 
 use ffi::h5e::*;
-use ffi::h5p::*;
 use ffi::h5t::*;
 
 use std::mem;
+
+pub use self::os::*;
 
 macro_rules! link_hid {
     ($rust_name:ident, $c_name:ident) => {
@@ -106,110 +107,89 @@ link_hid!(H5T_NATIVE_UINT_LEAST64,     H5T_NATIVE_UINT_LEAST64_g);
 link_hid!(H5T_NATIVE_INT_FAST64,       H5T_NATIVE_INT_FAST64_g);
 link_hid!(H5T_NATIVE_UINT_FAST64,      H5T_NATIVE_UINT_FAST64_g);
 
-// Property list classes (Linux version of the library)
-#[cfg(target_os = "linux")] link_hid!(H5P_ROOT,                    H5P_CLS_ROOT_g);
-#[cfg(target_os = "linux")] link_hid!(H5P_OBJECT_CREATE,           H5P_CLS_OBJECT_CREATE_g);
-#[cfg(target_os = "linux")] link_hid!(H5P_FILE_CREATE,             H5P_CLS_FILE_CREATE_g);
-#[cfg(target_os = "linux")] link_hid!(H5P_FILE_ACCESS,             H5P_CLS_FILE_ACCESS_g);
-#[cfg(target_os = "linux")] link_hid!(H5P_DATASET_CREATE,          H5P_CLS_DATASET_CREATE_g);
-#[cfg(target_os = "linux")] link_hid!(H5P_DATASET_ACCESS,          H5P_CLS_DATASET_ACCESS_g);
-#[cfg(target_os = "linux")] link_hid!(H5P_DATASET_XFER,            H5P_CLS_DATASET_XFER_g);
-#[cfg(target_os = "linux")] link_hid!(H5P_FILE_MOUNT,              H5P_CLS_FILE_MOUNT_g);
-#[cfg(target_os = "linux")] link_hid!(H5P_GROUP_CREATE,            H5P_CLS_GROUP_CREATE_g);
-#[cfg(target_os = "linux")] link_hid!(H5P_GROUP_ACCESS,            H5P_CLS_GROUP_ACCESS_g);
-#[cfg(target_os = "linux")] link_hid!(H5P_DATATYPE_CREATE,         H5P_CLS_DATATYPE_CREATE_g);
-#[cfg(target_os = "linux")] link_hid!(H5P_DATATYPE_ACCESS,         H5P_CLS_DATATYPE_ACCESS_g);
-#[cfg(target_os = "linux")] link_hid!(H5P_STRING_CREATE,           H5P_CLS_STRING_CREATE_g);
-#[cfg(target_os = "linux")] link_hid!(H5P_ATTRIBUTE_CREATE,        H5P_CLS_ATTRIBUTE_CREATE_g);
-#[cfg(target_os = "linux")] link_hid!(H5P_OBJECT_COPY,             H5P_CLS_OBJECT_COPY_g);
-#[cfg(target_os = "linux")] link_hid!(H5P_LINK_CREATE,             H5P_CLS_LINK_CREATE_g);
-#[cfg(target_os = "linux")] link_hid!(H5P_LINK_ACCESS,             H5P_CLS_LINK_ACCESS_g);
+#[cfg(target_os = "linux")]
+mod os {
+    use ffi::h5i::hid_t;
+    use ffi::h5::H5open;
+    use ffi::h5p::*;
 
-// Default property lists (Linux version of the library)
-#[cfg(target_os = "linux")] link_hid!(H5P_LST_FILE_CREATE_ID,      H5P_LST_FILE_CREATE_g);
-#[cfg(target_os = "linux")] link_hid!(H5P_LST_FILE_ACCESS_ID,      H5P_LST_FILE_ACCESS_g);
-#[cfg(target_os = "linux")] link_hid!(H5P_LST_DATASET_CREATE_ID,   H5P_LST_DATASET_CREATE_g);
-#[cfg(target_os = "linux")] link_hid!(H5P_LST_DATASET_ACCESS_ID,   H5P_LST_DATASET_ACCESS_g);
-#[cfg(target_os = "linux")] link_hid!(H5P_LST_DATASET_XFER_ID,     H5P_LST_DATASET_XFER_g);
-#[cfg(target_os = "linux")] link_hid!(H5P_LST_FILE_MOUNT_ID,       H5P_LST_FILE_MOUNT_g);
-#[cfg(target_os = "linux")] link_hid!(H5P_LST_GROUP_CREATE_ID,     H5P_LST_GROUP_CREATE_g);
-#[cfg(target_os = "linux")] link_hid!(H5P_LST_GROUP_ACCESS_ID,     H5P_LST_GROUP_ACCESS_g);
-#[cfg(target_os = "linux")] link_hid!(H5P_LST_DATATYPE_CREATE_ID,  H5P_LST_DATATYPE_CREATE_g);
-#[cfg(target_os = "linux")] link_hid!(H5P_LST_DATATYPE_ACCESS_ID,  H5P_LST_DATATYPE_ACCESS_g);
-#[cfg(target_os = "linux")] link_hid!(H5P_LST_ATTRIBUTE_CREATE_ID, H5P_LST_ATTRIBUTE_CREATE_g);
-#[cfg(target_os = "linux")] link_hid!(H5P_LST_OBJECT_COPY_ID,      H5P_LST_OBJECT_COPY_g);
-#[cfg(target_os = "linux")] link_hid!(H5P_LST_LINK_CREATE_ID,      H5P_LST_LINK_CREATE_g);
-#[cfg(target_os = "linux")] link_hid!(H5P_LST_LINK_ACCESS_ID,      H5P_LST_LINK_ACCESS_g);
+    // Property list classes
+    link_hid!(H5P_ROOT,                    H5P_CLS_ROOT_g);
+    link_hid!(H5P_OBJECT_CREATE,           H5P_CLS_OBJECT_CREATE_g);
+    link_hid!(H5P_FILE_CREATE,             H5P_CLS_FILE_CREATE_g);
+    link_hid!(H5P_FILE_ACCESS,             H5P_CLS_FILE_ACCESS_g);
+    link_hid!(H5P_DATASET_CREATE,          H5P_CLS_DATASET_CREATE_g);
+    link_hid!(H5P_DATASET_ACCESS,          H5P_CLS_DATASET_ACCESS_g);
+    link_hid!(H5P_DATASET_XFER,            H5P_CLS_DATASET_XFER_g);
+    link_hid!(H5P_FILE_MOUNT,              H5P_CLS_FILE_MOUNT_g);
+    link_hid!(H5P_GROUP_CREATE,            H5P_CLS_GROUP_CREATE_g);
+    link_hid!(H5P_GROUP_ACCESS,            H5P_CLS_GROUP_ACCESS_g);
+    link_hid!(H5P_DATATYPE_CREATE,         H5P_CLS_DATATYPE_CREATE_g);
+    link_hid!(H5P_DATATYPE_ACCESS,         H5P_CLS_DATATYPE_ACCESS_g);
+    link_hid!(H5P_STRING_CREATE,           H5P_CLS_STRING_CREATE_g);
+    link_hid!(H5P_ATTRIBUTE_CREATE,        H5P_CLS_ATTRIBUTE_CREATE_g);
+    link_hid!(H5P_OBJECT_COPY,             H5P_CLS_OBJECT_COPY_g);
+    link_hid!(H5P_LINK_CREATE,             H5P_CLS_LINK_CREATE_g);
+    link_hid!(H5P_LINK_ACCESS,             H5P_CLS_LINK_ACCESS_g);
 
-// Property list classes (OSX version of the library)
-#[cfg(target_os = "macos")] link_hid!(H5P_ROOT,                    H5P_CLS_ROOT_ID_g);
-#[cfg(target_os = "macos")] link_hid!(H5P_OBJECT_CREATE,           H5P_CLS_OBJECT_CREATE_ID_g);
-#[cfg(target_os = "macos")] link_hid!(H5P_FILE_CREATE,             H5P_CLS_FILE_CREATE_ID_g);
-#[cfg(target_os = "macos")] link_hid!(H5P_FILE_ACCESS,             H5P_CLS_FILE_ACCESS_ID_g);
-#[cfg(target_os = "macos")] link_hid!(H5P_DATASET_CREATE,          H5P_CLS_DATASET_CREATE_ID_g);
-#[cfg(target_os = "macos")] link_hid!(H5P_DATASET_ACCESS,          H5P_CLS_DATASET_ACCESS_ID_g);
-#[cfg(target_os = "macos")] link_hid!(H5P_DATASET_XFER,            H5P_CLS_DATASET_XFER_ID_g);
-#[cfg(target_os = "macos")] link_hid!(H5P_FILE_MOUNT,              H5P_CLS_FILE_MOUNT_ID_g);
-#[cfg(target_os = "macos")] link_hid!(H5P_GROUP_CREATE,            H5P_CLS_GROUP_CREATE_ID_g);
-#[cfg(target_os = "macos")] link_hid!(H5P_GROUP_ACCESS,            H5P_CLS_GROUP_ACCESS_ID_g);
-#[cfg(target_os = "macos")] link_hid!(H5P_DATATYPE_CREATE,         H5P_CLS_DATATYPE_CREATE_ID_g);
-#[cfg(target_os = "macos")] link_hid!(H5P_DATATYPE_ACCESS,         H5P_CLS_DATATYPE_ACCESS_ID_g);
-#[cfg(target_os = "macos")] link_hid!(H5P_STRING_CREATE,           H5P_CLS_STRING_CREATE_ID_g);
-#[cfg(target_os = "macos")] link_hid!(H5P_ATTRIBUTE_CREATE,        H5P_CLS_ATTRIBUTE_CREATE_ID_g);
-#[cfg(target_os = "macos")] link_hid!(H5P_OBJECT_COPY,             H5P_CLS_OBJECT_COPY_ID_g);
-#[cfg(target_os = "macos")] link_hid!(H5P_LINK_CREATE,             H5P_CLS_LINK_CREATE_ID_g);
-#[cfg(target_os = "macos")] link_hid!(H5P_LINK_ACCESS,             H5P_CLS_LINK_ACCESS_ID_g);
+    // Default property lists
+    link_hid!(H5P_LST_FILE_CREATE_ID,      H5P_LST_FILE_CREATE_g);
+    link_hid!(H5P_LST_FILE_ACCESS_ID,      H5P_LST_FILE_ACCESS_g);
+    link_hid!(H5P_LST_DATASET_CREATE_ID,   H5P_LST_DATASET_CREATE_g);
+    link_hid!(H5P_LST_DATASET_ACCESS_ID,   H5P_LST_DATASET_ACCESS_g);
+    link_hid!(H5P_LST_DATASET_XFER_ID,     H5P_LST_DATASET_XFER_g);
+    link_hid!(H5P_LST_FILE_MOUNT_ID,       H5P_LST_FILE_MOUNT_g);
+    link_hid!(H5P_LST_GROUP_CREATE_ID,     H5P_LST_GROUP_CREATE_g);
+    link_hid!(H5P_LST_GROUP_ACCESS_ID,     H5P_LST_GROUP_ACCESS_g);
+    link_hid!(H5P_LST_DATATYPE_CREATE_ID,  H5P_LST_DATATYPE_CREATE_g);
+    link_hid!(H5P_LST_DATATYPE_ACCESS_ID,  H5P_LST_DATATYPE_ACCESS_g);
+    link_hid!(H5P_LST_ATTRIBUTE_CREATE_ID, H5P_LST_ATTRIBUTE_CREATE_g);
+    link_hid!(H5P_LST_OBJECT_COPY_ID,      H5P_LST_OBJECT_COPY_g);
+    link_hid!(H5P_LST_LINK_CREATE_ID,      H5P_LST_LINK_CREATE_g);
+    link_hid!(H5P_LST_LINK_ACCESS_ID,      H5P_LST_LINK_ACCESS_g);
+}
 
-// Default property lists (OSX version of the library)
-#[cfg(target_os = "macos")] link_hid!(H5P_LST_FILE_CREATE_ID,      H5P_LST_FILE_CREATE_ID_g);
-#[cfg(target_os = "macos")] link_hid!(H5P_LST_FILE_ACCESS_ID,      H5P_LST_FILE_ACCESS_ID_g);
-#[cfg(target_os = "macos")] link_hid!(H5P_LST_DATASET_CREATE_ID,   H5P_LST_DATASET_CREATE_ID_g);
-#[cfg(target_os = "macos")] link_hid!(H5P_LST_DATASET_ACCESS_ID,   H5P_LST_DATASET_ACCESS_ID_g);
-#[cfg(target_os = "macos")] link_hid!(H5P_LST_DATASET_XFER_ID,     H5P_LST_DATASET_XFER_ID_g);
-#[cfg(target_os = "macos")] link_hid!(H5P_LST_FILE_MOUNT_ID,       H5P_LST_FILE_MOUNT_ID_g);
-#[cfg(target_os = "macos")] link_hid!(H5P_LST_GROUP_CREATE_ID,     H5P_LST_GROUP_CREATE_ID_g);
-#[cfg(target_os = "macos")] link_hid!(H5P_LST_GROUP_ACCESS_ID,     H5P_LST_GROUP_ACCESS_ID_g);
-#[cfg(target_os = "macos")] link_hid!(H5P_LST_DATATYPE_CREATE_ID,  H5P_LST_DATATYPE_CREATE_ID_g);
-#[cfg(target_os = "macos")] link_hid!(H5P_LST_DATATYPE_ACCESS_ID,  H5P_LST_DATATYPE_ACCESS_ID_g);
-#[cfg(target_os = "macos")] link_hid!(H5P_LST_ATTRIBUTE_CREATE_ID, H5P_LST_ATTRIBUTE_CREATE_ID_g);
-#[cfg(target_os = "macos")] link_hid!(H5P_LST_OBJECT_COPY_ID,      H5P_LST_OBJECT_COPY_ID_g);
-#[cfg(target_os = "macos")] link_hid!(H5P_LST_LINK_CREATE_ID,      H5P_LST_LINK_CREATE_ID_g);
-#[cfg(target_os = "macos")] link_hid!(H5P_LST_LINK_ACCESS_ID,      H5P_LST_LINK_ACCESS_ID_g);
+#[cfg(any(target_os = "macos", target_os = "windows"))]
+mod os {
+    use ffi::h5i::hid_t;
+    use ffi::h5::H5open;
+    use ffi::h5p::*;
 
-// Property list classes (Windows version of the library)
-#[cfg(target_os = "windows")] link_hid!(H5P_ROOT,                    H5P_CLS_ROOT_ID_g);
-#[cfg(target_os = "windows")] link_hid!(H5P_OBJECT_CREATE,           H5P_CLS_OBJECT_CREATE_ID_g);
-#[cfg(target_os = "windows")] link_hid!(H5P_FILE_CREATE,             H5P_CLS_FILE_CREATE_ID_g);
-#[cfg(target_os = "windows")] link_hid!(H5P_FILE_ACCESS,             H5P_CLS_FILE_ACCESS_ID_g);
-#[cfg(target_os = "windows")] link_hid!(H5P_DATASET_CREATE,          H5P_CLS_DATASET_CREATE_ID_g);
-#[cfg(target_os = "windows")] link_hid!(H5P_DATASET_ACCESS,          H5P_CLS_DATASET_ACCESS_ID_g);
-#[cfg(target_os = "windows")] link_hid!(H5P_DATASET_XFER,            H5P_CLS_DATASET_XFER_ID_g);
-#[cfg(target_os = "windows")] link_hid!(H5P_FILE_MOUNT,              H5P_CLS_FILE_MOUNT_ID_g);
-#[cfg(target_os = "windows")] link_hid!(H5P_GROUP_CREATE,            H5P_CLS_GROUP_CREATE_ID_g);
-#[cfg(target_os = "windows")] link_hid!(H5P_GROUP_ACCESS,            H5P_CLS_GROUP_ACCESS_ID_g);
-#[cfg(target_os = "windows")] link_hid!(H5P_DATATYPE_CREATE,         H5P_CLS_DATATYPE_CREATE_ID_g);
-#[cfg(target_os = "windows")] link_hid!(H5P_DATATYPE_ACCESS,         H5P_CLS_DATATYPE_ACCESS_ID_g);
-#[cfg(target_os = "windows")] link_hid!(H5P_STRING_CREATE,           H5P_CLS_STRING_CREATE_ID_g);
-#[cfg(target_os = "windows")] link_hid!(H5P_ATTRIBUTE_CREATE,        H5P_CLS_ATTRIBUTE_CREATE_ID_g);
-#[cfg(target_os = "windows")] link_hid!(H5P_OBJECT_COPY,             H5P_CLS_OBJECT_COPY_ID_g);
-#[cfg(target_os = "windows")] link_hid!(H5P_LINK_CREATE,             H5P_CLS_LINK_CREATE_ID_g);
-#[cfg(target_os = "windows")] link_hid!(H5P_LINK_ACCESS,             H5P_CLS_LINK_ACCESS_ID_g);
+    // Property list classes
+    link_hid!(H5P_ROOT,                    H5P_CLS_ROOT_ID_g);
+    link_hid!(H5P_OBJECT_CREATE,           H5P_CLS_OBJECT_CREATE_ID_g);
+    link_hid!(H5P_FILE_CREATE,             H5P_CLS_FILE_CREATE_ID_g);
+    link_hid!(H5P_FILE_ACCESS,             H5P_CLS_FILE_ACCESS_ID_g);
+    link_hid!(H5P_DATASET_CREATE,          H5P_CLS_DATASET_CREATE_ID_g);
+    link_hid!(H5P_DATASET_ACCESS,          H5P_CLS_DATASET_ACCESS_ID_g);
+    link_hid!(H5P_DATASET_XFER,            H5P_CLS_DATASET_XFER_ID_g);
+    link_hid!(H5P_FILE_MOUNT,              H5P_CLS_FILE_MOUNT_ID_g);
+    link_hid!(H5P_GROUP_CREATE,            H5P_CLS_GROUP_CREATE_ID_g);
+    link_hid!(H5P_GROUP_ACCESS,            H5P_CLS_GROUP_ACCESS_ID_g);
+    link_hid!(H5P_DATATYPE_CREATE,         H5P_CLS_DATATYPE_CREATE_ID_g);
+    link_hid!(H5P_DATATYPE_ACCESS,         H5P_CLS_DATATYPE_ACCESS_ID_g);
+    link_hid!(H5P_STRING_CREATE,           H5P_CLS_STRING_CREATE_ID_g);
+    link_hid!(H5P_ATTRIBUTE_CREATE,        H5P_CLS_ATTRIBUTE_CREATE_ID_g);
+    link_hid!(H5P_OBJECT_COPY,             H5P_CLS_OBJECT_COPY_ID_g);
+    link_hid!(H5P_LINK_CREATE,             H5P_CLS_LINK_CREATE_ID_g);
+    link_hid!(H5P_LINK_ACCESS,             H5P_CLS_LINK_ACCESS_ID_g);
 
-// Default property lists (Windows version of the library)
-#[cfg(target_os = "windows")] link_hid!(H5P_LST_FILE_CREATE_ID,      H5P_LST_FILE_CREATE_ID_g);
-#[cfg(target_os = "windows")] link_hid!(H5P_LST_FILE_ACCESS_ID,      H5P_LST_FILE_ACCESS_ID_g);
-#[cfg(target_os = "windows")] link_hid!(H5P_LST_DATASET_CREATE_ID,   H5P_LST_DATASET_CREATE_ID_g);
-#[cfg(target_os = "windows")] link_hid!(H5P_LST_DATASET_ACCESS_ID,   H5P_LST_DATASET_ACCESS_ID_g);
-#[cfg(target_os = "windows")] link_hid!(H5P_LST_DATASET_XFER_ID,     H5P_LST_DATASET_XFER_ID_g);
-#[cfg(target_os = "windows")] link_hid!(H5P_LST_FILE_MOUNT_ID,       H5P_LST_FILE_MOUNT_ID_g);
-#[cfg(target_os = "windows")] link_hid!(H5P_LST_GROUP_CREATE_ID,     H5P_LST_GROUP_CREATE_ID_g);
-#[cfg(target_os = "windows")] link_hid!(H5P_LST_GROUP_ACCESS_ID,     H5P_LST_GROUP_ACCESS_ID_g);
-#[cfg(target_os = "windows")] link_hid!(H5P_LST_DATATYPE_CREATE_ID,  H5P_LST_DATATYPE_CREATE_ID_g);
-#[cfg(target_os = "windows")] link_hid!(H5P_LST_DATATYPE_ACCESS_ID,  H5P_LST_DATATYPE_ACCESS_ID_g);
-#[cfg(target_os = "windows")] link_hid!(H5P_LST_ATTRIBUTE_CREATE_ID, H5P_LST_ATTRIBUTE_CREATE_ID_g);
-#[cfg(target_os = "windows")] link_hid!(H5P_LST_OBJECT_COPY_ID,      H5P_LST_OBJECT_COPY_ID_g);
-#[cfg(target_os = "windows")] link_hid!(H5P_LST_LINK_CREATE_ID,      H5P_LST_LINK_CREATE_ID_g);
-#[cfg(target_os = "windows")] link_hid!(H5P_LST_LINK_ACCESS_ID,      H5P_LST_LINK_ACCESS_ID_g);
+    // Default property lists
+    link_hid!(H5P_LST_FILE_CREATE_ID,      H5P_LST_FILE_CREATE_ID_g);
+    link_hid!(H5P_LST_FILE_ACCESS_ID,      H5P_LST_FILE_ACCESS_ID_g);
+    link_hid!(H5P_LST_DATASET_CREATE_ID,   H5P_LST_DATASET_CREATE_ID_g);
+    link_hid!(H5P_LST_DATASET_ACCESS_ID,   H5P_LST_DATASET_ACCESS_ID_g);
+    link_hid!(H5P_LST_DATASET_XFER_ID,     H5P_LST_DATASET_XFER_ID_g);
+    link_hid!(H5P_LST_FILE_MOUNT_ID,       H5P_LST_FILE_MOUNT_ID_g);
+    link_hid!(H5P_LST_GROUP_CREATE_ID,     H5P_LST_GROUP_CREATE_ID_g);
+    link_hid!(H5P_LST_GROUP_ACCESS_ID,     H5P_LST_GROUP_ACCESS_ID_g);
+    link_hid!(H5P_LST_DATATYPE_CREATE_ID,  H5P_LST_DATATYPE_CREATE_ID_g);
+    link_hid!(H5P_LST_DATATYPE_ACCESS_ID,  H5P_LST_DATATYPE_ACCESS_ID_g);
+    link_hid!(H5P_LST_ATTRIBUTE_CREATE_ID, H5P_LST_ATTRIBUTE_CREATE_ID_g);
+    link_hid!(H5P_LST_OBJECT_COPY_ID,      H5P_LST_OBJECT_COPY_ID_g);
+    link_hid!(H5P_LST_LINK_CREATE_ID,      H5P_LST_LINK_CREATE_ID_g);
+    link_hid!(H5P_LST_LINK_ACCESS_ID,      H5P_LST_LINK_ACCESS_ID_g);
+}
 
 // Error class
 link_hid!(H5E_ERR_CLS,                 H5E_ERR_CLS_g);

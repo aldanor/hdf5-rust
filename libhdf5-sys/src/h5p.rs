@@ -75,7 +75,7 @@ pub enum H5D_mpio_no_collective_cause_t {
 
 #[cfg(target_os = "linux")]
 extern {
-    // Property list classes (Linux version of the library)
+    // Property list classes
     pub static H5P_CLS_ROOT_g: hid_t;
     pub static H5P_CLS_OBJECT_CREATE_g: hid_t;
     pub static H5P_CLS_FILE_CREATE_g: hid_t;
@@ -94,7 +94,7 @@ extern {
     pub static H5P_CLS_LINK_CREATE_g: hid_t;
     pub static H5P_CLS_LINK_ACCESS_g: hid_t;
 
-    // Default property lists (Linux version of the library)
+    // Default property lists
     pub static H5P_LST_FILE_CREATE_g: hid_t;
     pub static H5P_LST_FILE_ACCESS_g: hid_t;
     pub static H5P_LST_DATASET_CREATE_g: hid_t;
@@ -113,7 +113,7 @@ extern {
 
 #[cfg(any(target_os = "macos", target_os = "windows"))]
 extern {
-    // Property list classes (OSX version of the library)
+    // Property list classes
     pub static H5P_CLS_ROOT_ID_g: hid_t;
     pub static H5P_CLS_OBJECT_CREATE_ID_g: hid_t;
     pub static H5P_CLS_FILE_CREATE_ID_g: hid_t;
@@ -132,7 +132,7 @@ extern {
     pub static H5P_CLS_LINK_CREATE_ID_g: hid_t;
     pub static H5P_CLS_LINK_ACCESS_ID_g: hid_t;
 
-    // Default property lists (OSX version of the library)
+    // Default property lists
     pub static H5P_LST_FILE_CREATE_ID_g: hid_t;
     pub static H5P_LST_FILE_ACCESS_ID_g: hid_t;
     pub static H5P_LST_DATASET_CREATE_ID_g: hid_t;
