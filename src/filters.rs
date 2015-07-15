@@ -236,6 +236,8 @@ impl Filters {
                         "Invalid chunk ndim: expected {}, got {}", shape.ndim(), chunk.ndim());
                 ensure!(chunk.size() > 0,
                         "Invalid chunk: {:?} (all dimensions must be positive)", chunk);
+                ensure!(chunk.iter().zip(shape.dims().iter()).all(|(&c, &s)| c <= s),
+                        "Invalid chunk: {:?} (must not exceed data shape in any dimension)", chunk);
                 let dims: Vec<hsize_t> = chunk.iter().map(|&x| x as hsize_t).collect();
                 h5try_s!(H5Pset_chunk(id, chunk.ndim() as c_int, dims.as_ptr()));
                 h5try_s!(H5Pset_fill_time(id, H5D_FILL_TIME_ALLOC));
@@ -522,6 +524,8 @@ mod tests {
                     "Invalid chunk ndim: expected 1, got 2");
         assert_err!(filters.to_dcpl(&datatype, (1, 2), (0, 2)),
                     r"Invalid chunk: \[0, 2\] \(all dimensions must be positive\)");
+        assert_err!(filters.to_dcpl(&datatype, (1, 2), (1, 3)),
+                    r"Invalid chunk: \[1, 3\] \(must not exceed data shape in any dimension\)");
 
         let dcpl = filters.to_dcpl(&datatype, (5579, 8323), (1, 2)).unwrap();
         assert_eq!(get_chunk(&dcpl, 2), vec![1, 2]);
