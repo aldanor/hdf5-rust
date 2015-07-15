@@ -29,13 +29,6 @@ pub enum Szip {
 }
 
 #[derive(Copy, Clone, PartialEq, Debug)]
-pub enum Chunk<T: Sized + Copy + Dimension> {
-    None,
-    Auto,
-    Manual(T),
-}
-
-#[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Filters {
     gzip: Option<u8>,
     szip: Option<(Szip, u8)>,
