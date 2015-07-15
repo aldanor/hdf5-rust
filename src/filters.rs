@@ -19,6 +19,9 @@ use libc::{c_int, c_uint, size_t, c_char};
 use num::Bounded;
 use num::integer::div_floor;
 
+pub const CHUNK_NONE: () = ();
+pub const CHUNK_AUTO: Ix = 0;
+
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum Szip {
     EntropyCoding,
@@ -213,31 +216,30 @@ impl Filters {
         Ok(())
     }
 
-    pub fn to_dcpl<D1: Dimension, D2: Dimension>(&self, datatype: &Datatype, shape: D1,
-                                                   chunks: Option<D2>) -> Result<PropertyList> {
+    pub fn to_dcpl<D1: Dimension, D2: Dimension>(&self, datatype: &Datatype, shape: D1, chunk: D2)
+                                                 -> Result<PropertyList> {
         try!(self.validate());
 
         h5lock!({
             let plist = try!(PropertyList::from_id(H5Pcreate(*H5P_DATASET_CREATE)));
             let id = plist.id();
 
-            // chunks
-            let mut chunks: Option<Vec<Ix>> = chunks.map(|x| x.dims());
-            if chunks.is_none() && (self.gzip.is_some() || self.szip.is_some() || self.shuffle ||
-                                    self.fletcher32 || self.scale_offset.is_some()) {
-                chunks = Some(vec![]); // enable chunking automatically if needed
-            }
-            if let Some(chunks) = chunks {
+            // chunking
+            if chunk.dims() == CHUNK_NONE.dims() {
+                let has_filters = self.gzip.is_some() || self.szip.is_some() || self.shuffle ||
+                                  self.fletcher32 || self.scale_offset.is_some();
+                ensure!(!has_filters, "Chunking must be enabled when filters are present.");
+            } else {
                 ensure!(shape.ndim() > 0, "Chunking cannot be enabled for scalar datasets.");
-                let chunks = if chunks.ndim() == 0 {
+                let chunk = if chunk.dims() == CHUNK_AUTO.dims() {
                     infer_chunk_size(shape.clone(), datatype.size()) // automatic
                 } else {
-                    chunks
+                    chunk.dims()
                 };
-                ensure!(chunks.ndim() == shape.ndim(),
-                        "Invalid chunks ndim: expected {}, got {}", chunks.ndim(), shape.ndim());
-                let dims: Vec<hsize_t> = chunks.iter().map(|&x| x as hsize_t).collect();
-                h5try_s!(H5Pset_chunk(id, chunks.ndim() as c_int, dims.as_ptr()));
+                ensure!(chunk.ndim() == shape.ndim(),
+                        "Invalid chunks ndim: expected {}, got {}", chunk.ndim(), shape.ndim());
+                let dims: Vec<hsize_t> = chunk.iter().map(|&x| x as hsize_t).collect();
+                h5try_s!(H5Pset_chunk(id, chunk.ndim() as c_int, dims.as_ptr()));
                 h5try_s!(H5Pset_fill_time(id, H5D_FILL_TIME_ALLOC));
             }
 
@@ -298,9 +300,10 @@ pub fn infer_chunk_size<D: Dimension>(shape: D, typesize: usize) -> Vec<Ix> {
     const CHUNK_MIN:  f64 = (8 * 1024) as f64;
     const CHUNK_MAX:  f64 = (1024 * 1024) as f64;
 
-    let ndim = shape.ndim();
-    if ndim == 0 {
+    if shape.ndim() == 0 {
         return vec![];
+    } else if shape.size() == 0 {
+        return vec![1];
     }
 
     let mut chunks = shape.dims();
@@ -322,7 +325,7 @@ pub fn infer_chunk_size<D: Dimension>(shape: D, typesize: usize) -> Vec<Ix> {
         if (bytes < target * 1.5 && bytes < CHUNK_MAX) || size == 1 {
             break;
         }
-        let axis = i % ndim;
+        let axis = i % shape.ndim();
         chunks[axis] = div_floor(chunks[axis] + 1, 2);
     }
 
@@ -331,7 +334,7 @@ pub fn infer_chunk_size<D: Dimension>(shape: D, typesize: usize) -> Vec<Ix> {
 
 #[cfg(test)]
 mod tests {
-    use super::{Filters, Szip, infer_chunk_size};
+    use super::{Filters, Szip, infer_chunk_size, CHUNK_AUTO};
     use datatype::ToDatatype;
     use error::{Result, silence_errors};
     use ffi::h5z::{H5Z_FILTER_SZIP, H5Zfilter_avail};
@@ -344,7 +347,7 @@ mod tests {
     fn make_filters<T: ToDatatype>(filters: &Filters) -> Result<Filters> {
         let datatype = T::to_datatype().unwrap();
         let shape = (10, 20);
-        let chunks = Some(());
+        let chunks = CHUNK_AUTO;
         let dcpl = try!(filters.to_dcpl(&datatype, &shape, chunks));
         Filters::from_dcpl(&dcpl)
     }
@@ -458,7 +461,7 @@ mod tests {
         let mut filters = Filters::new();
         filters.shuffle(true).gzip_default();
         let datatype = u32::to_datatype().unwrap();
-        let dcpl = filters.to_dcpl(&datatype, (10, 20), Some(())).unwrap();
+        let dcpl = filters.to_dcpl(&datatype, (10, 20), CHUNK_AUTO).unwrap();
         let filters2 = Filters::from_dcpl(&dcpl).unwrap();
         assert_eq!(filters2, filters);
     }
@@ -466,6 +469,8 @@ mod tests {
     #[test]
     pub fn test_infer_chunk_size() {
         assert_eq!(infer_chunk_size((), 1), vec![]);
+        assert_eq!(infer_chunk_size(0, 1), vec![1]);
+        assert_eq!(infer_chunk_size((1,), 1), vec![1]);
 
         // generated regression tests vs h5py implementation
         assert_eq!(infer_chunk_size((65682868,), 1), vec![64144]);
