@@ -331,7 +331,7 @@ pub fn infer_chunk_size<D: Dimension>(shape: D, typesize: usize) -> Vec<Ix> {
 
 #[cfg(test)]
 mod tests {
-    use super::{Filters, Szip};
+    use super::{Filters, Szip, infer_chunk_size};
     use datatype::ToDatatype;
     use error::{Result, silence_errors};
     use ffi::h5z::{H5Z_FILTER_SZIP, H5Zfilter_avail};
@@ -461,5 +461,28 @@ mod tests {
         let dcpl = filters.to_dcpl(&datatype, (10, 20), Some(())).unwrap();
         let filters2 = Filters::from_dcpl(&dcpl).unwrap();
         assert_eq!(filters2, filters);
+    }
+
+    #[test]
+    pub fn test_infer_chunk_size() {
+        assert_eq!(infer_chunk_size((), 1), vec![]);
+
+        // generated regression tests vs h5py implementation
+        assert_eq!(infer_chunk_size((65682868,), 1), vec![64144]);
+        assert_eq!(infer_chunk_size((56755037,), 2), vec![27713]);
+        assert_eq!(infer_chunk_size((56882283,), 4), vec![27775]);
+        assert_eq!(infer_chunk_size((21081789,), 8), vec![10294]);
+        assert_eq!(infer_chunk_size((5735, 6266), 1), vec![180, 392]);
+        assert_eq!(infer_chunk_size((467, 4427), 2), vec![30, 554]);
+        assert_eq!(infer_chunk_size((5579, 8323), 4), vec![88, 261]);
+        assert_eq!(infer_chunk_size((1686, 770), 8), vec![106, 49]);
+        assert_eq!(infer_chunk_size((344, 414, 294), 1), vec![22, 52, 37]);
+        assert_eq!(infer_chunk_size((386, 192, 444), 2), vec![25, 24, 56]);
+        assert_eq!(infer_chunk_size((277, 161, 460), 4), vec![18, 21, 58]);
+        assert_eq!(infer_chunk_size((314, 22, 253), 8), vec![40, 3, 32]);
+        assert_eq!(infer_chunk_size((89, 49, 91, 59), 1), vec![12, 13, 23, 15]);
+        assert_eq!(infer_chunk_size((42, 92, 60, 80), 2), vec![6, 12, 15, 20]);
+        assert_eq!(infer_chunk_size((15, 62, 62, 47), 4), vec![4, 16, 16, 12]);
+        assert_eq!(infer_chunk_size((62, 51, 55, 64), 8), vec![8, 7, 7, 16]);
     }
 }
