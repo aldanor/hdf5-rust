@@ -284,7 +284,7 @@ impl FileBuilder {
             "w-" | "x" => self.create_file(&filename, true),
             "a"        => match self.open_file(&filename, true) {
                             Ok(file) => Ok(file),
-                            _        => self.create_file(&filename, true),
+                            _ => self.create_file(&filename, true),
                           },
             _ => fail!("Invalid file access mode, expected r|r+|w|w-|x|a"),
         }
