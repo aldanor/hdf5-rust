@@ -7,6 +7,24 @@ Thread-safe Rust bindings and high-level wrappers for the HDF5 library API.
 Note that this project is in its early development stage and hence things are likely to change
 and break on a regular basis.
 
+## Compatibility
+
+### Platforms
+
+`hdf5-rs` is known to be compatible with these platforms:
+
+- Linux (tested on Travis CI)
+- Mac OS X
+- Windows (MinGW only for now, see below for details; tested on AppVeyor)
+
+### Rust
+
+`hdf5-rs` is tested for all three official release channels:
+
+- 1.1.0 (stable)
+- beta
+- nightly
+
 ## Building
 
 ### Windows
