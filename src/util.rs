@@ -24,7 +24,7 @@ pub fn to_cstring<S: Into<String>>(string: S) -> CString {
 
 #[doc(hidden)]
 pub fn get_h5_str<T, F>(func: F) -> Result<String>
-                 where F: Fn(*mut c_char, size_t) -> T, T: Integer + NumCast {
+where F: Fn(*mut c_char, size_t) -> T, T: Integer + NumCast {
     unsafe {
         let len: isize = 1 + cast::<T, isize>(func(ptr::null_mut(), 0)).unwrap();
         ensure!(len > 0, "negative string length in get_h5_str()");

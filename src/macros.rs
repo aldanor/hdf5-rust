@@ -33,8 +33,10 @@ macro_rules! assert_err {
                 let re = Regex::new($err).unwrap();
                 let desc = value.description().to_string();
                 if !re.is_match(desc.as_ref()) {
-                    panic!("assertion failed: error message \"{}\" doesn't match \"{}\" in `{}`",
-                           desc, re, stringify!($expr));
+                    panic!(
+                        "assertion failed: error message \"{}\" doesn't match \"{}\" in `{}`",
+                        desc, re, stringify!($expr)
+                    );
                 }
             }
         }

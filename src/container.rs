@@ -41,7 +41,8 @@ pub trait Container: Location {
         h5lock_s!({
             let lcpl = try!(make_lcpl());
             Group::from_id(h5try!(H5Gcreate2(
-                self.id(), to_cstring(name).as_ptr(), lcpl.id(), H5P_DEFAULT, H5P_DEFAULT)))
+                self.id(), to_cstring(name).as_ptr(), lcpl.id(), H5P_DEFAULT, H5P_DEFAULT
+            )))
         })
     }
 
@@ -55,26 +56,34 @@ pub trait Container: Location {
     fn link_soft<S1: Into<String>, S2: Into<String>>(&self, name: S1, path: S2) -> Result<()> {
         h5lock_s!({
             let lcpl = try!(make_lcpl());
-            h5call!(H5Lcreate_soft(to_cstring(name).as_ptr(), self.id(), to_cstring(path).as_ptr(),
-                                   lcpl.id(), H5P_DEFAULT)).and(Ok(()))
+            h5call!(H5Lcreate_soft(
+                to_cstring(name).as_ptr(), self.id(),
+                to_cstring(path).as_ptr(), lcpl.id(), H5P_DEFAULT
+            )).and(Ok(()))
         })
     }
 
     /// Creates a hard link. Note: `name` and `path` are relative to the current object.
     fn link_hard<S1: Into<String>, S2: Into<String>>(&self, name: S1, path: S2) -> Result<()> {
-        h5call!(H5Lcreate_hard(self.id(), to_cstring(name).as_ptr(), H5L_SAME_LOC,
-                               to_cstring(path).as_ptr(), H5P_DEFAULT, H5P_DEFAULT)).and(Ok(()))
+        h5call!(H5Lcreate_hard(
+            self.id(), to_cstring(name).as_ptr(), H5L_SAME_LOC,
+            to_cstring(path).as_ptr(), H5P_DEFAULT, H5P_DEFAULT
+        )).and(Ok(()))
     }
 
     /// Relinks an object. Note: `name` and `path` are relative to the current object.
     fn relink<S1: Into<String>, S2: Into<String>>(&self, name: S1, path: S2) -> Result<()> {
-        h5call!(H5Lmove(self.id(), to_cstring(name).as_ptr(), H5L_SAME_LOC,
-                        to_cstring(path).as_ptr(), H5P_DEFAULT, H5P_DEFAULT)).and(Ok(()))
+        h5call!(H5Lmove(
+            self.id(), to_cstring(name).as_ptr(), H5L_SAME_LOC,
+            to_cstring(path).as_ptr(), H5P_DEFAULT, H5P_DEFAULT
+        )).and(Ok(()))
     }
 
     /// Removes a link to an object from this file or group.
     fn unlink<S: Into<String>>(&self, name: S) -> Result<()> {
-        h5call!(H5Ldelete(self.id(), to_cstring(name).as_ptr(), H5P_DEFAULT)).and(Ok(()))
+        h5call!(H5Ldelete(
+            self.id(), to_cstring(name).as_ptr(), H5P_DEFAULT
+        )).and(Ok(()))
     }
 }
 
@@ -132,9 +141,9 @@ mod tests {
             file.group("foo/test/inner").unwrap();
             file.group("/foo/hard/inner").unwrap();
             assert_err!(file.link_hard("foo/test", "/foo/test/inner"),
-                        "unable to create link: name already exists");
+                "unable to create link: name already exists");
             assert_err!(file.link_hard("foo/bar", "/foo/baz"),
-                        "unable to create link: object.+doesn't exist");
+                "unable to create link: object.+doesn't exist");
             file.relink("/foo/hard", "/foo/hard2").unwrap();
             file.group("/foo/hard2/inner").unwrap();
             file.relink("/foo/test", "/foo/baz").unwrap();
@@ -176,14 +185,14 @@ mod tests {
             file.create_group("test").unwrap();
             file.group("test").unwrap();
             assert_err!(file.relink("test", "foo/test"),
-                        "unable to move link: component not found");
+                "unable to move link: component not found");
             file.create_group("foo").unwrap();
             assert_err!(file.relink("bar", "/baz"),
-                        "unable to move link: name doesn't exist");
+                "unable to move link: name doesn't exist");
             file.relink("test", "/foo/test").unwrap();
             file.group("/foo/test").unwrap();
             assert_err!(file.group("test"),
-                        "unable to open group: object.+doesn't exist");
+                "unable to open group: object.+doesn't exist");
         })
     }
 

@@ -153,9 +153,6 @@ pub fn sync<T, F>(func: F) -> T where F: FnOnce() -> T,
 {
     use remutex::ReentrantMutex;
     lazy_static! {
-        // static ref LOCK: RecursiveMutex = RecursiveMutex::new();
-
-        // use temporary implementation of ReentrantMutex from nightly libstd
         static ref LOCK: ReentrantMutex<()> = ReentrantMutex::new(());
     }
     let _guard = LOCK.lock();

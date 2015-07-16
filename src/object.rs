@@ -8,7 +8,7 @@ pub trait Object: ID {
         if self.is_valid() {
             match h5call!(H5Iget_ref(self.id())) {
                 Ok(count) if count >= 0 => count as u32,
-                _                       => 0,
+                _ => 0,
             }
         } else {
             0

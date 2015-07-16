@@ -1,6 +1,8 @@
 use ffi::h5::herr_t;
-use ffi::h5e::{H5Ewalk2, H5Eget_msg, H5E_error2_t, H5Eset_auto2, H5Eget_current_stack,
-               H5Eclose_stack, H5E_WALK_DOWNWARD, H5E_DEFAULT};
+use ffi::h5e::{
+    H5Ewalk2, H5Eget_msg, H5E_error2_t, H5Eset_auto2, H5Eget_current_stack,
+    H5Eclose_stack, H5E_WALK_DOWNWARD, H5E_DEFAULT
+};
 
 use util::{get_h5_str, string_from_cstr};
 
@@ -22,7 +24,7 @@ pub struct ErrorFrame {
 
 impl ErrorFrame {
     pub fn new<S1, S2, S3, S4>(desc: S1, func: S2, major: S3, minor: S4) -> ErrorFrame
-              where S1: Into<String>, S2: Into<String>, S3: Into<String>, S4: Into<String> {
+    where S1: Into<String>, S2: Into<String>, S3: Into<String>, S4: Into<String> {
         let (s_func, s_desc) = (func.into(), desc.into());
         let description = format!("{}(): {}", s_func.clone(), s_desc.clone());
         ErrorFrame {
@@ -43,8 +45,9 @@ impl ErrorFrame {
     }
 
     pub fn detail(&self) -> Option<String> {
-        Some(format!("Error in {}(): {} [{}: {}]",
-             self.func, self.desc, self.major, self.minor).clone())
+        Some(format!(
+            "Error in {}(): {} [{}: {}]", self.func, self.desc, self.major, self.minor
+        ).clone())
     }
 }
 
@@ -129,8 +132,9 @@ impl ErrorStack {
             if self.len() == 1 {
                 self.description = Some(top_desc);
             } else {
-                self.description = Some(format!("{}: {}", top_desc,
-                                                self.frames[self.len() - 1].desc()));
+                self.description = Some(format!(
+                    "{}: {}", top_desc, self.frames[self.len() - 1].desc()
+                ));
             }
         }
     }
@@ -148,8 +152,8 @@ impl ErrorStack {
 
     pub fn description(&self) -> &str {
         match self.description {
-            None            => "unknown library error",
-            Some(ref desc)  => desc.as_ref(), //frame.description(),
+            None           => "unknown library error",
+            Some(ref desc) => desc.as_ref(), //frame.description(),
         }
     }
 
@@ -253,20 +257,20 @@ mod tests {
         let stack = result_error.ok().unwrap().unwrap();
         assert_eq!(stack.description(), "H5Pclose(): can't close: can't locate ID");
         assert_eq!(&stack.detail().unwrap(),
-                   "Error in H5Pclose(): can't close [Property lists: Unable to free object]");
+            "Error in H5Pclose(): can't close [Property lists: Unable to free object]");
 
         assert!(stack.len() >= 2 && stack.len() <= 3); // depending on HDF5 version
         assert!(!stack.is_empty());
 
         assert_eq!(stack[0].description(), "H5Pclose(): can't close");
         assert_eq!(&stack[0].detail().unwrap(),
-                   "Error in H5Pclose(): can't close \
-                    [Property lists: Unable to free object]");
+            "Error in H5Pclose(): can't close \
+            [Property lists: Unable to free object]");
 
         assert_eq!(stack[stack.len() - 1].description(), "H5I_dec_ref(): can't locate ID");
         assert_eq!(&stack[stack.len() - 1].detail().unwrap(),
-                   "Error in H5I_dec_ref(): can't locate ID \
-                    [Object atom: Unable to find atom information (already closed?)]");
+            "Error in H5I_dec_ref(): can't locate ID \
+            [Object atom: Unable to find atom information (already closed?)]");
 
         let empty_stack = ErrorStack::new();
         assert!(empty_stack.is_empty());

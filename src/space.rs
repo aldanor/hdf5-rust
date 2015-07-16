@@ -84,8 +84,9 @@ impl Dataspace {
             dims.push(*dim as hsize_t);
             max_dims.push(H5S_UNLIMITED);
         }
-        Dataspace::from_id(h5try!(H5Screate_simple(rank as c_int, dims.as_ptr(),
-                                                   max_dims.as_ptr())))
+        Dataspace::from_id(h5try!(H5Screate_simple(
+            rank as c_int, dims.as_ptr(), max_dims.as_ptr()
+        )))
     }
 }
 
@@ -99,8 +100,9 @@ impl Dimension for Dataspace {
         if ndim > 0 {
             let mut dims: Vec<hsize_t> = Vec::with_capacity(ndim);
             unsafe { dims.set_len(ndim); }
-            if h5call!(H5Sget_simple_extent_dims(self.id(), dims.as_mut_ptr(),
-                                                 ptr::null_mut())).is_ok() {
+            if h5call!(H5Sget_simple_extent_dims(
+                self.id(), dims.as_mut_ptr(), ptr::null_mut()
+            )).is_ok() {
                 return dims.iter().cloned().map(|x| x as usize).collect();
             }
         }
@@ -118,7 +120,7 @@ impl FromID for Dataspace {
     fn from_id(id: hid_t) -> Result<Dataspace> {
         match get_id_type(id) {
             H5I_DATASPACE => Ok(Dataspace { handle: try!(Handle::new(id)) }),
-            _             => Err(From::from(format!("Invalid dataspace id: {}", id))),
+            _ => Err(From::from(format!("Invalid dataspace id: {}", id))),
         }
     }
 }
@@ -196,7 +198,7 @@ mod tests {
     pub fn test_dataspace() {
         silence_errors();
         assert_err!(Dataspace::new(H5S_UNLIMITED as usize),
-                    "current dimension must have a specific size");
+            "current dimension must have a specific size");
         let d = Dataspace::new((5, 6)).unwrap();
         assert_eq!((d.ndim(), d.dims(), d.size()), (2, vec![5, 6], 30));
         assert_eq!(Dataspace::new(()).unwrap().dims(), vec![]);

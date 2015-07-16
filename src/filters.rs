@@ -6,13 +6,16 @@ use space::{Dimension, Ix};
 
 use ffi::h5::hsize_t;
 use ffi::h5d::H5D_FILL_TIME_ALLOC;
-use ffi::h5p::{H5Pcreate, H5Pset_chunk, H5Pset_fletcher32, H5Pset_scaleoffset, H5Pset_shuffle,
-               H5Pset_deflate, H5Pset_szip, H5Pset_fill_time, H5Pget_nfilters, H5Pget_filter2};
-use ffi::h5z::{H5Z_SO_INT, H5Z_SO_FLOAT_DSCALE, H5_SZIP_EC_OPTION_MASK, H5_SZIP_NN_OPTION_MASK,
-               H5Z_FILTER_DEFLATE, H5Z_FILTER_SZIP, H5Z_FILTER_SHUFFLE, H5Z_FILTER_FLETCHER32,
-               H5Z_FILTER_SCALEOFFSET, H5Z_FILTER_CONFIG_ENCODE_ENABLED,
-               H5Z_FILTER_CONFIG_DECODE_ENABLED, H5Zfilter_avail, H5Zget_filter_info,
-               H5Z_filter_t};
+use ffi::h5p::{
+    H5Pcreate, H5Pset_chunk, H5Pset_fletcher32, H5Pset_scaleoffset, H5Pset_shuffle,
+    H5Pset_deflate, H5Pset_szip, H5Pset_fill_time, H5Pget_nfilters, H5Pget_filter2
+};
+use ffi::h5z::{
+    H5Z_SO_INT, H5Z_SO_FLOAT_DSCALE, H5_SZIP_EC_OPTION_MASK, H5_SZIP_NN_OPTION_MASK,
+    H5Z_FILTER_DEFLATE, H5Z_FILTER_SZIP, H5Z_FILTER_SHUFFLE, H5Z_FILTER_FLETCHER32,
+    H5Z_FILTER_SCALEOFFSET, H5Z_FILTER_CONFIG_ENCODE_ENABLED, H5Z_FILTER_CONFIG_DECODE_ENABLED,
+    H5Zfilter_avail, H5Zget_filter_info, H5Z_filter_t
+};
 use globals::H5P_DATASET_CREATE;
 
 use libc::{c_int, c_uint, size_t, c_char};
@@ -137,15 +140,16 @@ impl Filters {
             fail!("Cannot specify two compression options at once.")
         }
         if let Some(level) = self.gzip {
-            ensure!(level <= 9, "Invalid level for gzip compression, expected 0-9 integer.");
+            ensure!(level <= 9,
+                "Invalid level for gzip compression, expected 0-9 integer.");
         }
         if let Some((_, pixels_per_block)) = self.szip {
             ensure!(pixels_per_block <= 32 && pixels_per_block % 2 == 0,
-                    "Invalid pixels per block for szip compression, expected even 0-32 integer.");
+                "Invalid pixels per block for szip compression, expected even 0-32 integer.");
         }
         if let Some(offset) = self.scale_offset {
             ensure!(offset <= c_int::max_value() as u32,
-                    "Scale-offset factor too large, maximum is {}.", c_int::max_value());
+                "Scale-offset factor too large, maximum is {}.", c_int::max_value());
         }
         if self.scale_offset.is_some() && self.fletcher32 {
             fail!("Cannot use lossy scale-offset filter with fletcher32.");
@@ -162,14 +166,19 @@ impl Filters {
             for idx in 0..n_filters {
                 let flags: *mut c_uint = &mut 0;
                 let n_elements: *mut size_t = &mut 16;
+
                 let mut values: Vec<c_uint> = Vec::with_capacity(16);
                 values.set_len(16);
+
                 let mut name: Vec<c_char> = Vec::with_capacity(256);
                 name.set_len(256);
+
                 let filter_config: *mut c_uint = &mut 0;
 
-                let code = H5Pget_filter2(id, idx as c_uint, flags, n_elements, values.as_mut_ptr(),
-                                          256, name.as_mut_ptr(), filter_config);
+                let code = H5Pget_filter2(
+                    id, idx as c_uint, flags, n_elements, values.as_mut_ptr(),
+                    256, name.as_mut_ptr(), filter_config
+                );
                 name.push(0);
 
                 match code {
@@ -203,17 +212,19 @@ impl Filters {
 
     fn ensure_available(&self, name: &str, code: H5Z_filter_t) -> Result<()> {
         ensure!(h5lock!(H5Zfilter_avail(code) == 1), "Filter not available: {}", name);
+
         let flags: *mut c_uint = &mut 0;
         h5try!(H5Zget_filter_info(code, flags));
+
         ensure!(unsafe { *flags & H5Z_FILTER_CONFIG_ENCODE_ENABLED != 0 },
-                "Encoding is not enabled for filter: {}", name);
+            "Encoding is not enabled for filter: {}", name);
         ensure!(unsafe { *flags & H5Z_FILTER_CONFIG_DECODE_ENABLED != 0 },
-                "Decoding is not enabled for filter: {}", name);
+            "Decoding is not enabled for filter: {}", name);
         Ok(())
     }
 
-    pub fn to_dcpl<D1: Dimension, D2: Dimension>(&self, datatype: &Datatype, shape: D1, chunk: D2)
-                                                 -> Result<PropertyList> {
+    pub fn to_dcpl<D1, D2>(&self, datatype: &Datatype, shape: D1, chunk: D2) -> Result<PropertyList>
+    where D1: Dimension, D2: Dimension {
         try!(self.validate());
 
         h5lock!({
@@ -222,9 +233,11 @@ impl Filters {
 
             // chunking
             if chunk.dims() == CHUNK_NONE.dims() {
-                let has_filters = self.gzip.is_some() || self.szip.is_some() || self.shuffle ||
-                                  self.fletcher32 || self.scale_offset.is_some();
-                ensure!(!has_filters, "Chunking must be enabled when filters are present");
+                ensure!(
+                    self.gzip.is_none() && self.szip.is_none() && !self.shuffle &&
+                        !self.fletcher32 && self.scale_offset.is_none(),
+                    "Chunking must be enabled when filters are present"
+                );
             } else {
                 ensure!(shape.ndim() > 0, "Chunking cannot be enabled for scalar datasets");
                 let chunk = if chunk.dims() == CHUNK_AUTO.dims() {
@@ -233,11 +246,11 @@ impl Filters {
                     chunk.dims()
                 };
                 ensure!(chunk.ndim() == shape.ndim(),
-                        "Invalid chunk ndim: expected {}, got {}", shape.ndim(), chunk.ndim());
+                    "Invalid chunk ndim: expected {}, got {}", shape.ndim(), chunk.ndim());
                 ensure!(chunk.size() > 0,
-                        "Invalid chunk: {:?} (all dimensions must be positive)", chunk);
+                    "Invalid chunk: {:?} (all dimensions must be positive)", chunk);
                 ensure!(chunk.iter().zip(shape.dims().iter()).all(|(&c, &s)| c <= s),
-                        "Invalid chunk: {:?} (must not exceed data shape in any dimension)", chunk);
+                    "Invalid chunk: {:?} (must not exceed data shape in any dimension)", chunk);
                 let dims: Vec<hsize_t> = chunk.iter().map(|&x| x as hsize_t).collect();
                 h5try_s!(H5Pset_chunk(id, chunk.ndim() as c_int, dims.as_ptr()));
                 h5try_s!(H5Pset_fill_time(id, H5D_FILL_TIME_ALLOC));
@@ -258,7 +271,7 @@ impl Filters {
                     },
                     &Datatype::Float(_) => {
                         ensure!(offset > 0,
-                                "Can only use positive scale-offset factor with floats");
+                            "Can only use positive scale-offset factor with floats");
                         H5Pset_scaleoffset(id, H5Z_SO_FLOAT_DSCALE, offset as c_int);
                     },
 
@@ -376,11 +389,12 @@ mod tests {
         } else {
             assert!(Filters::new().get_szip().is_none());
             assert_eq!(Filters::new().szip(SzipMethod::EntropyCoding, 4).get_szip(),
-                       Some((SzipMethod::EntropyCoding, 4)));
-            assert!(Filters::new().szip(SzipMethod::EntropyCoding, 4)
-                                  .no_szip().get_szip().is_none());
+                Some((SzipMethod::EntropyCoding, 4)));
+            assert!(
+                Filters::new().szip(SzipMethod::EntropyCoding, 4).no_szip().get_szip().is_none()
+            );
             assert_eq!(Filters::new().szip_default().get_szip(),
-                       Some((SzipMethod::NearestNeighbor, 8)));
+                Some((SzipMethod::NearestNeighbor, 8)));
 
             check_roundtrip::<u32>(Filters::new().no_szip());
             check_roundtrip::<u32>(Filters::new().szip(SzipMethod::EntropyCoding, 4));
@@ -391,9 +405,9 @@ mod tests {
             check_roundtrip::<f32>(Filters::new().szip(SzipMethod::NearestNeighbor, 4));
 
             assert_err!(make_filters::<u32>(&Filters::new().szip(SzipMethod::EntropyCoding, 1)),
-                        "Invalid pixels per block for szip compression");
+                "Invalid pixels per block for szip compression");
             assert_err!(make_filters::<u32>(&Filters::new().szip(SzipMethod::NearestNeighbor, 34)),
-                        "Invalid pixels per block for szip compression");
+                "Invalid pixels per block for szip compression");
         }
     }
 
@@ -403,7 +417,7 @@ mod tests {
 
         if !gzip_available() {
             assert_err!(make_filters::<u32>(&Filters::new().gzip_default()),
-                        "Filter not available: gzip");
+                "Filter not available: gzip");
         } else {
             assert!(Filters::new().get_gzip().is_none());
             assert_eq!(Filters::new().gzip(7).get_gzip(), Some(7));
@@ -417,9 +431,9 @@ mod tests {
             check_roundtrip::<f32>(Filters::new().gzip(7));
 
             assert_err!(make_filters::<u32>(&Filters::new().gzip_default().szip_default()),
-                        "Cannot specify two compression options at once");
+                "Cannot specify two compression options at once");
             assert_err!(make_filters::<u32>(&Filters::new().gzip(42)),
-                        "Invalid level for gzip compression");
+                "Invalid level for gzip compression");
         }
     }
 
@@ -463,13 +477,13 @@ mod tests {
 
         check_roundtrip::<f32>(Filters::new().no_scale_offset());
         assert_err!(make_filters::<f32>(&Filters::new().scale_offset(0)),
-                    "Can only use positive scale-offset factor with floats");
+            "Can only use positive scale-offset factor with floats");
         check_roundtrip::<f32>(Filters::new().scale_offset(8));
 
         assert_err!(make_filters::<u32>(&Filters::new().scale_offset(u32::max_value())),
-                    "Scale-offset factor too large");
+            "Scale-offset factor too large");
         assert_err!(make_filters::<u32>(&Filters::new().scale_offset(0).fletcher32(true)),
-                    "Cannot use lossy scale-offset filter with fletcher32");
+            "Cannot use lossy scale-offset filter with fletcher32");
     }
 
     #[test]
@@ -527,17 +541,17 @@ mod tests {
         let mut filters = Filters::new();
         filters.shuffle(true);
         assert_err!(filters.to_dcpl(&datatype, &shape, CHUNK_NONE),
-                    "Chunking must be enabled when filters are present");
+            "Chunking must be enabled when filters are present");
         assert_err!(filters.to_dcpl(&datatype, (), CHUNK_AUTO),
-                    "Chunking cannot be enabled for scalar datasets");
+            "Chunking cannot be enabled for scalar datasets");
         assert_err!(filters.to_dcpl(&datatype, (), (1, 2)),
-                    "Chunking cannot be enabled for scalar datasets");
+            "Chunking cannot be enabled for scalar datasets");
         assert_err!(filters.to_dcpl(&datatype, 1, (1, 2)),
-                    "Invalid chunk ndim: expected 1, got 2");
+            "Invalid chunk ndim: expected 1, got 2");
         assert_err!(filters.to_dcpl(&datatype, (1, 2), (0, 2)),
-                    r"Invalid chunk: \[0, 2\] \(all dimensions must be positive\)");
+            r"Invalid chunk: \[0, 2\] \(all dimensions must be positive\)");
         assert_err!(filters.to_dcpl(&datatype, (1, 2), (1, 3)),
-                    r"Invalid chunk: \[1, 3\] \(must not exceed data shape in any dimension\)");
+            r"Invalid chunk: \[1, 3\] \(must not exceed data shape in any dimension\)");
 
         let dcpl = filters.to_dcpl(&datatype, (5579, 8323), (1, 2)).unwrap();
         assert_eq!(get_chunk(&dcpl, 2), vec![1, 2]);

@@ -3,9 +3,10 @@ use handle::{Handle, ID, FromID, get_id_type};
 use object::Object;
 
 use ffi::h5i::{H5I_DATATYPE, hid_t};
-use ffi::h5t::{H5T_INTEGER, H5T_FLOAT, H5T_NO_CLASS, H5T_NCLASSES, H5T_ORDER_BE, H5T_ORDER_LE,
-               H5T_SGN_2, H5Tcopy, H5Tget_class, H5Tget_order, H5Tget_offset, H5Tget_sign,
-               H5Tget_precision, H5Tget_size};
+use ffi::h5t::{
+    H5T_INTEGER, H5T_FLOAT, H5T_NO_CLASS, H5T_NCLASSES, H5T_ORDER_BE, H5T_ORDER_LE, H5T_SGN_2,
+    H5Tcopy, H5Tget_class, H5Tget_order, H5Tget_offset, H5Tget_sign, H5Tget_precision, H5Tget_size
+};
 
 #[cfg(target_endian = "big")]
 use globals::{
