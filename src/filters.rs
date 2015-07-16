@@ -8,7 +8,8 @@ use ffi::h5::hsize_t;
 use ffi::h5d::H5D_FILL_TIME_ALLOC;
 use ffi::h5p::{
     H5Pcreate, H5Pset_chunk, H5Pset_fletcher32, H5Pset_scaleoffset, H5Pset_shuffle,
-    H5Pset_deflate, H5Pset_szip, H5Pset_fill_time, H5Pget_nfilters, H5Pget_filter2
+    H5Pset_deflate, H5Pset_szip, H5Pset_fill_time, H5Pget_nfilters, H5Pget_filter2,
+    H5Pset_obj_track_times
 };
 use ffi::h5z::{
     H5Z_SO_INT, H5Z_SO_FLOAT_DSCALE, H5_SZIP_EC_OPTION_MASK, H5_SZIP_NN_OPTION_MASK,
@@ -230,6 +231,10 @@ impl Filters {
         h5lock!({
             let plist = try!(PropertyList::from_id(H5Pcreate(*H5P_DATASET_CREATE)));
             let id = plist.id();
+
+            // Disable object time tracking since it's not fully implemented in HDF5 and
+            // it doesn't play well with version control.
+            h5try_s!(H5Pset_obj_track_times(id, 0));
 
             // chunking
             if chunk.dims() == CHUNK_NONE.dims() {
