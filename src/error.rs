@@ -14,6 +14,7 @@ use std::error::Error as BaseError;
 use libc::{c_uint, c_void};
 use num::{Integer, Zero, Bounded};
 
+#[derive(Clone)]
 pub struct ErrorFrame {
     desc: String,
     func: String,
@@ -55,6 +56,7 @@ pub fn silence_errors() {
     h5lock!(H5Eset_auto2(H5E_DEFAULT, None, ptr::null_mut()));
 }
 
+#[derive(Clone)]
 pub struct ErrorStack {
     frames: Vec<ErrorFrame>,
     description: Option<String>,
@@ -162,6 +164,7 @@ impl ErrorStack {
     }
 }
 
+#[derive(Clone)]
 pub enum Error {
     LibraryError(ErrorStack),
     InternalError(String),
