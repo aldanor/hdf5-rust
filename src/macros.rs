@@ -2,9 +2,21 @@ macro_rules! fail {
     ($err:expr) => (
         return Err(From::from($err));
     );
+
     ($fmt:expr, $($arg:tt)*) => (
-        return Err(From::from(format!($fmt, $($arg)*)));
+        fail!(format!($fmt, $($arg)*))
     );
+}
+
+macro_rules! try_ref_clone {
+    ($expr:expr) => (
+        match $expr {
+            Ok(ref val) => val,
+            Err(ref err) => {
+                return Err(From::from(err.clone()))
+            }
+        }
+    )
 }
 
 macro_rules! ensure {
