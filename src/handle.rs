@@ -29,11 +29,11 @@ pub fn is_valid_user_id(id: hid_t) -> bool {
     })
 }
 
-pub trait ID {
+pub trait ID: Sized {
     fn id(&self) -> hid_t;
 }
 
-pub trait FromID {
+pub trait FromID: Sized {
     fn from_id(id: hid_t) -> Result<Self>;
 }
 
