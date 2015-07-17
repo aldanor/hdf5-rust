@@ -1,4 +1,4 @@
-use ffi::h5d::H5Dcreate2;
+use ffi::h5d::{H5Dcreate2, H5Dcreate_anon};
 use ffi::h5i::{H5I_DATASET, hid_t};
 use ffi::h5p::{H5Pcreate, H5Pset_create_intermediate_group, H5P_DEFAULT};
 use globals::H5P_LINK_CREATE;
@@ -45,6 +45,7 @@ pub struct DatasetBuilder {
 }
 
 impl DatasetBuilder {
+    /// Create a new dataset builder, bind it to a container and set the datatype.
     pub fn new<T: ToDatatype, C: Container>(parent: &C) -> DatasetBuilder {
         // Store the reference to the parent handle, increase its reference count.
         let handle = Handle::new(parent.id());
@@ -66,24 +67,43 @@ impl DatasetBuilder {
         self.chunk = chunk.dims(); self
     }
 
-    /// Finalize and create the dataset.
-    pub fn create<S: Into<String>, D: Dimension>(&self, name: S, shape: D) -> Result<Dataset> {
+    fn finalize<D: Dimension>(&self, name: Option<String>, shape: D) -> Result<Dataset> {
         let datatype = try_ref_clone!(self.datatype);
         let parent = try_ref_clone!(self.parent);
 
         h5lock!({
-            // Create intermediate groups automatically.
-            let lcpl = try!(PropertyList::from_id(h5try_s!(H5Pcreate(*H5P_LINK_CREATE))));
-            h5try_s!(H5Pset_create_intermediate_group(lcpl.id(), 1));
-
             let dataspace = try!(Dataspace::new(&shape));
             let dcpl = try!(self.filters.to_dcpl(&datatype, &shape, &self.chunk));
 
-            Dataset::from_id(h5try_s!(H5Dcreate2(
-                parent.id(), to_cstring(name).as_ptr(), datatype.id(),
-                dataspace.id(), lcpl.id(), dcpl.id(), H5P_DEFAULT
-            )))
+            match name.clone() {
+                Some(name) => {
+                    // Create intermediate groups automatically.
+                    let lcpl = try!(PropertyList::from_id(h5try_s!(H5Pcreate(*H5P_LINK_CREATE))));
+                    h5try_s!(H5Pset_create_intermediate_group(lcpl.id(), 1));
+
+                    Dataset::from_id(h5try_s!(H5Dcreate2(
+                        parent.id(), to_cstring(name).as_ptr(), datatype.id(),
+                        dataspace.id(), lcpl.id(), dcpl.id(), H5P_DEFAULT
+                    )))
+                },
+                _ => {
+                    Dataset::from_id(h5try_s!(H5Dcreate_anon(
+                        parent.id(), datatype.id(),
+                        dataspace.id(), dcpl.id(), H5P_DEFAULT
+                    )))
+                }
+            }
         })
+    }
+
+    /// Create the dataset and link it into the file structure.
+    pub fn create<S: Into<String>, D: Dimension>(&self, name: S, shape: D) -> Result<Dataset> {
+        self.finalize(Some(name.into()), shape)
+    }
+
+    /// Create an anonymous dataset without linking it.
+    pub fn create_anon<D: Dimension>(&self, shape: D) -> Result<Dataset> {
+        self.finalize(None, shape)
     }
 }
 
