@@ -21,6 +21,7 @@ pub mod macros;
 mod handle;
 
 pub mod container;
+pub mod dataset;
 pub mod datatype;
 pub mod error;
 pub mod file;

@@ -4,6 +4,8 @@ use ffi::h5l::{H5Lmove, H5Lcreate_soft, H5Lcreate_hard, H5Ldelete, H5L_SAME_LOC}
 use ffi::h5p::{H5Pcreate, H5Pset_create_intermediate_group, H5P_DEFAULT};
 use globals::H5P_LINK_CREATE;
 
+use dataset::DatasetBuilder;
+use datatype::ToDatatype;
 use error::Result;
 use group::Group;
 use handle::{ID, FromID};
@@ -84,6 +86,11 @@ pub trait Container: Location {
         h5call!(H5Ldelete(
             self.id(), to_cstring(name).as_ptr(), H5P_DEFAULT
         )).and(Ok(()))
+    }
+
+    /// Create a new dataset builder.
+    fn new_dataset<T: ToDatatype>(&self) -> DatasetBuilder {
+        DatasetBuilder::new::<T, Self>(&self)
     }
 }
 
@@ -205,5 +212,13 @@ mod tests {
             assert_err!(file.group("/foo/bar"), "unable to open group");
             assert!(file.group("foo").unwrap().is_empty());
         })
+    }
+
+    #[test]
+    pub fn test_dataset() {
+        with_tmp_file(|file| {
+            file.create_group("/foo/bar").unwrap()
+                .new_dataset::<u32>().create("baz", (10, 20)).unwrap();
+        });
     }
 }
