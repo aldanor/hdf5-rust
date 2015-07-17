@@ -1,6 +1,6 @@
 use ffi::h5d::{H5Dcreate2, H5Dcreate_anon};
 use ffi::h5i::{H5I_DATASET, hid_t};
-use ffi::h5p::{H5Pcreate, H5Pset_create_intermediate_group, H5P_DEFAULT};
+use ffi::h5p::{H5Pcreate, H5Pset_create_intermediate_group, H5P_DEFAULT, H5Pset_obj_track_times};
 use globals::H5P_LINK_CREATE;
 
 use container::Container;
@@ -42,6 +42,7 @@ pub struct DatasetBuilder {
     filters: Filters,
     chunk: Vec<Ix>,
     parent: Result<Handle>,
+    track_times: bool,
 }
 
 impl DatasetBuilder {
@@ -59,12 +60,18 @@ impl DatasetBuilder {
             filters: Filters::default(),
             chunk: CHUNK_AUTO.dims(),
             parent: handle,
+            track_times: false,
         }
     }
 
     /// Configure chunking.
     pub fn chunk<D: Dimension>(&mut self, chunk: D) -> &mut DatasetBuilder {
         self.chunk = chunk.dims(); self
+    }
+
+    /// Enable or disable tracking object modification time (disabled by default).
+    pub fn track_times(&mut self, track_times: bool) -> &mut DatasetBuilder {
+        self.track_times = track_times; self
     }
 
     fn finalize<D: Dimension>(&self, name: Option<String>, shape: D) -> Result<Dataset> {
@@ -74,6 +81,10 @@ impl DatasetBuilder {
         h5lock!({
             let dataspace = try!(Dataspace::new(&shape));
             let dcpl = try!(self.filters.to_dcpl(&datatype, &shape, &self.chunk));
+
+            if self.track_times {
+                h5try_s!(H5Pset_obj_track_times(dcpl.id(), 0));
+            }
 
             match name.clone() {
                 Some(name) => {
