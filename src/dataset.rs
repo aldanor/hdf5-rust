@@ -90,6 +90,13 @@ impl Dataset {
         self.ndim() == 0
     }
 
+    /// Returns `true` if the dataset is resizable along some axis.
+    pub fn is_resizable(&self) -> bool {
+        h5lock_s!({
+            if let Ok(s) = self.dataspace() { s.resizable() } else { false }
+        })
+    }
+
     /// Returns `true` if the dataset has a chunked layout.
     pub fn is_chunked(&self) -> bool {
         h5lock!(H5Pget_layout(self.dcpl.id()) == H5D_layout_t::H5D_CHUNKED)
@@ -117,15 +124,8 @@ impl Dataset {
         self.filters.clone()
     }
 
-    /// Returns `true` if the dataset is resizable along some axis.
-    pub fn resizable(&self) -> bool {
-        h5lock_s!({
-            if let Ok(s) = self.dataspace() { s.resizable() } else { false }
-        })
-    }
-
     /// Returns `true` if object modification time is tracked by the dataset.
-    pub fn track_times(&self) -> bool {
+    pub fn tracks_times(&self) -> bool {
         unsafe {
             let track_times: *mut hbool_t = &mut 0;
             h5lock_s!(H5Pget_obj_track_times(self.dcpl.id(), track_times));
@@ -511,11 +511,11 @@ mod tests {
     pub fn test_resizable() {
         with_tmp_file(|file| {
             assert_eq!(file.new_dataset::<u32>().create_anon(1).unwrap()
-                .resizable(), false);
+                .is_resizable(), false);
             assert_eq!(file.new_dataset::<u32>().resizable(false).create_anon(1).unwrap()
-                .resizable(), false);
+                .is_resizable(), false);
             assert_eq!(file.new_dataset::<u32>().resizable(true).create_anon(1).unwrap()
-                .resizable(), true);
+                .is_resizable(), true);
         })
     }
 
@@ -523,11 +523,11 @@ mod tests {
     pub fn test_track_times() {
         with_tmp_file(|file| {
             assert_eq!(file.new_dataset::<u32>().create_anon(1).unwrap()
-                .track_times(), false);
+                .tracks_times(), false);
             assert_eq!(file.new_dataset::<u32>().track_times(false).create_anon(1).unwrap()
-                .track_times(), false);
+                .tracks_times(), false);
             assert_eq!(file.new_dataset::<u32>().track_times(true).create_anon(1).unwrap()
-                .track_times(), true);
+                .tracks_times(), true);
         });
 
         with_tmp_path(|path| {
