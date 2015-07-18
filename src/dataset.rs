@@ -6,7 +6,7 @@ use globals::H5P_LINK_CREATE;
 use container::Container;
 use datatype::{Datatype, ToDatatype};
 use error::Result;
-use filters::{Filters, Chunk};
+use filters::{Filters, Chunk, SzipMethod};
 use handle::{Handle, ID, FromID, get_id_type};
 use location::Location;
 use object::Object;
@@ -102,6 +102,31 @@ impl DatasetBuilder {
     /// Make the dataset resizable along all axes (requires chunking).
     pub fn resizable(&mut self, resizable: bool) -> &mut DatasetBuilder {
         self.resizable = resizable; self
+    }
+
+    /// Enable gzip compression with a specified level (0-9).
+    pub fn gzip(&mut self, level: u8) -> &mut DatasetBuilder {
+        self.filters.gzip(level); self
+    }
+
+    /// Enable szip compression with a specified method (EC, NN) and level (0-32).
+    pub fn szip(&mut self, method: SzipMethod, level: u8) -> &mut DatasetBuilder {
+        self.filters.szip(method, level); self
+    }
+
+    /// Enable or disable shuffle filter.
+    pub fn shuffle(&mut self, shuffle: bool) -> &mut DatasetBuilder {
+        self.filters.shuffle(shuffle); self
+    }
+
+    /// Enable or disable fletcher32 filter.
+    pub fn fletcher32(&mut self, fletcher32: bool) -> &mut DatasetBuilder {
+        self.filters.fletcher32(fletcher32); self
+    }
+
+    /// Enable scale-offset filter with a specified factor (0 means automatic).
+    pub fn scale_offset(&mut self, scale_offset: u32) -> &mut DatasetBuilder {
+        self.filters.scale_offset(scale_offset); self
     }
 
     fn finalize<D: Dimension>(&self, name: Option<String>, shape: D) -> Result<Dataset> {
