@@ -143,6 +143,12 @@ impl Filters {
         self.szip = Some((SzipMethod::NearestNeighbor, 8)); self
     }
 
+    /// Returns `true` if any filters are enabled and thus chunkins is required.
+    pub fn has_filters(&self) -> bool {
+        self.gzip.is_some() || self.szip.is_some() ||
+            self.shuffle || self.fletcher32 || self.scale_offset.is_some()
+    }
+
     pub fn validate(&self) -> Result<()> {
         if self.gzip.is_some() && self.szip.is_some() {
             fail!("Cannot specify two compression options at once.")
@@ -241,15 +247,12 @@ impl Filters {
             let id = plist.id();
 
             // chunking
-            let has_filters =
-                self.gzip.is_some() || self.szip.is_some() || self.shuffle ||
-                self.fletcher32 || self.scale_offset.is_some();
             if let Chunk::None = chunk {
-                ensure!(!has_filters, "Chunking must be enabled when filters are present");
+                ensure!(!self.has_filters(), "Chunking must be enabled when filters are present");
                 ensure!(!resizable, "Chunking must be enabled for resizable datasets");
             } else {
                 let no_chunk = if let Chunk::Auto = chunk {
-                    !has_filters && !resizable
+                    !self.has_filters() && !resizable
                 } else {
                     false
                 };
@@ -512,6 +515,16 @@ mod tests {
         let dcpl = filters.to_dcpl(&datatype, (10, 20), Chunk::Auto, true).unwrap();
         let filters2 = Filters::from_dcpl(&dcpl).unwrap();
         assert_eq!(filters2, filters);
+    }
+
+    #[test]
+    pub fn test_has_filters() {
+        assert_eq!(Filters::default().has_filters(), false);
+        assert_eq!(Filters::default().gzip_default().has_filters(), true);
+        assert_eq!(Filters::default().szip_default().has_filters(), true);
+        assert_eq!(Filters::default().fletcher32(true).has_filters(), true);
+        assert_eq!(Filters::default().shuffle(true).has_filters(), true);
+        assert_eq!(Filters::default().scale_offset(2).has_filters(), true);
     }
 
     #[test]
