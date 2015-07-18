@@ -6,4 +6,4 @@ pub use location::Location;
 pub use container::Container;
 pub use space::Dimension;
 pub use datatype::{AnyDatatype, AtomicDatatype, ToDatatype};
-pub use filters::{Filters, CHUNK_NONE, CHUNK_AUTO};
+pub use filters::Filters;

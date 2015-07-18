@@ -22,12 +22,6 @@ use libc::{c_int, c_uint, size_t, c_char};
 use num::Bounded;
 use num::integer::div_floor;
 
-/// Disables chunking.
-pub const CHUNK_NONE: () = ();
-
-/// Enables automatic chunking.
-pub const CHUNK_AUTO: Ix = 0;
-
 #[derive(Clone, Debug)]
 pub enum Chunk {
     None,
