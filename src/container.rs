@@ -89,8 +89,8 @@ pub trait Container: Location {
     }
 
     /// Create a new dataset builder.
-    fn new_dataset<T: ToDatatype>(&self) -> DatasetBuilder {
-        DatasetBuilder::new::<T, Self>(&self)
+    fn new_dataset<T: ToDatatype>(&self) -> DatasetBuilder<T> {
+        DatasetBuilder::<T>::new::<Self>(&self)
     }
 }
 

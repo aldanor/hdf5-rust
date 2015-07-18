@@ -1,18 +1,37 @@
-use ffi::h5d::{H5Dcreate2, H5Dcreate_anon};
+use ffi::h5::hsize_t;
+use ffi::h5d::{
+    H5Dcreate2, H5Dcreate_anon, H5D_FILL_TIME_ALLOC, H5Dget_create_plist, H5D_layout_t,
+    H5Dget_space
+};
 use ffi::h5i::{H5I_DATASET, hid_t};
-use ffi::h5p::{H5Pcreate, H5Pset_create_intermediate_group, H5P_DEFAULT, H5Pset_obj_track_times};
+use ffi::h5p::{
+    H5Pcreate, H5Pset_create_intermediate_group, H5P_DEFAULT, H5Pset_obj_track_times,
+    H5Pset_fill_time, H5Pset_chunk, H5Pget_layout, H5Pget_chunk
+};
 use globals::H5P_LINK_CREATE;
 
 use container::Container;
-use datatype::{Datatype, ToDatatype};
+use datatype::{Datatype, ToDatatype, AnyDatatype};
 use error::Result;
-use filters::{Filters, Chunk, SzipMethod};
+use filters::{Filters, SzipMethod};
 use handle::{Handle, ID, FromID, get_id_type};
 use location::Location;
 use object::Object;
 use plist::PropertyList;
-use space::{Dataspace, Dimension};
+use space::{Dataspace, Dimension, Ix};
 use util::to_cstring;
+
+use libc::c_int;
+use num::integer::div_floor;
+use std::marker::PhantomData;
+
+#[derive(Clone, Debug)]
+pub enum Chunk {
+    None,
+    Auto,
+    Infer,
+    Manual(Vec<Ix>)
+}
 
 pub struct Dataset {
     handle: Handle,
@@ -38,117 +57,206 @@ impl Object for Dataset {}
 impl Location for Dataset {}
 
 impl Dataset {
+    /// Returns the shape of the datasets.
+    pub fn shape(&self) -> Vec<Ix> {
+        if let Ok(s) = self.dataspace() { s.dims() } else { vec![] }
+    }
+
+    /// Returns the number of dimensions in the dataset.
+    pub fn ndim(&self) -> usize {
+        if let Ok(s) = self.dataspace() { s.ndim() } else { 0 }
+    }
+
+    /// Returns `true` if the dataset has a chunked layout.
+    pub fn is_chunked(&self) -> bool {
+        if let Ok(dcpl) = self.dcpl() {
+            h5lock!({
+                H5Pget_layout(dcpl.id()) == H5D_layout_t::H5D_CHUNKED
+            })
+        } else {
+            false
+        }
+    }
+
+    /// Returns the chunk shape if the dataset is chunked.
+    pub fn chunks(&self) -> Option<Vec<Ix>> {
+        h5lock!({
+            let dcpl = self.dcpl();
+            match (dcpl, self.is_chunked()) {
+                (Ok(dcpl), true)  => Some({
+                    let ndim = self.ndim();
+                    let mut dims: Vec<hsize_t> = Vec::with_capacity(ndim);
+                    dims.set_len(ndim);
+                    H5Pget_chunk(dcpl.id(), ndim as c_int, dims.as_mut_ptr());
+                    dims.iter().map(|&x| x as Ix).collect()
+                }),
+                _ => None,
+            }
+        })
+    }
+
+    fn dcpl(&self) -> Result<PropertyList> {
+        PropertyList::from_id(h5try!(H5Dget_create_plist(self.id())))
+    }
+
+    fn dataspace(&self) -> Result<Dataspace> {
+        Dataspace::from_id(h5try!(H5Dget_space(self.id())))
+    }
 }
 
-pub struct DatasetBuilder {
-    datatype: Result<Datatype>,
+#[derive(Clone)]
+pub struct DatasetBuilder<T> {
     filters: Filters,
     chunk: Chunk,
     parent: Result<Handle>,
     track_times: bool,
     resizable: bool,
+    phantom: PhantomData<T>,
 }
 
-impl DatasetBuilder {
-    /// Create a new dataset builder, bind it to a container and set the datatype.
-    pub fn new<T: ToDatatype, C: Container>(parent: &C) -> DatasetBuilder {
-        // Store the reference to the parent handle, increase its reference count.
-        let handle = Handle::new(parent.id());
-        if let Ok(ref handle) = handle {
-            handle.incref();
-        }
 
-        // Datatype and parent may contain invalid values, to be unwrapped later.
-        DatasetBuilder {
-            datatype: T::to_datatype(),
-            filters: Filters::default(),
-            chunk: Chunk::Auto,
-            parent: handle,
-            track_times: false,
-            resizable: false,
-        }
+impl<T: ToDatatype> DatasetBuilder<T> {
+    /// Create a new dataset builder, bind it to a container and set the datatype.
+    pub fn new<C: Container>(parent: &C) -> DatasetBuilder<T> {
+        h5lock_s!({
+            // Store the reference to the parent handle and try to increase its reference count.
+            let handle = Handle::new(parent.id());
+            if let Ok(ref handle) = handle {
+                handle.incref();
+            }
+
+            DatasetBuilder::<T> {
+                filters: Filters::default(),
+                chunk: Chunk::Auto,
+                parent: handle,
+                track_times: false,
+                resizable: false,
+                phantom: PhantomData,
+            }
+        })
     }
 
     /// Disable chunking.
-    pub fn no_chunk(&mut self) -> &mut DatasetBuilder {
+    pub fn no_chunk(&mut self) -> &mut DatasetBuilder<T> {
         self.chunk = Chunk::None; self
     }
 
     /// Enable automatic chunking only if chunking is required (default option).
-    pub fn chunk_auto(&mut self) -> &mut DatasetBuilder {
+    pub fn chunk_auto(&mut self) -> &mut DatasetBuilder<T> {
         self.chunk = Chunk::Auto; self
     }
 
     /// Enable chunking with automatic chunk shape.
-    pub fn chunk_infer(&mut self) -> &mut DatasetBuilder {
+    pub fn chunk_infer(&mut self) -> &mut DatasetBuilder<T> {
         self.chunk = Chunk::Infer; self
     }
 
     /// Set chunk shape manually.
-    pub fn chunk<D: Dimension>(&mut self, chunk: D) -> &mut DatasetBuilder {
+    pub fn chunk<D: Dimension>(&mut self, chunk: D) -> &mut DatasetBuilder<T> {
         self.chunk = Chunk::Manual(chunk.dims()); self
     }
 
     /// Set the filters.
-    pub fn filters(&mut self, filters: &Filters) -> &mut DatasetBuilder {
+    pub fn filters(&mut self, filters: &Filters) -> &mut DatasetBuilder<T> {
         self.filters = filters.clone(); self
     }
 
     /// Enable or disable tracking object modification time (disabled by default).
-    pub fn track_times(&mut self, track_times: bool) -> &mut DatasetBuilder {
+    pub fn track_times(&mut self, track_times: bool) -> &mut DatasetBuilder<T> {
         self.track_times = track_times; self
     }
 
     /// Make the dataset resizable along all axes (requires chunking).
-    pub fn resizable(&mut self, resizable: bool) -> &mut DatasetBuilder {
+    pub fn resizable(&mut self, resizable: bool) -> &mut DatasetBuilder<T> {
         self.resizable = resizable; self
     }
 
     /// Enable gzip compression with a specified level (0-9).
-    pub fn gzip(&mut self, level: u8) -> &mut DatasetBuilder {
+    pub fn gzip(&mut self, level: u8) -> &mut DatasetBuilder<T> {
         self.filters.gzip(level); self
     }
 
     /// Enable szip compression with a specified method (EC, NN) and level (0-32).
-    pub fn szip(&mut self, method: SzipMethod, level: u8) -> &mut DatasetBuilder {
+    pub fn szip(&mut self, method: SzipMethod, level: u8) -> &mut DatasetBuilder<T> {
         self.filters.szip(method, level); self
     }
 
     /// Enable or disable shuffle filter.
-    pub fn shuffle(&mut self, shuffle: bool) -> &mut DatasetBuilder {
+    pub fn shuffle(&mut self, shuffle: bool) -> &mut DatasetBuilder<T> {
         self.filters.shuffle(shuffle); self
     }
 
     /// Enable or disable fletcher32 filter.
-    pub fn fletcher32(&mut self, fletcher32: bool) -> &mut DatasetBuilder {
+    pub fn fletcher32(&mut self, fletcher32: bool) -> &mut DatasetBuilder<T> {
         self.filters.fletcher32(fletcher32); self
     }
 
     /// Enable scale-offset filter with a specified factor (0 means automatic).
-    pub fn scale_offset(&mut self, scale_offset: u32) -> &mut DatasetBuilder {
+    pub fn scale_offset(&mut self, scale_offset: u32) -> &mut DatasetBuilder<T> {
         self.filters.scale_offset(scale_offset); self
     }
 
-    fn finalize<D: Dimension>(&self, name: Option<String>, shape: D) -> Result<Dataset> {
-        let datatype = try_ref_clone!(self.datatype);
-        let parent = try_ref_clone!(self.parent);
-
+    fn make_dcpl<D: Dimension>(&self, datatype: &Datatype, shape: D) -> Result<PropertyList> {
         h5lock!({
-            let dataspace = try!(Dataspace::new(&shape, self.resizable));
-            let dcpl = try!(self.filters.to_dcpl(
-                &datatype, &shape, self.chunk.clone(), self.resizable
-            ));
+            let dcpl = try!(self.filters.to_dcpl(datatype));
+            let id = dcpl.id();
 
             if self.track_times {
-                h5try_s!(H5Pset_obj_track_times(dcpl.id(), 0));
+                h5try_s!(H5Pset_obj_track_times(id, 0));
             }
+
+            if let Chunk::None = self.chunk {
+                ensure!(!self.filters.has_filters(),
+                    "Chunking must be enabled when filters are present");
+                ensure!(!self.resizable,
+                    "Chunking must be enabled for resizable datasets");
+            } else {
+                let no_chunk = if let Chunk::Auto = self.chunk {
+                    !self.filters.has_filters() && !self.resizable
+                } else {
+                    false
+                };
+                if !no_chunk {
+                    ensure!(shape.ndim() > 0,
+                        "Chunking cannot be enabled for scalar datasets");
+                    let dims = match self.chunk {
+                        Chunk::Manual(ref c) => c.clone(),
+                        _ => infer_chunk_size(shape.clone(), datatype.size()),
+                    };
+                    ensure!(dims.ndim() == shape.ndim(),
+                        "Invalid chunk ndim: expected {}, got {}", shape.ndim(), dims.ndim());
+                    ensure!(dims.size() > 0,
+                        "Invalid chunk: {:?} (all dimensions must be positive)", dims);
+                    ensure!(dims.iter().zip(shape.dims().iter()).all(|(&c, &s)| c <= s),
+                        "Invalid chunk: {:?} (must not exceed data shape in any dimension)", dims);
+                    let c_dims: Vec<hsize_t> = dims.iter().map(|&x| x as hsize_t).collect();
+                    h5try_s!(H5Pset_chunk(id, dims.ndim() as c_int, c_dims.as_ptr()));
+                    h5try_s!(H5Pset_fill_time(id, H5D_FILL_TIME_ALLOC));
+                }
+            }
+
+            Ok(dcpl)
+        })
+    }
+
+    fn make_lcpl(&self) -> Result<PropertyList> {
+        h5lock_s!({
+            let lcpl = try!(PropertyList::from_id(h5try!(H5Pcreate(*H5P_LINK_CREATE))));
+            h5call!(H5Pset_create_intermediate_group(lcpl.id(), 1)).and(Ok(lcpl))
+        })
+    }
+
+    fn finalize<D: Dimension>(&self, name: Option<String>, shape: D) -> Result<Dataset> {
+        h5lock!({
+            let datatype = try!(T::to_datatype());
+            let parent = try_ref_clone!(self.parent);
+
+            let dataspace = try!(Dataspace::new(&shape, self.resizable));
+            let dcpl = try!(self.make_dcpl(&datatype, &shape));
 
             match name.clone() {
                 Some(name) => {
-                    // Create intermediate groups automatically.
-                    let lcpl = try!(PropertyList::from_id(h5try_s!(H5Pcreate(*H5P_LINK_CREATE))));
-                    h5try_s!(H5Pset_create_intermediate_group(lcpl.id(), 1));
-
+                    let lcpl = try!(self.make_lcpl());
                     Dataset::from_id(h5try_s!(H5Dcreate2(
                         parent.id(), to_cstring(name).as_ptr(), datatype.id(),
                         dataspace.id(), lcpl.id(), dcpl.id(), H5P_DEFAULT
@@ -175,6 +283,130 @@ impl DatasetBuilder {
     }
 }
 
+fn infer_chunk_size<D: Dimension>(shape: D, typesize: usize) -> Vec<Ix> {
+    // This algorithm is borrowed from h5py, though the idea originally comes from PyTables.
+
+    const CHUNK_BASE: f64 = (16 * 1024) as f64;
+    const CHUNK_MIN:  f64 = (8 * 1024) as f64;
+    const CHUNK_MAX:  f64 = (1024 * 1024) as f64;
+
+    if shape.ndim() == 0 {
+        return vec![];
+    } else if shape.size() == 0 {
+        return vec![1];
+    }
+
+    let mut chunks = shape.dims();
+    let total = (typesize * shape.size()) as f64;
+    let mut target: f64 = CHUNK_BASE * 2.0_f64.powf((total / (1024.0 * 1024.0)).log10());
+
+    if target > CHUNK_MAX {
+        target = CHUNK_MAX;
+    } else if target < CHUNK_MIN {
+        target = CHUNK_MIN;
+    }
+
+    // Loop over axes, dividing them by 2, stop when all of the following is true:
+    // - chunk size is smaller than the target chunk size or is within 50% of target chunk size
+    // - chunk size is smaller than the maximum chunk size
+    for i in 0.. {
+        let size = chunks.iter().fold(1, |acc, &el| acc * el);
+        let bytes = (size * typesize) as f64;
+        if (bytes < target * 1.5 && bytes < CHUNK_MAX) || size == 1 {
+            break;
+        }
+        let axis = i % shape.ndim();
+        chunks[axis] = div_floor(chunks[axis] + 1, 2);
+    }
+
+    chunks
+}
+
 #[cfg(test)]
 mod tests {
+    use super::infer_chunk_size;
+    use container::Container;
+    use test::with_tmp_file;
+
+    #[test]
+    pub fn test_infer_chunk_size() {
+        assert_eq!(infer_chunk_size((), 1), vec![]);
+        assert_eq!(infer_chunk_size(0, 1), vec![1]);
+        assert_eq!(infer_chunk_size((1,), 1), vec![1]);
+
+        // generated regression tests vs h5py implementation
+        assert_eq!(infer_chunk_size((65682868,), 1), vec![64144]);
+        assert_eq!(infer_chunk_size((56755037,), 2), vec![27713]);
+        assert_eq!(infer_chunk_size((56882283,), 4), vec![27775]);
+        assert_eq!(infer_chunk_size((21081789,), 8), vec![10294]);
+        assert_eq!(infer_chunk_size((5735, 6266), 1), vec![180, 392]);
+        assert_eq!(infer_chunk_size((467, 4427), 2), vec![30, 554]);
+        assert_eq!(infer_chunk_size((5579, 8323), 4), vec![88, 261]);
+        assert_eq!(infer_chunk_size((1686, 770), 8), vec![106, 49]);
+        assert_eq!(infer_chunk_size((344, 414, 294), 1), vec![22, 52, 37]);
+        assert_eq!(infer_chunk_size((386, 192, 444), 2), vec![25, 24, 56]);
+        assert_eq!(infer_chunk_size((277, 161, 460), 4), vec![18, 21, 58]);
+        assert_eq!(infer_chunk_size((314, 22, 253), 8), vec![40, 3, 32]);
+        assert_eq!(infer_chunk_size((89, 49, 91, 59), 1), vec![12, 13, 23, 15]);
+        assert_eq!(infer_chunk_size((42, 92, 60, 80), 2), vec![6, 12, 15, 20]);
+        assert_eq!(infer_chunk_size((15, 62, 62, 47), 4), vec![4, 16, 16, 12]);
+        assert_eq!(infer_chunk_size((62, 51, 55, 64), 8), vec![8, 7, 7, 16]);
+    }
+
+    #[test]
+    pub fn test_is_chunked() {
+        with_tmp_file(|file| {
+            assert_eq!(file.new_dataset::<u32>()
+                .create_anon(1).unwrap().is_chunked(),
+                    false);
+            assert_eq!(file.new_dataset::<u32>()
+                .shuffle(true).create_anon(1).unwrap().is_chunked(),
+                    true);
+        });
+    }
+
+    #[test]
+    pub fn test_chunks() {
+        with_tmp_file(|file| {
+            assert_eq!(file.new_dataset::<u32>()
+                .create_anon(1).unwrap().chunks(),
+                    None);
+            assert_eq!(file.new_dataset::<u32>()
+                .no_chunk().create_anon(1).unwrap().chunks(),
+                    None);
+            assert_eq!(file.new_dataset::<u32>()
+                .chunk((1, 2)).create_anon((10, 20)).unwrap().chunks(),
+                    Some(vec![1, 2]));
+            assert_eq!(file.new_dataset::<u32>()
+                .chunk_infer().create_anon((5579, 8323)).unwrap().chunks(),
+                    Some(vec![88, 261]));
+            assert_eq!(file.new_dataset::<u32>()
+                .chunk_auto().create_anon((5579, 8323)).unwrap().chunks(),
+                    None);
+            assert_eq!(file.new_dataset::<u32>()
+                .chunk_auto().shuffle(true).create_anon((5579, 8323)).unwrap().chunks(),
+                    Some(vec![88, 261]));
+        });
+    }
+
+    #[test]
+    pub fn test_invalid_chunk() {
+        with_tmp_file(|file| {
+            let b = file.new_dataset::<u32>();
+            assert_err!(b.clone().shuffle(true).no_chunk().create_anon(1),
+                "Chunking must be enabled when filters are present");
+            assert_err!(b.clone().no_chunk().resizable(true).create_anon(1),
+                "Chunking must be enabled for resizable datasets");
+            assert_err!(b.clone().chunk_infer().create_anon(()),
+                "Chunking cannot be enabled for scalar datasets");
+            assert_err!(b.clone().chunk((1, 2)).create_anon(()),
+                "Chunking cannot be enabled for scalar datasets");
+            assert_err!(b.clone().chunk((1, 2)).create_anon(1),
+                "Invalid chunk ndim: expected 1, got 2");
+            assert_err!(b.clone().chunk((0, 2)).create_anon((1, 2)),
+                r"Invalid chunk: \[0, 2\] \(all dimensions must be positive\)");
+            assert_err!(b.clone().chunk((1, 3)).create_anon((1, 2)),
+                r"Invalid chunk: \[1, 3\] \(must not exceed data shape in any dimension\)");
+        })
+    }
 }
