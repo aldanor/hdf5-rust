@@ -8,6 +8,8 @@ use ffi::h5t::{
     H5Tcopy, H5Tget_class, H5Tget_order, H5Tget_offset, H5Tget_sign, H5Tget_precision, H5Tget_size
 };
 
+use std::fmt;
+
 #[cfg(target_endian = "big")]
 use globals::{
     H5T_STD_I8BE, H5T_STD_I16BE,
@@ -178,6 +180,26 @@ impl FromID for Datatype {
 
 impl Object for Datatype {}
 
+impl fmt::Debug for Datatype {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(self, f)
+    }
+}
+
+impl fmt::Display for Datatype {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if !self.is_valid() {
+            return "<HDF5 datatype: invalid id>".fmt(f);
+        }
+        format!("<HDF5 datatype: {}>", match *self {
+            Datatype::Integer(ref dt) => format!("{}-bit {}signed integer", dt.precision(),
+                                            if dt.is_signed() { "" } else { "un" }),
+            Datatype::Float(ref dt)   => format!("{}-bit float", dt.precision()),
+            // _ => "unknown",
+        }).fmt(f)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::{Datatype, AnyDatatype, AtomicDatatype, ToDatatype};
@@ -252,5 +274,23 @@ mod tests {
 
         test_integer!(isize, true, POINTER_WIDTH_BYTES * 8, POINTER_WIDTH_BYTES);
         test_integer!(usize, false, POINTER_WIDTH_BYTES * 8, POINTER_WIDTH_BYTES);
+    }
+
+    #[test]
+    pub fn test_debug_display() {
+        assert_eq!(format!("{}", u32::to_datatype().unwrap()),
+            "<HDF5 datatype: 32-bit unsigned integer>");
+        assert_eq!(format!("{:?}", u32::to_datatype().unwrap()),
+            "<HDF5 datatype: 32-bit unsigned integer>");
+
+        assert_eq!(format!("{}", i8::to_datatype().unwrap()),
+            "<HDF5 datatype: 8-bit signed integer>");
+        assert_eq!(format!("{}", i8::to_datatype().unwrap()),
+            "<HDF5 datatype: 8-bit signed integer>");
+
+        assert_eq!(format!("{}", f64::to_datatype().unwrap()),
+            "<HDF5 datatype: 64-bit float>");
+        assert_eq!(format!("{:?}", f64::to_datatype().unwrap()),
+            "<HDF5 datatype: 64-bit float>");
     }
 }
