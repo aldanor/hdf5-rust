@@ -89,6 +89,11 @@ impl DatasetBuilder {
         self.chunk = Chunk::Manual(chunk.dims()); self
     }
 
+    /// Set the filters.
+    pub fn filters(&mut self, filters: &Filters) -> &mut DatasetBuilder {
+        self.filters = filters.clone(); self
+    }
+
     /// Enable or disable tracking object modification time (disabled by default).
     pub fn track_times(&mut self, track_times: bool) -> &mut DatasetBuilder {
         self.track_times = track_times; self
