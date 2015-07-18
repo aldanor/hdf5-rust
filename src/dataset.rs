@@ -1,7 +1,7 @@
 use ffi::h5::{hsize_t, hbool_t};
 use ffi::h5d::{
     H5Dcreate2, H5Dcreate_anon, H5D_FILL_TIME_ALLOC, H5Dget_create_plist, H5D_layout_t,
-    H5Dget_space
+    H5Dget_space, H5Dget_storage_size
 };
 use ffi::h5i::{H5I_DATASET, hid_t};
 use ffi::h5p::{
@@ -126,6 +126,12 @@ impl Dataset {
             h5lock_s!(H5Pget_obj_track_times(self.dcpl.id(), track_times));
             *track_times == 1
         }
+    }
+
+    /// Returns the amount of file space required for the dataset. Note that this only
+    /// accounts for the space which has actually been allocated (it can be equal to zero).
+    pub fn storage_size(&self) -> u64 {
+        h5lock!(H5Dget_storage_size(self.id())) as u64
     }
 
     fn dataspace(&self) -> Result<Dataspace> {
@@ -361,10 +367,16 @@ fn infer_chunk_size<D: Dimension>(shape: D, typesize: usize) -> Vec<Ix> {
 #[cfg(test)]
 mod tests {
     use super::infer_chunk_size;
+    use ffi::h5d::H5Dwrite;
+    use ffi::h5s::H5S_ALL;
+    use ffi::h5p::H5P_DEFAULT;
     use container::Container;
+    use datatype::ToDatatype;
     use file::File;
     use filters::{Filters, SzipMethod, gzip_available, szip_available};
+    use handle::ID;
     use test::{with_tmp_file, with_tmp_path};
+    use libc::c_void;
     use std::io::Read;
     use std::fs;
 
@@ -529,5 +541,20 @@ mod tests {
             fs::File::open(&path).unwrap().read_to_end(&mut buf2).unwrap();
             assert!(buf1 != buf2);
         });
+    }
+
+    #[test]
+    pub fn test_storage_size() {
+        with_tmp_file(|file| {
+            let ds = file.new_dataset::<u16>().create_anon(3).unwrap();
+            assert_eq!(ds.storage_size(), 0);
+
+            let buf: Vec<u16> = vec![1, 2, 3];
+            h5call!(H5Dwrite(
+                ds.id(), u16::to_datatype().unwrap().id(), H5S_ALL,
+                H5S_ALL, H5P_DEFAULT, buf.as_ptr() as *const c_void
+            )).unwrap();
+            assert_eq!(ds.storage_size(), 6);
+        })
     }
 }
