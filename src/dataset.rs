@@ -1,4 +1,4 @@
-use ffi::h5::hsize_t;
+use ffi::h5::{hsize_t, hbool_t};
 use ffi::h5d::{
     H5Dcreate2, H5Dcreate_anon, H5D_FILL_TIME_ALLOC, H5Dget_create_plist, H5D_layout_t,
     H5Dget_space
@@ -6,7 +6,8 @@ use ffi::h5d::{
 use ffi::h5i::{H5I_DATASET, hid_t};
 use ffi::h5p::{
     H5Pcreate, H5Pset_create_intermediate_group, H5P_DEFAULT, H5Pset_obj_track_times,
-    H5Pset_fill_time, H5Pset_chunk, H5Pget_layout, H5Pget_chunk, H5Pset_fill_value
+    H5Pset_fill_time, H5Pset_chunk, H5Pget_layout, H5Pget_chunk, H5Pset_fill_value,
+    H5Pget_obj_track_times
 };
 use globals::H5P_LINK_CREATE;
 
@@ -118,6 +119,15 @@ impl Dataset {
         })
     }
 
+    /// Returns `true` if object modification time is tracked by the dataset.
+    pub fn track_times(&self) -> bool {
+        unsafe {
+            let track_times: *mut hbool_t = &mut 0;
+            h5lock_s!(H5Pget_obj_track_times(self.dcpl.id(), track_times));
+            *track_times == 1
+        }
+    }
+
     fn dataspace(&self) -> Result<Dataspace> {
         Dataspace::from_id(h5try!(H5Dget_space(self.id())))
     }
@@ -224,9 +234,7 @@ impl<T: ToDatatype> DatasetBuilder<T> {
             let dcpl = try!(self.filters.to_dcpl(datatype));
             let id = dcpl.id();
 
-            if self.track_times {
-                h5try_s!(H5Pset_obj_track_times(id, 0));
-            }
+            h5try_s!(H5Pset_obj_track_times(id, self.track_times as hbool_t));
 
             if let Some(ref fill_value) = self.fill_value {
                 h5try_s!(H5Pset_fill_value(id, datatype.id(),
@@ -354,8 +362,11 @@ fn infer_chunk_size<D: Dimension>(shape: D, typesize: usize) -> Vec<Ix> {
 mod tests {
     use super::infer_chunk_size;
     use container::Container;
+    use file::File;
     use filters::{Filters, SzipMethod, gzip_available, szip_available};
-    use test::with_tmp_file;
+    use test::{with_tmp_file, with_tmp_path};
+    use std::io::Read;
+    use std::fs;
 
     #[test]
     pub fn test_infer_chunk_size() {
@@ -487,5 +498,36 @@ mod tests {
             assert_eq!(file.new_dataset::<u32>().resizable(true).create_anon(1).unwrap()
                 .resizable(), true);
         })
+    }
+
+    #[test]
+    pub fn test_track_times() {
+        with_tmp_file(|file| {
+            assert_eq!(file.new_dataset::<u32>().create_anon(1).unwrap()
+                .track_times(), false);
+            assert_eq!(file.new_dataset::<u32>().track_times(false).create_anon(1).unwrap()
+                .track_times(), false);
+            assert_eq!(file.new_dataset::<u32>().track_times(true).create_anon(1).unwrap()
+                .track_times(), true);
+        });
+
+        with_tmp_path(|path| {
+            let mut buf1: Vec<u8> = Vec::new();
+            File::open(&path, "w").unwrap().new_dataset::<u32>().create("foo", 1).unwrap();
+            fs::File::open(&path).unwrap().read_to_end(&mut buf1).unwrap();
+
+            let mut buf2: Vec<u8> = Vec::new();
+            File::open(&path, "w").unwrap().new_dataset::<u32>()
+                .track_times(false).create("foo", 1).unwrap();
+            fs::File::open(&path).unwrap().read_to_end(&mut buf2).unwrap();
+
+            assert_eq!(buf1, buf2);
+
+            let mut buf2: Vec<u8> = Vec::new();
+            File::open(&path, "w").unwrap().new_dataset::<u32>()
+                .track_times(true).create("foo", 1).unwrap();
+            fs::File::open(&path).unwrap().read_to_end(&mut buf2).unwrap();
+            assert!(buf1 != buf2);
+        });
     }
 }
