@@ -217,8 +217,9 @@ mod tests {
     #[test]
     pub fn test_dataset() {
         with_tmp_file(|file| {
-            file.create_group("/foo/bar").unwrap()
-                .new_dataset::<u32>().create("baz", (10, 20)).unwrap();
+            file.new_dataset::<u32>().no_chunk().create("/foo/bar", (10, 20)).unwrap();
+            file.new_dataset::<f32>().resizable(true).create("baz", (10, 20)).unwrap();
+            file.new_dataset::<u8>().resizable(true).create_anon((10, 20)).unwrap();
         });
     }
 }

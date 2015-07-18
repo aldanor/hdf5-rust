@@ -6,11 +6,12 @@ use globals::H5P_LINK_CREATE;
 use container::Container;
 use datatype::{Datatype, ToDatatype};
 use error::Result;
-use filters::{Filters, CHUNK_AUTO};
+use filters::{Filters, Chunk};
 use handle::{Handle, ID, FromID, get_id_type};
+use location::Location;
 use object::Object;
 use plist::PropertyList;
-use space::{Dataspace, Dimension, Ix};
+use space::{Dataspace, Dimension};
 use util::to_cstring;
 
 pub struct Dataset {
@@ -34,15 +35,18 @@ impl FromID for Dataset {
 
 impl Object for Dataset {}
 
+impl Location for Dataset {}
+
 impl Dataset {
 }
 
 pub struct DatasetBuilder {
     datatype: Result<Datatype>,
     filters: Filters,
-    chunk: Vec<Ix>,
+    chunk: Chunk,
     parent: Result<Handle>,
     track_times: bool,
+    resizable: bool,
 }
 
 impl DatasetBuilder {
@@ -54,19 +58,35 @@ impl DatasetBuilder {
             handle.incref();
         }
 
-        // Datatype and parent may contain invalid values but will be validated later.
+        // Datatype and parent may contain invalid values, to be unwrapped later.
         DatasetBuilder {
             datatype: T::to_datatype(),
             filters: Filters::default(),
-            chunk: CHUNK_AUTO.dims(),
+            chunk: Chunk::Auto,
             parent: handle,
             track_times: false,
+            resizable: false,
         }
     }
 
-    /// Configure chunking.
+    /// Disable chunking.
+    pub fn no_chunk(&mut self) -> &mut DatasetBuilder {
+        self.chunk = Chunk::None; self
+    }
+
+    /// Enable automatic chunking only if chunking is required (default option).
+    pub fn chunk_auto(&mut self) -> &mut DatasetBuilder {
+        self.chunk = Chunk::Auto; self
+    }
+
+    /// Enable chunking with automatic chunk shape.
+    pub fn chunk_infer(&mut self) -> &mut DatasetBuilder {
+        self.chunk = Chunk::Infer; self
+    }
+
+    /// Set chunk shape manually.
     pub fn chunk<D: Dimension>(&mut self, chunk: D) -> &mut DatasetBuilder {
-        self.chunk = chunk.dims(); self
+        self.chunk = Chunk::Manual(chunk.dims()); self
     }
 
     /// Enable or disable tracking object modification time (disabled by default).
@@ -74,13 +94,20 @@ impl DatasetBuilder {
         self.track_times = track_times; self
     }
 
+    /// Make the dataset resizable along all axes (requires chunking).
+    pub fn resizable(&mut self, resizable: bool) -> &mut DatasetBuilder {
+        self.resizable = resizable; self
+    }
+
     fn finalize<D: Dimension>(&self, name: Option<String>, shape: D) -> Result<Dataset> {
         let datatype = try_ref_clone!(self.datatype);
         let parent = try_ref_clone!(self.parent);
 
         h5lock!({
-            let dataspace = try!(Dataspace::new(&shape));
-            let dcpl = try!(self.filters.to_dcpl(&datatype, &shape, &self.chunk));
+            let dataspace = try!(Dataspace::new(&shape, self.resizable));
+            let dcpl = try!(self.filters.to_dcpl(
+                &datatype, &shape, self.chunk.clone(), self.resizable
+            ));
 
             if self.track_times {
                 h5try_s!(H5Pset_obj_track_times(dcpl.id(), 0));

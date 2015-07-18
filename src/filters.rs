@@ -28,13 +28,27 @@ pub const CHUNK_NONE: () = ();
 /// Enables automatic chunking.
 pub const CHUNK_AUTO: Ix = 0;
 
+#[derive(Clone, Debug)]
+pub enum Chunk {
+    None,
+    Auto,
+    Infer,
+    Manual(Vec<Ix>)
+}
+
+impl Chunk {
+    pub fn from_dims<D: Dimension>(dims: D) -> Chunk {
+        Chunk::Manual(dims.dims())
+    }
+}
+
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum SzipMethod {
     EntropyCoding,
     NearestNeighbor,
 }
 
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct Filters {
     gzip: Option<u8>,
     szip: Option<(SzipMethod, u8)>,
@@ -223,8 +237,9 @@ impl Filters {
         Ok(())
     }
 
-    pub fn to_dcpl<D1, D2>(&self, datatype: &Datatype, shape: D1, chunk: D2) -> Result<PropertyList>
-    where D1: Dimension, D2: Dimension {
+    pub fn to_dcpl<D: Dimension>(
+        &self, datatype: &Datatype, shape: D, chunk: Chunk, resizable: bool
+    ) -> Result<PropertyList> {
         try!(self.validate());
 
         h5lock!({
@@ -232,28 +247,34 @@ impl Filters {
             let id = plist.id();
 
             // chunking
-            if chunk.dims() == CHUNK_NONE.dims() {
-                ensure!(
-                    self.gzip.is_none() && self.szip.is_none() && !self.shuffle &&
-                        !self.fletcher32 && self.scale_offset.is_none(),
-                    "Chunking must be enabled when filters are present"
-                );
+            let has_filters =
+                self.gzip.is_some() || self.szip.is_some() || self.shuffle ||
+                self.fletcher32 || self.scale_offset.is_some();
+            if let Chunk::None = chunk {
+                ensure!(!has_filters, "Chunking must be enabled when filters are present");
+                ensure!(!resizable, "Chunking must be enabled for resizable datasets");
             } else {
-                ensure!(shape.ndim() > 0, "Chunking cannot be enabled for scalar datasets");
-                let chunk = if chunk.dims() == CHUNK_AUTO.dims() {
-                    infer_chunk_size(shape.clone(), datatype.size()) // automatic
+                let no_chunk = if let Chunk::Auto = chunk {
+                    !has_filters && !resizable
                 } else {
-                    chunk.dims()
+                    false
                 };
-                ensure!(chunk.ndim() == shape.ndim(),
-                    "Invalid chunk ndim: expected {}, got {}", shape.ndim(), chunk.ndim());
-                ensure!(chunk.size() > 0,
-                    "Invalid chunk: {:?} (all dimensions must be positive)", chunk);
-                ensure!(chunk.iter().zip(shape.dims().iter()).all(|(&c, &s)| c <= s),
-                    "Invalid chunk: {:?} (must not exceed data shape in any dimension)", chunk);
-                let dims: Vec<hsize_t> = chunk.iter().map(|&x| x as hsize_t).collect();
-                h5try_s!(H5Pset_chunk(id, chunk.ndim() as c_int, dims.as_ptr()));
-                h5try_s!(H5Pset_fill_time(id, H5D_FILL_TIME_ALLOC));
+                if !no_chunk {
+                    ensure!(shape.ndim() > 0, "Chunking cannot be enabled for scalar datasets");
+                    let dims = match chunk {
+                        Chunk::Manual(ref c) => c.clone(),
+                        _ => infer_chunk_size(shape.clone(), datatype.size()),
+                    };
+                    ensure!(dims.ndim() == shape.ndim(),
+                        "Invalid chunk ndim: expected {}, got {}", shape.ndim(), dims.ndim());
+                    ensure!(dims.size() > 0,
+                        "Invalid chunk: {:?} (all dimensions must be positive)", dims);
+                    ensure!(dims.iter().zip(shape.dims().iter()).all(|(&c, &s)| c <= s),
+                        "Invalid chunk: {:?} (must not exceed data shape in any dimension)", dims);
+                    let c_dims: Vec<hsize_t> = dims.iter().map(|&x| x as hsize_t).collect();
+                    h5try_s!(H5Pset_chunk(id, dims.ndim() as c_int, c_dims.as_ptr()));
+                    h5try_s!(H5Pset_fill_time(id, H5D_FILL_TIME_ALLOC));
+                }
             }
 
             // fletcher32
@@ -347,7 +368,7 @@ fn infer_chunk_size<D: Dimension>(shape: D, typesize: usize) -> Vec<Ix> {
 
 #[cfg(test)]
 mod tests {
-    use super::{Filters, SzipMethod, infer_chunk_size, CHUNK_NONE, CHUNK_AUTO};
+    use super::{Filters, Chunk, SzipMethod, infer_chunk_size};
     use datatype::ToDatatype;
     use space::Ix;
     use error::{Result, silence_errors};
@@ -370,8 +391,8 @@ mod tests {
     fn make_filters<T: ToDatatype>(filters: &Filters) -> Result<Filters> {
         let datatype = T::to_datatype().unwrap();
         let shape = (10, 20);
-        let chunks = CHUNK_AUTO;
-        let dcpl = try!(filters.to_dcpl(&datatype, &shape, chunks));
+        let chunks = Chunk::Auto;
+        let dcpl = try!(filters.to_dcpl(&datatype, &shape, chunks, true));
         Filters::from_dcpl(&dcpl)
     }
 
@@ -494,7 +515,7 @@ mod tests {
             filters.gzip_default();
         }
         let datatype = u32::to_datatype().unwrap();
-        let dcpl = filters.to_dcpl(&datatype, (10, 20), CHUNK_AUTO).unwrap();
+        let dcpl = filters.to_dcpl(&datatype, (10, 20), Chunk::Auto, true).unwrap();
         let filters2 = Filters::from_dcpl(&dcpl).unwrap();
         assert_eq!(filters2, filters);
     }
@@ -540,23 +561,29 @@ mod tests {
 
         let mut filters = Filters::new();
         filters.shuffle(true);
-        assert_err!(filters.to_dcpl(&datatype, &shape, CHUNK_NONE),
+        assert_err!(filters.to_dcpl(&datatype, &shape, Chunk::None, false),
             "Chunking must be enabled when filters are present");
-        assert_err!(filters.to_dcpl(&datatype, (), CHUNK_AUTO),
+        assert_err!(Filters::default().to_dcpl(&datatype, &shape, Chunk::None, true),
+            "Chunking must be enabled for resizable datasets");
+        assert_err!(filters.to_dcpl(&datatype, (), Chunk::Infer, false),
             "Chunking cannot be enabled for scalar datasets");
-        assert_err!(filters.to_dcpl(&datatype, (), (1, 2)),
+        assert_err!(filters.to_dcpl(&datatype, (), Chunk::from_dims((1, 2)), false),
             "Chunking cannot be enabled for scalar datasets");
-        assert_err!(filters.to_dcpl(&datatype, 1, (1, 2)),
+        assert_err!(filters.to_dcpl(&datatype, 1, Chunk::from_dims((1, 2)), false),
             "Invalid chunk ndim: expected 1, got 2");
-        assert_err!(filters.to_dcpl(&datatype, (1, 2), (0, 2)),
+        assert_err!(filters.to_dcpl(&datatype, (1, 2), Chunk::from_dims((0, 2)), false),
             r"Invalid chunk: \[0, 2\] \(all dimensions must be positive\)");
-        assert_err!(filters.to_dcpl(&datatype, (1, 2), (1, 3)),
+        assert_err!(filters.to_dcpl(&datatype, (1, 2), Chunk::from_dims((1, 3)), false),
             r"Invalid chunk: \[1, 3\] \(must not exceed data shape in any dimension\)");
 
-        let dcpl = filters.to_dcpl(&datatype, (5579, 8323), (1, 2)).unwrap();
+        let dcpl = filters.to_dcpl(
+            &datatype, (5579, 8323), Chunk::from_dims((1, 2)), true
+        ).unwrap();
         assert_eq!(get_chunk(&dcpl, 2), vec![1, 2]);
 
-        let dcpl = filters.to_dcpl(&datatype, (5579, 8323), CHUNK_AUTO).unwrap();
+        let dcpl = filters.to_dcpl(
+            &datatype, (5579, 8323), Chunk::Auto, true
+        ).unwrap();
         assert_eq!(get_chunk(&dcpl, 2), vec![88, 261]);
     }
 }
