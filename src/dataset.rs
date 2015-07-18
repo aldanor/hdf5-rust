@@ -102,7 +102,14 @@ impl Dataset {
 
     /// Returns the filters used to create the dataset.
     pub fn filters(&self) -> Result<Filters> {
-        Filters::from_dcpl(&try!(self.dcpl()))
+        h5lock_s!(Filters::from_dcpl(&try!(self.dcpl())))
+    }
+
+    /// Returns `true` if the dataset is resizable along some axis.
+    pub fn resizable(&self) -> bool {
+        h5lock_s!({
+            if let Ok(s) = self.dataspace() { s.resizable() } else { false }
+        })
     }
 
     fn dcpl(&self) -> Result<PropertyList> {
@@ -461,6 +468,18 @@ mod tests {
                     .create_anon(100).unwrap().filters().unwrap()
                     .get_szip(), Some((SzipMethod::EntropyCoding, 4)));
             }
+        })
+    }
+
+    #[test]
+    pub fn test_resizable() {
+        with_tmp_file(|file| {
+            assert_eq!(file.new_dataset::<u32>().create_anon(1).unwrap()
+                .resizable(), false);
+            assert_eq!(file.new_dataset::<u32>().resizable(false).create_anon(1).unwrap()
+                .resizable(), false);
+            assert_eq!(file.new_dataset::<u32>().resizable(true).create_anon(1).unwrap()
+                .resizable(), true);
         })
     }
 }
