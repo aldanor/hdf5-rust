@@ -80,6 +80,11 @@ impl Dataset {
         if let Ok(s) = self.dataspace() { s.ndim() } else { 0 }
     }
 
+    /// Returns the total number of elements in the dataset.
+    pub fn size(&self) -> usize {
+        self.shape().size()
+    }
+
     /// Returns `true` if the dataset is a scalar.
     pub fn is_scalar(&self) -> bool {
         self.ndim() == 0
@@ -463,15 +468,17 @@ mod tests {
     }
 
     #[test]
-    pub fn test_shape_ndim_is_scalar() {
+    pub fn test_shape_ndim_size() {
         with_tmp_file(|file| {
-            let d = file.new_dataset::<f32>().create_anon((1, 2)).unwrap();
-            assert_eq!(d.shape(), vec![1, 2]);
+            let d = file.new_dataset::<f32>().create_anon((2, 3)).unwrap();
+            assert_eq!(d.shape(), vec![2, 3]);
+            assert_eq!(d.size(), 6);
             assert_eq!(d.ndim(), 2);
             assert_eq!(d.is_scalar(), false);
 
             let d = file.new_dataset::<u8>().create_anon(()).unwrap();
             assert_eq!(d.shape(), vec![]);
+            assert_eq!(d.size(), 1);
             assert_eq!(d.ndim(), 0);
             assert_eq!(d.is_scalar(), true);
         })
