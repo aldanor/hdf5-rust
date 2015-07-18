@@ -1,7 +1,7 @@
 use ffi::h5::{hsize_t, hbool_t, haddr_t, HADDR_UNDEF};
 use ffi::h5d::{
     H5Dcreate2, H5Dcreate_anon, H5D_FILL_TIME_ALLOC, H5Dget_create_plist, H5D_layout_t,
-    H5Dget_space, H5Dget_storage_size, H5Dget_offset
+    H5Dget_space, H5Dget_storage_size, H5Dget_offset, H5Dget_type
 };
 use ffi::h5i::{H5I_DATASET, hid_t};
 use ffi::h5p::{
@@ -148,6 +148,11 @@ impl Dataset {
 
     fn dataspace(&self) -> Result<Dataspace> {
         Dataspace::from_id(h5try!(H5Dget_space(self.id())))
+    }
+
+    /// Returns a new `Datatype` object associated with this dataset.
+    pub fn datatype(&self) -> Result<Datatype> {
+        Datatype::from_id(h5try!(H5Dget_type(self.id())))
     }
 }
 
@@ -571,6 +576,14 @@ mod tests {
             )).unwrap();
             assert_eq!(ds.storage_size(), 6);
             assert!(ds.offset().is_some());
+        })
+    }
+
+    #[test]
+    pub fn test_datatype() {
+        with_tmp_file(|file| {
+            assert_eq!(file.new_dataset::<f32>().create_anon(1).unwrap().datatype().unwrap(),
+                       f32::to_datatype().unwrap());
         })
     }
 }
