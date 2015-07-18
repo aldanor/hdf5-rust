@@ -100,6 +100,11 @@ impl Dataset {
         })
     }
 
+    /// Returns the filters used to create the dataset.
+    pub fn filters(&self) -> Result<Filters> {
+        Filters::from_dcpl(&try!(self.dcpl()))
+    }
+
     fn dcpl(&self) -> Result<PropertyList> {
         PropertyList::from_id(h5try!(H5Dget_create_plist(self.id())))
     }
@@ -331,6 +336,7 @@ fn infer_chunk_size<D: Dimension>(shape: D, typesize: usize) -> Vec<Ix> {
 mod tests {
     use super::infer_chunk_size;
     use container::Container;
+    use filters::Filters;
     use test::with_tmp_file;
 
     #[test]
@@ -367,7 +373,7 @@ mod tests {
             assert_eq!(file.new_dataset::<u32>()
                 .shuffle(true).create_anon(1).unwrap().is_chunked(),
                     true);
-        });
+        })
     }
 
     #[test]
@@ -391,7 +397,7 @@ mod tests {
             assert_eq!(file.new_dataset::<u32>()
                 .chunk_auto().shuffle(true).create_anon((5579, 8323)).unwrap().chunks(),
                     Some(vec![88, 261]));
-        });
+        })
     }
 
     #[test]
@@ -427,6 +433,18 @@ mod tests {
             assert_eq!(d.shape(), vec![]);
             assert_eq!(d.ndim(), 0);
             assert_eq!(d.is_scalar(), true);
-        });
+        })
+    }
+
+    #[test]
+    pub fn test_filters() {
+        with_tmp_file(|file| {
+            assert_eq!(file.new_dataset::<u32>()
+                .create_anon(1).unwrap().filters().unwrap(),
+                    Filters::default());
+            assert_eq!(file.new_dataset::<u32>()
+                .shuffle(true).gzip(7).create_anon(1).unwrap().filters().unwrap(),
+                    *Filters::new().shuffle(true).gzip(7));
+        })
     }
 }
