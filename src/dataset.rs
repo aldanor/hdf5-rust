@@ -336,7 +336,7 @@ fn infer_chunk_size<D: Dimension>(shape: D, typesize: usize) -> Vec<Ix> {
 mod tests {
     use super::infer_chunk_size;
     use container::Container;
-    use filters::Filters;
+    use filters::{Filters, SzipMethod, gzip_available, szip_available};
     use test::with_tmp_file;
 
     #[test]
@@ -440,11 +440,27 @@ mod tests {
     pub fn test_filters() {
         with_tmp_file(|file| {
             assert_eq!(file.new_dataset::<u32>()
-                .create_anon(1).unwrap().filters().unwrap(),
+                .create_anon(100).unwrap().filters().unwrap(),
                     Filters::default());
-            assert_eq!(file.new_dataset::<u32>()
-                .shuffle(true).gzip(7).create_anon(1).unwrap().filters().unwrap(),
-                    *Filters::new().shuffle(true).gzip(7));
+            assert_eq!(file.new_dataset::<u32>().shuffle(true)
+                .create_anon(100).unwrap().filters().unwrap()
+                .get_shuffle(), true);
+            assert_eq!(file.new_dataset::<u32>().fletcher32(true)
+                .create_anon(100).unwrap().filters().unwrap()
+                .get_fletcher32(), true);
+            assert_eq!(file.new_dataset::<u32>().scale_offset(8)
+                .create_anon(100).unwrap().filters().unwrap()
+                .get_scale_offset(), Some(8));
+            if gzip_available() {
+                assert_eq!(file.new_dataset::<u32>().gzip(7)
+                    .create_anon(100).unwrap().filters().unwrap()
+                    .get_gzip(), Some(7));
+            }
+            if szip_available() {
+                assert_eq!(file.new_dataset::<u32>().szip(SzipMethod::EntropyCoding, 4)
+                    .create_anon(100).unwrap().filters().unwrap()
+                    .get_szip(), Some((SzipMethod::EntropyCoding, 4)));
+            }
         })
     }
 }

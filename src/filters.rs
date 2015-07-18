@@ -24,6 +24,16 @@ pub enum SzipMethod {
     NearestNeighbor,
 }
 
+/// Returns `true` if gzip filter is available.
+pub fn gzip_available() -> bool {
+    h5lock!(H5Zfilter_avail(H5Z_FILTER_DEFLATE) == 1)
+}
+
+/// Returns `true` if szip filter is available.
+pub fn szip_available() -> bool {
+    h5lock!(H5Zfilter_avail(H5Z_FILTER_SZIP) == 1)
+}
+
 #[derive(Clone, PartialEq, Debug)]
 pub struct Filters {
     gzip: Option<u8>,
@@ -278,19 +288,10 @@ impl Filters {
 
 #[cfg(test)]
 mod tests {
-    use super::{Filters, SzipMethod};
+    use super::{Filters, SzipMethod, gzip_available, szip_available};
     use datatype::ToDatatype;
     use error::{Result, silence_errors};
-    use ffi::h5z::{H5Z_FILTER_DEFLATE, H5Z_FILTER_SZIP, H5Zfilter_avail};
     use num::Bounded;
-
-    fn gzip_available() -> bool {
-        h5lock!(H5Zfilter_avail(H5Z_FILTER_DEFLATE) == 1)
-    }
-
-    fn szip_available() -> bool {
-        h5lock!(H5Zfilter_avail(H5Z_FILTER_SZIP) == 1)
-    }
 
     fn make_filters<T: ToDatatype>(filters: &Filters) -> Result<Filters> {
         let datatype = T::to_datatype().unwrap();
