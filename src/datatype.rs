@@ -107,7 +107,7 @@ pub trait AtomicDatatype: ID {
     }
 }
 
-pub trait ToDatatype {
+pub trait ToDatatype: Clone {
     fn to_datatype() -> Result<Datatype>;
 }
 
