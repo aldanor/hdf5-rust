@@ -106,6 +106,15 @@ impl Handle {
     }
 }
 
+impl Clone for Handle {
+    fn clone(&self) -> Handle {
+        h5lock_s!({
+            self.incref();
+            Handle::from_id(self.id()).unwrap_or(Handle::invalid())
+        })
+    }
+}
+
 impl Drop for Handle {
     fn drop(&mut self) {
         h5lock_s!(self.decref());
