@@ -1,7 +1,7 @@
-use ffi::h5::{hsize_t, hbool_t};
+use ffi::h5::{hsize_t, hbool_t, haddr_t, HADDR_UNDEF};
 use ffi::h5d::{
     H5Dcreate2, H5Dcreate_anon, H5D_FILL_TIME_ALLOC, H5Dget_create_plist, H5D_layout_t,
-    H5Dget_space, H5Dget_storage_size
+    H5Dget_space, H5Dget_storage_size, H5Dget_offset
 };
 use ffi::h5i::{H5I_DATASET, hid_t};
 use ffi::h5p::{
@@ -137,6 +137,13 @@ impl Dataset {
     /// accounts for the space which has actually been allocated (it can be equal to zero).
     pub fn storage_size(&self) -> u64 {
         h5lock!(H5Dget_storage_size(self.id())) as u64
+    }
+
+    /// Returns the absolute byte offset of the dataset in the file if such offset is defined
+    /// (which is not the case for datasets that are chunked, compact or not allocated yet).
+    pub fn offset(&self) -> Option<u64> {
+        let offset: haddr_t = h5lock!(H5Dget_offset(self.id()));
+        if offset == HADDR_UNDEF { None } else { Some(offset as u64) }
     }
 
     fn dataspace(&self) -> Result<Dataspace> {
@@ -551,10 +558,11 @@ mod tests {
     }
 
     #[test]
-    pub fn test_storage_size() {
+    pub fn test_storage_size_offset() {
         with_tmp_file(|file| {
             let ds = file.new_dataset::<u16>().create_anon(3).unwrap();
             assert_eq!(ds.storage_size(), 0);
+            assert!(ds.offset().is_none());
 
             let buf: Vec<u16> = vec![1, 2, 3];
             h5call!(H5Dwrite(
@@ -562,6 +570,7 @@ mod tests {
                 H5S_ALL, H5P_DEFAULT, buf.as_ptr() as *const c_void
             )).unwrap();
             assert_eq!(ds.storage_size(), 6);
+            assert!(ds.offset().is_some());
         })
     }
 }
