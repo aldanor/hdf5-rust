@@ -5,7 +5,8 @@ use object::Object;
 use ffi::h5i::{H5I_DATATYPE, hid_t};
 use ffi::h5t::{
     H5T_INTEGER, H5T_FLOAT, H5T_NO_CLASS, H5T_NCLASSES, H5T_ORDER_BE, H5T_ORDER_LE, H5T_SGN_2,
-    H5Tcopy, H5Tget_class, H5Tget_order, H5Tget_offset, H5Tget_sign, H5Tget_precision, H5Tget_size
+    H5Tcopy, H5Tget_class, H5Tget_order, H5Tget_offset, H5Tget_sign, H5Tget_precision, H5Tget_size,
+    H5Tequal
 };
 
 use std::fmt;
@@ -180,6 +181,12 @@ impl FromID for Datatype {
 
 impl Object for Datatype {}
 
+impl PartialEq for Datatype {
+    fn eq(&self, other: &Datatype) -> bool {
+        h5call!(H5Tequal(self.id(), other.id())).unwrap_or(0) == 1
+    }
+}
+
 impl fmt::Debug for Datatype {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::Display::fmt(self, f)
@@ -222,6 +229,12 @@ mod tests {
     pub fn test_invalid_datatype() {
         assert_err!(Datatype::from_id(H5I_INVALID_HID), "Invalid datatype id");
         assert_err!(Datatype::from_id(h5lock!(H5Tcopy(*H5T_STD_REF_OBJ))), "Unsupported datatype");
+    }
+
+    #[test]
+    pub fn test_eq() {
+        assert!(u32::to_datatype().unwrap() == u32::to_datatype().unwrap());
+        assert!(u32::to_datatype().unwrap() != u16::to_datatype().unwrap());
     }
 
     #[test]
