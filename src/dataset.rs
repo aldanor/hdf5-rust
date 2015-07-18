@@ -6,7 +6,7 @@ use ffi::h5d::{
 use ffi::h5i::{H5I_DATASET, hid_t};
 use ffi::h5p::{
     H5Pcreate, H5Pset_create_intermediate_group, H5P_DEFAULT, H5Pset_obj_track_times,
-    H5Pset_fill_time, H5Pset_chunk, H5Pget_layout, H5Pget_chunk
+    H5Pset_fill_time, H5Pset_chunk, H5Pget_layout, H5Pget_chunk, H5Pset_fill_value
 };
 use globals::H5P_LINK_CREATE;
 
@@ -21,9 +21,8 @@ use plist::PropertyList;
 use space::{Dataspace, Dimension, Ix};
 use util::to_cstring;
 
-use libc::c_int;
+use libc::{c_int, c_void};
 use num::integer::div_floor;
-use std::marker::PhantomData;
 
 #[derive(Clone, Debug)]
 pub enum Chunk {
@@ -35,6 +34,8 @@ pub enum Chunk {
 
 pub struct Dataset {
     handle: Handle,
+    dcpl: PropertyList,
+    filters: Filters,
 }
 
 impl ID for Dataset {
@@ -45,10 +46,21 @@ impl ID for Dataset {
 
 impl FromID for Dataset {
     fn from_id(id: hid_t) -> Result<Dataset> {
-        match get_id_type(id) {
-            H5I_DATASET => Ok(Dataset { handle: try!(Handle::new(id)) }),
-            _ => Err(From::from(format!("Invalid property list id: {}", id))),
-        }
+        h5lock!({
+            match get_id_type(id) {
+                H5I_DATASET => {
+                    let handle = try!(Handle::new(id));
+                    let dcpl = try!(PropertyList::from_id(h5try_s!(H5Dget_create_plist(id))));
+                    let filters = try!(Filters::from_dcpl(&dcpl));
+                    Ok(Dataset {
+                        handle: handle,
+                        dcpl: dcpl,
+                        filters: filters,
+                    })
+                },
+                _ => Err(From::from(format!("Invalid property list id: {}", id))),
+            }
+        })
     }
 }
 
@@ -74,35 +86,29 @@ impl Dataset {
 
     /// Returns `true` if the dataset has a chunked layout.
     pub fn is_chunked(&self) -> bool {
-        if let Ok(dcpl) = self.dcpl() {
-            h5lock!({
-                H5Pget_layout(dcpl.id()) == H5D_layout_t::H5D_CHUNKED
-            })
-        } else {
-            false
-        }
+        h5lock!(H5Pget_layout(self.dcpl.id()) == H5D_layout_t::H5D_CHUNKED)
     }
 
     /// Returns the chunk shape if the dataset is chunked.
     pub fn chunks(&self) -> Option<Vec<Ix>> {
         h5lock!({
-            let dcpl = self.dcpl();
-            match (dcpl, self.is_chunked()) {
-                (Ok(dcpl), true)  => Some({
+            if !self.is_chunked() {
+                None
+            } else {
+                Some({
                     let ndim = self.ndim();
                     let mut dims: Vec<hsize_t> = Vec::with_capacity(ndim);
                     dims.set_len(ndim);
-                    H5Pget_chunk(dcpl.id(), ndim as c_int, dims.as_mut_ptr());
+                    H5Pget_chunk(self.dcpl.id(), ndim as c_int, dims.as_mut_ptr());
                     dims.iter().map(|&x| x as Ix).collect()
-                }),
-                _ => None,
+                })
             }
         })
     }
 
     /// Returns the filters used to create the dataset.
-    pub fn filters(&self) -> Result<Filters> {
-        h5lock_s!(Filters::from_dcpl(&try!(self.dcpl())))
+    pub fn filters(&self) -> Filters {
+        self.filters.clone()
     }
 
     /// Returns `true` if the dataset is resizable along some axis.
@@ -110,10 +116,6 @@ impl Dataset {
         h5lock_s!({
             if let Ok(s) = self.dataspace() { s.resizable() } else { false }
         })
-    }
-
-    fn dcpl(&self) -> Result<PropertyList> {
-        PropertyList::from_id(h5try!(H5Dget_create_plist(self.id())))
     }
 
     fn dataspace(&self) -> Result<Dataspace> {
@@ -128,7 +130,7 @@ pub struct DatasetBuilder<T> {
     parent: Result<Handle>,
     track_times: bool,
     resizable: bool,
-    phantom: PhantomData<T>,
+    fill_value: Option<T>,
 }
 
 
@@ -148,9 +150,13 @@ impl<T: ToDatatype> DatasetBuilder<T> {
                 parent: handle,
                 track_times: false,
                 resizable: false,
-                phantom: PhantomData,
+                fill_value: None,
             }
         })
+    }
+
+    pub fn fill_value(&mut self, fill_value: T) -> &mut DatasetBuilder<T> {
+        self.fill_value = Some(fill_value.clone()); self
     }
 
     /// Disable chunking.
@@ -220,6 +226,11 @@ impl<T: ToDatatype> DatasetBuilder<T> {
 
             if self.track_times {
                 h5try_s!(H5Pset_obj_track_times(id, 0));
+            }
+
+            if let Some(ref fill_value) = self.fill_value {
+                h5try_s!(H5Pset_fill_value(id, datatype.id(),
+                    &fill_value.clone() as *const _ as *const c_void));
             }
 
             if let Chunk::None = self.chunk {
@@ -447,26 +458,21 @@ mod tests {
     pub fn test_filters() {
         with_tmp_file(|file| {
             assert_eq!(file.new_dataset::<u32>()
-                .create_anon(100).unwrap().filters().unwrap(),
-                    Filters::default());
+                .create_anon(100).unwrap().filters(), Filters::default());
             assert_eq!(file.new_dataset::<u32>().shuffle(true)
-                .create_anon(100).unwrap().filters().unwrap()
-                .get_shuffle(), true);
+                .create_anon(100).unwrap().filters().get_shuffle(), true);
             assert_eq!(file.new_dataset::<u32>().fletcher32(true)
-                .create_anon(100).unwrap().filters().unwrap()
-                .get_fletcher32(), true);
+                .create_anon(100).unwrap().filters().get_fletcher32(), true);
             assert_eq!(file.new_dataset::<u32>().scale_offset(8)
-                .create_anon(100).unwrap().filters().unwrap()
-                .get_scale_offset(), Some(8));
+                .create_anon(100).unwrap().filters().get_scale_offset(), Some(8));
             if gzip_available() {
                 assert_eq!(file.new_dataset::<u32>().gzip(7)
-                    .create_anon(100).unwrap().filters().unwrap()
-                    .get_gzip(), Some(7));
+                    .create_anon(100).unwrap().filters().get_gzip(), Some(7));
             }
             if szip_available() {
                 assert_eq!(file.new_dataset::<u32>().szip(SzipMethod::EntropyCoding, 4)
-                    .create_anon(100).unwrap().filters().unwrap()
-                    .get_szip(), Some((SzipMethod::EntropyCoding, 4)));
+                    .create_anon(100).unwrap().filters().get_szip(),
+                        Some((SzipMethod::EntropyCoding, 4)));
             }
         })
     }
