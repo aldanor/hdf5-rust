@@ -35,7 +35,6 @@ mod datatype;
 mod error;
 mod file;
 mod filters;
-mod globals;
 mod group;
 mod handle;
 mod location;
@@ -44,6 +43,9 @@ mod plist;
 mod space;
 mod sync;
 mod util;
+
+#[allow(dead_code)]
+mod globals;
 
 pub mod prelude;
 
