@@ -1,3 +1,5 @@
+#![cfg_attr(not(test), allow(dead_code))]
+
 pub use container::Container;
 pub use dataset::Dataset;
 pub use datatype::{Datatype, AnyDatatype, AtomicDatatype, ToDatatype};
