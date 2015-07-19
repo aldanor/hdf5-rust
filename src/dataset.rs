@@ -149,6 +149,9 @@ impl Dataset {
         if offset == HADDR_UNDEF { None } else { Some(offset as u64) }
     }
 
+    /// Returns default fill value for the dataset if such value is set. Note that conversion
+    /// to the requested type is done by HDF5 which may result in loss of precision for
+    /// floating-point values if the datatype differs from the datatype of of the dataset.
     pub fn fill_value<T: ToDatatype>(&self) -> Result<Option<T>> {
         h5lock!({
             let defined: *mut H5D_fill_value_t = &mut H5D_fill_value_t::H5D_FILL_VALUE_UNDEFINED;
