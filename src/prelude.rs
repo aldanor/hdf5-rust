@@ -14,4 +14,7 @@ pub use super::Object;
 pub use super::Location;
 pub use super::Container;
 pub use super::Dimension;
-pub use super::{AnyDatatype, AtomicDatatype, ToDatatype};
+pub use super::ToDatatype;
+
+// A few extra traits that are not reexported on the crate level.
+pub use datatype::{AnyDatatype, AtomicDatatype};
