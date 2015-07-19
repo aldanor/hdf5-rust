@@ -50,12 +50,14 @@ macro_rules! def_atomic {
             handle: Handle,
         }
 
+        #[doc(hidden)]
         impl ID for $name {
             fn id(&self) -> hid_t {
                 self.handle.id()
             }
         }
 
+        #[doc(hidden)]
         impl FromID for $name {
             fn from_id(id: hid_t) -> Result<$name> {
                 h5lock!({
@@ -91,7 +93,6 @@ pub trait AtomicDatatype: ID {
     /// Returns true if the datatype byte order is big endian.
     fn is_be(&self) -> bool {
         h5lock!(H5Tget_order(self.id()) == H5T_ORDER_BE)
-
     }
 
     /// Returns true if the datatype byte order is little endian.
