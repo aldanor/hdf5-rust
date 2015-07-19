@@ -414,7 +414,7 @@ fn infer_chunk_size<D: Dimension>(shape: D, typesize: usize) -> Vec<Ix> {
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use super::infer_chunk_size;
     use ffi::h5d::H5Dwrite;
     use ffi::h5s::H5S_ALL;

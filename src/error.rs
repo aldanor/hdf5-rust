@@ -239,7 +239,7 @@ pub fn h5check<T>(value: T) -> Result<T> where T: Integer + Zero + Bounded,
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use ffi::h5::herr_t;
     use ffi::h5p::{H5Pcreate, H5Pclose};
     use globals::H5P_ROOT;

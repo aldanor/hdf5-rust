@@ -291,8 +291,8 @@ impl Filters {
 }
 
 #[cfg(test)]
-mod tests {
     use super::{Filters, SzipMethod, gzip_available, szip_available};
+pub mod tests {
     use datatype::ToDatatype;
     use error::{Result, silence_errors};
     use num::Bounded;

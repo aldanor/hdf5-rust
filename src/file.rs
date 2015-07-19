@@ -295,7 +295,7 @@ impl FileBuilder {
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use super::{File, FileBuilder};
     use container::Container;
     use error::silence_errors;
