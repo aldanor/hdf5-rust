@@ -4,8 +4,7 @@ use ffi::h5p::{H5Pcreate, H5Pset_userblock, H5Pget_userblock};
 use ffi::h5f::{
     H5F_ACC_RDONLY, H5F_ACC_RDWR, H5F_ACC_EXCL, H5F_ACC_TRUNC, H5F_SCOPE_LOCAL,
     H5F_OBJ_FILE, H5F_OBJ_ALL, H5Fopen, H5Fcreate, H5Fget_filesize, H5Fget_freespace,
-    H5Fflush, H5Fget_obj_ids, H5Fget_access_plist, H5Fget_create_plist, H5Fget_intent,
-    H5Fget_obj_count, H5Fclose
+    H5Fflush, H5Fget_obj_ids, H5Fget_create_plist, H5Fget_intent, H5Fget_obj_count, H5Fclose
 };
 use ffi::h5fd::{H5Pset_fapl_sec2, H5Pset_fapl_stdio, H5Pset_fapl_core};
 
@@ -28,6 +27,7 @@ use libc::{size_t, c_uint};
 /// Represents the HDF5 file object.
 pub struct File {
     handle: Handle,
+    fcpl: PropertyList,
 }
 
 #[doc(hidden)]
@@ -40,10 +40,15 @@ impl ID for File {
 #[doc(hidden)]
 impl FromID for File {
     fn from_id(id: hid_t) -> Result<File> {
-        match get_id_type(id) {
-            H5I_FILE => Ok(File { handle: try!(Handle::new(id)) }),
-            _ => Err(From::from(format!("Invalid file id: {}", id))),
-        }
+        h5lock_s!({
+            match get_id_type(id) {
+                H5I_FILE => Ok(File {
+                    handle: try!(Handle::new(id)),
+                    fcpl: try!(PropertyList::from_id(h5try!(H5Fget_create_plist(id)))),
+                 }),
+                _ => Err(From::from(format!("Invalid file id: {}", id))),
+            }
+        })
     }
 }
 
@@ -93,15 +98,6 @@ impl File {
         }
     }
 
-    #[allow(dead_code)]
-    fn fapl(&self) -> Result<PropertyList> {
-        PropertyList::from_id(h5try!(H5Fget_access_plist(self.id())))
-    }
-
-    fn fcpl(&self) -> Result<PropertyList> {
-        PropertyList::from_id(h5try!(H5Fget_create_plist(self.id())))
-    }
-
     /// Returns the output of the `h5dump` tool. Note that this wouldn't work with core driver.
     pub fn dump(&self) -> Option<String> {
         self.flush().ok().and(
@@ -114,9 +110,7 @@ impl File {
     pub fn userblock(&self) -> size_t {
         unsafe {
             let userblock: *mut hsize_t = &mut 0;
-            if let Ok(fcpl) = self.fcpl() {
-                h5lock_s!(H5Pget_userblock(fcpl.id(), userblock));
-            }
+            h5lock_s!(H5Pget_userblock(self.fcpl.id(), userblock));
             *userblock as size_t
         }
     }
