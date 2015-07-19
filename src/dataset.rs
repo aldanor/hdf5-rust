@@ -74,7 +74,7 @@ impl Object for Dataset {}
 impl Location for Dataset {}
 
 impl Dataset {
-    /// Returns the shape of the datasets.
+    /// Returns the shape of the dataset.
     pub fn shape(&self) -> Vec<Ix> {
         if let Ok(s) = self.dataspace() { s.dims() } else { vec![] }
     }
@@ -205,7 +205,7 @@ pub struct DatasetBuilder<T> {
 
 
 impl<T: ToDatatype> DatasetBuilder<T> {
-    /// Create a new dataset builder, bind it to a container and set the datatype.
+    /// Create a new dataset builder and bind it to the parent container.
     pub fn new<C: Container>(parent: &C) -> DatasetBuilder<T> {
         h5lock_s!({
             // Store the reference to the parent handle and try to increase its reference count.

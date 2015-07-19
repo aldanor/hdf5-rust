@@ -2,7 +2,7 @@
 
 pub use container::Container;
 pub use dataset::Dataset;
-pub use datatype::{Datatype, AnyDatatype, AtomicDatatype, ToDatatype};
+pub use datatype::{Datatype, ToDatatype};
 pub use error::{Result, Error};
 pub use file::File;
 pub use filters::Filters;
