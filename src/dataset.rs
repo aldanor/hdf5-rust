@@ -14,7 +14,7 @@ use globals::H5P_LINK_CREATE;
 use container::Container;
 use datatype::{Datatype, ToDatatype, AnyDatatype};
 use error::Result;
-use filters::{Filters, SzipMethod};
+use filters::Filters;
 use handle::{Handle, ID, FromID, get_id_type};
 use location::Location;
 use object::Object;
@@ -259,8 +259,11 @@ impl<T: ToDatatype> DatasetBuilder<T> {
     }
 
     /// Enable szip compression with a specified method (EC, NN) and level (0-32).
-    pub fn szip(&mut self, method: SzipMethod, level: u8) -> &mut DatasetBuilder<T> {
-        self.filters.szip(method, level); self
+    ///
+    /// If `nn` if set to `true` (default), the nearest neighbor method is used, otherwise
+    /// the method is set to entropy coding.
+    pub fn szip(&mut self, nn: bool, level: u8) -> &mut DatasetBuilder<T> {
+        self.filters.szip(nn, level); self
     }
 
     /// Enable or disable shuffle filter.
@@ -422,7 +425,7 @@ pub mod tests {
     use container::Container;
     use datatype::ToDatatype;
     use file::File;
-    use filters::{Filters, SzipMethod, gzip_available, szip_available};
+    use filters::{Filters, gzip_available, szip_available};
     use handle::ID;
     use location::Location;
     use object::Object;
@@ -546,9 +549,9 @@ pub mod tests {
                     .create_anon(100).unwrap().filters().get_gzip(), Some(7));
             }
             if szip_available() {
-                assert_eq!(file.new_dataset::<u32>().szip(SzipMethod::EntropyCoding, 4)
+                assert_eq!(file.new_dataset::<u32>().szip(false, 4)
                     .create_anon(100).unwrap().filters().get_szip(),
-                        Some((SzipMethod::EntropyCoding, 4)));
+                        Some((false, 4)));
             }
         })
     }

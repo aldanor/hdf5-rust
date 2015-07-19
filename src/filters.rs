@@ -18,12 +18,6 @@ use globals::H5P_DATASET_CREATE;
 use libc::{c_int, c_uint, size_t, c_char};
 use num::Bounded;
 
-#[derive(Copy, Clone, PartialEq, Debug)]
-pub enum SzipMethod {
-    EntropyCoding,
-    NearestNeighbor,
-}
-
 /// Returns `true` if gzip filter is available.
 pub fn gzip_available() -> bool {
     h5lock!(H5Zfilter_avail(H5Z_FILTER_DEFLATE) == 1)
@@ -38,7 +32,7 @@ pub fn szip_available() -> bool {
 #[derive(Clone, PartialEq, Debug)]
 pub struct Filters {
     gzip: Option<u8>,
-    szip: Option<(SzipMethod, u8)>,
+    szip: Option<(bool, u8)>,
     shuffle: bool,
     fletcher32: bool,
     scale_offset: Option<u32>,
@@ -77,8 +71,11 @@ impl Filters {
     }
 
     /// Enable szip compression with a specified method (EC, NN) and level (0-32).
-    pub fn szip(&mut self, method: SzipMethod, level: u8) -> &mut Filters {
-        self.szip = Some((method, level)); self
+    ///
+    /// If `nn` if set to `true` (default), the nearest neighbor method is used, otherwise
+    /// the method is set to entropy coding.
+    pub fn szip(&mut self, nn: bool, level: u8) -> &mut Filters {
+        self.szip = Some((nn, level)); self
     }
 
     /// Disable szip compression.
@@ -87,7 +84,10 @@ impl Filters {
     }
 
     /// Get the current settings for szip filter.
-    pub fn get_szip(&self) -> Option<(SzipMethod, u8)> {
+    ///
+    /// Returns a tuple `(nn, level)`, where `nn` indicates whether the nearest neighbor
+    /// method is used and `level` is the associated compression level.
+    pub fn get_szip(&self) -> Option<(bool, u8)> {
         self.szip
     }
 
@@ -133,7 +133,7 @@ impl Filters {
 
     /// Enable szip filter with default settings (NN method, compression level 8).
     pub fn szip_default(&mut self) -> &mut Filters {
-        self.szip = Some((SzipMethod::NearestNeighbor, 8)); self
+        self.szip = Some((true, 8)); self
     }
 
     /// Returns `true` if any filters are enabled and thus chunkins is required.
@@ -195,12 +195,12 @@ impl Filters {
                         filters.gzip(values[0] as u8);
                     },
                     H5Z_FILTER_SZIP => {
-                        let method = match values[0] {
-                            v if v & H5_SZIP_EC_OPTION_MASK != 0 => SzipMethod::EntropyCoding,
-                            v if v & H5_SZIP_NN_OPTION_MASK != 0 => SzipMethod::NearestNeighbor,
+                        let nn = match values[0] {
+                            v if v & H5_SZIP_EC_OPTION_MASK != 0 => false,
+                            v if v & H5_SZIP_NN_OPTION_MASK != 0 => true,
                             _ => fail!("Unknown szip method: {:?}", values[0]),
                         };
-                        filters.szip(method, values[1] as u8);
+                        filters.szip(nn, values[1] as u8);
                     },
                     H5Z_FILTER_SHUFFLE => {
                         filters.shuffle(true);
@@ -276,12 +276,9 @@ impl Filters {
             if let Some(level) = self.gzip {
                 try!(self.ensure_available("gzip", H5Z_FILTER_DEFLATE));
                 h5try_s!(H5Pset_deflate(id, level as c_uint));
-            } else if let Some((method, pixels_per_block)) = self.szip {
+            } else if let Some((nn, pixels_per_block)) = self.szip {
                 try!(self.ensure_available("szip", H5Z_FILTER_SZIP));
-                let options = match method {
-                    SzipMethod::EntropyCoding   => H5_SZIP_EC_OPTION_MASK,
-                    SzipMethod::NearestNeighbor => H5_SZIP_NN_OPTION_MASK,
-                };
+                let options = if nn { H5_SZIP_NN_OPTION_MASK } else { H5_SZIP_EC_OPTION_MASK };
                 h5try_s!(H5Pset_szip(id, options, pixels_per_block as c_uint));
             }
 
@@ -291,8 +288,8 @@ impl Filters {
 }
 
 #[cfg(test)]
-    use super::{Filters, SzipMethod, gzip_available, szip_available};
 pub mod tests {
+    use super::{Filters, gzip_available, szip_available};
     use datatype::ToDatatype;
     use error::{Result, silence_errors};
     use num::Bounded;
@@ -316,25 +313,21 @@ pub mod tests {
                 "Filter not available: szip");
         } else {
             assert!(Filters::new().get_szip().is_none());
-            assert_eq!(Filters::new().szip(SzipMethod::EntropyCoding, 4).get_szip(),
-                Some((SzipMethod::EntropyCoding, 4)));
-            assert!(
-                Filters::new().szip(SzipMethod::EntropyCoding, 4).no_szip().get_szip().is_none()
-            );
-            assert_eq!(Filters::new().szip_default().get_szip(),
-                Some((SzipMethod::NearestNeighbor, 8)));
+            assert_eq!(Filters::new().szip(false, 4).get_szip(), Some((false, 4)));
+            assert!(Filters::new().szip(false, 4).no_szip().get_szip().is_none());
+            assert_eq!(Filters::new().szip_default().get_szip(), Some((true, 8)));
 
             check_roundtrip::<u32>(Filters::new().no_szip());
-            check_roundtrip::<u32>(Filters::new().szip(SzipMethod::EntropyCoding, 4));
-            check_roundtrip::<u32>(Filters::new().szip(SzipMethod::NearestNeighbor, 4));
+            check_roundtrip::<u32>(Filters::new().szip(false, 4));
+            check_roundtrip::<u32>(Filters::new().szip(true, 4));
 
             check_roundtrip::<f32>(Filters::new().no_szip());
-            check_roundtrip::<f32>(Filters::new().szip(SzipMethod::EntropyCoding, 4));
-            check_roundtrip::<f32>(Filters::new().szip(SzipMethod::NearestNeighbor, 4));
+            check_roundtrip::<f32>(Filters::new().szip(false, 4));
+            check_roundtrip::<f32>(Filters::new().szip(true, 4));
 
-            assert_err!(make_filters::<u32>(&Filters::new().szip(SzipMethod::EntropyCoding, 1)),
+            assert_err!(make_filters::<u32>(&Filters::new().szip(false, 1)),
                 "Invalid pixels per block for szip compression");
-            assert_err!(make_filters::<u32>(&Filters::new().szip(SzipMethod::NearestNeighbor, 34)),
+            assert_err!(make_filters::<u32>(&Filters::new().szip(true, 34)),
                 "Invalid pixels per block for szip compression");
         }
     }
