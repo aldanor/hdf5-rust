@@ -1,10 +1,11 @@
+use ffi::h5d::H5Dopen2;
 use ffi::h5g::{H5G_info_t, H5Gget_info, H5Gcreate2, H5Gopen2};
 use ffi::h5i::hid_t;
 use ffi::h5l::{H5Lmove, H5Lcreate_soft, H5Lcreate_hard, H5Ldelete, H5L_SAME_LOC};
 use ffi::h5p::{H5Pcreate, H5Pset_create_intermediate_group, H5P_DEFAULT};
 use globals::H5P_LINK_CREATE;
 
-use dataset::DatasetBuilder;
+use dataset::{Dataset, DatasetBuilder};
 use datatype::ToDatatype;
 use error::Result;
 use group::Group;
@@ -38,7 +39,7 @@ pub trait Container: Location {
         self.len() == 0
     }
 
-    /// Create a new group in a container which can be a file or another group.
+    /// Create a new group in a file or group.
     fn create_group<S: Into<String>>(&self, name: S) -> Result<Group> {
         h5lock_s!({
             let lcpl = try!(make_lcpl());
@@ -48,7 +49,7 @@ pub trait Container: Location {
         })
     }
 
-    /// Opens an existing group in a container which can be a file or another group.
+    /// Opens an existing group in a file or group.
     fn group<S: Into<String>>(&self, name: S) -> Result<Group> {
         Group::from_id(h5try!(H5Gopen2(
             self.id(), to_cstring(name).as_ptr(), H5P_DEFAULT)))
@@ -88,9 +89,15 @@ pub trait Container: Location {
         )).and(Ok(()))
     }
 
-    /// Create a new dataset builder.
+    /// Instantiates a new dataset builder.
     fn new_dataset<T: ToDatatype>(&self) -> DatasetBuilder<T> {
         DatasetBuilder::<T>::new::<Self>(&self)
+    }
+
+    /// Opens an existing dataset in the file or group.
+    fn dataset<S: Into<String>>(&self, name: S) -> Result<Dataset> {
+        Dataset::from_id(h5try!(H5Dopen2(
+            self.id(), to_cstring(name).as_ptr(), H5P_DEFAULT)))
     }
 }
 

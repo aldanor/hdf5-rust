@@ -392,6 +392,8 @@ mod tests {
     use file::File;
     use filters::{Filters, SzipMethod, gzip_available, szip_available};
     use handle::ID;
+    use location::Location;
+    use object::Object;
     use test::{with_tmp_file, with_tmp_path};
     use libc::c_void;
     use std::io::Read;
@@ -584,6 +586,22 @@ mod tests {
         with_tmp_file(|file| {
             assert_eq!(file.new_dataset::<f32>().create_anon(1).unwrap().datatype().unwrap(),
                        f32::to_datatype().unwrap());
+        })
+    }
+
+    #[test]
+    pub fn test_create_anon() {
+        with_tmp_file(|file| {
+            let ds = file.new_dataset::<u32>().create("foo/bar", (1, 2)).unwrap();
+            assert!(ds.is_valid());
+            assert_eq!(ds.shape(), vec![1, 2]);
+            assert_eq!(ds.name(), "/foo/bar");
+            assert_eq!(file.group("foo").unwrap().dataset("bar").unwrap().shape(), vec![1, 2]);
+
+            let ds = file.new_dataset::<u32>().create_anon((2, 3)).unwrap();
+            assert!(ds.is_valid());
+            assert_eq!(ds.name(), "");
+            assert_eq!(ds.shape(), vec![2, 3]);
         })
     }
 }
