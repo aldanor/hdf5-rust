@@ -4,11 +4,7 @@ Cargo.lock
 **/target/release
 /tmp.*
 **/*.h5
-
-# vim
 *~
 *.swp
-
-# vagrant
 .vagrant/
-
+/tmp/

@@ -1,10 +1,12 @@
 use ffi::h5::{hsize_t, hbool_t};
 use ffi::h5i::{H5I_FILE, hid_t};
 use ffi::h5p::{H5Pcreate, H5Pset_userblock, H5Pget_userblock};
-use ffi::h5f::{H5F_ACC_RDONLY, H5F_ACC_RDWR, H5F_ACC_EXCL, H5F_ACC_TRUNC, H5F_SCOPE_LOCAL,
-               H5F_OBJ_FILE, H5F_OBJ_ALL, H5Fopen, H5Fcreate, H5Fget_filesize, H5Fget_freespace,
-               H5Fflush, H5Fget_obj_ids, H5Fget_access_plist, H5Fget_create_plist, H5Fget_intent,
-               H5Fget_obj_count, H5Fclose};
+use ffi::h5f::{
+    H5F_ACC_RDONLY, H5F_ACC_RDWR, H5F_ACC_EXCL, H5F_ACC_TRUNC, H5F_SCOPE_LOCAL,
+    H5F_OBJ_FILE, H5F_OBJ_ALL, H5Fopen, H5Fcreate, H5Fget_filesize, H5Fget_freespace,
+    H5Fflush, H5Fget_obj_ids, H5Fget_access_plist, H5Fget_create_plist, H5Fget_intent,
+    H5Fget_obj_count, H5Fclose
+};
 use ffi::h5fd::{H5Pset_fapl_sec2, H5Pset_fapl_stdio, H5Pset_fapl_core};
 
 use globals::{H5P_FILE_CREATE, H5P_FILE_ACCESS};
@@ -23,21 +25,24 @@ use std::process::Command;
 
 use libc::{size_t, c_uint};
 
+/// Represents the HDF5 file object.
 pub struct File {
     handle: Handle,
 }
 
+#[doc(hidden)]
 impl ID for File {
     fn id(&self) -> hid_t {
         self.handle.id()
     }
 }
 
+#[doc(hidden)]
 impl FromID for File {
     fn from_id(id: hid_t) -> Result<File> {
         match get_id_type(id) {
             H5I_FILE => Ok(File { handle: try!(Handle::new(id)) }),
-            _        => Err(From::from(format!("Invalid file id: {}", id))),
+            _ => Err(From::from(format!("Invalid file id: {}", id))),
         }
     }
 }
@@ -75,7 +80,7 @@ impl File {
     pub fn free_space(&self) -> u64 {
         match h5call!(H5Fget_freespace(self.id())) {
             Ok(size) => size as u64,
-            _        => 0,
+            _ => 0,
         }
     }
 
@@ -99,8 +104,10 @@ impl File {
 
     /// Returns the output of the `h5dump` tool. Note that this wouldn't work with core driver.
     pub fn dump(&self) -> Option<String> {
-        self.flush().ok().and(Command::new("h5dump").arg(self.filename()).output().ok()
-                              .map(|out| String::from_utf8_lossy(&out.stdout).to_string()))
+        self.flush().ok().and(
+            Command::new("h5dump").arg(self.filename()).output().ok()
+                                  .map(|out| String::from_utf8_lossy(&out.stdout).to_string())
+        )
     }
 
     /// Returns the userblock size in bytes (or 0 if the file handle is invalid).
@@ -230,9 +237,10 @@ impl FileBuilder {
             match self.driver.as_ref() {
                 "sec2"  => h5try!(H5Pset_fapl_sec2(fapl.id())),
                 "stdio" => h5try!(H5Pset_fapl_stdio(fapl.id())),
-                "core"  => h5try!(H5Pset_fapl_core(fapl.id(), self.increment,
-                                                   self.filebacked as hbool_t)),
-                _       => fail!(format!("Invalid file driver: {}", self.driver)),
+                "core"  => h5try!(H5Pset_fapl_core(
+                               fapl.id(), self.increment, self.filebacked as hbool_t
+                           )),
+                _ => fail!(format!("Invalid file driver: {}", self.driver)),
             };
             Ok(fapl)
         })
@@ -249,7 +257,7 @@ impl FileBuilder {
                     let c_filename = to_cstring(filename).as_ptr();
                     File::from_id(h5try!(H5Fopen(c_filename, flags, fapl.id())))
                 },
-                None          => fail!("Invalid UTF-8 in file name: {:?}", filename)
+                None => fail!("Invalid UTF-8 in file name: {:?}", filename)
             }
         })
     }
@@ -266,7 +274,7 @@ impl FileBuilder {
                     let c_filename = to_cstring(filename).as_ptr();
                     File::from_id(h5try!(H5Fcreate(c_filename, flags, fcpl.id(), fapl.id())))
                 },
-                None          => fail!("Invalid UTF-8 in file name: {:?}", filename)
+                None => fail!("Invalid UTF-8 in file name: {:?}", filename)
             }
         })
     }
@@ -279,9 +287,9 @@ impl FileBuilder {
             "w-" | "x" => self.create_file(&filename, true),
             "a"        => match self.open_file(&filename, true) {
                             Ok(file) => Ok(file),
-                            _        => self.create_file(&filename, true),
+                            _ => self.create_file(&filename, true),
                           },
-            _          => fail!("Invalid file access mode, expected r|r+|w|w-|x|a"),
+            _ => fail!("Invalid file access mode, expected r|r+|w|w-|x|a"),
         }
     }
 }
@@ -374,7 +382,7 @@ mod tests {
             let file = File::open(&path, "r").unwrap();
             file.group("foo").unwrap();
             assert_err!(file.create_group("bar"),
-                        "unable to create group: no write intent on file");
+                "unable to create group: no write intent on file");
             assert_err!(File::open("/foo/bar/baz", "r"), "unable to open file");
         });
 
@@ -408,11 +416,11 @@ mod tests {
         });
         with_tmp_path(|path| {
             assert_err!(FileBuilder::new().userblock(512).mode("r").open(&path),
-                        "Cannot specify userblock when opening a file");
+                "Cannot specify userblock when opening a file");
             assert_err!(FileBuilder::new().userblock(512).mode("r+").open(&path),
-                        "Cannot specify userblock when opening a file");
+                "Cannot specify userblock when opening a file");
             assert_err!(FileBuilder::new().userblock(1).mode("w").open(&path),
-                        "userblock size is non-zero and less than 512");
+                "userblock size is non-zero and less than 512");
             FileBuilder::new().userblock(512).mode("w").open(&path).unwrap();
             assert_eq!(File::open(&path, "r").unwrap().userblock(), 512);
 
@@ -480,7 +488,7 @@ mod tests {
             file.close();
             assert!(fs::metadata(&path).is_err());
             assert_err!(FileBuilder::new().driver("core").mode("r").open(&path),
-                        "unable to open file");
+                "unable to open file");
         })
     }
 

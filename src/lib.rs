@@ -1,3 +1,14 @@
+pub use container::Container;
+pub use dataset::Dataset;
+pub use datatype::{Datatype, AnyDatatype, AtomicDatatype, ToDatatype};
+pub use error::{Result, Error};
+pub use file::File;
+pub use filters::Filters;
+pub use group::Group;
+pub use location::Location;
+pub use object::Object;
+pub use space::{Dimension, Ix, Dataspace};
+
 extern crate libc;
 extern crate num;
 
@@ -16,23 +27,23 @@ extern crate tempdir;
 extern crate regex;
 
 #[macro_use]
-pub mod macros;
+mod macros;
 
+mod container;
+mod dataset;
+mod datatype;
+mod error;
+mod file;
+mod filters;
+mod globals;
+mod group;
 mod handle;
-
-pub mod container;
-pub mod datatype;
-pub mod error;
-pub mod file;
-pub mod filters;
-pub mod globals;
-pub mod group;
-pub mod location;
-pub mod object;
-pub mod plist;
-pub mod space;
-pub mod sync;
-pub mod util;
+mod location;
+mod object;
+mod plist;
+mod space;
+mod sync;
+mod util;
 
 pub mod prelude;
 

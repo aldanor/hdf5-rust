@@ -3,9 +3,14 @@ use handle::{Handle, ID, FromID, get_id_type};
 use object::Object;
 
 use ffi::h5i::{H5I_DATATYPE, hid_t};
-use ffi::h5t::{H5T_INTEGER, H5T_FLOAT, H5T_NO_CLASS, H5T_NCLASSES, H5T_ORDER_BE, H5T_ORDER_LE,
-               H5T_SGN_2, H5Tcopy, H5Tget_class, H5Tget_order, H5Tget_offset, H5Tget_sign,
-               H5Tget_precision, H5Tget_size};
+use ffi::h5t::{
+    H5T_INTEGER, H5T_FLOAT, H5T_NO_CLASS, H5T_NCLASSES, H5T_ORDER_BE, H5T_ORDER_LE, H5T_SGN_2,
+    H5Tcopy, H5Tget_class, H5Tget_order, H5Tget_offset, H5Tget_sign, H5Tget_precision, H5Tget_size,
+    H5Tequal
+};
+
+use libc::c_void;
+use std::fmt;
 
 #[cfg(target_endian = "big")]
 use globals::{
@@ -25,11 +30,13 @@ use globals::{
     H5T_IEEE_F32LE, H5T_IEEE_F64LE,
 };
 
+/// Represents the HDF5 datatype object.
 pub enum Datatype {
     Integer(IntegerDatatype),
     Float(FloatDatatype),
 }
 
+/// A trait for all HDF5 datatypes.
 pub trait AnyDatatype: ID {
     /// Get the total size of the datatype in bytes.
     fn size(&self) -> usize {
@@ -46,12 +53,14 @@ macro_rules! def_atomic {
             handle: Handle,
         }
 
+        #[doc(hidden)]
         impl ID for $name {
             fn id(&self) -> hid_t {
                 self.handle.id()
             }
         }
 
+        #[doc(hidden)]
         impl FromID for $name {
             fn from_id(id: hid_t) -> Result<$name> {
                 h5lock!({
@@ -72,6 +81,7 @@ macro_rules! def_atomic {
     )
 }
 
+/// A trait for integer scalar datatypes.
 def_atomic!(IntegerDatatype, H5T_INTEGER);
 
 impl IntegerDatatype {
@@ -81,13 +91,14 @@ impl IntegerDatatype {
     }
 }
 
+/// A trait for floating-point scalar datatypes.
 def_atomic!(FloatDatatype, H5T_FLOAT);
 
+/// A trait for atomic scalar datatypes.
 pub trait AtomicDatatype: ID {
     /// Returns true if the datatype byte order is big endian.
     fn is_be(&self) -> bool {
         h5lock!(H5Tget_order(self.id()) == H5T_ORDER_BE)
-
     }
 
     /// Returns true if the datatype byte order is little endian.
@@ -106,8 +117,11 @@ pub trait AtomicDatatype: ID {
     }
 }
 
-pub trait ToDatatype {
+/// A trait for native types that are convertible to HDF5 datatypes.
+pub trait ToDatatype: Clone {
     fn to_datatype() -> Result<Datatype>;
+    fn from_raw_ptr(buf: *const c_void) -> Self;
+    fn with_raw_ptr<T, F: Fn(*const c_void) -> T>(value: Self, func: F) -> T;
 }
 
 macro_rules! impl_atomic {
@@ -121,6 +135,15 @@ macro_rules! impl_atomic {
             #[cfg(target_endian = "little")]
             fn to_datatype() -> Result<Datatype> {
                 Datatype::from_id(h5try!(H5Tcopy(*$le)))
+            }
+
+            fn with_raw_ptr<T, F: Fn(*const c_void) -> T>(value: Self, func: F) -> T {
+                let buf = &value as *const _ as *const c_void;
+                func(buf)
+            }
+
+            fn from_raw_ptr(buf: *const c_void) -> Self {
+                unsafe { *(buf as *const Self) }
             }
         }
     )
@@ -147,6 +170,7 @@ impl_atomic!(f64, H5T_IEEE_F64BE, H5T_IEEE_F64LE);
 #[cfg(target_pointer_width = "64")] impl_atomic!(usize, H5T_STD_U64BE, H5T_STD_U64LE);
 #[cfg(target_pointer_width = "64")] impl_atomic!(isize, H5T_STD_I64BE, H5T_STD_I64LE);
 
+#[doc(hidden)]
 impl ID for Datatype {
     fn id(&self) -> hid_t {
         match *self {
@@ -156,6 +180,7 @@ impl ID for Datatype {
     }
 }
 
+#[doc(hidden)]
 impl FromID for Datatype {
     fn from_id(id: hid_t) -> Result<Datatype> {
         h5lock!({
@@ -176,6 +201,32 @@ impl FromID for Datatype {
 }
 
 impl Object for Datatype {}
+
+impl PartialEq for Datatype {
+    fn eq(&self, other: &Datatype) -> bool {
+        h5call!(H5Tequal(self.id(), other.id())).unwrap_or(0) == 1
+    }
+}
+
+impl fmt::Debug for Datatype {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(self, f)
+    }
+}
+
+impl fmt::Display for Datatype {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if !self.is_valid() {
+            return "<HDF5 datatype: invalid id>".fmt(f);
+        }
+        format!("<HDF5 datatype: {}>", match *self {
+            Datatype::Integer(ref dt) => format!("{}-bit {}signed integer", dt.precision(),
+                                            if dt.is_signed() { "" } else { "un" }),
+            Datatype::Float(ref dt)   => format!("{}-bit float", dt.precision()),
+            // _ => "unknown",
+        }).fmt(f)
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -199,6 +250,12 @@ mod tests {
     pub fn test_invalid_datatype() {
         assert_err!(Datatype::from_id(H5I_INVALID_HID), "Invalid datatype id");
         assert_err!(Datatype::from_id(h5lock!(H5Tcopy(*H5T_STD_REF_OBJ))), "Unsupported datatype");
+    }
+
+    #[test]
+    pub fn test_eq() {
+        assert!(u32::to_datatype().unwrap() == u32::to_datatype().unwrap());
+        assert!(u32::to_datatype().unwrap() != u16::to_datatype().unwrap());
     }
 
     #[test]
@@ -251,5 +308,23 @@ mod tests {
 
         test_integer!(isize, true, POINTER_WIDTH_BYTES * 8, POINTER_WIDTH_BYTES);
         test_integer!(usize, false, POINTER_WIDTH_BYTES * 8, POINTER_WIDTH_BYTES);
+    }
+
+    #[test]
+    pub fn test_debug_display() {
+        assert_eq!(format!("{}", u32::to_datatype().unwrap()),
+            "<HDF5 datatype: 32-bit unsigned integer>");
+        assert_eq!(format!("{:?}", u32::to_datatype().unwrap()),
+            "<HDF5 datatype: 32-bit unsigned integer>");
+
+        assert_eq!(format!("{}", i8::to_datatype().unwrap()),
+            "<HDF5 datatype: 8-bit signed integer>");
+        assert_eq!(format!("{}", i8::to_datatype().unwrap()),
+            "<HDF5 datatype: 8-bit signed integer>");
+
+        assert_eq!(format!("{}", f64::to_datatype().unwrap()),
+            "<HDF5 datatype: 64-bit float>");
+        assert_eq!(format!("{:?}", f64::to_datatype().unwrap()),
+            "<HDF5 datatype: 64-bit float>");
     }
 }

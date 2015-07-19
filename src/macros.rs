@@ -2,9 +2,21 @@ macro_rules! fail {
     ($err:expr) => (
         return Err(From::from($err));
     );
+
     ($fmt:expr, $($arg:tt)*) => (
-        return Err(From::from(format!($fmt, $($arg)*)));
+        fail!(format!($fmt, $($arg)*))
     );
+}
+
+macro_rules! try_ref_clone {
+    ($expr:expr) => (
+        match $expr {
+            Ok(ref val) => val,
+            Err(ref err) => {
+                return Err(From::from(err.clone()))
+            }
+        }
+    )
 }
 
 macro_rules! ensure {
@@ -33,8 +45,10 @@ macro_rules! assert_err {
                 let re = Regex::new($err).unwrap();
                 let desc = value.description().to_string();
                 if !re.is_match(desc.as_ref()) {
-                    panic!("assertion failed: error message \"{}\" doesn't match \"{}\" in `{}`",
-                           desc, re, stringify!($expr));
+                    panic!(
+                        "assertion failed: error message \"{}\" doesn't match \"{}\" in `{}`",
+                        desc, re, stringify!($expr)
+                    );
                 }
             }
         }

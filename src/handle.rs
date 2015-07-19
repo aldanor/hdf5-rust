@@ -29,11 +29,11 @@ pub fn is_valid_user_id(id: hid_t) -> bool {
     })
 }
 
-pub trait ID {
+pub trait ID: Sized {
     fn id(&self) -> hid_t;
 }
 
-pub trait FromID {
+pub trait FromID: Sized {
     fn from_id(id: hid_t) -> Result<Self>;
 }
 
@@ -102,6 +102,15 @@ impl Handle {
             if !is_valid_user_id(self.id()) && !is_valid_id(self.id()) {
                 self.invalidate();
             }
+        })
+    }
+}
+
+impl Clone for Handle {
+    fn clone(&self) -> Handle {
+        h5lock_s!({
+            self.incref();
+            Handle::from_id(self.id()).unwrap_or(Handle::invalid())
         })
     }
 }

@@ -2,12 +2,42 @@
 
 [![Build Status](https://img.shields.io/travis/aldanor/hdf5-rs.svg)](https://travis-ci.org/aldanor/hdf5-rs) [![Appveyor Build Status](https://img.shields.io/appveyor/ci/aldanor/hdf5-rs.svg)](https://ci.appveyor.com/project/aldanor/hdf5-rs)
 
+[Documentation](http://aldanor.github.io/hdf5-rs)
+
 Thread-safe Rust bindings and high-level wrappers for the HDF5 library API.
 
-Note that this project is in its early development stage and hence things are likely to change
-and break on a regular basis.
+## Compatibility
+
+### Platforms
+
+`hdf5-rs` is known to run on these platforms:
+
+- Linux (tests run on Travis CI)
+- OS X
+- Windows (MinGW only for now, see below for details; tests run on AppVeyor)
+
+### Rust
+
+`hdf5-rs` is tested for all three official release channels:
+
+- stable (1.1.0)
+- beta
+- nightly
 
 ## Building
+
+### Linux, OS X
+
+There are also two environment variables that may be of use if the library location and/or name
+is unconventional:
+
+- `HDF5_LIBDIR` -- added to library search path during the build step
+- `HDF5_LIBNAME` -- library filename (defaults to `hdf5`)
+
+Note also that the build script of `libhdf5-sys` crate tries to use `pkg-config` (if it's available
+to deduce library location).
+
+For most setups though, just running `cargo build` and `cargo test` should be sufficient.
 
 ### Windows
 

@@ -9,17 +9,19 @@ pub struct PropertyList {
     handle: Handle,
 }
 
+#[doc(hidden)]
 impl ID for PropertyList {
     fn id(&self) -> hid_t {
         self.handle.id()
     }
 }
 
+#[doc(hidden)]
 impl FromID for PropertyList {
     fn from_id(id: hid_t) -> Result<PropertyList> {
         match get_id_type(id) {
             H5I_GENPROP_LST => Ok(PropertyList { handle: try!(Handle::new(id)) }),
-            _               => Err(From::from(format!("Invalid property list id: {}", id))),
+            _ => Err(From::from(format!("Invalid property list id: {}", id))),
         }
     }
 }

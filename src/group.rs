@@ -8,6 +8,7 @@ use location::Location;
 
 use std::fmt;
 
+/// Represents the HDF5 group object.
 pub struct Group {
     handle: Handle,
 }
@@ -32,17 +33,19 @@ impl fmt::Display for Group {
     }
 }
 
+#[doc(hidden)]
 impl ID for Group {
     fn id(&self) -> hid_t {
         self.handle.id()
     }
 }
 
+#[doc(hidden)]
 impl FromID for Group {
     fn from_id(id: hid_t) -> Result<Group> {
         match get_id_type(id) {
             H5I_GROUP => Ok(Group { handle: try!(Handle::new(id)) }),
-            _         => Err(From::from(format!("Invalid group id: {}", id))),
+            _ => Err(From::from(format!("Invalid group id: {}", id))),
         }
     }
 }
