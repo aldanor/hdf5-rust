@@ -89,21 +89,32 @@ impl Dataset {
         self.shape().size()
     }
 
-    /// Returns `true` if the dataset is a scalar.
+    /// Returns whether this dataset is a scalar.
     pub fn is_scalar(&self) -> bool {
         self.ndim() == 0
     }
 
-    /// Returns `true` if the dataset is resizable along some axis.
+    /// Returns whether this dataset is resizable along some axis.
     pub fn is_resizable(&self) -> bool {
         h5lock_s!({
             if let Ok(s) = self.dataspace() { s.resizable() } else { false }
         })
     }
 
-    /// Returns `true` if the dataset has a chunked layout.
+    /// Returns whether this dataset has a chunked layout.
     pub fn is_chunked(&self) -> bool {
         h5lock!(H5Pget_layout(self.dcpl.id()) == H5D_layout_t::H5D_CHUNKED)
+    }
+
+    /// Returns whether this dataset's type is equivalent to the given type.
+    pub fn is_type<T: ToDatatype>(&self) -> bool {
+        match T::to_datatype() {
+            Ok(ref datatype) => match self.datatype() {
+                Ok(ref ds_datatype) => ds_datatype.eq(datatype),
+                _ => false,
+            },
+            _ => false,
+        }
     }
 
     /// Returns the chunk shape if the dataset is chunked.
@@ -689,6 +700,18 @@ pub mod tests {
 
             let ds = file.new_dataset::<f32>().fill_value(3.14).create_anon(100).unwrap();
             check_all_fill_values!(ds, 3.14);
+        })
+    }
+
+    #[test]
+    pub fn test_is_type() {
+        with_tmp_file(|file| {
+            let ds = file.new_dataset::<u16>().create_anon(100).unwrap();
+            assert_eq!(ds.is_type::<u16>(), true);
+
+            assert_eq!(ds.is_type::<i16>(), false);
+            assert_eq!(ds.is_type::<u8>(), false);
+            assert_eq!(ds.is_type::<f32>(), false);
         })
     }
 }
