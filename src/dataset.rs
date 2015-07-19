@@ -556,7 +556,7 @@ pub mod tests {
         });
 
         with_tmp_file(|file| {
-            let filters = Filters::new().gzip(3).shuffle(true).clone();
+            let filters = Filters::new().fletcher32(true).shuffle(true).clone();
             assert_eq!(file.new_dataset::<u32>().filters(&filters)
                 .create_anon(100).unwrap().filters(), filters);
         })
