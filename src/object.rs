@@ -3,7 +3,7 @@ use ffi::h5i::{H5I_type_t, H5Iget_ref};
 use handle::{ID, is_valid_user_id, get_id_type};
 
 pub trait Object: ID {
-    /// Returns reference count if the handle is valid, 0 otherwise.
+    /// Returns reference count if the handle is valid and 0 otherwise.
     fn refcount(&self) -> u32 {
         if self.is_valid() {
             match h5call!(H5Iget_ref(self.id())) {
@@ -15,10 +15,13 @@ pub trait Object: ID {
         }
     }
 
+    /// Returns `true` if the object has a valid unlocked identifier (`false` for pre-defined
+    /// locked identifiers like property list classes).
     fn is_valid(&self) -> bool {
         is_valid_user_id(self.id())
     }
 
+    /// Returns type of the object.
     fn id_type(&self) -> H5I_type_t {
         get_id_type(self.id())
     }
