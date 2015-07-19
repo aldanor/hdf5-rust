@@ -34,6 +34,7 @@ pub fn szip_available() -> bool {
     h5lock!(H5Zfilter_avail(H5Z_FILTER_SZIP) == 1)
 }
 
+/// HDF5 filters and compression options.
 #[derive(Clone, PartialEq, Debug)]
 pub struct Filters {
     gzip: Option<u8>,

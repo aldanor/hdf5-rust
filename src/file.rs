@@ -25,6 +25,7 @@ use std::process::Command;
 
 use libc::{size_t, c_uint};
 
+/// Represents the HDF5 file object.
 pub struct File {
     handle: Handle,
 }

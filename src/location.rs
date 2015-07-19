@@ -10,6 +10,7 @@ use util::{get_h5_str, to_cstring};
 
 use std::ptr;
 
+/// A trait for HDF5 objects that can have a named location (file, group, dataset).
 pub trait Location: Object {
     /// Returns the name of the object within the file, or empty string if the object doesn't
     /// have a name (e.g., an anonymous dataset).

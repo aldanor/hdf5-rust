@@ -8,6 +8,7 @@ use location::Location;
 
 use std::fmt;
 
+/// Represents the HDF5 group object.
 pub struct Group {
     handle: Handle,
 }

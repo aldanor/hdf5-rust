@@ -10,8 +10,10 @@ use object::Object;
 use std::{fmt, ptr, slice};
 use libc::c_int;
 
+/// A scalar integer type used by `Dimension` trait for indexing.
 pub type Ix = usize;
 
+/// A trait for the shape and index types.
 pub trait Dimension: Clone {
     fn ndim(&self) -> usize;
     fn dims(&self) -> Vec<Ix>;
@@ -71,6 +73,7 @@ impl Dimension for Ix {
     fn dims(&self) -> Vec<Ix> { vec![*self] }
 }
 
+/// Represents the HDF5 dataspace object.
 pub struct Dataspace {
     handle: Handle,
 }

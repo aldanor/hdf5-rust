@@ -28,6 +28,7 @@ fn make_lcpl() -> Result<PropertyList> {
     })
 }
 
+/// A trait for HDF5 objects that can contain other objects (file, group).
 pub trait Container: Location {
     /// Returns the number of objects in the container (or 0 if the container is invalid).
     fn len(&self) -> u64 {

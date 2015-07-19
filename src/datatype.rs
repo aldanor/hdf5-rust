@@ -30,11 +30,13 @@ use globals::{
     H5T_IEEE_F32LE, H5T_IEEE_F64LE,
 };
 
+/// Represents the HDF5 datatype object.
 pub enum Datatype {
     Integer(IntegerDatatype),
     Float(FloatDatatype),
 }
 
+/// A trait for all HDF5 datatypes.
 pub trait AnyDatatype: ID {
     /// Get the total size of the datatype in bytes.
     fn size(&self) -> usize {
@@ -79,6 +81,7 @@ macro_rules! def_atomic {
     )
 }
 
+/// A trait for integer scalar datatypes.
 def_atomic!(IntegerDatatype, H5T_INTEGER);
 
 impl IntegerDatatype {
@@ -88,8 +91,10 @@ impl IntegerDatatype {
     }
 }
 
+/// A trait for floating-point scalar datatypes.
 def_atomic!(FloatDatatype, H5T_FLOAT);
 
+/// A trait for atomic scalar datatypes.
 pub trait AtomicDatatype: ID {
     /// Returns true if the datatype byte order is big endian.
     fn is_be(&self) -> bool {
@@ -112,6 +117,7 @@ pub trait AtomicDatatype: ID {
     }
 }
 
+/// A trait for native types that are convertible to HDF5 datatypes.
 pub trait ToDatatype: Clone {
     fn to_datatype() -> Result<Datatype>;
     fn from_raw_ptr(buf: *const c_void) -> Self;

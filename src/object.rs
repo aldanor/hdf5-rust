@@ -2,6 +2,7 @@ use ffi::h5i::{H5I_type_t, H5Iget_ref};
 
 use handle::{ID, is_valid_user_id, get_id_type};
 
+/// A trait for all HDF5 objects that can be referenced through an identifier.
 pub trait Object: ID {
     /// Returns reference count if the handle is valid and 0 otherwise.
     fn refcount(&self) -> u32 {

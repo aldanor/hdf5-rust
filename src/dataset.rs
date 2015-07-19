@@ -34,6 +34,7 @@ pub enum Chunk {
     Manual(Vec<Ix>)
 }
 
+/// Represents the HDF5 dataset object.
 pub struct Dataset {
     handle: Handle,
     dcpl: PropertyList,
