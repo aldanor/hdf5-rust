@@ -9,6 +9,7 @@ use ffi::h5t::{
     H5Tequal
 };
 
+use libc::c_void;
 use std::fmt;
 
 #[cfg(target_endian = "big")]
@@ -113,6 +114,8 @@ pub trait AtomicDatatype: ID {
 
 pub trait ToDatatype: Clone {
     fn to_datatype() -> Result<Datatype>;
+    fn from_raw_ptr(buf: *const c_void) -> Self;
+    fn with_raw_ptr<T, F: Fn(*const c_void) -> T>(value: Self, func: F) -> T;
 }
 
 macro_rules! impl_atomic {
@@ -126,6 +129,15 @@ macro_rules! impl_atomic {
             #[cfg(target_endian = "little")]
             fn to_datatype() -> Result<Datatype> {
                 Datatype::from_id(h5try!(H5Tcopy(*$le)))
+            }
+
+            fn with_raw_ptr<T, F: Fn(*const c_void) -> T>(value: Self, func: F) -> T {
+                let buf = &value as *const _ as *const c_void;
+                func(buf)
+            }
+
+            fn from_raw_ptr(buf: *const c_void) -> Self {
+                unsafe { *(buf as *const Self) }
             }
         }
     )
