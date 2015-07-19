@@ -229,7 +229,7 @@ impl fmt::Display for Datatype {
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use super::{Datatype, AnyDatatype, AtomicDatatype, ToDatatype};
     use super::Datatype::*;
     use handle::FromID;

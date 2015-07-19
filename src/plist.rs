@@ -42,7 +42,7 @@ impl PartialEq for PropertyList {
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use super::PropertyList;
     use globals::{H5P_FILE_ACCESS, H5P_FILE_CREATE};
     use ffi::h5p::H5Pcreate;

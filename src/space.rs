@@ -183,7 +183,7 @@ impl fmt::Display for Dataspace {
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use super::{Dimension, Ix, Dataspace};
     use error::silence_errors;
     use handle::{ID, FromID};

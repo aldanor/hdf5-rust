@@ -57,7 +57,7 @@ impl Location for Group {}
 impl Container for Group {}
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use container::Container;
     use test::with_tmp_file;
 

@@ -50,7 +50,7 @@ pub trait Location: Object {
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use super::Location;
     use file::File;
     use handle::ID;

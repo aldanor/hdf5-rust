@@ -29,7 +29,7 @@ pub trait Object: ID {
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use ffi::h5i::{H5I_INVALID_HID, hid_t};
     use ffi::h5p::{H5P_DEFAULT, H5Pcreate};
     use globals::H5P_FILE_ACCESS;
