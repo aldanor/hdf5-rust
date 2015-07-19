@@ -1,13 +1,13 @@
 use ffi::h5::{hsize_t, hbool_t, haddr_t, HADDR_UNDEF};
 use ffi::h5d::{
     H5Dcreate2, H5Dcreate_anon, H5D_FILL_TIME_ALLOC, H5Dget_create_plist, H5D_layout_t,
-    H5Dget_space, H5Dget_storage_size, H5Dget_offset, H5Dget_type
+    H5Dget_space, H5Dget_storage_size, H5Dget_offset, H5Dget_type, H5D_fill_value_t
 };
 use ffi::h5i::{H5I_DATASET, hid_t};
 use ffi::h5p::{
     H5Pcreate, H5Pset_create_intermediate_group, H5P_DEFAULT, H5Pset_obj_track_times,
     H5Pset_fill_time, H5Pset_chunk, H5Pget_layout, H5Pget_chunk, H5Pset_fill_value,
-    H5Pget_obj_track_times
+    H5Pget_obj_track_times, H5Pget_fill_value, H5Pfill_value_defined
 };
 use globals::H5P_LINK_CREATE;
 
@@ -22,7 +22,8 @@ use plist::PropertyList;
 use space::{Dataspace, Dimension, Ix};
 use util::to_cstring;
 
-use libc::{c_int, c_void};
+use libc;
+use libc::{c_int, c_void, size_t};
 use num::integer::div_floor;
 
 #[derive(Clone, Debug)]
@@ -148,6 +149,25 @@ impl Dataset {
         if offset == HADDR_UNDEF { None } else { Some(offset as u64) }
     }
 
+    pub fn fill_value<T: ToDatatype>(&self) -> Result<Option<T>> {
+        h5lock!({
+            let defined: *mut H5D_fill_value_t = &mut H5D_fill_value_t::H5D_FILL_VALUE_UNDEFINED;
+            h5try_s!(H5Pfill_value_defined(self.dcpl.id(), defined));
+            match *defined {
+                H5D_fill_value_t::H5D_FILL_VALUE_ERROR => fail!("Invalid fill value"),
+                H5D_fill_value_t::H5D_FILL_VALUE_UNDEFINED => Ok(None),
+                _ => {
+                    let datatype = try!(T::to_datatype());
+                    let buf: *mut c_void = libc::malloc(datatype.size() as size_t);
+                    h5try_s!(H5Pget_fill_value(self.dcpl.id(), datatype.id(), buf));
+                    let result = Ok(Some(T::from_raw_ptr(buf)));
+                    libc::free(buf);
+                    result
+                }
+            }
+        })
+    }
+
     fn dataspace(&self) -> Result<Dataspace> {
         Dataspace::from_id(h5try!(H5Dget_space(self.id())))
     }
@@ -262,8 +282,9 @@ impl<T: ToDatatype> DatasetBuilder<T> {
             h5try_s!(H5Pset_obj_track_times(id, self.track_times as hbool_t));
 
             if let Some(ref fill_value) = self.fill_value {
-                h5try_s!(H5Pset_fill_value(id, datatype.id(),
-                    &fill_value.clone() as *const _ as *const c_void));
+                h5try_s!(T::with_raw_ptr(fill_value.clone(), |buf|
+                    H5Pset_fill_value(id, datatype.id(), buf)
+                ));
             }
 
             if let Chunk::None = self.chunk {
@@ -280,18 +301,23 @@ impl<T: ToDatatype> DatasetBuilder<T> {
                 if !no_chunk {
                     ensure!(shape.ndim() > 0,
                         "Chunking cannot be enabled for scalar datasets");
+
                     let dims = match self.chunk {
                         Chunk::Manual(ref c) => c.clone(),
                         _ => infer_chunk_size(shape.clone(), datatype.size()),
                     };
+
                     ensure!(dims.ndim() == shape.ndim(),
                         "Invalid chunk ndim: expected {}, got {}", shape.ndim(), dims.ndim());
                     ensure!(dims.size() > 0,
                         "Invalid chunk: {:?} (all dimensions must be positive)", dims);
                     ensure!(dims.iter().zip(shape.dims().iter()).all(|(&c, &s)| c <= s),
                         "Invalid chunk: {:?} (must not exceed data shape in any dimension)", dims);
+
                     let c_dims: Vec<hsize_t> = dims.iter().map(|&x| x as hsize_t).collect();
                     h5try_s!(H5Pset_chunk(id, dims.ndim() as c_int, c_dims.as_ptr()));
+
+                    // For chunked datasets, write fill values at the allocation time.
                     h5try_s!(H5Pset_fill_time(id, H5D_FILL_TIME_ALLOC));
                 }
             }
@@ -604,6 +630,51 @@ mod tests {
             assert!(ds.is_valid());
             assert_eq!(ds.name(), "");
             assert_eq!(ds.shape(), vec![2, 3]);
+        })
+    }
+
+    #[test]
+    pub fn test_fill_value() {
+        with_tmp_file(|file| {
+            macro_rules! check_fill_value {
+                ($ds:expr, $tp:ty, $v:expr) => (
+                    assert_eq!(($ds).fill_value::<$tp>().unwrap(), Some(($v) as $tp));
+                );
+            }
+
+            macro_rules! check_fill_value_approx {
+                ($ds:expr, $tp:ty, $v:expr) => ({
+                    let fill_value = ($ds).fill_value::<$tp>().unwrap().unwrap();
+                    // FIXME: should inexact float->float casts be prohibited?
+                    assert!((fill_value - (($v) as $tp)).abs() < (1.0e-6 as $tp));
+                });
+            }
+
+            macro_rules! check_all_fill_values {
+                ($ds:expr, $v:expr) => (
+                    check_fill_value!($ds, u8, $v);
+                    check_fill_value!($ds, u16, $v);
+                    check_fill_value!($ds, u32, $v);
+                    check_fill_value!($ds, u64, $v);
+                    check_fill_value!($ds, i8, $v);
+                    check_fill_value!($ds, i16, $v);
+                    check_fill_value!($ds, i32, $v);
+                    check_fill_value!($ds, i64, $v);
+                    check_fill_value!($ds, usize, $v);
+                    check_fill_value!($ds, isize, $v);
+                    check_fill_value_approx!($ds, f32, $v);
+                    check_fill_value_approx!($ds, f64, $v);
+                )
+            }
+
+            let ds = file.new_dataset::<u16>().create_anon(100).unwrap();
+            check_all_fill_values!(ds, 0);
+
+            let ds = file.new_dataset::<u16>().fill_value(42).create_anon(100).unwrap();
+            check_all_fill_values!(ds, 42);
+
+            let ds = file.new_dataset::<f32>().fill_value(3.14).create_anon(100).unwrap();
+            check_all_fill_values!(ds, 3.14);
         })
     }
 }
