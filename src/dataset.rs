@@ -553,7 +553,29 @@ pub mod tests {
                     .create_anon(100).unwrap().filters().get_szip(),
                         Some((false, 4)));
             }
+        });
+
+        with_tmp_file(|file| {
+            let filters = Filters::new().gzip(3).shuffle(true).clone();
+            assert_eq!(file.new_dataset::<u32>().filters(&filters)
+                .create_anon(100).unwrap().filters(), filters);
+            assert_eq!(file.new_dataset::<u32>().shuffle(true)
+                .create_anon(100).unwrap().filters().get_shuffle(), true);
+            assert_eq!(file.new_dataset::<u32>().fletcher32(true)
+                .create_anon(100).unwrap().filters().get_fletcher32(), true);
+            assert_eq!(file.new_dataset::<u32>().scale_offset(8)
+                .create_anon(100).unwrap().filters().get_scale_offset(), Some(8));
+            if gzip_available() {
+                assert_eq!(file.new_dataset::<u32>().gzip(7)
+                    .create_anon(100).unwrap().filters().get_gzip(), Some(7));
+            }
+            if szip_available() {
+                assert_eq!(file.new_dataset::<u32>().szip(false, 4)
+                    .create_anon(100).unwrap().filters().get_szip(),
+                        Some((false, 4)));
+            }
         })
+
     }
 
     #[test]
