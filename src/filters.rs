@@ -141,6 +141,7 @@ impl Filters {
             self.shuffle || self.fletcher32 || self.scale_offset.is_some()
     }
 
+    /// Verify whether the filters configuration is valid.
     pub fn validate(&self) -> Result<()> {
         if self.gzip.is_some() && self.szip.is_some() {
             fail!("Cannot specify two compression options at once.")
@@ -163,6 +164,7 @@ impl Filters {
         Ok(())
     }
 
+    #[doc(hidden)]
     pub fn from_dcpl(dcpl: &PropertyList) -> Result<Filters> {
         let mut filters = Filters::default();
         h5lock!({
@@ -229,6 +231,7 @@ impl Filters {
         Ok(())
     }
 
+    #[doc(hidden)]
     pub fn to_dcpl(&self, datatype: &Datatype) -> Result<PropertyList> {
         try!(self.validate());
 
