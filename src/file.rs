@@ -221,6 +221,7 @@ impl FileBuilder {
         self.filebacked = filebacked; self
     }
 
+    #[allow(dead_code)]
     pub fn increment(&mut self, increment: size_t) -> &mut FileBuilder {
         self.increment = increment; self
     }
