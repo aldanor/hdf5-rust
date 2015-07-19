@@ -9,12 +9,14 @@ pub struct PropertyList {
     handle: Handle,
 }
 
+#[doc(hidden)]
 impl ID for PropertyList {
     fn id(&self) -> hid_t {
         self.handle.id()
     }
 }
 
+#[doc(hidden)]
 impl FromID for PropertyList {
     fn from_id(id: hid_t) -> Result<PropertyList> {
         match get_id_type(id) {

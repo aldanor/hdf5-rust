@@ -29,12 +29,14 @@ pub struct File {
     handle: Handle,
 }
 
+#[doc(hidden)]
 impl ID for File {
     fn id(&self) -> hid_t {
         self.handle.id()
     }
 }
 
+#[doc(hidden)]
 impl FromID for File {
     fn from_id(id: hid_t) -> Result<File> {
         match get_id_type(id) {

@@ -18,8 +18,6 @@ extern crate regex;
 #[macro_use]
 pub mod macros;
 
-mod handle;
-
 pub mod container;
 pub mod dataset;
 pub mod datatype;
@@ -33,7 +31,9 @@ pub mod object;
 pub mod plist;
 pub mod space;
 pub mod sync;
-pub mod util;
+
+mod handle;
+mod util;
 
 pub mod prelude;
 

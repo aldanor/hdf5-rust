@@ -128,12 +128,14 @@ impl Dimension for Dataspace {
     }
 }
 
+#[doc(hidden)]
 impl ID for Dataspace {
     fn id(&self) -> hid_t {
         self.handle.id()
     }
 }
 
+#[doc(hidden)]
 impl FromID for Dataspace {
     fn from_id(id: hid_t) -> Result<Dataspace> {
         match get_id_type(id) {

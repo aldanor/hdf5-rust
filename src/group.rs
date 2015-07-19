@@ -32,12 +32,14 @@ impl fmt::Display for Group {
     }
 }
 
+#[doc(hidden)]
 impl ID for Group {
     fn id(&self) -> hid_t {
         self.handle.id()
     }
 }
 
+#[doc(hidden)]
 impl FromID for Group {
     fn from_id(id: hid_t) -> Result<Group> {
         match get_id_type(id) {

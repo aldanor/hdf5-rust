@@ -39,12 +39,14 @@ pub struct Dataset {
     filters: Filters,
 }
 
+#[doc(hidden)]
 impl ID for Dataset {
     fn id(&self) -> hid_t {
         self.handle.id()
     }
 }
 
+#[doc(hidden)]
 impl FromID for Dataset {
     fn from_id(id: hid_t) -> Result<Dataset> {
         h5lock!({

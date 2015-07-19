@@ -151,6 +151,7 @@ impl_atomic!(f64, H5T_IEEE_F64BE, H5T_IEEE_F64LE);
 #[cfg(target_pointer_width = "64")] impl_atomic!(usize, H5T_STD_U64BE, H5T_STD_U64LE);
 #[cfg(target_pointer_width = "64")] impl_atomic!(isize, H5T_STD_I64BE, H5T_STD_I64LE);
 
+#[doc(hidden)]
 impl ID for Datatype {
     fn id(&self) -> hid_t {
         match *self {
@@ -160,6 +161,7 @@ impl ID for Datatype {
     }
 }
 
+#[doc(hidden)]
 impl FromID for Datatype {
     fn from_id(id: hid_t) -> Result<Datatype> {
         h5lock!({
