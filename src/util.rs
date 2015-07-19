@@ -28,6 +28,9 @@ where F: Fn(*mut c_char, size_t) -> T, T: Integer + NumCast {
     unsafe {
         let len: isize = 1 + cast::<T, isize>(func(ptr::null_mut(), 0)).unwrap();
         ensure!(len > 0, "negative string length in get_h5_str()");
+        if len == 0 {
+            return Ok("".to_string());
+        }
         let buf = libc::malloc((len as size_t) * mem::size_of::<c_char>() as size_t) as *mut c_char;
         func(buf, len as size_t);
         let msg = string_from_cstr(buf);
