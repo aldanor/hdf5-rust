@@ -1,4 +1,4 @@
-use ffi::h5::{haddr_t, H5open};
+use ffi::h5::haddr_t;
 use ffi::h5fd::{H5FD_core_init, H5FD_sec2_init, H5FD_stdio_init};
 use ffi::h5i::hid_t;
 
@@ -12,8 +12,8 @@ pub use self::os::*;
 macro_rules! link_hid {
     ($rust_name:ident, $c_name:ident) => {
         lazy_static! {
-            pub static ref $rust_name: hid_t = {
-                h5lock!(H5open());
+            pub static ref $rust_name: $crate::ffi::h5i::hid_t = {
+                h5lock!($crate::ffi::h5::H5open());
                 $c_name
             };
         }
@@ -109,8 +109,6 @@ link_hid!(H5T_NATIVE_UINT_FAST64,      H5T_NATIVE_UINT_FAST64_g);
 
 #[cfg(target_os = "linux")]
 mod os {
-    use ffi::h5i::hid_t;
-    use ffi::h5::H5open;
     use ffi::h5p::*;
 
     // Property list classes
@@ -151,8 +149,6 @@ mod os {
 
 #[cfg(any(target_os = "macos", target_os = "windows"))]
 mod os {
-    use ffi::h5i::hid_t;
-    use ffi::h5::H5open;
     use ffi::h5p::*;
 
     // Property list classes

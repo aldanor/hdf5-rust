@@ -203,7 +203,6 @@ pub struct DatasetBuilder<T> {
     fill_value: Option<T>,
 }
 
-
 impl<T: ToDatatype> DatasetBuilder<T> {
     /// Create a new dataset builder and bind it to the parent container.
     pub fn new<C: Container>(parent: &C) -> DatasetBuilder<T> {

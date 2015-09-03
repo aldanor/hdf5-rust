@@ -57,27 +57,28 @@ macro_rules! assert_err {
 
 /// Run a safe expression in a closure synchronized by a global reentrant mutex.
 macro_rules! h5lock_s {
-    ($expr:expr) => ({
-        use ::sync::sync;
-        sync(|| { $expr })
-    })
+    ($expr:expr) => (
+        $crate::sync::sync(|| { $expr })
+    )
 }
 
 /// Run an unsafe expression in a closure synchronized by a global reentrant mutex.
 macro_rules! h5lock {
-    ($expr:expr) => (h5lock_s!(unsafe { $expr }))
+    ($expr:expr) => (
+        h5lock_s!(unsafe { $expr })
+    )
 }
 
-
 macro_rules! h5call_s {
-    ($expr:expr) => ({
-        use error::h5check;
-        h5lock_s!(h5check($expr))
-    })
+    ($expr:expr) => (
+        h5lock_s!($crate::error::h5check($expr))
+    )
 }
 
 macro_rules! h5call {
-    ($expr:expr) => (h5call_s!(unsafe { $expr }))
+    ($expr:expr) => (
+        h5call_s!(unsafe { $expr })
+    )
 }
 
 macro_rules! h5try_s {
@@ -90,5 +91,7 @@ macro_rules! h5try_s {
 }
 
 macro_rules! h5try {
-    ($expr:expr) => (h5try_s!(unsafe { $expr }))
+    ($expr:expr) => (
+        h5try_s!(unsafe { $expr })
+    )
 }
