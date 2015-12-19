@@ -107,11 +107,11 @@ impl File {
     }
 
     /// Returns the userblock size in bytes (or 0 if the file handle is invalid).
-    pub fn userblock(&self) -> size_t {
+    pub fn userblock(&self) -> u64 {
         unsafe {
             let userblock: *mut hsize_t = &mut 0;
             h5lock_s!(H5Pget_userblock(self.fcpl.id(), userblock));
-            *userblock as size_t
+            *userblock as u64
         }
     }
 
@@ -189,7 +189,7 @@ impl fmt::Display for File {
 pub struct FileBuilder {
     driver: String,
     mode: String,
-    userblock: size_t,
+    userblock: u64,
     filebacked: bool,
     increment: size_t,
 }
@@ -213,7 +213,7 @@ impl FileBuilder {
         self.mode = mode.into(); self
     }
 
-    pub fn userblock(&mut self, userblock: size_t) -> &mut FileBuilder {
+    pub fn userblock(&mut self, userblock: u64) -> &mut FileBuilder {
         self.userblock = userblock; self
     }
 
@@ -260,7 +260,7 @@ impl FileBuilder {
     fn create_file<P: AsRef<Path>>(&self, filename: P, exclusive: bool) -> Result<File> {
         h5lock_s!({
             let fcpl = try!(PropertyList::from_id(h5try!(H5Pcreate(*H5P_FILE_CREATE))));
-            h5try!(H5Pset_userblock(fcpl.id(), self.userblock));
+            h5try!(H5Pset_userblock(fcpl.id(), self.userblock as usize));
             let fapl = try!(self.make_fapl());
             let flags = if exclusive { H5F_ACC_EXCL } else { H5F_ACC_TRUNC };
             let filename = filename.as_ref();
