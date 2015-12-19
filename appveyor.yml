@@ -2,23 +2,31 @@ version: 0.1.{build}
 
 environment:
   RUST_TARGET: x86_64-pc-windows-gnu
-  HDF5_LIBDIR: C:\hdf5_bin
+  # RUST_TARGET: x86_64-pc-windows-msvc
+  HDF5_LIBDIR: C:\HDF5\lib
   matrix:
-    - RUST_VERSION: 1.2.0
+    - RUST_VERSION: 1.5.0
     - RUST_VERSION: beta
     - RUST_VERSION: nightly
-
+  VCVARS: "C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\bin\\amd64\\vcvars64.bat"
 install:
-  # get rust & cargo
-  - ps: Start-FileDownload "https://static.rust-lang.org/dist/rust-${env:RUST_VERSION}-${env:RUST_TARGET}.exe"
-  - rust-%RUST_VERSION%-%RUST_TARGET%.exe /VERYSILENT /NORESTART /DIR="C:\Program Files\Rust-%RUST_VERSION%"
-  - set PATH=%PATH%;C:\Program Files\Rust-%RUST_VERSION%\bin
+  - ps: Start-FileDownload "https://static.rust-lang.org/dist/rust-${env:RUST_VERSION}-${env:RUST_TARGET}.msi"
+  - ps: Start-Process -FilePath msiexec -ArgumentList /i, rust-${env:RUST_VERSION}-${env:RUST_TARGET}.msi, INSTALLDIR="C:\Rust", /quiet -Wait
+  - set PATH=%PATH%;C:\Rust\bin
+  - cmd: mkdir C:\HDF5
+  - cmd: mkdir C:\HDF5\lib
+  - ps: Invoke-WebRequest "https://github.com/kkirstein/hdf5-rs/releases/download/alpha/hdf5.dll" -OutFile "C:\HDF5\lib\hdf5.dll"
+  # - ps: Invoke-WebRequest http://repo.continuum.io/pkgs/free/win-64/hdf5-1.8.15.1-vc14_4.tar.bz2 -OutFile hdf5.tar.bz2
+  # - cmd: 7z x -y hdf5.tar.bz2
+  # - cmd: 7z x -y hdf5.tar
+  # - cmd: xcopy Library C:\HDF5 /s /e /y
 
-  # get hdf5 binary (just get a prebuilt binary for now)
-  - mkdir C:\hdf5_bin
-  - ps: Invoke-WebRequest "https://github.com/kkirstein/hdf5-rs/releases/download/alpha/hdf5.dll" -OutFile "C:\hdf5_bin\hdf5.dll"
-  - set PATH=C:\hdf5_bin;%PATH%
-
+  # - ps: Invoke-WebRequest "http://www.hdfgroup.org/ftp/HDF5/current/bin/windows/extra/hdf5-1.8.16-win64-vs2015-shared.zip" -OutFile hdf5.zip
+  # - cmd: 7z x hdf5.zip -y
+  # - ps: Start-Process -FilePath msiexec -ArgumentList /i, "hdf5\HDF5-1.8.16-win64.msi", INSTALLDIR="C:\HDF5" -Wait
+  - cmd: CALL "%VCVARS%"
+  # - cmd: set PATH=C:\HDF5;%PATH%
+  - cmd: set PATH=C:\HDF5\bin;%PATH%
   # output version info
   - rustc --version
   - cargo --version

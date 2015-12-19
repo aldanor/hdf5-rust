@@ -46,9 +46,14 @@ impl ReentrantMutex {
     }
 }
 
+#[allow(non_camel_case_types)]
 mod ffi {
-    use libc::{LPVOID, LONG, HANDLE, c_ulong, BOOLEAN};
-    #[allow(non_camel_case_types)]
+    use libc::{c_long, c_ulong, c_void};
+
+    pub type BOOLEAN = u8;
+    pub type LONG = c_long;
+    pub type LPVOID = *mut c_void;
+    pub type HANDLE = LPVOID;
     pub type ULONG_PTR = c_ulong;
 
     #[allow(non_snake_case)]

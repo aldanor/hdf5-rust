@@ -1,7 +1,7 @@
 language: rust
 sudo: false
 rust:
-- 1.2.0
+- 1.5.0
 - beta
 - nightly
 script:
@@ -19,10 +19,17 @@ notifications:
 os:
 - linux
 - osx
+before_install:
+- if [ `uname` = "Darwin" ]; then
+    brew update >/dev/null;
+    brew tap homebrew/science;
+    brew install hdf5;
+  fi
 after_success: |
-  [ $TRAVIS_BRANCH = master ] &&
-  [ $TRAVIS_PULL_REQUEST = false ] &&
-  [ $TRAVIS_RUST_VERSION = nightly ] &&
+  [ $TRAVIS_BRANCH = "master" ] &&
+  [ $TRAVIS_PULL_REQUEST = "false" ] &&
+  [ $TRAVIS_RUST_VERSION = "nightly" ] &&
+  [ `uname` = "Linux" ] &&
   echo '<meta http-equiv=refresh content=0;url=hdf5/index.html>' > target/doc/index.html &&
   pip install ghp-import --user $USER &&
   $HOME/.local/bin/ghp-import -n target/doc &&
