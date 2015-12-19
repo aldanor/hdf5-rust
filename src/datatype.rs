@@ -231,7 +231,6 @@ impl fmt::Display for Datatype {
 #[cfg(test)]
 pub mod tests {
     use super::{Datatype, AnyDatatype, AtomicDatatype, ToDatatype};
-    use super::Datatype::*;
     use handle::FromID;
     use ffi::h5i::H5I_INVALID_HID;
     use ffi::h5t::H5Tcopy;
