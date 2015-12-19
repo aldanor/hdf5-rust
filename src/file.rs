@@ -191,7 +191,7 @@ pub struct FileBuilder {
     mode: String,
     userblock: u64,
     filebacked: bool,
-    increment: size_t,
+    increment: u32,
 }
 
 impl FileBuilder {
@@ -222,7 +222,7 @@ impl FileBuilder {
     }
 
     #[allow(dead_code)]
-    pub fn increment(&mut self, increment: size_t) -> &mut FileBuilder {
+    pub fn increment(&mut self, increment: u32) -> &mut FileBuilder {
         self.increment = increment; self
     }
 
@@ -233,7 +233,7 @@ impl FileBuilder {
                 "sec2"  => h5try!(H5Pset_fapl_sec2(fapl.id())),
                 "stdio" => h5try!(H5Pset_fapl_stdio(fapl.id())),
                 "core"  => h5try!(H5Pset_fapl_core(
-                               fapl.id(), self.increment, self.filebacked as hbool_t
+                               fapl.id(), self.increment as size_t, self.filebacked as hbool_t
                            )),
                 _ => fail!(format!("Invalid file driver: {}", self.driver)),
             };
@@ -260,7 +260,7 @@ impl FileBuilder {
     fn create_file<P: AsRef<Path>>(&self, filename: P, exclusive: bool) -> Result<File> {
         h5lock_s!({
             let fcpl = try!(PropertyList::from_id(h5try!(H5Pcreate(*H5P_FILE_CREATE))));
-            h5try!(H5Pset_userblock(fcpl.id(), self.userblock as usize));
+            h5try!(H5Pset_userblock(fcpl.id(), self.userblock));
             let fapl = try!(self.make_fapl());
             let flags = if exclusive { H5F_ACC_EXCL } else { H5F_ACC_TRUNC };
             let filename = filename.as_ref();
