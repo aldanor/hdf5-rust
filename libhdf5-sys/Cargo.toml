@@ -1,7 +1,7 @@
 [package]
 
 name = "libhdf5-sys"
-version = "0.0.1"
+version = "0.1.0"
 authors = ["Ivan Smirnov <i.s.smirnov@gmail.com>"]
 build = "build.rs"
 links = "hdf5"
@@ -12,7 +12,7 @@ description = "Native bindings to the HDF5 library"
 name = "libhdf5_sys"
 
 [dependencies]
-libc = "*"
+libc = "0.2.4"
 
 [build-dependencies]
-pkg-config = "*"
+pkg-config = "0.3.6"
