@@ -12,15 +12,15 @@ Thread-safe Rust bindings and high-level wrappers for the HDF5 library API.
 
 `hdf5-rs` is known to run on these platforms:
 
-- Linux (tests run on Travis CI)
-- OS X
-- Windows (MinGW only for now, see below for details; tests run on AppVeyor)
+- Linux (tested on Travis CI)
+- OS X (tested on Travis CI)
+- Windows (see below for details; gnu build tested on AppVeyor)
 
 ### Rust
 
 `hdf5-rs` is tested for all three official release channels:
 
-- stable (1.1.0)
+- stable (1.5.0)
 - beta
 - nightly
 
@@ -31,8 +31,8 @@ Thread-safe Rust bindings and high-level wrappers for the HDF5 library API.
 There are also two environment variables that may be of use if the library location and/or name
 is unconventional:
 
-- `HDF5_LIBDIR` -- added to library search path during the build step
-- `HDF5_LIBNAME` -- library filename (defaults to `hdf5`)
+- `HDF5_LIBDIR` – added to library search path during the build step
+- `HDF5_LIBNAME` – library filename (defaults to `hdf5`)
 
 Note also that the build script of `libhdf5-sys` crate tries to use `pkg-config` (if it's available
 to deduce library location).
