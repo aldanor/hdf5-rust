@@ -1,26 +1,25 @@
 [package]
-
-name = "hdf5"
+name = "hdf5-rs"
 version = "0.1.0"
 authors = ["Ivan Smirnov <i.s.smirnov@gmail.com>"]
 keywords = ["hdf5"]
+license = "MIT/Apache-2.0"
 readme = "README.md"
 description = "Thread-safe Rust bindings for the HDF5 library."
 repository = "https://github.com/aldanor/hdf5-rs"
 homepage = "https://github.com/aldanor/hdf5-rs"
+exclude = [
+    "appveyor.yml",
+    ".travis.yml",
+    ".gitignore"
+]
 
 [dependencies]
 lazy_static = "0.1.15"
 num = "0.1.29"
 libc = "0.2.4"
-
-[dependencies.libhdf5-sys]
-path = "libhdf5-sys"
-version = "0.1.0"
-
-[dependencies.remutex]
-path = "remutex"
-version = "0.1.0"
+libhdf5-sys = { path = "libhdf5-sys", version = "0.1.0" }
+remutex = { path = "remutex", version = "0.1.0" }
 
 [dev-dependencies]
 regex = "0.1.43"
