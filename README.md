@@ -2,7 +2,7 @@
 
 [![Build Status](https://img.shields.io/travis/aldanor/hdf5-rs.svg)](https://travis-ci.org/aldanor/hdf5-rs) [![Appveyor Build Status](https://img.shields.io/appveyor/ci/aldanor/hdf5-rs.svg)](https://ci.appveyor.com/project/aldanor/hdf5-rs)
 
-[Documentation](http://aldanor.github.io/hdf5-rs)
+[Documentation](http://aldanor.github.io/hdf5-rs/hdf5_rs)
 
 Thread-safe Rust bindings and high-level wrappers for the HDF5 library API.
 
