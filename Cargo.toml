@@ -1,6 +1,6 @@
 [package]
 name = "hdf5-rs"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Ivan Smirnov <i.s.smirnov@gmail.com>"]
 keywords = ["hdf5"]
 license = "MIT/Apache-2.0"
@@ -16,11 +16,11 @@ exclude = [
 
 [dependencies]
 lazy_static = "0.1.15"
-num = "0.1.29"
-libc = "0.2.4"
-libhdf5-sys = { path = "libhdf5-sys", version = "0.1.0" }
-remutex = { path = "remutex", version = "0.1.0" }
+num = "0.1.30"
+libc = "0.2.6"
+libhdf5-sys = { path = "libhdf5-sys", version = "0.1.1" }
+remutex = { path = "remutex", version = "0.1.1" }
 
 [dev-dependencies]
-regex = "0.1.43"
+regex = "0.1.48"
 tempdir = "0.3.4"
