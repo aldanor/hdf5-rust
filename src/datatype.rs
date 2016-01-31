@@ -259,54 +259,48 @@ pub mod tests {
 
     #[test]
     pub fn test_atomic_datatype() {
-        macro_rules! test_integer {
-            ($tp:ty, $signed:expr, $precision:expr, $size:expr) => (
-                match <$tp as ToDatatype>::to_datatype().unwrap() {
-                    Datatype::Integer(dt) => {
-                        assert_eq!(dt.is_be(), IS_BE);
-                        assert_eq!(dt.is_le(), IS_LE);
-                        assert_eq!(dt.offset(), 0);
-                        assert_eq!(dt.precision(), $precision);
-                        assert_eq!(dt.is_signed(), $signed);
-                        assert_eq!(dt.size(), $size);
-                    },
-                    _ => panic!("Integer datatype expected")
-                }
-            )
+        fn test_integer<T: ToDatatype>(signed: bool, precision: usize, size: usize) {
+            match <T as ToDatatype>::to_datatype().unwrap() {
+                Datatype::Integer(dt) => {
+                    assert_eq!(dt.is_be(), IS_BE);
+                    assert_eq!(dt.is_le(), IS_LE);
+                    assert_eq!(dt.offset(), 0);
+                    assert_eq!(dt.precision(), precision);
+                    assert_eq!(dt.is_signed(), signed);
+                    assert_eq!(dt.size(), size);
+                },
+                _ => panic!("Integer datatype expected")
+            }
         }
 
-        macro_rules! test_float {
-            ($tp:ty, $precision:expr, $size:expr) => (
-                match <$tp as ToDatatype>::to_datatype().unwrap() {
-                    Datatype::Float(dt) => {
-                        assert_eq!(dt.is_be(), IS_BE);
-                        assert_eq!(dt.is_le(), IS_LE);
-                        assert_eq!(dt.offset(), 0);
-                        assert_eq!(dt.precision(), $precision);
-                        assert_eq!(dt.size(), $size);
-                    },
-                    _ => panic!("Float datatype expected")
-                }
-            )
-        }
+        fn test_float<T: ToDatatype>(precision: usize, size: usize) {
+            match <T as ToDatatype>::to_datatype().unwrap() {
+                Datatype::Float(dt) => {
+                    assert_eq!(dt.is_be(), IS_BE);
+                    assert_eq!(dt.is_le(), IS_LE);
+                    assert_eq!(dt.offset(), 0);
+                    assert_eq!(dt.precision(), precision);
+                    assert_eq!(dt.size(), size);
+                },
+                _ => panic!("Float datatype expected")
+            }
+        }        test_integer::<bool>(false, 8, 1);
 
-        test_integer!(bool, false, 8, 1);
+        test_integer::<i8>(true, 8, 1);
+        test_integer::<i16>(true, 16, 2);
+        test_integer::<i32>(true, 32, 4);
+        test_integer::<i64>(true, 64, 8);
 
-        test_integer!(i8, true, 8, 1);
-        test_integer!(i16, true, 16, 2);
-        test_integer!(i32, true, 32, 4);
-        test_integer!(i64, true, 64, 8);
+        test_integer::<u8>(false, 8, 1);
+        test_integer::<u16>(false, 16, 2);
+        test_integer::<u32>(false, 32, 4);
+        test_integer::<u64>(false, 64, 8);
 
-        test_integer!(u8, false, 8, 1);
-        test_integer!(u16, false, 16, 2);
-        test_integer!(u32, false, 32, 4);
-        test_integer!(u64, false, 64, 8);
+        test_float::<f32>(32, 4);
+        test_float::<f64>(64, 8);
 
-        test_float!(f32, 32, 4);
-        test_float!(f64, 64, 8);
-
-        test_integer!(isize, true, POINTER_WIDTH_BYTES * 8, POINTER_WIDTH_BYTES);
-        test_integer!(usize, false, POINTER_WIDTH_BYTES * 8, POINTER_WIDTH_BYTES);
+        test_integer::<isize>(true, POINTER_WIDTH_BYTES * 8, POINTER_WIDTH_BYTES);
+        test_integer::<usize>(false, POINTER_WIDTH_BYTES * 8, POINTER_WIDTH_BYTES);
     }
 
     #[test]
