@@ -6,8 +6,14 @@ rust:
 - nightly
 script:
 - cd $TRAVIS_BUILD_DIR/remutex && cargo build --verbose && cargo test --verbose
-- cd $TRAVIS_BUILD_DIR && cargo build --verbose && cargo test --verbose
-- cargo doc --no-deps
+- |
+  cd $TRAVIS_BUILD_DIR &&
+  cargo build --verbose &&
+  case $TRAVIS_RUST_VERSION in
+    nightly)  cargo test --verbose --features unstable ;;
+    *)        cargo test --verbose ;;
+  esac &&
+  cargo doc --no-deps
 addons:
   apt:
     packages:
