@@ -1,3 +1,5 @@
+#![cfg_attr(feature = "unstable", feature(plugin))]
+#![cfg_attr(feature = "unstable", plugin(clippy))]
 #![cfg_attr(not(test), allow(dead_code))]
 
 pub use container::Container;
