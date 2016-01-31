@@ -48,7 +48,7 @@ impl Registry {
 
     pub fn new_handle(&self, id: hid_t) -> Arc<RwLock<hid_t>> {
         let mut registry = self.registry.lock().unwrap();
-        let handle = registry.entry(id).or_insert(Arc::new(RwLock::new(id)));
+        let handle = registry.entry(id).or_insert_with(|| Arc::new(RwLock::new(id)));
         if *handle.read().unwrap() != id {
             // an id may be left dangling by previous invalidation of a linked handle
             *handle = Arc::new(RwLock::new(id));
@@ -67,9 +67,10 @@ impl Handle {
             static ref REGISTRY: Registry = Registry::new();
         }
         h5lock_s!({
-            match is_valid_user_id(id) {
-                false => Err(From::from(format!("Invalid handle id: {}", id))),
-                true  => Ok(Handle{ id: REGISTRY.new_handle(id) })
+            if is_valid_user_id(id) {
+                Ok(Handle{ id: REGISTRY.new_handle(id) })
+            } else {
+                Err(From::from(format!("Invalid handle id: {}", id)))
             }
         })
     }

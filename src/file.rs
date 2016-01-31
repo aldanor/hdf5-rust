@@ -141,7 +141,7 @@ impl File {
         h5lock_s!({
             let file_ids = self.get_obj_ids(H5F_OBJ_FILE);
             let object_ids = self.get_obj_ids(H5F_OBJ_ALL & !H5F_OBJ_FILE);
-            for file_id in file_ids.iter() {
+            for file_id in &file_ids {
                 let handle = Handle::from_id(*file_id);
                 if let Ok(handle) = handle {
                     while handle.is_valid() {
@@ -149,7 +149,7 @@ impl File {
                     }
                 }
             }
-            for object_id in object_ids.iter() {
+            for object_id in &object_ids {
                 let handle = Handle::from_id(*object_id);
                 if let Ok(handle) = handle {
                     while handle.is_valid() {
@@ -179,7 +179,7 @@ impl fmt::Display for File {
         }
         let basename = match Path::new(&self.filename()).file_name() {
             Some(s) => s.to_string_lossy().into_owned(),
-            None    => "".to_string(),
+            None    => "".to_owned(),
         };
         let mode = if self.is_read_only() { "read-only" } else { "read/write" };
         format!("<HDF5 file: \"{}\" ({})>", basename, mode).fmt(f)
@@ -197,8 +197,8 @@ pub struct FileBuilder {
 impl FileBuilder {
     pub fn new() -> FileBuilder {
         FileBuilder {
-            driver: "sec2".to_string(),
-            mode: "r".to_string(),
+            driver: "sec2".to_owned(),
+            mode: "r".to_owned(),
             userblock: 0,
             filebacked: false,
             increment: 64 * 1024 * 1024,
@@ -437,8 +437,8 @@ pub mod tests {
                 let mut reader = fs::File::open(&path).unwrap().take(512);
                 let mut data: Vec<u8> = Vec::new();
                 assert_eq!(reader.read_to_end(&mut data).unwrap(), 512);
-                for i in 0usize..512usize {
-                    assert_eq!(data[i], (i % 256) as u8);
+                for (i, item) in data.iter().cloned().enumerate().take(512) {
+                    assert_eq!(item, (i % 256) as u8);
                 }
             }
             File::open(&path, "r").unwrap().group("foo/bar").unwrap();

@@ -25,8 +25,8 @@ impl fmt::Display for Group {
             return "<HDF5 group: invalid id>".fmt(f);
         }
         let members = match self.len() {
-            0 => "empty".to_string(),
-            1 => "1 member".to_string(),
+            0 => "empty".to_owned(),
+            1 => "1 member".to_owned(),
             x => format!("{} members", x),
         };
         format!("<HDF5 group: \"{}\" ({})>", self.name(), members).fmt(f)

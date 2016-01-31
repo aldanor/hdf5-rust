@@ -34,7 +34,7 @@ pub trait Location: Object {
     fn comment(&self) -> Option<String> {
         // TODO: should this return Result<Option<String>> or fail silently?
         let comment = h5lock!(get_h5_str(|m, s| { H5Oget_comment(self.id(), m, s) }).ok());
-        comment.and_then(|c| if c.len() == 0 { None } else { Some(c) })
+        comment.and_then(|c| if c.is_empty() { None } else { Some(c) })
     }
 
     /// Set or the commment attached to the named object.

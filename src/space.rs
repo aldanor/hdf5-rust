@@ -83,7 +83,7 @@ impl Dataspace {
         let rank = d.ndim();
         let mut dims: Vec<hsize_t> = vec![];
         let mut max_dims: Vec<hsize_t> = vec![];
-        for dim in d.dims().iter() {
+        for dim in &d.dims() {
             dims.push(*dim as hsize_t);
             max_dims.push(if resizable { H5S_UNLIMITED } else { *dim as hsize_t });
         }

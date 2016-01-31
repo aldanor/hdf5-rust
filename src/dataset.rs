@@ -697,8 +697,8 @@ pub mod tests {
             let ds = file.new_dataset::<u16>().fill_value(42).create_anon(100).unwrap();
             check_all_fill_values!(ds, 42);
 
-            let ds = file.new_dataset::<f32>().fill_value(3.14).create_anon(100).unwrap();
-            check_all_fill_values!(ds, 3.14);
+            let ds = file.new_dataset::<f32>().fill_value(1.234).create_anon(100).unwrap();
+            check_all_fill_values!(ds, 1.234);
         })
     }
 

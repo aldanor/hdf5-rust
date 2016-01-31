@@ -247,13 +247,13 @@ impl Filters {
             }
 
             // scale-offset
-            if let &Some(offset) = &self.scale_offset {
+            if let Some(offset) = self.scale_offset {
                 try!(self.ensure_available("scaleoffset", H5Z_FILTER_SCALEOFFSET));
-                match datatype {
-                    &Datatype::Integer(_) => {
+                match *datatype {
+                    Datatype::Integer(_) => {
                         H5Pset_scaleoffset(id, H5Z_SO_INT, offset as c_int);
                     },
-                    &Datatype::Float(_) => {
+                    Datatype::Float(_) => {
                         ensure!(offset > 0,
                             "Can only use positive scale-offset factor with floats");
                         H5Pset_scaleoffset(id, H5Z_SO_FLOAT_DSCALE, offset as c_int);

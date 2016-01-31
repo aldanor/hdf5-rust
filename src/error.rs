@@ -65,7 +65,7 @@ pub struct ErrorStack {
 impl Index<usize> for ErrorStack {
     type Output = ErrorFrame;
 
-    fn index<'a>(&'a self, index: usize) -> &'a ErrorFrame {
+    fn index(&self, index: usize) -> &ErrorFrame {
         &self.frames[index]
     }
 }
@@ -130,7 +130,7 @@ impl ErrorStack {
     pub fn push(&mut self, frame: ErrorFrame) {
         self.frames.push(frame);
         if self.len() >= 1 {
-            let top_desc = self.frames[0].description().to_string();
+            let top_desc = self.frames[0].description().to_owned();
             if self.len() == 1 {
                 self.description = Some(top_desc);
             } else {
@@ -142,13 +142,14 @@ impl ErrorStack {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.len() == 0
+        self.frames.is_empty()
     }
 
     pub fn top(&self) -> Option<&ErrorFrame> {
-        match !self.is_empty() {
-            false => None,
-            true  => Some(&self.frames[0]),
+        if !self.is_empty() {
+            Some(&self.frames[0])
+        } else {
+            None
         }
     }
 
@@ -229,12 +230,13 @@ pub fn h5check<T>(value: T) -> Result<T> where T: Integer + Zero + Bounded,
         value == T::zero()
     };
 
-    match maybe_error {
-        false => Ok(value),
-        true  => match Error::query() {
+    if maybe_error {
+        match Error::query() {
             None       => Ok(value),
             Some(err)  => Err(From::from(err)),
-        },
+        }
+    } else {
+        Ok(value)
     }
 }
 

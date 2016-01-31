@@ -29,7 +29,7 @@ where F: Fn(*mut c_char, size_t) -> T, T: Integer + NumCast {
         let len: isize = 1 + cast::<T, isize>(func(ptr::null_mut(), 0)).unwrap();
         ensure!(len > 0, "negative string length in get_h5_str()");
         if len == 1 {
-            return Ok("".to_string());
+            return Ok("".to_owned());
         }
         let buf = libc::malloc((len as size_t) * mem::size_of::<c_char>() as size_t) as *mut c_char;
         func(buf, len as size_t);
@@ -49,7 +49,7 @@ mod tests {
 
     #[test]
     pub fn test_string_cstr() {
-        let s1: String = "foo".to_string();
+        let s1: String = "foo".to_owned();
         assert_eq!(s1, string_from_cstr(to_cstring(s1.clone()).as_ptr()));
         let s2: &str = "bar";
         assert_eq!(s2, string_from_cstr(to_cstring(s2).as_ptr()));

@@ -35,11 +35,11 @@ macro_rules! ensure {
 /// Panics if `$expr` is not an Err(err) with err.description() matching regexp `$err`.
 macro_rules! assert_err {
     ($expr:expr, $err:expr) => {
-        match &($expr) {
-            &Ok(_) => {
+        match $expr {
+            Ok(_) => {
                 panic!("assertion failed: not an error in `{}`", stringify!($expr));
             }
-            &Err(ref value) => {
+            Err(ref value) => {
                 use regex::Regex;
                 use std::error::Error as BaseError;
                 let re = Regex::new($err).unwrap();
