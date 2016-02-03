@@ -3,7 +3,7 @@
 //! The purpose of this module is to provide reexports of many core `hdf5` traits so that
 //! they can be then glob-imported all at once:
 //!
-//! ```
+//! ```ignore
 //! use hdf5_rs::prelude::*;
 //! ```
 //! This module provides reexports of such traits as `Object`, `Location` and `Container` and
