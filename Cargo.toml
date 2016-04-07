@@ -18,13 +18,13 @@ exclude = [
 unstable = ["clippy"]
 
 [dependencies]
-lazy_static = "0.1.15"
-num = "0.1.30"
-libc = "0.2.6"
+lazy_static = "0.1"
+num = "0.1"
+libc = "0.2"
 libhdf5-sys = { path = "libhdf5-sys", version = "0.1.1" }
 remutex = { path = "remutex", version = "0.1.1" }
 clippy = {version = "^0.0.37", optional = true}
 
 [dev-dependencies]
-regex = "0.1.48"
-tempdir = "0.3.4"
+regex = "0.1"
+tempdir = "0.3"
