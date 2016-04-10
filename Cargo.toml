@@ -23,7 +23,7 @@ num = "0.1"
 libc = "0.2"
 libhdf5-sys = { path = "libhdf5-sys", version = "0.1.1" }
 remutex = { path = "remutex", version = "0.1.1" }
-clippy = {version = "^0.0.37", optional = true}
+clippy = { version = "^0.0.63", optional = true }
 
 [dev-dependencies]
 regex = "0.1"
