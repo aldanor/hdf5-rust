@@ -58,6 +58,10 @@ extern {
     pub fn H5get_libversion(majnum: *mut c_uint, minnum: *mut c_uint, relnum: *mut c_uint) ->
                             herr_t;
     pub fn H5check_version(majnum: c_uint, minnum: c_uint, relnum: c_uint) -> herr_t;
+}
+
+#[cfg(hdf5_1_8_13)]
+extern {
     pub fn H5free_memory(mem: *mut c_void) -> herr_t;
 }
 
