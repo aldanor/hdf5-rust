@@ -21,6 +21,9 @@ pub mod h5s;
 pub mod h5t;
 pub mod h5z;
 
+#[cfg(hdf5_1_8_15)]
+pub mod h5pl;
+
 #[cfg(test)]
 mod tests {
     use super::h5::H5open;
