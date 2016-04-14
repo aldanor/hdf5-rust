@@ -298,8 +298,6 @@ extern {
     pub fn H5Pset_buffer(plist_id: hid_t, size: size_t, tconv: *mut c_void, bkg: *mut c_void) ->
                          herr_t;
     pub fn H5Pget_buffer(plist_id: hid_t, tconv: *mut *mut c_void, bkg: *mut *mut c_void) -> size_t;
-    pub fn H5Pset_preserve(plist_id: hid_t, status: hbool_t) -> herr_t;
-    pub fn H5Pget_preserve(plist_id: hid_t) -> c_int;
     pub fn H5Pset_edc_check(plist_id: hid_t, check: H5Z_EDC_t) -> herr_t;
     pub fn H5Pget_edc_check(plist_id: hid_t) -> H5Z_EDC_t;
     pub fn H5Pset_filter_callback(plist_id: hid_t, func: H5Z_filter_func_t, op_data: *mut c_void) ->
