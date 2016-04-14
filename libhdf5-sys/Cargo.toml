@@ -13,8 +13,8 @@ description = "Native bindings to the HDF5 library"
 name = "libhdf5_sys"
 
 [dependencies]
-libc = "0.2.6"
+libc = "0.2"
 
 [build-dependencies]
-pkg-config = "0.3.6"
+pkg-config = "0.3"
 tempdir = "0.3"
