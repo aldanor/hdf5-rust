@@ -17,3 +17,4 @@ libc = "0.2.6"
 
 [build-dependencies]
 pkg-config = "0.3.6"
+tempdir = "0.3"

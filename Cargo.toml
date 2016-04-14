@@ -13,6 +13,7 @@ exclude = [
     ".travis.yml",
     ".gitignore"
 ]
+build = "build.rs"
 
 [features]
 unstable = ["clippy"]
@@ -28,3 +29,6 @@ clippy = { version = "^0.0.63", optional = true }
 [dev-dependencies]
 regex = "0.1"
 tempdir = "0.3"
+
+[build-dependencies]
+libhdf5-sys = { path = "libhdf5-sys", version = "0.1.1" }
