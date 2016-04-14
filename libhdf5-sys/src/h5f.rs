@@ -125,5 +125,9 @@ extern {
     pub fn H5Freset_mdc_hit_rate_stats(file_id: hid_t) -> herr_t;
     pub fn H5Fget_name(obj_id: hid_t, name: *mut c_char, size: size_t) -> ssize_t;
     pub fn H5Fget_info(obj_id: hid_t, bh_info: *mut H5F_info_t) -> herr_t;
+}
+
+#[cfg(hdf5_1_8_7)]
+extern {
     pub fn H5Fclear_elink_file_cache(file_id: hid_t) -> herr_t;
 }
