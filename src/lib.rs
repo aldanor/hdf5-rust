@@ -54,3 +54,27 @@ pub mod prelude;
 
 #[cfg(test)]
 pub mod test;
+
+/// Returns the version of the HDF5 library that the crate was compiled against.
+pub fn hdf5_version() -> (u8, u8, u8) {
+    use ffi::h5;
+    use libc::c_uint;
+
+    let mut version: (c_uint, c_uint, c_uint) = (0, 0, 0);
+    h5lock!({
+        h5::H5open();
+        h5::H5get_libversion(&mut version.0, &mut version.1, &mut version.2);
+    });
+    (version.0 as u8, version.1 as u8, version.2 as u8)
+}
+
+#[cfg(test)]
+pub mod tests {
+    use super::hdf5_version;
+
+    #[test]
+    pub fn test_hdf5_version() {
+        let version = hdf5_version();
+        assert!(version.0 >= 1 && version.1 >= 8);
+    }
+}
