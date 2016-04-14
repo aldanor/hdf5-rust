@@ -3,12 +3,6 @@ pub use self::H5_index_t::*;
 
 use libc::{c_int, c_uint, c_void, c_ulonglong, c_longlong, uint64_t};
 
-pub const H5_VERS_MAJOR:      c_uint = 1;
-pub const H5_VERS_MINOR:      c_uint = 8;
-pub const H5_VERS_RELEASE:    c_uint = 14;
-pub const H5_VERS_SUBRELEASE: &'static str = "";
-pub const H5_VERS_INFO:       &'static str = "HDF5; library version: 1.8.14";
-
 pub type herr_t   = c_int;
 pub type hbool_t  = c_uint;
 pub type htri_t   = c_int;
