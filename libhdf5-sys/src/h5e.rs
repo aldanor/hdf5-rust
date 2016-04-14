@@ -27,7 +27,7 @@ pub struct H5E_error2_t {
     pub desc: *const c_char,
 }
 
-impl ::std::default::Default for H5E_error2_t {
+impl Default for H5E_error2_t {
     fn default() -> H5E_error2_t { unsafe { ::std::mem::zeroed() } }
 }
 

@@ -112,7 +112,7 @@ pub struct H5FD_class_t {
     pub fl_map: [H5FD_mem_t; 7usize],
 }
 
-impl ::std::default::Default for H5FD_class_t {
+impl Default for H5FD_class_t {
     fn default() -> H5FD_class_t { unsafe { ::std::mem::zeroed() } }
 }
 
@@ -124,7 +124,7 @@ pub struct H5FD_free_t {
     pub next: *mut H5FD_free_t,
 }
 
-impl ::std::default::Default for H5FD_free_t {
+impl Default for H5FD_free_t {
     fn default() -> H5FD_free_t { unsafe { ::std::mem::zeroed() } }
 }
 
@@ -141,7 +141,7 @@ pub struct H5FD_t {
     pub alignment: hsize_t,
 }
 
-impl ::std::default::Default for H5FD_t {
+impl Default for H5FD_t {
     fn default() -> H5FD_t { unsafe { ::std::mem::zeroed() } }
 }
 
@@ -175,7 +175,7 @@ pub struct H5FD_file_image_callbacks_t {
     pub udata: *mut c_void,
 }
 
-impl ::std::default::Default for H5FD_file_image_callbacks_t {
+impl Default for H5FD_file_image_callbacks_t {
     fn default() -> H5FD_file_image_callbacks_t { unsafe { ::std::mem::zeroed() } }
 }
 

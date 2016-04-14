@@ -62,7 +62,7 @@ pub struct H5O_hdr_info_t {
     pub mesg: __H5O_hdr_info_t__mesg,
 }
 
-impl ::std::default::Default for H5O_hdr_info_t {
+impl Default for H5O_hdr_info_t {
     fn default() -> H5O_hdr_info_t { unsafe { ::std::mem::zeroed() } }
 }
 
@@ -75,7 +75,7 @@ pub struct __H5O_hdr_info_t__space {
     pub free: hsize_t,
 }
 
-impl ::std::default::Default for __H5O_hdr_info_t__space {
+impl Default for __H5O_hdr_info_t__space {
     fn default() -> __H5O_hdr_info_t__space { unsafe { ::std::mem::zeroed() } }
 }
 
@@ -86,7 +86,7 @@ pub struct __H5O_hdr_info_t__mesg {
     pub shared: uint64_t,
 }
 
-impl ::std::default::Default for __H5O_hdr_info_t__mesg {
+impl Default for __H5O_hdr_info_t__mesg {
     fn default() -> __H5O_hdr_info_t__mesg { unsafe { ::std::mem::zeroed() } }
 }
 
@@ -106,7 +106,7 @@ pub struct H5O_info_t {
     pub meta_size: __H5O_info_t__meta_size,
 }
 
-impl ::std::default::Default for H5O_info_t {
+impl Default for H5O_info_t {
     fn default() -> H5O_info_t { unsafe { ::std::mem::zeroed() } }
 }
 
@@ -117,7 +117,7 @@ pub struct __H5O_info_t__meta_size {
     pub attr: H5_ih_info_t,
 }
 
-impl ::std::default::Default for __H5O_info_t__meta_size {
+impl Default for __H5O_info_t__meta_size {
     fn default() -> __H5O_info_t__meta_size { unsafe { ::std::mem::zeroed() } }
 }
 

@@ -43,7 +43,7 @@ pub struct H5_ih_info_t {
     pub heap_size: hsize_t,
 }
 
-impl ::std::default::Default for H5_ih_info_t {
+impl Default for H5_ih_info_t {
     fn default() -> H5_ih_info_t { unsafe { ::std::mem::zeroed() } }
 }
 

@@ -147,7 +147,7 @@ pub struct H5T_cdata_t {
     pub _priv: *mut c_void,
 }
 
-impl ::std::default::Default for H5T_cdata_t {
+impl Default for H5T_cdata_t {
     fn default() -> H5T_cdata_t { unsafe { ::std::mem::zeroed() } }
 }
 
@@ -194,7 +194,7 @@ pub struct hvl_t {
     pub p: *mut c_void,
 }
 
-impl ::std::default::Default for hvl_t {
+impl Default for hvl_t {
     fn default() -> hvl_t { unsafe { ::std::mem::zeroed() } }
 }
 

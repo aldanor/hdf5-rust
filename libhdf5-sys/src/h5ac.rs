@@ -44,7 +44,7 @@ pub struct H5AC_cache_config_t {
     pub metadata_write_strategy: c_int,
 }
 
-impl ::std::default::Default for H5AC_cache_config_t {
+impl Default for H5AC_cache_config_t {
     fn default() -> H5AC_cache_config_t { unsafe { ::std::mem::zeroed() } }
 }
 

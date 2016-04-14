@@ -14,7 +14,7 @@ pub struct H5A_info_t {
     pub data_size: hsize_t,
 }
 
-impl ::std::default::Default for H5A_info_t {
+impl Default for H5A_info_t {
     fn default() -> H5A_info_t { unsafe { ::std::mem::zeroed() } }
 }
 

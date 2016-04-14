@@ -36,7 +36,7 @@ pub struct H5L_info_t {
     pub u: __H5L_info_t__u,
 }
 
-impl ::std::default::Default for H5L_info_t {
+impl Default for H5L_info_t {
     fn default() -> H5L_info_t { unsafe { ::std::mem::zeroed() } }
 }
 
@@ -46,7 +46,7 @@ pub struct __H5L_info_t__u {
     pub _bindgen_data_: [u64; 1usize],
 }
 
-impl ::std::default::Default for __H5L_info_t__u {
+impl Default for __H5L_info_t__u {
     fn default() -> __H5L_info_t__u { unsafe { ::std::mem::zeroed() } }
 }
 
@@ -89,7 +89,7 @@ pub struct H5L_class_t {
     pub query_func: H5L_query_func_t,
 }
 
-impl ::std::default::Default for H5L_class_t {
+impl Default for H5L_class_t {
     fn default() -> H5L_class_t { unsafe { ::std::mem::zeroed() } }
 }
 

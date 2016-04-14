@@ -96,7 +96,7 @@ pub struct H5Z_cb_t {
     pub op_data: *mut c_void,
 }
 
-impl ::std::default::Default for H5Z_cb_t {
+impl Default for H5Z_cb_t {
     fn default() -> H5Z_cb_t { unsafe { ::std::mem::zeroed() } }
 }
 
@@ -121,7 +121,7 @@ pub struct H5Z_class2_t {
     pub filter: H5Z_func_t,
 }
 
-impl ::std::default::Default for H5Z_class2_t {
+impl Default for H5Z_class2_t {
     fn default() -> H5Z_class2_t { unsafe { ::std::mem::zeroed() } }
 }
 

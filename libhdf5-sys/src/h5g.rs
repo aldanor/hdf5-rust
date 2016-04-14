@@ -38,7 +38,7 @@ pub struct H5G_info_t {
     pub mounted: hbool_t,
 }
 
-impl ::std::default::Default for H5G_info_t {
+impl Default for H5G_info_t {
     fn default() -> H5G_info_t { unsafe { ::std::mem::zeroed() } }
 }
 
