@@ -10,7 +10,7 @@ script:
   cd $TRAVIS_BUILD_DIR &&
   cargo build --verbose &&
   case $TRAVIS_RUST_VERSION in
-    nightly)  cargo test --verbose --features unstable ;;
+    nightly)  cargo test --verbose --features lint ;;
     *)        cargo test --verbose ;;
   esac &&
   cargo doc --no-deps

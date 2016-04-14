@@ -194,6 +194,12 @@ pub struct FileBuilder {
     increment: u32,
 }
 
+impl Default for FileBuilder {
+    fn default() -> FileBuilder {
+        FileBuilder::new()
+    }
+}
+
 impl FileBuilder {
     pub fn new() -> FileBuilder {
         FileBuilder {

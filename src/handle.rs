@@ -41,6 +41,12 @@ struct Registry {
     registry: Mutex<HashMap<hid_t, Arc<RwLock<hid_t>>>>,
 }
 
+impl Default for Registry {
+    fn default() -> Registry {
+        Registry::new()
+    }
+}
+
 impl Registry {
     pub fn new() -> Registry {
         Registry { registry: Mutex::new(HashMap::new()) }

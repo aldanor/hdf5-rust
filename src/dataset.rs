@@ -120,9 +120,7 @@ impl Dataset {
     /// Returns the chunk shape if the dataset is chunked.
     pub fn chunks(&self) -> Option<Vec<Ix>> {
         h5lock!({
-            if !self.is_chunked() {
-                None
-            } else {
+            if self.is_chunked() {
                 Some({
                     let ndim = self.ndim();
                     let mut dims: Vec<hsize_t> = Vec::with_capacity(ndim);
@@ -130,6 +128,8 @@ impl Dataset {
                     H5Pget_chunk(self.dcpl.id(), ndim as c_int, dims.as_mut_ptr());
                     dims.iter().map(|&x| x as Ix).collect()
                 })
+            } else {
+                None
             }
         })
     }

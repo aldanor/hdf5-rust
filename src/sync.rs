@@ -55,6 +55,12 @@ struct RecursiveMutexGuard<'a> {
 // same thread (otherwise we can't use Relaxed).  We might be able to allow
 // it with Acquire / Release?
 
+impl Default for RecursiveMutex {
+    fn default() -> RecursiveMutex {
+        RecursiveMutex::new()
+    }
+}
+
 impl RecursiveMutex {
     fn new() -> RecursiveMutex {
         RecursiveMutex {

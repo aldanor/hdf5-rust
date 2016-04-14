@@ -16,7 +16,7 @@ exclude = [
 build = "build.rs"
 
 [features]
-unstable = ["clippy"]
+lint = ["clippy"]
 
 [dependencies]
 lazy_static = "0.1"
