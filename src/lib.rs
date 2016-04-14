@@ -74,7 +74,6 @@ pub mod tests {
 
     #[test]
     pub fn test_hdf5_version() {
-        let version = hdf5_version();
-        assert!(version.0 >= 1 && version.1 >= 8);
+        assert!(hdf5_version() >= (1, 8, 0));
     }
 }
