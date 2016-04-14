@@ -141,7 +141,6 @@ extern {
     pub fn H5Oopen_by_addr(loc_id: hid_t, addr: haddr_t) -> hid_t;
     pub fn H5Oopen_by_idx(loc_id: hid_t, group_name: *const c_char, idx_type: H5_index_t, order:
                           H5_iter_order_t, n: hsize_t, lapl_id: hid_t) -> hid_t;
-    pub fn H5Oexists_by_name(loc_id: hid_t, name: *const c_char, lapl_id: hid_t) -> htri_t;
     pub fn H5Oget_info(loc_id: hid_t, oinfo: *mut H5O_info_t) -> herr_t;
     pub fn H5Oget_info_by_name(loc_id: hid_t, name: *const c_char, oinfo: *mut H5O_info_t, lapl_id:
                                hid_t) -> herr_t;
@@ -166,4 +165,9 @@ extern {
                             H5_iter_order_t, op: H5O_iterate_t, op_data: *mut c_void, lapl_id:
                             hid_t) -> herr_t;
     pub fn H5Oclose(object_id: hid_t) -> herr_t;
+}
+
+#[cfg(hdf5_1_8_5)]
+extern {
+    pub fn H5Oexists_by_name(loc_id: hid_t, name: *const c_char, lapl_id: hid_t) -> htri_t;
 }
