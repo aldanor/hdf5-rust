@@ -14,19 +14,23 @@ Requires HDF5 library of version 1.8.4 or later.
 
 `hdf5-rs` is known to run on these platforms:
 
-- Linux (tested on Travis CI)
-- OS X (tested on Travis CI)
-- Windows (see below for details; gnu build tested on AppVeyor)
+- Linux (tested on Travis CI, HDF5 v1.8.4)
+- OS X (tested on Travis CI, HDF5 v1.8.16)
+- Windows (see below for details; gnu build tested on AppVeyor, HDF5 v1.8.15)
 
 ### Rust
 
-`hdf5-rs` is tested for all three official release channels:
-
-- stable (1.5.0)
-- beta
-- nightly
+`hdf5-rs` is tested for all three official release channels: stable, beta and nightly.
 
 ## Building
+
+### Conditional compilation
+
+Build scripts for both `libhdf5-sys` and `hdf5-rs` crates check the actual version of the
+HDF5 library that they are being linked against, and some functionality may be conditionally
+enabled or disabled at compile time. While this allows supporting multiple versions of HDF5
+in a single codebase, this is something the library user should be aware of in case they
+choose to use the low level FFI bindings.
 
 ### Linux, OS X
 
@@ -43,7 +47,7 @@ For most setups though, just running `cargo build` and `cargo test` should be su
 
 ### Windows
 
-Until the official MSVC tooling lands in stable Rust (presumably in 1.2.0), we can only support the
+Until the official MSVC tooling lands becomes mature enough in stable Rust, we can only support the
 gcc build of HDF5 binaries on Windows. Since the official binaries from
 [HDF-Group](http://www.hdfgroup.org/) are built with MSVC, a few extra step are required to get
 everything working. Instructions for building HDF5 on Windows can be found
