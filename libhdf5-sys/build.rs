@@ -38,7 +38,7 @@ fn find_hdf5_libs() -> (Vec<String>, Vec<String>) {
     (libs, dirs)
 }
 
-fn get_hdf5_version(libs: &[String], dirs: &[String]) -> (u32, u32, u32) {
+fn get_hdf5_version(libs: &[String], dirs: &[String]) -> (u8, u8, u8) {
     let src = env::current_dir().unwrap().join("hdf5_version.rs");
     let rustc = env::var_os("RUSTC").unwrap_or_else(|| OsString::from("rustc"));
     let dir = TempDir::new_in(".", "tmp").unwrap();
@@ -67,7 +67,7 @@ fn get_hdf5_version(libs: &[String], dirs: &[String]) -> (u32, u32, u32) {
     let out = out.unwrap();
     let stdout = str::from_utf8(&out.stdout).unwrap();
 
-    let version: Vec<_> = stdout.split_whitespace().map(|s| s.parse::<u32>().unwrap()).collect();
+    let version: Vec<_> = stdout.split_whitespace().map(|s| s.parse::<u8>().unwrap()).collect();
     assert_eq!(version.len(), 3);
 
     (version[0], version[1], version[2])
