@@ -66,3 +66,8 @@ extern {
     pub fn H5allocate_memory(size: size_t, clear: hbool_t) -> *mut c_void;
     pub fn H5resize_memory(mem: *mut c_void, size: size_t) -> *mut c_void;
 }
+
+#[cfg(hdf5_1_8_16)]
+extern {
+    pub fn H5is_library_threadsafe(is_ts: *mut hbool_t) -> herr_t;
+}

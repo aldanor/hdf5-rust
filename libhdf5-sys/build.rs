@@ -78,7 +78,7 @@ fn main() {
     let version = get_hdf5_version(&libs, &dirs);
 
     assert!(version >= (1, 8, 0));
-    for v in &[(1, 8, 14), (1, 8, 15)] {
+    for v in &[(1, 8, 14), (1, 8, 15), (1, 8, 16)] {
         if version >= *v {
             println!("cargo:rustc-cfg=hdf5_{}_{}_{}", v.0, v.1, v.2);
         }
