@@ -264,10 +264,6 @@ extern {
                                        H5FD_file_image_callbacks_t) -> herr_t;
     pub fn H5Pget_file_image_callbacks(fapl_id: hid_t, callbacks_ptr: *mut
                                        H5FD_file_image_callbacks_t) -> herr_t;
-    pub fn H5Pset_core_write_tracking(fapl_id: hid_t, is_enabled: hbool_t, page_size: size_t) ->
-                                      herr_t;
-    pub fn H5Pget_core_write_tracking(fapl_id: hid_t, is_enabled: *mut hbool_t, page_size: *mut
-                                      size_t) -> herr_t;
     pub fn H5Pset_layout(plist_id: hid_t, layout: H5D_layout_t) -> herr_t;
     pub fn H5Pget_layout(plist_id: hid_t) -> H5D_layout_t;
     pub fn H5Pset_chunk(plist_id: hid_t, ndims: c_int, dim: *const hsize_t) -> herr_t;
@@ -354,4 +350,12 @@ extern {
                                  -> herr_t;
     pub fn H5Pget_mcdt_search_cb(plist_id: hid_t, func: *mut H5O_mcdt_search_cb_t, op_data: *mut
                                  *mut c_void) -> herr_t;
+}
+
+#[cfg(hdf5_1_8_13)]
+extern {
+    pub fn H5Pset_core_write_tracking(fapl_id: hid_t, is_enabled: hbool_t, page_size: size_t) ->
+        herr_t;
+    pub fn H5Pget_core_write_tracking(fapl_id: hid_t, is_enabled: *mut hbool_t, page_size: *mut
+                                      size_t) -> herr_t;
 }
