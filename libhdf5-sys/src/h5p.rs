@@ -73,7 +73,7 @@ pub enum H5D_mpio_no_collective_cause_t {
     H5D_MPIO_FILTERS                           = 64,
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(not(hdf5_1_8_14))]
 extern {
     // Property list classes
     pub static H5P_CLS_ROOT_g: hid_t;
@@ -111,7 +111,7 @@ extern {
     pub static H5P_LST_LINK_ACCESS_g: hid_t;
 }
 
-#[cfg(any(target_os = "macos", target_os = "windows"))]
+#[cfg(hdf5_1_8_14)]
 extern {
     // Property list classes
     pub static H5P_CLS_ROOT_ID_g: hid_t;

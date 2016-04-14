@@ -7,7 +7,7 @@ use ffi::h5t::*;
 
 use std::mem;
 
-pub use self::os::*;
+pub use self::plist_globals::*;
 
 macro_rules! link_hid {
     ($rust_name:ident, $c_name:ident) => {
@@ -107,8 +107,8 @@ link_hid!(H5T_NATIVE_UINT_LEAST64,     H5T_NATIVE_UINT_LEAST64_g);
 link_hid!(H5T_NATIVE_INT_FAST64,       H5T_NATIVE_INT_FAST64_g);
 link_hid!(H5T_NATIVE_UINT_FAST64,      H5T_NATIVE_UINT_FAST64_g);
 
-#[cfg(target_os = "linux")]
-mod os {
+#[cfg(not(hdf5_1_8_14))]
+mod plist_globals {
     use ffi::h5p::*;
 
     // Property list classes
@@ -147,8 +147,8 @@ mod os {
     link_hid!(H5P_LST_LINK_ACCESS_ID,      H5P_LST_LINK_ACCESS_g);
 }
 
-#[cfg(any(target_os = "macos", target_os = "windows"))]
-mod os {
+#[cfg(hdf5_1_8_14)]
+mod plist_globals {
     use ffi::h5p::*;
 
     // Property list classes
