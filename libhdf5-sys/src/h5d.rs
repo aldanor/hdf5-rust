@@ -71,8 +71,11 @@ pub enum H5D_fill_value_t {
 
 pub type H5D_operator_t = Option<extern fn (elem: *mut c_void, type_id: hid_t, ndim: c_uint, point:
                                             *const hsize_t, operator_data: *mut c_void) -> herr_t>;
+
+#[cfg(hdf5_1_8_11)]
 pub type H5D_scatter_func_t = Option<extern fn (src_buf: *mut *const c_void, src_buf_bytes_used:
                                                 *mut size_t, op_data: *mut c_void) -> herr_t>;
+#[cfg(hdf5_1_8_11)]
 pub type H5D_gather_func_t = Option<extern fn (dst_buf: *const c_void, dst_buf_bytes_used: size_t,
                                                op_data: *mut c_void) -> herr_t>;
 
@@ -103,10 +106,14 @@ extern {
     pub fn H5Dfill(fill: *const c_void, fill_type: hid_t, buf: *mut c_void, buf_type: hid_t, space:
                    hid_t) -> herr_t;
     pub fn H5Dset_extent(dset_id: hid_t, size: *const hsize_t) -> herr_t;
+    pub fn H5Ddebug(dset_id: hid_t) -> herr_t;
+}
+
+#[cfg(hdf5_1_8_11)]
+extern {
     pub fn H5Dscatter(op: H5D_scatter_func_t, op_data: *mut c_void, type_id: hid_t, dst_space_id:
                       hid_t, dst_buf: *mut c_void) -> herr_t;
     pub fn H5Dgather(src_space_id: hid_t, src_buf: *const c_void, type_id: hid_t, dst_buf_size:
                      size_t, dst_buf: *mut c_void, op: H5D_gather_func_t, op_data: *mut c_void) ->
-                     herr_t;
-    pub fn H5Ddebug(dset_id: hid_t) -> herr_t;
+        herr_t;
 }
