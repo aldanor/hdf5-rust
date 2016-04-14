@@ -6,6 +6,8 @@
 
 Thread-safe Rust bindings and high-level wrappers for the HDF5 library API.
 
+Requires HDF5 library of version 1.8.4 or later.
+
 ## Compatibility
 
 ### Platforms
