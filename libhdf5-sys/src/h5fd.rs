@@ -158,6 +158,7 @@ pub enum H5FD_file_image_op_t {
     H5FD_FILE_IMAGE_OP_FILE_CLOSE          = 7,
 }
 
+#[cfg(hdf5_1_8_9)]
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct H5FD_file_image_callbacks_t {
@@ -175,6 +176,7 @@ pub struct H5FD_file_image_callbacks_t {
     pub udata: *mut c_void,
 }
 
+#[cfg(hdf5_1_8_9)]
 impl Default for H5FD_file_image_callbacks_t {
     fn default() -> H5FD_file_image_callbacks_t { unsafe { ::std::mem::zeroed() } }
 }

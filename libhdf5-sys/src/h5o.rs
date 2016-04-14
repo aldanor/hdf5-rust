@@ -12,7 +12,11 @@ pub const H5O_COPY_EXPAND_EXT_LINK_FLAG:       c_uint = 0x0004;
 pub const H5O_COPY_EXPAND_REFERENCE_FLAG:      c_uint = 0x0008;
 pub const H5O_COPY_WITHOUT_ATTR_FLAG:          c_uint = 0x0010;
 pub const H5O_COPY_PRESERVE_NULL_FLAG:         c_uint = 0x0020;
+#[cfg(not(hdf5_1_8_9))]
+pub const H5O_COPY_ALL:                        c_uint = 0x003F;
+#[cfg(hdf5_1_8_9)]
 pub const H5O_COPY_MERGE_COMMITTED_DTYPE_FLAG: c_uint = 0x0040;
+#[cfg(hdf5_1_8_9)]
 pub const H5O_COPY_ALL:                        c_uint = 0x007F;
 
 pub const H5O_SHMESG_NONE_FLAG:    c_uint = 0x0000;
@@ -134,6 +138,7 @@ pub enum H5O_mcdt_search_ret_t {
     H5O_MCDT_SEARCH_STOP  = 1,
 }
 
+#[cfg(hdf5_1_8_9)]
 pub type H5O_mcdt_search_cb_t = Option<extern fn(op_data: *mut c_void) -> H5O_mcdt_search_ret_t>;
 
 extern {
