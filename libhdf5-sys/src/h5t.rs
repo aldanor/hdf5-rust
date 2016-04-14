@@ -35,6 +35,7 @@ pub enum H5T_class_t {
     H5T_NCLASSES = 11,
 }
 
+#[cfg(hdf5_1_8_6)]
 #[repr(C)]
 #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
 pub enum H5T_order_t {
@@ -44,6 +45,17 @@ pub enum H5T_order_t {
     H5T_ORDER_VAX = 2,
     H5T_ORDER_MIXED = 3,
     H5T_ORDER_NONE = 4,
+}
+
+#[cfg(not(hdf5_1_8_6))]
+#[repr(C)]
+#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+pub enum H5T_order_t {
+    H5T_ORDER_ERROR = -1,
+    H5T_ORDER_LE = 0,
+    H5T_ORDER_BE = 1,
+    H5T_ORDER_VAX = 2,
+    H5T_ORDER_NONE = 3,
 }
 
 #[repr(C)]
