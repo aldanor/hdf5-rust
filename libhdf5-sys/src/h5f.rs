@@ -115,7 +115,6 @@ extern {
     pub fn H5Funmount(loc: hid_t, name: *const c_char) -> herr_t;
     pub fn H5Fget_freespace(file_id: hid_t) -> hssize_t;
     pub fn H5Fget_filesize(file_id: hid_t, size: *mut hsize_t) -> herr_t;
-    pub fn H5Fget_file_image(file_id: hid_t, buf_ptr: *mut c_void, buf_len: size_t) -> ssize_t;
     pub fn H5Fget_mdc_config(file_id: hid_t, config_ptr: *mut H5AC_cache_config_t) -> herr_t;
     pub fn H5Fset_mdc_config(file_id: hid_t, config_ptr: *mut H5AC_cache_config_t) -> herr_t;
     pub fn H5Fget_mdc_hit_rate(file_id: hid_t, hit_rate_ptr: *mut c_double) -> herr_t;
@@ -130,4 +129,9 @@ extern {
 #[cfg(hdf5_1_8_7)]
 extern {
     pub fn H5Fclear_elink_file_cache(file_id: hid_t) -> herr_t;
+}
+
+#[cfg(hdf5_1_8_9)]
+extern {
+    pub fn H5Fget_file_image(file_id: hid_t, buf_ptr: *mut c_void, buf_len: size_t) -> ssize_t;
 }

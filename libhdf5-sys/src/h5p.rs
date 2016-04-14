@@ -255,13 +255,6 @@ extern {
     pub fn H5Pset_libver_bounds(plist_id: hid_t, low: H5F_libver_t, high: H5F_libver_t) -> herr_t;
     pub fn H5Pget_libver_bounds(plist_id: hid_t, low: *mut H5F_libver_t, high: *mut H5F_libver_t) ->
                                 herr_t;
-    pub fn H5Pset_file_image(fapl_id: hid_t, buf_ptr: *mut c_void, buf_len: size_t) -> herr_t;
-    pub fn H5Pget_file_image(fapl_id: hid_t, buf_ptr_ptr: *mut *mut c_void, buf_len_ptr: *mut
-                             size_t) -> herr_t;
-    pub fn H5Pset_file_image_callbacks(fapl_id: hid_t, callbacks_ptr: *mut
-                                       H5FD_file_image_callbacks_t) -> herr_t;
-    pub fn H5Pget_file_image_callbacks(fapl_id: hid_t, callbacks_ptr: *mut
-                                       H5FD_file_image_callbacks_t) -> herr_t;
     pub fn H5Pset_layout(plist_id: hid_t, layout: H5D_layout_t) -> herr_t;
     pub fn H5Pget_layout(plist_id: hid_t) -> H5D_layout_t;
     pub fn H5Pset_chunk(plist_id: hid_t, ndims: c_int, dim: *const hsize_t) -> herr_t;
@@ -354,6 +347,17 @@ extern {
 extern {
     pub fn H5Pset_elink_file_cache_size(plist_id: hid_t, efc_size: c_uint) -> herr_t;
     pub fn H5Pget_elink_file_cache_size(plist_id: hid_t, efc_size: *mut c_uint) -> herr_t;
+}
+
+#[cfg(hdf5_1_8_9)]
+extern {
+    pub fn H5Pset_file_image(fapl_id: hid_t, buf_ptr: *mut c_void, buf_len: size_t) -> herr_t;
+    pub fn H5Pget_file_image(fapl_id: hid_t, buf_ptr_ptr: *mut *mut c_void, buf_len_ptr: *mut
+                             size_t) -> herr_t;
+    pub fn H5Pset_file_image_callbacks(fapl_id: hid_t, callbacks_ptr: *mut
+                                       H5FD_file_image_callbacks_t) -> herr_t;
+    pub fn H5Pget_file_image_callbacks(fapl_id: hid_t, callbacks_ptr: *mut
+                                       H5FD_file_image_callbacks_t) -> herr_t;
 }
 
 #[cfg(hdf5_1_8_13)]
