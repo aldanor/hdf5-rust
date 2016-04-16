@@ -36,9 +36,9 @@ fn main() {
     let (libs, dirs) = find_hdf5_libs();
 
     for dir in dirs.iter() {
-        println!("cargo:rustc-flags=-L {}", dir);
+        println!("cargo:rustc-link-search={}", dir);
     }
     for lib in libs.iter() {
-        println!("cargo:rustc-flags=-l {}", lib);
+        println!("cargo:rustc-link-lib={}", lib);
     }
 }
