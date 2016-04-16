@@ -30,3 +30,13 @@ pub fn dump_build_flags() {
         println!("cargo:rustc-cfg=hdf5_{}_{}_{}", v.0, v.1, v.2);
     }
 }
+
+#[cfg(test)]
+pub mod tests {
+    use super::hdf5_version;
+
+    #[test]
+    fn test_version() {
+        assert!(hdf5_version().unwrap() >= (1, 8, 4));
+    }
+}
