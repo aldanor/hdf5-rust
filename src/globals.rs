@@ -4,12 +4,28 @@ use ffi::h5i::hid_t;
 
 use std::mem;
 
+#[cfg(not(target_env = "msvc"))]
 macro_rules! link_hid {
     ($rust_name:ident, $mod_name:ident::$c_name:ident) => {
         lazy_static! {
             pub static ref $rust_name: $crate::ffi::h5i::hid_t = {
                 h5lock!($crate::ffi::h5::H5open());
                 *$crate::ffi::$mod_name::$c_name
+            };
+        }
+    }
+}
+
+// God damn dllimport...
+#[cfg(target_env = "msvc")]
+macro_rules! link_hid {
+    ($rust_name:ident, $mod_name:ident::$c_name:ident) => {
+        lazy_static! {
+            pub static ref $rust_name: $crate::ffi::h5i::hid_t = {
+                h5lock!($crate::ffi::h5::H5open());
+                unsafe {
+                    *(*$crate::ffi::$mod_name::$c_name as *const $crate::ffi::h5i::hid_t)
+                }
             };
         }
     }
