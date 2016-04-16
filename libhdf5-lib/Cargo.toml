@@ -1,19 +1,18 @@
 [package]
-name = "libhdf5-sys"
-version = "0.1.1"
+name = "libhdf5-lib"
+version = "0.1.0"
 authors = ["Ivan Smirnov <i.s.smirnov@gmail.com>"]
 keywords = ["hdf5"]
 license = "MIT/Apache-2.0"
 build = "build.rs"
 repository = "https://github.com/aldanor/hdf5-rs"
-description = "Native bindings to the HDF5 library"
+description = "Build script support for the HDF5 library"
 
 [lib]
-name = "libhdf5_sys"
+name = "libhdf5_lib"
 
 [dependencies]
 libc = "0.2"
-libhdf5-lib = { path = "../libhdf5-lib", version = "0.1.0" }
 
 [build-dependencies]
-libhdf5-lib = { path = "../libhdf5-lib", version = "0.1.0" }
+pkg-config = "0.3"
