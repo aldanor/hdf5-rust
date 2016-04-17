@@ -3,6 +3,7 @@
 [![Build Status](https://img.shields.io/travis/aldanor/hdf5-rs.svg)](https://travis-ci.org/aldanor/hdf5-rs) [![Appveyor Build Status](https://img.shields.io/appveyor/ci/aldanor/hdf5-rs.svg)](https://ci.appveyor.com/project/aldanor/hdf5-rs)
 
 [Documentation](http://aldanor.github.io/hdf5-rs/hdf5_rs)
+[Changelog](https://github.com/aldanor/hdf5-rs/blob/master/CHANGELOG.md)
 
 Thread-safe Rust bindings and high-level wrappers for the HDF5 library API.
 
@@ -16,7 +17,7 @@ Requires HDF5 library of version 1.8.4 or later.
 
 - Linux (tested on Travis CI, HDF5 v1.8.4)
 - OS X (tested on Travis CI, HDF5 v1.8.16)
-- Windows (see below for details; gnu build tested on AppVeyor, HDF5 v1.8.15)
+- Windows (tested on AppVeyor, MSVC target, HDF5 v1.8.16, VS2015 x64)
 
 ### Rust
 
@@ -24,7 +25,7 @@ Requires HDF5 library of version 1.8.4 or later.
 
 ## Building
 
-### Conditional compilation
+### HDF5 version
 
 Build scripts for both `libhdf5-sys` and `hdf5-rs` crates check the actual version of the
 HDF5 library that they are being linked against, and some functionality may be conditionally
@@ -34,38 +35,42 @@ choose to use the low level FFI bindings.
 
 ### Linux, OS X
 
+The build script of `libhdf5-lib` crate will try to use `pkg-config` if it's available
+to deduce HDF5 library location. This is sufficient for most standard setups.
+
 There are also two environment variables that may be of use if the library location and/or name
 is unconventional:
 
 - `HDF5_LIBDIR` – added to library search path during the build step
-- `HDF5_LIBNAME` – library filename (defaults to `hdf5`)
+- `HDF5_LIBNAME` – library name (defaults to `hdf5`)
 
-Note also that the build script of `libhdf5-sys` crate tries to use `pkg-config` (if it's available
-to deduce library location).
-
-For most setups though, just running `cargo build` and `cargo test` should be sufficient.
+Note that `cargo clean` is requred before rebuilding if any of those variables are changed.
 
 ### Windows
 
-Until the official MSVC tooling lands becomes mature enough in stable Rust, we can only support the
-gcc build of HDF5 binaries on Windows. Since the official binaries from
-[HDF-Group](http://www.hdfgroup.org/) are built with MSVC, a few extra step are required to get
-everything working. Instructions for building HDF5 on Windows can be found
-[here](http://www.hdfgroup.org/HDF5/release/cmakebuild.html). The
-[TDM distribution](http://tdm-gcc.tdragon.net/) of MinGW-GCC is recommended as it contains bintools
-for both 32-bit and 64-bit.
+`hdf5-rs` fully supports MSVC toolchain, which allows using the
+[official releases](https://www.hdfgroup.org/downloads/index.html) of
+HDF5 and is generally the recommended way to go. That being said, previous experiments have shown
+that all tests pass on the `gnu` target as well, one just needs to be careful with building the
+HDF5 binary itself and configuring the build environment.
 
-As of now, building `hdf5-rs` on Windows requires a few manual steps:
+Few things to note when building on Windows:
 
-- gcc-compatible HDF5 binary (`hdf5.dll` shared library) is required for linking.
-
-- Set `HDF5_LIBDIR` environment variable to point to the folder containing `hdf5.dll` (avoid paths
-  with spaces as they are difficult to escape correctly).
-
-- Make sure that `hdf5.dll` is on your search path, otherwise the tests will fail.
-
-- Run `cargo build` and/or `cargo test` to build the Rust library and run the tests. After making
-  any changes to the build environment, e.g. `HDF5_LIBDIR`, a `cargo clean` may be necessary.
+- `hdf5.dll` should be available in the search path at build time and runtime (both `gnu` and `msvc`).
+  This normally requires adding the `bin` folder of HDF5 installation to `PATH`. If using an official
+  HDF5 release (`msvc` only), this will be done automatically by the installer.
+- If `HDF5_LIBDIR` or `HDF5_LIBNAME` change, `cargo clean` is required before rebuilding.
+- `msvc`: installed Visual Studio version should match the HDF5 binary (2013 or 2015). Note that it
+  is not necessary to run `vcvars` scripts; Rust build system will take care of that.
+- In most cases, it is not necessary to manually set `HDF5_LIBDIR` as it would be inferred from the
+  search path (both `gnu` and `msvc`). This also implies that the official releases should work
+  out of the box.
+- When building for either target, make sure that there are no conflicts in the search path (e.g.,
+  some binaries from MinGW toolchain may shadow MSVS executables or vice versa).
+- The recommended platform for `gnu` target is [TDM distribution](http://tdm-gcc.tdragon.net/) of
+  MinGW-GCC as it contains bintools for both 32-bit and 64-bit.
+- The recommended setup for `msvc` target is VS2015 x64 since that matches CI build configuration,
+  however VS2013 and x86 should work equally well.
 
 ## License
 
