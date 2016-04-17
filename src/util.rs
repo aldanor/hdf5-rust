@@ -1,5 +1,6 @@
 use libc::{self, c_char, c_void, size_t};
 
+use std::borrow::Borrow;
 use std::mem;
 use std::ptr;
 use num::{Integer, NumCast};
@@ -15,11 +16,10 @@ pub fn string_from_cstr(string: *const c_char) -> String {
     }
 }
 
-/// Convert a `String` or an `&str` into a zero-terminated string (`const char *`).
-pub fn to_cstring<S: Into<String>>(string: S) -> CString {
-    unsafe {
-        CString::from_vec_unchecked(string.into().into_bytes())
-    }
+/// Convert a `String` or a `&str` into a zero-terminated string (`const char *`).
+pub fn to_cstring<S: Borrow<str>>(string: S) -> Result<CString> {
+    let string = string.borrow();
+    CString::new(string).map_err(|_| format!("null byte in string: {:?}", string).into())
 }
 
 #[doc(hidden)]
@@ -49,14 +49,12 @@ mod tests {
 
     #[test]
     pub fn test_string_cstr() {
-        let s1: String = "foo".to_owned();
-        assert_eq!(s1, string_from_cstr(to_cstring(s1.clone()).as_ptr()));
-        let s2: &str = "bar";
-        assert_eq!(s2, string_from_cstr(to_cstring(s2).as_ptr()));
-        let s3 = to_cstring("33");
-        let s4 = to_cstring("44");
-        assert_eq!(string_from_cstr(s3.as_ptr()), "33");
-        assert_eq!(string_from_cstr(s4.as_ptr()), "44");
+        let s1 = "foo".to_owned();
+        let c_s1 = to_cstring(s1.clone()).unwrap();
+        assert_eq!(s1, string_from_cstr(c_s1.as_ptr()));
+        let s2 = "bar";
+        let c_s2 = to_cstring(s2).unwrap();
+        assert_eq!(s2, string_from_cstr(c_s2.as_ptr()));
     }
 
     #[test]

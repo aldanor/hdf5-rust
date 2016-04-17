@@ -41,52 +41,58 @@ pub trait Container: Location {
     }
 
     /// Create a new group in a file or group.
-    fn create_group<S: Into<String>>(&self, name: S) -> Result<Group> {
+    fn create_group(&self, name: &str) -> Result<Group> {
         h5lock_s!({
             let lcpl = try!(make_lcpl());
+            let name = try!(to_cstring(name));
             Group::from_id(h5try!(H5Gcreate2(
-                self.id(), to_cstring(name).as_ptr(), lcpl.id(), H5P_DEFAULT, H5P_DEFAULT
+                self.id(), name.as_ptr(), lcpl.id(), H5P_DEFAULT, H5P_DEFAULT
             )))
         })
     }
 
     /// Opens an existing group in a file or group.
-    fn group<S: Into<String>>(&self, name: S) -> Result<Group> {
+    fn group(&self, name: &str) -> Result<Group> {
+        let name = try!(to_cstring(name));
         Group::from_id(h5try!(H5Gopen2(
-            self.id(), to_cstring(name).as_ptr(), H5P_DEFAULT)))
+            self.id(), name.as_ptr(), H5P_DEFAULT)))
     }
 
-    /// Creates a soft link. Note: `name` and `path` are relative to the current object.
-    fn link_soft<S1: Into<String>, S2: Into<String>>(&self, name: S1, path: S2) -> Result<()> {
+    /// Creates a soft link. Note: `src` and `dst` are relative to the current object.
+    fn link_soft(&self, src: &str, dst: &str) -> Result<()> {
         h5lock_s!({
             let lcpl = try!(make_lcpl());
+            let src = try!(to_cstring(src));
+            let dst = try!(to_cstring(dst));
             h5call!(H5Lcreate_soft(
-                to_cstring(name).as_ptr(), self.id(),
-                to_cstring(path).as_ptr(), lcpl.id(), H5P_DEFAULT
+                src.as_ptr(), self.id(), dst.as_ptr(), lcpl.id(), H5P_DEFAULT
             )).and(Ok(()))
         })
     }
 
-    /// Creates a hard link. Note: `name` and `path` are relative to the current object.
-    fn link_hard<S1: Into<String>, S2: Into<String>>(&self, name: S1, path: S2) -> Result<()> {
+    /// Creates a hard link. Note: `src` and `dst` are relative to the current object.
+    fn link_hard(&self, src: &str, dst: &str) -> Result<()> {
+        let src = try!(to_cstring(src));
+        let dst = try!(to_cstring(dst));
         h5call!(H5Lcreate_hard(
-            self.id(), to_cstring(name).as_ptr(), H5L_SAME_LOC,
-            to_cstring(path).as_ptr(), H5P_DEFAULT, H5P_DEFAULT
+            self.id(), src.as_ptr(), H5L_SAME_LOC, dst.as_ptr(), H5P_DEFAULT, H5P_DEFAULT
         )).and(Ok(()))
     }
 
     /// Relinks an object. Note: `name` and `path` are relative to the current object.
-    fn relink<S1: Into<String>, S2: Into<String>>(&self, name: S1, path: S2) -> Result<()> {
+    fn relink(&self, name: &str, path: &str) -> Result<()> {
+        let name = try!(to_cstring(name));
+        let path = try!(to_cstring(path));
         h5call!(H5Lmove(
-            self.id(), to_cstring(name).as_ptr(), H5L_SAME_LOC,
-            to_cstring(path).as_ptr(), H5P_DEFAULT, H5P_DEFAULT
+            self.id(), name.as_ptr(), H5L_SAME_LOC, path.as_ptr(), H5P_DEFAULT, H5P_DEFAULT
         )).and(Ok(()))
     }
 
     /// Removes a link to an object from this file or group.
-    fn unlink<S: Into<String>>(&self, name: S) -> Result<()> {
+    fn unlink(&self, name: &str) -> Result<()> {
+        let name = try!(to_cstring(name));
         h5call!(H5Ldelete(
-            self.id(), to_cstring(name).as_ptr(), H5P_DEFAULT
+            self.id(), name.as_ptr(), H5P_DEFAULT
         )).and(Ok(()))
     }
 
@@ -96,9 +102,10 @@ pub trait Container: Location {
     }
 
     /// Opens an existing dataset in the file or group.
-    fn dataset<S: Into<String>>(&self, name: S) -> Result<Dataset> {
+    fn dataset(&self, name: &str) -> Result<Dataset> {
+        let name = try!(to_cstring(name));
         Dataset::from_id(h5try!(H5Dopen2(
-            self.id(), to_cstring(name).as_ptr(), H5P_DEFAULT)))
+            self.id(), name.as_ptr(), H5P_DEFAULT)))
     }
 }
 

@@ -255,8 +255,8 @@ impl FileBuilder {
             let filename = filename.as_ref();
             match filename.to_str() {
                 Some(filename) => {
-                    let c_filename = to_cstring(filename).as_ptr();
-                    File::from_id(h5try!(H5Fopen(c_filename, flags, fapl.id())))
+                    let filename = try!(to_cstring(filename));
+                    File::from_id(h5try!(H5Fopen(filename.as_ptr(), flags, fapl.id())))
                 },
                 None => fail!("Invalid UTF-8 in file name: {:?}", filename)
             }
@@ -272,8 +272,8 @@ impl FileBuilder {
             let filename = filename.as_ref();
             match filename.to_str() {
                 Some(filename) => {
-                    let c_filename = to_cstring(filename).as_ptr();
-                    File::from_id(h5try!(H5Fcreate(c_filename, flags, fcpl.id(), fapl.id())))
+                    let filename = try!(to_cstring(filename));
+                    File::from_id(h5try!(H5Fcreate(filename.as_ptr(), flags, fcpl.id(), fapl.id())))
                 },
                 None => fail!("Invalid UTF-8 in file name: {:?}", filename)
             }

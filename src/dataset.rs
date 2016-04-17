@@ -350,7 +350,7 @@ impl<T: ToDatatype> DatasetBuilder<T> {
         })
     }
 
-    fn finalize<D: Dimension>(&self, name: Option<String>, shape: D) -> Result<Dataset> {
+    fn finalize<D: Dimension>(&self, name: Option<&str>, shape: D) -> Result<Dataset> {
         h5lock!({
             let datatype = try!(T::to_datatype());
             let parent = try_ref_clone!(self.parent);
@@ -361,8 +361,9 @@ impl<T: ToDatatype> DatasetBuilder<T> {
             match name.clone() {
                 Some(name) => {
                     let lcpl = try!(self.make_lcpl());
+                    let name = try!(to_cstring(name));
                     Dataset::from_id(h5try_s!(H5Dcreate2(
-                        parent.id(), to_cstring(name).as_ptr(), datatype.id(),
+                        parent.id(), name.as_ptr(), datatype.id(),
                         dataspace.id(), lcpl.id(), dcpl.id(), H5P_DEFAULT
                     )))
                 },
@@ -377,8 +378,8 @@ impl<T: ToDatatype> DatasetBuilder<T> {
     }
 
     /// Create the dataset and link it into the file structure.
-    pub fn create<S: Into<String>, D: Dimension>(&self, name: S, shape: D) -> Result<Dataset> {
-        self.finalize(Some(name.into()), shape)
+    pub fn create<D: Dimension>(&self, name: &str, shape: D) -> Result<Dataset> {
+        self.finalize(Some(name), shape)
     }
 
     /// Create an anonymous dataset without linking it.
