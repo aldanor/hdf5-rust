@@ -6,7 +6,8 @@ keywords = ["hdf5"]
 license = "MIT/Apache-2.0"
 build = "build.rs"
 repository = "https://github.com/aldanor/hdf5-rs"
-description = "Build script support for the HDF5 library"
+homepage = "https://github.com/aldanor/hdf5-rs"
+description = "Build script support for the HDF5 library."
 
 [lib]
 name = "libhdf5_lib"
