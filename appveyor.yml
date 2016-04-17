@@ -7,12 +7,9 @@ matrix:
 skip_tags: true
 build: false
 
-init:
-- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
-
 environment:
   TARGET: x86_64-pc-windows-msvc
-  HDF5_ROOT: "C:\\Program Files\\HDF_Group\\HDF5\\1.8.16"
+  HDF5_BINDIR: "C:\\Program Files\\HDF_Group\\HDF5\\1.8.16\\bin"
   matrix:
     - CHANNEL: 1.8.0
     - CHANNEL: beta
@@ -20,14 +17,12 @@ environment:
 install:
   - ps: Start-FileDownload "https://static.rust-lang.org/dist/rust-${env:CHANNEL}-${env:TARGET}.msi"
   - ps: Start-Process -FilePath msiexec -ArgumentList /i, rust-${env:CHANNEL}-${env:TARGET}.msi, INSTALLDIR="C:\Rust", /quiet -Wait
-  - set PATH=%PATH%;C:\Rust\bin
   - rustc -vV
   - cargo -vV
   - ps: Invoke-WebRequest "http://www.hdfgroup.org/ftp/HDF5/current/bin/windows/extra/hdf5-1.8.16-win64-vs2015-shared.zip" -OutFile hdf5.zip
   - 7z x hdf5.zip -y
   - ps: Start-Process -FilePath msiexec -ArgumentList /i, "hdf5\HDF5-1.8.16-win64.msi", /quiet -Wait
-  - set PATH=%PATH%;%HDF5_ROOT%\bin
-  - set HDF5_LIBDIR=%HDF5_ROOT%\lib
+  - set PATH=%PATH%;C:\Rust\bin;%HDF5_BINDIR%
 
 test_script:
   - cd %APPVEYOR_BUILD_FOLDER%\libhdf5-lib
