@@ -24,16 +24,13 @@ pub struct ErrorFrame {
 }
 
 impl ErrorFrame {
-    pub fn new<S1, S2, S3, S4>(desc: S1, func: S2, major: S3, minor: S4) -> ErrorFrame
-    where S1: Into<String>, S2: Into<String>, S3: Into<String>, S4: Into<String> {
-        let (s_func, s_desc) = (func.into(), desc.into());
-        let description = format!("{}(): {}", s_func.clone(), s_desc.clone());
+    pub fn new(desc: &str, func: &str, major: &str, minor: &str) -> ErrorFrame {
         ErrorFrame {
-            desc: s_desc,
-            func: s_func,
+            desc: desc.into(),
+            func: func.into(),
             major: major.into(),
             minor: minor.into(),
-            description: description,
+            description: format!("{}(): {}", func, desc),
         }
     }
 
@@ -98,7 +95,7 @@ impl ErrorStack {
                     let minor = try!(get_h5_str(|m, s| {
                         H5Eget_msg(e.min_num, ptr::null_mut(), m, s)
                     }));
-                    Ok(ErrorFrame::new(desc, func, major, minor))
+                    Ok(ErrorFrame::new(&desc, &func, &major, &minor))
                 };
                 match closure(*err_desc) {
                     Ok(frame) => { data.stack.push(frame); 0 },

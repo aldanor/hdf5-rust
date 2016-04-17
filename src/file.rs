@@ -68,7 +68,7 @@ impl File {
     /// | `w`       | Create file, truncate if exists
     /// | `w-`, `x` | Create file, fail if exists
     /// | `a`       | Read/write if exists, create otherwise
-    pub fn open<P: AsRef<Path>, S: Into<String>>(filename: P, mode: S) -> Result<File> {
+    pub fn open<P: AsRef<Path>>(filename: P, mode: &str) -> Result<File> {
         FileBuilder::new().mode(mode).open(filename)
     }
 
@@ -211,11 +211,11 @@ impl FileBuilder {
         }
     }
 
-    pub fn driver<S: Into<String>>(&mut self, driver: S) -> &mut FileBuilder {
+    pub fn driver(&mut self, driver: &str) -> &mut FileBuilder {
         self.driver = driver.into(); self
     }
 
-    pub fn mode<S: Into<String>>(&mut self, mode: S) -> &mut FileBuilder {
+    pub fn mode(&mut self, mode: &str) -> &mut FileBuilder {
         self.mode = mode.into(); self
     }
 
