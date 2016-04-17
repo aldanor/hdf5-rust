@@ -3,7 +3,7 @@ pub use self::H5O_mcdt_search_ret_t::*;
 
 use libc::{c_uint, c_void, c_char, c_ulong, size_t, ssize_t, uint32_t, uint64_t, time_t};
 
-use h5::{herr_t, hsize_t, haddr_t, htri_t, H5_index_t, H5_iter_order_t, H5_ih_info_t};
+use h5::{herr_t, hsize_t, haddr_t, H5_index_t, H5_iter_order_t, H5_ih_info_t};
 use h5i::hid_t;
 
 pub const H5O_COPY_SHALLOW_HIERARCHY_FLAG:     c_uint = 0x0001;
@@ -171,6 +171,9 @@ extern {
                             hid_t) -> herr_t;
     pub fn H5Oclose(object_id: hid_t) -> herr_t;
 }
+
+#[cfg(hdf5_1_8_5)]
+use h5::htri_t;
 
 #[cfg(hdf5_1_8_5)]
 extern {
