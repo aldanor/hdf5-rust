@@ -1,37 +1,41 @@
-version: 0.1.{build}
-
-environment:
-  RUST_TARGET: x86_64-pc-windows-gnu
-  # RUST_TARGET: x86_64-pc-windows-msvc
-  HDF5_LIBDIR: C:\HDF5\lib
-  matrix:
-    - RUST_VERSION: 1.8.0
-    - RUST_VERSION: beta
-    - RUST_VERSION: nightly
-  VCVARS: "C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\bin\\amd64\\vcvars64.bat"
-install:
-  - ps: Start-FileDownload "https://static.rust-lang.org/dist/rust-${env:RUST_VERSION}-${env:RUST_TARGET}.msi"
-  - ps: Start-Process -FilePath msiexec -ArgumentList /i, rust-${env:RUST_VERSION}-${env:RUST_TARGET}.msi, INSTALLDIR="C:\Rust", /quiet -Wait
-  - set PATH=%PATH%;C:\Rust\bin
-  - cmd: mkdir C:\HDF5
-  - cmd: mkdir C:\HDF5\lib
-  - ps: Invoke-WebRequest "https://github.com/kkirstein/hdf5-rs/releases/download/alpha/hdf5.dll" -OutFile "C:\HDF5\lib\hdf5.dll"
-  # - ps: Invoke-WebRequest http://repo.continuum.io/pkgs/free/win-64/hdf5-1.8.15.1-vc14_4.tar.bz2 -OutFile hdf5.tar.bz2
-  # - cmd: 7z x -y hdf5.tar.bz2
-  # - cmd: 7z x -y hdf5.tar
-  # - cmd: xcopy Library C:\HDF5 /s /e /y
-
-  # - ps: Invoke-WebRequest "http://www.hdfgroup.org/ftp/HDF5/current/bin/windows/extra/hdf5-1.8.16-win64-vs2015-shared.zip" -OutFile hdf5.zip
-  # - cmd: 7z x hdf5.zip -y
-  # - ps: Start-Process -FilePath msiexec -ArgumentList /i, "hdf5\HDF5-1.8.16-win64.msi", INSTALLDIR="C:\HDF5" -Wait
-  - cmd: CALL "%VCVARS%"
-  # - cmd: set PATH=C:\HDF5;%PATH%
-  - cmd: set PATH=C:\HDF5\bin;%PATH%
-  # output version info
-  - rustc --version
-  - cargo --version
-
+version: 0.1.{build}-{branch}
+platform:
+  - x64
+os: Visual Studio 2015
+matrix:
+  fast_finish: true
+skip_tags: true
 build: false
 
+init:
+- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+
+environment:
+  TARGET: x86_64-pc-windows-msvc
+  HDF5_ROOT: "C:\\Program Files\\HDF_Group\\HDF5\\1.8.16"
+  matrix:
+    - CHANNEL: 1.8.0
+    - CHANNEL: beta
+    - CHANNEL: nightly
+install:
+  - ps: Start-FileDownload "https://static.rust-lang.org/dist/rust-${env:CHANNEL}-${env:TARGET}.msi"
+  - ps: Start-Process -FilePath msiexec -ArgumentList /i, rust-${env:CHANNEL}-${env:TARGET}.msi, INSTALLDIR="C:\Rust", /quiet -Wait
+  - set PATH=%PATH%;C:\Rust\bin
+  - rustc -vV
+  - cargo -vV
+  - ps: Invoke-WebRequest "http://www.hdfgroup.org/ftp/HDF5/current/bin/windows/extra/hdf5-1.8.16-win64-vs2015-shared.zip" -OutFile hdf5.zip
+  - 7z x hdf5.zip -y
+  - ps: Start-Process -FilePath msiexec -ArgumentList /i, "hdf5\HDF5-1.8.16-win64.msi", /quiet -Wait
+  - set PATH=%PATH%;%HDF5_ROOT%\bin
+  - set HDF5_LIBDIR=%HDF5_ROOT%\lib
+
 test_script:
+  - cd %APPVEYOR_BUILD_FOLDER%\libhdf5-lib
+  - cargo test -v --no-run
+  - cargo test -v
+  - cd %APPVEYOR_BUILD_FOLDER%\libhdf5-sys
+  - cargo test -v --no-run
+  - cargo test -v
+  - cd %APPVEYOR_BUILD_FOLDER%
+  - cargo test -v --no-run
   - cargo test --verbose

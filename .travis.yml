@@ -5,14 +5,29 @@ rust:
 - beta
 - nightly
 script:
-- cd $TRAVIS_BUILD_DIR/remutex && cargo build --verbose && cargo test --verbose
+- |
+  cd $TRAVIS_BUILD_DIR/remutex &&
+  cargo build -v &&
+  cargo test -v --no-run &&
+  cargo test -v
+- |
+  cd $TRAVIS_BUILD_DIR/libhdf5-lib &&
+  cargo build -v &&
+  cargo test -v --no-run &&
+  cargo test -v
+- |
+  cd $TRAVIS_BUILD_DIR/libhdf5-sys &&
+  cargo build -v &&
+  cargo test -v --no-run &&
+  cargo test -v
 - |
   cd $TRAVIS_BUILD_DIR &&
-  cargo build --verbose &&
   case $TRAVIS_RUST_VERSION in
-    nightly)  cargo test --verbose --features lint ;;
-    *)        cargo test --verbose ;;
+    nightly)  cargo build -v --features lint ;;
+    *)        cargo build -v ;;
   esac &&
+  cargo test -v --no-run &&
+  cargo test -v &&
   cargo doc --no-deps
 addons:
   apt:
