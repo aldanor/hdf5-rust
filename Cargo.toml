@@ -20,12 +20,16 @@ lint = ["clippy"]
 
 [dependencies]
 lazy_static = "0.1"
-num = "0.1"
 libc = "0.2"
 libhdf5-lib = { path = "libhdf5-lib", version = "0.1.0" }
 libhdf5-sys = { path = "libhdf5-sys", version = "0.1.1" }
 remutex = { path = "remutex", version = "0.1.1" }
 clippy = { version = "^0.0.63", optional = true }
+
+[dependencies.num]
+version = "0.1"
+default_features = false
+features = []
 
 [dev-dependencies]
 regex = "0.1"
