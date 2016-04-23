@@ -158,7 +158,7 @@ pub mod tests {
     use super::ValueType::*;
 
     #[test]
-    fn test_value_type_size() {
+    pub fn test_value_type_size() {
         assert_eq!(bool::value_type().size(), 1);
         assert_eq!(i16::value_type().size(), 2);
         assert_eq!(u32::value_type().size(), 4);
@@ -167,7 +167,7 @@ pub mod tests {
     }
 
     #[test]
-    fn test_scalar_value_types() {
+    pub fn test_scalar_value_types() {
         assert_eq!(bool::value_type(), Boolean);
         assert_eq!(i8::value_type(), Integer(IntSize::U1));
         assert_eq!(i16::value_type(), Integer(IntSize::U2));
@@ -183,14 +183,14 @@ pub mod tests {
 
     #[test]
     #[cfg(target_pointer_width = "32")]
-    fn test_ptr_sized_ints() {
+    pub fn test_ptr_sized_ints() {
         assert_eq!(isize::value_type(), Integer(IntSize::U4));
         assert_eq!(usize::value_type(), Unsigned(IntSize::U4));
     }
 
     #[test]
     #[cfg(target_pointer_width = "64")]
-    fn test_ptr_sized_ints() {
+    pub fn test_ptr_sized_ints() {
         assert_eq!(isize::value_type(), Integer(IntSize::U8));
         assert_eq!(usize::value_type(), Unsigned(IntSize::U8));
     }
