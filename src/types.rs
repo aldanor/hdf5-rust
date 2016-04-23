@@ -331,4 +331,39 @@ pub mod tests {
         assert_eq!(E3::value_type(), Bar::value_type());
         assert_eq!(E4::value_type(), Bar::value_type());
     }
+
+    #[test]
+    pub fn test_compound_type() {
+        h5def!(struct Foo { a: i64, b: u64 });
+        assert_eq!(Foo::value_type(), Compound(CompoundType {
+            fields: vec![
+                CompoundField { name: "a".into(), ty: i64::value_type(), offset: 0 },
+                CompoundField { name: "b".into(), ty: u64::value_type(), offset: 8 },
+            ],
+            size: 16,
+        }));
+        assert_eq!(Foo::value_type().size(), 16);
+
+        h5def!(pub struct Bar { a: i64, b: u64 });
+        assert_eq!(Bar::value_type(), Foo::value_type());
+
+        h5def!(#[derive(Debug)] pub struct Baz { pub a: i64, pub b: u64 });
+        assert_eq!(Baz::value_type(), Foo::value_type());
+        assert!(format!("{:?}", Baz { a: 1, b: 2 }).len() > 0);
+
+        h5def!(struct S1 { a: i64, b: u64 }
+               struct S2 { a: i64, b: u64 } );
+        assert_eq!(S1::value_type(), Foo::value_type());
+        assert_eq!(S2::value_type(), Foo::value_type());
+
+        h5def!(pub struct S3 { a: i64, b: u64 }
+               pub struct S4 { a: i64, b: u64 } );
+        assert_eq!(S3::value_type(), Foo::value_type());
+        assert_eq!(S4::value_type(), Foo::value_type());
+
+        h5def!(pub struct S5 { pub a: i64, pub b: u64 }
+               pub struct S6 { pub a: i64, pub b: u64 });
+        assert_eq!(S5::value_type(), Foo::value_type());
+        assert_eq!(S6::value_type(), Foo::value_type());
+    }
 }
