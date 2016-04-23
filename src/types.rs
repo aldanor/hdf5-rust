@@ -153,6 +153,89 @@ unsafe impl<T: Array<Item=I>, I: ToValueType> ToValueType for T {
     }
 }
 
+#[macro_export]
+macro_rules! h5def {
+    ($(#[repr($ty:ident)] $(#[$attr:meta])* enum $s:ident { $($i:ident = $v:expr),+$(,)* })*) => (
+        $(
+            #[allow(dead_code)] #[derive(Clone, Copy)] #[repr($ty)] $(#[$attr])*
+            enum $s { $($i = $v),+ }
+            h5def!(@impl_enum $s($ty) { $($i = $v),+ });
+        )*
+    );
+
+    ($(#[repr($ty:ident)] $(#[$attr:meta])* pub enum $s:ident { $($i:ident = $v:expr),+$(,)* })*) => (
+        $(
+            #[allow(dead_code)] #[derive(Clone, Copy)] #[repr($ty)] $(#[$attr])*
+            pub enum $s { $($i = $v),+ }
+            h5def!(@impl_enum $s($ty) { $($i = $v),+ });
+        )*
+    );
+
+    ($($(#[$attr:meta])* #[repr($ty:ty)] struct $s:ident { $($i:ident: $t:ty),+$(,)* })*) => (
+        $(
+            #[allow(dead_code)] #[derive(Clone)] #[repr(C)] $(#[$attr])*
+            struct $s { $($i: $t),+ }
+            h5def!(@impl_struct $s($ty) { $($i: $t),+ });
+        )*
+    );
+
+    ($($(#[$attr:meta])* pub struct $s:ident { $($i:ident: $t:ty),+$(,)* })*) => (
+        $(
+            #[allow(dead_code)] #[derive(Clone)] #[repr(C)] $(#[$attr])*
+            pub struct $s { $($i: $t),+ }
+            h5def!(@impl_struct $s { $($i: $t),+ });
+        )*
+    );
+
+    ($($(#[$attr:meta])* pub struct $s:ident { $(pub $i:ident: $t:ty),+$(,)* })*) => (
+        $(
+            #[allow(dead_code)] #[derive(Clone)] #[repr(C)] $(#[$attr])*
+            pub struct $s { $(pub $i: $t),+ }
+            h5def!(@impl_struct $s { $($i: $t),+ });
+        )*
+    );
+
+    (@impl_enum $s:ident($ty:ident) { $($i:ident = $v:expr),+ }) => (
+        unsafe impl $crate::types::ToValueType for $s {
+            fn value_type() -> $crate::types::ValueType {
+                $crate::types::ValueType::Enum(
+                    $crate::types::EnumType {
+                        size: match ::std::mem::size_of::<$ty>() {
+                            1 => IntSize::U1, 2 => IntSize::U2, 4 => IntSize::U4, 8 => IntSize::U8,
+                            _ => panic!("invalid int size"),
+                        },
+                        signed: ::std::$ty::MIN != 0,
+                        members: vec![$(
+                            $crate::types::EnumMember {
+                                name: stringify!($i).into(),
+                                value: $v as $ty as u64,
+                            }),+],
+                    }
+                )
+            }
+        }
+    );
+
+    (@impl_struct $s:ident { $($i:ident: $t:ty),+ }) => (
+        unsafe impl $crate::types::ToValueType for $s {
+            fn value_type() -> $crate::types::ValueType {
+                let base = 0usize as *const $s;
+                $crate::types::ValueType::Compound(
+                    $crate::types::CompoundType {
+                        fields: vec![$(
+                            $crate::types::CompoundField {
+                                name: stringify!($i).into(),
+                                ty: <$t as $crate::types::ToValueType>::value_type(),
+                                offset: unsafe { &((*base).$i) as *const $t as usize }
+                            }),+],
+                        size: ::std::mem::size_of::<$s>(),
+                    }
+                )
+            }
+        }
+    );
+}
+
 #[cfg(test)]
 pub mod tests {
     use std::mem;
