@@ -4,11 +4,9 @@ use libc::c_char;
 
 use ffi::h5t::hvl_t;
 
-#[repr(u32)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum IntSize { U1 = 1, U2 = 2, U4 = 4, U8 = 8 }
 
-#[repr(u32)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum FloatSize { U4 = 4, U8 = 8 }
 
@@ -29,13 +27,13 @@ pub struct Enum {
 pub struct CompoundField {
     pub name: String,
     pub ty: ValueType,
-    pub offset: u32,
+    pub offset: usize,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Compound {
     pub fields: Vec<CompoundField>,
-    pub size: u32,
+    pub size: usize,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -46,27 +44,27 @@ pub enum ValueType {
     Boolean,
     Enum(Enum),
     Compound(Compound),
-    FixedArray(Box<ValueType>, u32),
-    FixedString(u32),
+    FixedArray(Box<ValueType>, usize),
+    FixedString(usize),
     VarLenArray(Box<ValueType>),
     VarLenString,
 }
 
 impl ValueType {
-    pub fn size(&self) -> u32 {
+    pub fn size(&self) -> usize {
         use self::ValueType::*;
 
         match *self {
-            Integer(size) => size as u32,
-            Unsigned(size) => size as u32,
-            Float(size) => size as u32,
+            Integer(size) => size as usize,
+            Unsigned(size) => size as usize,
+            Float(size) => size as usize,
             Boolean => 1,
-            Enum(ref enum_type) => enum_type.size as u32,
+            Enum(ref enum_type) => enum_type.size as usize,
             Compound(ref compound) => compound.size,
             FixedArray(ref ty, len) => ty.size() * len,
-            FixedString(len) => (mem::size_of::<c_char>() as u32) * (len + 1),
-            VarLenArray(_) => mem::size_of::<hvl_t>() as u32,
-            VarLenString => mem::size_of::<*const c_char> as u32,
+            FixedString(len) => mem::size_of::<c_char>() * (len + 1),
+            VarLenArray(_) => mem::size_of::<hvl_t>(),
+            VarLenString => mem::size_of::<*const c_char>(),
         }
     }
 }
@@ -125,7 +123,7 @@ pub mod tests {
         assert_eq!(i16::value_type().size(), 2);
         assert_eq!(u32::value_type().size(), 4);
         assert_eq!(f64::value_type().size(), 8);
-        assert_eq!(usize::value_type().size(), mem::size_of::<usize>() as u32);
+        assert_eq!(usize::value_type().size(), mem::size_of::<usize>());
     }
 
     #[test]
