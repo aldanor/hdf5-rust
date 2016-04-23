@@ -297,4 +297,30 @@ pub mod tests {
         type S = [T; 4];
         assert_eq!(S::value_type(), FixedArray(Box::new(T::value_type()), 4));
     }
+
+    #[test]
+    pub fn test_enum() {
+        h5def!(#[repr(i64)] enum Foo { A = 1, B = -2 });
+        assert_eq!(Foo::value_type(), Enum(EnumType {
+            size: IntSize::U8,
+            signed: true,
+            members: vec![
+                EnumMember { name: "A".into(), value: 1 },
+                EnumMember { name: "B".into(), value: -2i64 as u64 },
+            ]
+        }));
+        assert_eq!(Foo::value_type().size(), 8);
+
+        h5def!(#[repr(u8)] #[derive(Debug)] pub enum Bar { A = 1, B = 2, });
+        assert_eq!(Bar::value_type(), Enum(EnumType {
+            size: IntSize::U1,
+            signed: false,
+            members: vec![
+                EnumMember { name: "A".into(), value: 1 },
+                EnumMember { name: "B".into(), value: 2 },
+            ]
+        }));
+        assert_eq!(format!("{:?}", Bar::A), "A");
+        assert_eq!(Bar::value_type().size(), 1);
+    }
 }
