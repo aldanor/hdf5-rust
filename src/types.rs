@@ -154,7 +154,7 @@ unsafe impl<T: Array<Item=I>, I: ToValueType> ToValueType for T {
 pub mod tests {
     use std::mem;
 
-    use super::{ToValueType, IntSize, FloatSize};
+    use super::{ToValueType, IntSize, FloatSize, Array};
     use super::ValueType::*;
 
     #[test]
@@ -193,5 +193,22 @@ pub mod tests {
     pub fn test_ptr_sized_ints() {
         assert_eq!(isize::value_type(), Integer(IntSize::U8));
         assert_eq!(usize::value_type(), Unsigned(IntSize::U8));
+    }
+
+    #[test]
+    pub fn test_array_trait() {
+        type T = [u32; 256];
+        assert_eq!(<T as Array>::capacity(), 256);
+        let mut arr = [1, 2, 3];
+        assert_eq!(arr.as_ptr(), &arr[0] as *const _);
+        assert_eq!(arr.as_mut_ptr(), &mut arr[0] as *mut _);
+    }
+
+    #[test]
+    pub fn test_fixed_size_array() {
+        type T = [u32; 256];
+        assert_eq!(T::value_type(), FixedArray(Box::new(Unsigned(IntSize::U4)), 256));
+        type S = [T; 4];
+        assert_eq!(S::value_type(), FixedArray(Box::new(T::value_type()), 4));
     }
 }
