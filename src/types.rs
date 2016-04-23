@@ -17,7 +17,7 @@ pub struct EnumMember {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Enum {
+pub struct EnumType {
     pub size: IntSize,
     pub signed: bool,
     pub members: Vec<EnumMember>,
@@ -31,7 +31,7 @@ pub struct CompoundField {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Compound {
+pub struct CompoundType {
     pub fields: Vec<CompoundField>,
     pub size: usize,
 }
@@ -42,8 +42,8 @@ pub enum ValueType {
     Unsigned(IntSize),
     Float(FloatSize),
     Boolean,
-    Enum(Enum),
-    Compound(Compound),
+    Enum(EnumType),
+    Compound(CompoundType),
     FixedArray(Box<ValueType>, usize),
     FixedString(usize),
     VarLenArray(Box<ValueType>),
@@ -123,9 +123,12 @@ macro_rules! impl_array {
     ($n:expr, $($ns:expr,)*) => (
         unsafe impl<T> Array for [T; $n] {
             type Item = T;
-            #[inline(always)] fn as_ptr(&self) -> *const T { self as *const _ as *const _ }
-            #[inline(always)] fn as_mut_ptr(&mut self) -> *mut T { self as *mut _ as *mut _}
-            #[inline(always)] fn capacity() -> usize { $n }
+            #[inline(always)]
+            fn as_ptr(&self) -> *const T { self as *const _ as *const _ }
+            #[inline(always)]
+            fn as_mut_ptr(&mut self) -> *mut T { self as *mut _ as *mut _}
+            #[inline(always)]
+            fn capacity() -> usize { $n }
         }
 
         impl_array!($($ns,)*);
@@ -154,7 +157,7 @@ unsafe impl<T: Array<Item=I>, I: ToValueType> ToValueType for T {
 pub mod tests {
     use std::mem;
 
-    use super::{ToValueType, IntSize, FloatSize, Array};
+    use super::*;
     use super::ValueType::*;
 
     #[test]
