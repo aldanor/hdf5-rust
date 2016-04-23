@@ -320,5 +320,15 @@ pub mod tests {
         }));
         assert_eq!(format!("{:?}", Bar::A), "A");
         assert_eq!(Bar::value_type().size(), 1);
+
+        h5def!(#[repr(u8)] enum E1 { A = 1, B = 2 }
+               #[repr(u8)] enum E2 { A = 1, B = 2});
+        assert_eq!(E1::value_type(), Bar::value_type());
+        assert_eq!(E2::value_type(), Bar::value_type());
+
+        h5def!(#[repr(u8)] pub enum E3 { A = 1, B = 2 }
+               #[repr(u8)] pub enum E4 { A = 1, B = 2});
+        assert_eq!(E3::value_type(), Bar::value_type());
+        assert_eq!(E4::value_type(), Bar::value_type());
     }
 }
