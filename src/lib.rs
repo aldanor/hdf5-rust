@@ -13,6 +13,7 @@ pub use group::Group;
 pub use location::Location;
 pub use object::Object;
 pub use space::{Dimension, Ix, Dataspace};
+pub use types::ToValueType;
 
 extern crate libc;
 extern crate num;
@@ -32,6 +33,9 @@ extern crate regex;
 
 #[macro_use]
 mod macros;
+
+#[macro_use]
+mod types;
 
 mod container;
 mod dataset;
