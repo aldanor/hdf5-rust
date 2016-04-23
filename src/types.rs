@@ -238,22 +238,11 @@ macro_rules! h5def {
 
 #[cfg(test)]
 pub mod tests {
-    use std::mem;
-
     use super::*;
     use super::ValueType::*;
 
     #[test]
-    pub fn test_value_type_size() {
-        assert_eq!(bool::value_type().size(), 1);
-        assert_eq!(i16::value_type().size(), 2);
-        assert_eq!(u32::value_type().size(), 4);
-        assert_eq!(f64::value_type().size(), 8);
-        assert_eq!(usize::value_type().size(), mem::size_of::<usize>());
-    }
-
-    #[test]
-    pub fn test_scalar_value_types() {
+    pub fn test_scalar_types() {
         assert_eq!(bool::value_type(), Boolean);
         assert_eq!(i8::value_type(), Integer(IntSize::U1));
         assert_eq!(i16::value_type(), Integer(IntSize::U2));
@@ -265,6 +254,11 @@ pub mod tests {
         assert_eq!(u64::value_type(), Unsigned(IntSize::U8));
         assert_eq!(f32::value_type(), Float(FloatSize::U4));
         assert_eq!(f64::value_type(), Float(FloatSize::U8));
+
+        assert_eq!(bool::value_type().size(), 1);
+        assert_eq!(i16::value_type().size(), 2);
+        assert_eq!(u32::value_type().size(), 4);
+        assert_eq!(f64::value_type().size(), 8);
     }
 
     #[test]
@@ -272,6 +266,8 @@ pub mod tests {
     pub fn test_ptr_sized_ints() {
         assert_eq!(isize::value_type(), Integer(IntSize::U4));
         assert_eq!(usize::value_type(), Unsigned(IntSize::U4));
+
+        assert_eq!(usize::value_type().size(), 4);
     }
 
     #[test]
@@ -279,6 +275,8 @@ pub mod tests {
     pub fn test_ptr_sized_ints() {
         assert_eq!(isize::value_type(), Integer(IntSize::U8));
         assert_eq!(usize::value_type(), Unsigned(IntSize::U8));
+
+        assert_eq!(usize::value_type().size(), 8);
     }
 
     #[test]
@@ -299,7 +297,7 @@ pub mod tests {
     }
 
     #[test]
-    pub fn test_enum() {
+    pub fn test_enum_type() {
         h5def!(#[repr(i64)] enum Foo { A = 1, B = -2 });
         assert_eq!(Foo::value_type(), Enum(EnumType {
             size: IntSize::U8,
