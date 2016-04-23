@@ -155,60 +155,60 @@ unsafe impl<T: Array<Item=I>, I: ToValueType> ToValueType for T {
 
 #[macro_export]
 macro_rules! h5def {
-    ($(#[repr($ty:ident)] $(#[$attr:meta])* enum $s:ident { $($i:ident = $v:expr),+$(,)* })*) => (
+    ($(#[repr($t:ident)] $(#[$a:meta])* enum $s:ident { $($i:ident = $v:expr),+$(,)* })*) => (
         $(
-            #[allow(dead_code)] #[derive(Clone, Copy)] #[repr($ty)] $(#[$attr])*
+            #[allow(dead_code)] #[derive(Clone, Copy)] #[repr($t)] $(#[$a])*
             enum $s { $($i = $v),+ }
-            h5def!(@impl_enum $s($ty) { $($i = $v),+ });
+            h5def!(@impl_enum $s($t) { $($i = $v),+ });
         )*
     );
 
-    ($(#[repr($ty:ident)] $(#[$attr:meta])* pub enum $s:ident { $($i:ident = $v:expr),+$(,)* })*) => (
+    ($(#[repr($t:ident)] $(#[$a:meta])* pub enum $s:ident { $($i:ident = $v:expr),+$(,)* })*) => (
         $(
-            #[allow(dead_code)] #[derive(Clone, Copy)] #[repr($ty)] $(#[$attr])*
+            #[allow(dead_code)] #[derive(Clone, Copy)] #[repr($t)] $(#[$a])*
             pub enum $s { $($i = $v),+ }
-            h5def!(@impl_enum $s($ty) { $($i = $v),+ });
+            h5def!(@impl_enum $s($t) { $($i = $v),+ });
         )*
     );
 
-    ($($(#[$attr:meta])* #[repr($ty:ty)] struct $s:ident { $($i:ident: $t:ty),+$(,)* })*) => (
+    ($($(#[$a:meta])* struct $s:ident { $($i:ident: $t:ty),+$(,)* })*) => (
         $(
-            #[allow(dead_code)] #[derive(Clone)] #[repr(C)] $(#[$attr])*
+            #[allow(dead_code)] #[derive(Clone)] #[repr(C)] $(#[$a])*
             struct $s { $($i: $t),+ }
-            h5def!(@impl_struct $s($ty) { $($i: $t),+ });
+            h5def!(@impl_struct $s { $($i: $t),+ });
         )*
     );
 
-    ($($(#[$attr:meta])* pub struct $s:ident { $($i:ident: $t:ty),+$(,)* })*) => (
+    ($($(#[$a:meta])* pub struct $s:ident { $($i:ident: $t:ty),+$(,)* })*) => (
         $(
-            #[allow(dead_code)] #[derive(Clone)] #[repr(C)] $(#[$attr])*
+            #[allow(dead_code)] #[derive(Clone)] #[repr(C)] $(#[$a])*
             pub struct $s { $($i: $t),+ }
             h5def!(@impl_struct $s { $($i: $t),+ });
         )*
     );
 
-    ($($(#[$attr:meta])* pub struct $s:ident { $(pub $i:ident: $t:ty),+$(,)* })*) => (
+    ($($(#[$a:meta])* pub struct $s:ident { $(pub $i:ident: $t:ty),+$(,)* })*) => (
         $(
-            #[allow(dead_code)] #[derive(Clone)] #[repr(C)] $(#[$attr])*
+            #[allow(dead_code)] #[derive(Clone)] #[repr(C)] $(#[$a])*
             pub struct $s { $(pub $i: $t),+ }
             h5def!(@impl_struct $s { $($i: $t),+ });
         )*
     );
 
-    (@impl_enum $s:ident($ty:ident) { $($i:ident = $v:expr),+ }) => (
+    (@impl_enum $s:ident($t:ident) { $($i:ident = $v:expr),+ }) => (
         unsafe impl $crate::types::ToValueType for $s {
             fn value_type() -> $crate::types::ValueType {
                 $crate::types::ValueType::Enum(
                     $crate::types::EnumType {
-                        size: match ::std::mem::size_of::<$ty>() {
+                        size: match ::std::mem::size_of::<$t>() {
                             1 => IntSize::U1, 2 => IntSize::U2, 4 => IntSize::U4, 8 => IntSize::U8,
                             _ => panic!("invalid int size"),
                         },
-                        signed: ::std::$ty::MIN != 0,
+                        signed: ::std::$t::MIN != 0,
                         members: vec![$(
                             $crate::types::EnumMember {
                                 name: stringify!($i).into(),
-                                value: $v as $ty as u64,
+                                value: $v as $t as u64,
                             }),+],
                     }
                 )
