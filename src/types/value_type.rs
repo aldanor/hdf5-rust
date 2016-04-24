@@ -55,8 +55,7 @@ impl ValueType {
         use self::ValueType::*;
 
         match *self {
-            Integer(size) => size as usize,
-            Unsigned(size) => size as usize,
+            Integer(size) | Unsigned(size) => size as usize,
             Float(size) => size as usize,
             Boolean => 1,
             Enum(ref enum_type) => enum_type.size as usize,
@@ -207,9 +206,9 @@ pub mod tests {
 
     #[test]
     pub fn test_fixed_size_array() {
+        type S = [T; 4];
         type T = [u32; 256];
         assert_eq!(T::value_type(), VT::FixedArray(Box::new(VT::Unsigned(IntSize::U4)), 256));
-        type S = [T; 4];
         assert_eq!(S::value_type(), VT::FixedArray(Box::new(T::value_type()), 4));
     }
 }

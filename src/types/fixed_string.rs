@@ -1,7 +1,6 @@
 use std::ffi::CStr;
 use std::mem;
 use std::ptr;
-use std::str;
 
 use libc::c_char;
 
@@ -39,7 +38,7 @@ impl<A: Array<Item=u8>> FixedString<A> {
         self.buf.as_ptr()
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn capacity() -> usize {
         A::capacity()
     }
