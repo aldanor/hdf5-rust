@@ -68,8 +68,7 @@ impl_string_traits!(FixedString, FixedString<A>, A: Array<Item=u8>);
 #[cfg(test)]
 pub mod tests {
     use super::FixedString;
-    use types::ToValueType;
-    use types::ValueType as VT;
+    use types::{ValueType, ToValueType};
 
     type S = FixedString<[u8; 5]>;
 
@@ -77,7 +76,7 @@ pub mod tests {
     pub fn test_value_type() {
         use std::mem;
 
-        assert_eq!(S::value_type(), VT::FixedString(5));
+        assert_eq!(S::value_type(), ValueType::FixedString(5));
         assert_eq!(S::value_type().size(), 6);
         assert_eq!(mem::size_of::<S>(), 6);
         assert_eq!(S::capacity(), 5);

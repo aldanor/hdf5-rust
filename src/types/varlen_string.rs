@@ -74,8 +74,7 @@ impl_string_traits!(VarLenString, VarLenString);
 #[cfg(test)]
 pub mod tests {
     use super::VarLenString;
-    use types::ToValueType;
-    use types::ValueType as VT;
+    use types::{ValueType, ToValueType};
 
     type S = VarLenString;
 
@@ -83,7 +82,7 @@ pub mod tests {
     pub fn test_value_type() {
         use std::mem;
 
-        assert_eq!(S::value_type(), VT::VarLenString);
+        assert_eq!(S::value_type(), ValueType::VarLenString);
         assert_eq!(S::value_type().size(), mem::size_of::<*mut u8>());
         assert_eq!(mem::size_of::<S>(), S::value_type().size());
     }
