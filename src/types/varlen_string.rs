@@ -1,8 +1,4 @@
-use std::borrow::{Borrow, Cow};
 use std::ffi::CStr;
-use std::fmt;
-use std::hash::{Hash, Hasher};
-use std::ops::{Deref, Index, RangeFull};
 use std::ptr;
 use std::str;
 
@@ -75,116 +71,63 @@ impl VarLenString {
     }
 }
 
-impl<'a> From<&'a str> for VarLenString {
-    fn from(s: &'a str) -> VarLenString {
-        VarLenString::from_str(s)
+impl Clone for VarLenString {
+    fn clone(&self) -> VarLenString {
+        VarLenString::from_str(&*self)
     }
 }
 
-impl From<String> for VarLenString {
-    fn from(s: String) -> VarLenString {
-        VarLenString::from_str(&s)
-    }
-}
+impl_string_traits!(VarLenString, VarLenString);
 
-impl Into<Vec<u8>> for VarLenString {
-    fn into(self) -> Vec<u8> {
-        self.as_bytes().to_vec()
-    }
-}
+#[cfg(test)]
+pub mod tests {
+    use std::borrow::Borrow;
+    use std::hash::{Hash, Hasher, SipHasher};
+    use std::mem;
 
-impl Deref for VarLenString {
-    type Target = str;
+    use super::VarLenString;
+    use types::ToValueType;
+    use types::ValueType as VT;
 
-    #[inline]
-    fn deref(&self) -> &str {
-        unsafe { str::from_utf8_unchecked(self.as_bytes()) }
-    }
-}
+    #[test]
+    pub fn test_fixed_string() {
+        type S = VarLenString;
+        assert_eq!(S::value_type(), VT::VarLenString);
+        assert_eq!(S::value_type().size(), mem::size_of::<*mut u8>());
+        assert_eq!(mem::size_of::<S>(), S::value_type().size());
 
-impl Borrow<str> for VarLenString {
-    #[inline]
-    fn borrow(&self) -> &str {
-        self
-    }
-}
+        assert!(S::from_str("").is_empty());
+        assert!(S::from_str("\0").is_empty());
+        assert!(S::new().is_empty());
+        assert!(S::default().is_empty());
 
-impl AsRef<str> for VarLenString {
-    #[inline]
-    fn as_ref(&self) -> &str {
-        self
-    }
-}
+        assert_eq!(S::from("abc").as_str(), "abc");
+        assert_eq!(S::from("abc".to_owned()).as_str(), "abc");
+        let v: Vec<u8> = S::from("abc").into();
+        assert_eq!(v, "abc".as_bytes().to_vec());
 
-impl Index<RangeFull> for VarLenString {
-    type Output = str;
+        let s = VarLenString::from_str("abc");
+        assert_eq!(s.len(), 3);
+        assert!(!s.is_empty());
+        assert_eq!(s.as_bytes(), "abc".as_bytes());
+        assert_eq!(s.as_str(), "abc");
+        assert_eq!(&*s, "abc");
+        assert_eq!(s.borrow() as &str, "abc");
+        assert_eq!(s.as_ref() as &str, "abc");
+        assert_eq!(&s[..], "abc");
+        assert_eq!(s, "abc");
+        assert_eq!("abc", s);
+        assert_eq!(&s, "abc");
+        assert_eq!("abc", &s);
+        assert_eq!(s, "abc".to_owned());
+        assert_eq!("abc".to_owned(), s);
+        assert_eq!(s, s);
+        assert_eq!(format!("{}", s), "abc");
+        assert_eq!(format!("{:?}", s), "\"abc\"");
 
-    #[inline]
-    fn index(&self, _: RangeFull) -> &str {
-        self
-    }
-}
-
-impl PartialEq for VarLenString {
-    #[inline]
-    fn eq(&self, other: &Self) -> bool {
-        PartialEq::eq(&self[..], &other[..])
-    }
-    #[inline]
-    fn ne(&self, other: &Self) -> bool {
-        PartialEq::ne(&self[..], &other[..])
-    }
-}
-
-impl Eq for VarLenString { }
-
-macro_rules! impl_eq {
-    ($lhs:ty, $rhs: ty) => {
-        impl<'a> PartialEq<$rhs> for $lhs {
-            #[inline]
-            fn eq(&self, other: &$rhs) -> bool { PartialEq::eq(&self[..], &other[..]) }
-            #[inline]
-            fn ne(&self, other: &$rhs) -> bool { PartialEq::ne(&self[..], &other[..]) }
-        }
-
-        impl<'a> PartialEq<$lhs> for $rhs {
-            #[inline]
-            fn eq(&self, other: &$lhs) -> bool { PartialEq::eq(&self[..], &other[..]) }
-            #[inline]
-            fn ne(&self, other: &$lhs) -> bool { PartialEq::ne(&self[..], &other[..]) }
-        }
-    }
-}
-
-impl_eq!(VarLenString, str);
-impl_eq!(VarLenString, &'a str);
-impl_eq!(VarLenString, String);
-impl_eq!(VarLenString, Cow<'a, str>);
-
-impl fmt::Debug for VarLenString {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        (**self).fmt(f)
-    }
-}
-
-impl fmt::Display for VarLenString {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        (**self).fmt(f)
-    }
-}
-
-impl Hash for VarLenString {
-    #[inline]
-    fn hash<H: Hasher>(&self, hasher: &mut H) {
-        (**self).hash(hasher)
-    }
-}
-
-impl Default for VarLenString {
-    #[inline]
-    fn default() -> VarLenString {
-        VarLenString::new()
+        let (mut h1, mut h2) = (SipHasher::new(), SipHasher::new());
+        s.hash(&mut h1);
+        "abc".hash(&mut h2);
+        assert_eq!(h1.finish(), h2.finish());
     }
 }
