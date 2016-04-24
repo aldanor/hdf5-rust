@@ -73,29 +73,40 @@ impl_string_traits!(VarLenString, VarLenString);
 
 #[cfg(test)]
 pub mod tests {
-    use std::borrow::Borrow;
-    use std::hash::{Hash, Hasher, SipHasher};
-    use std::mem;
-
     use super::VarLenString;
     use types::ToValueType;
     use types::ValueType as VT;
 
+    type S = VarLenString;
+
     #[test]
-    pub fn test_fixed_string() {
-        type S = VarLenString;
+    pub fn test_value_type() {
+        use std::mem;
+
         assert_eq!(S::value_type(), VT::VarLenString);
         assert_eq!(S::value_type().size(), mem::size_of::<*mut u8>());
         assert_eq!(mem::size_of::<S>(), S::value_type().size());
+    }
 
+    #[test]
+    pub fn test_empty_default() {
         assert!(S::new("").is_empty());
         assert!(S::new("\0").is_empty());
         assert!(S::default().is_empty());
+    }
 
+    #[test]
+    pub fn test_into_from() {
         assert_eq!(S::from("abc").as_str(), "abc");
         assert_eq!(S::from("abc".to_owned()).as_str(), "abc");
         let v: Vec<u8> = S::from("abc").into();
         assert_eq!(v, "abc".as_bytes().to_vec());
+    }
+
+    #[test]
+    pub fn test_string_traits() {
+        use std::borrow::Borrow;
+        use std::hash::{Hash, Hasher, SipHasher};
 
         let s = VarLenString::new("abc");
         assert_eq!(s.len(), 3);

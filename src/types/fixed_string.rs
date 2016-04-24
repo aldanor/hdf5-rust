@@ -68,32 +68,46 @@ impl_string_traits!(FixedString, FixedString<A>, A: Array<Item=u8>);
 
 #[cfg(test)]
 pub mod tests {
-    use std::borrow::Borrow;
-    use std::hash::{Hash, Hasher, SipHasher};
-    use std::mem;
-
     use super::FixedString;
     use types::ToValueType;
     use types::ValueType as VT;
 
+    type S = FixedString<[u8; 5]>;
+
     #[test]
-    pub fn test_fixed_string() {
-        type S = FixedString<[u8; 5]>;
+    pub fn test_value_type() {
+        use std::mem;
+
         assert_eq!(S::value_type(), VT::FixedString(5));
         assert_eq!(S::value_type().size(), 6);
         assert_eq!(mem::size_of::<S>(), 6);
         assert_eq!(S::capacity(), 5);
+    }
 
-
+    #[test]
+    pub fn test_empty_default() {
         assert!(S::new("").is_empty());
         assert!(S::new("\0").is_empty());
         assert!(S::default().is_empty());
+    }
 
+    #[test]
+    pub fn test_overflow() {
         assert_eq!(S::new("abcdefg"), "abcde");
+    }
+
+    #[test]
+    pub fn test_into_from() {
         assert_eq!(S::from("abc").as_str(), "abc");
         assert_eq!(S::from("abc".to_owned()).as_str(), "abc");
         let v: Vec<u8> = S::from("abc").into();
         assert_eq!(v, "abc".as_bytes().to_vec());
+    }
+
+    #[test]
+    pub fn test_string_traits() {
+        use std::borrow::Borrow;
+        use std::hash::{Hash, Hasher, SipHasher};
 
         let s = FixedString::<[_; 5]>::new("abc");
         assert_eq!(s.len(), 3);
