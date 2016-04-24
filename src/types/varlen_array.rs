@@ -7,7 +7,7 @@ use std::slice;
 use libc::size_t;
 
 use ffi::h5t::hvl_t;
-use types::{ValueType, ToValueType};
+use types::{ValueType, ToValueType, Array};
 
 #[repr(C)]
 #[unsafe_no_drop_flag]
@@ -79,6 +79,14 @@ impl<T: Clone> Deref for VarLenArray<T> {
 impl<'a, T: Clone> From<&'a [T]> for VarLenArray<T> {
     fn from(arr: &[T]) -> VarLenArray<T> {
         VarLenArray::new(arr)
+    }
+}
+
+impl<T: Clone, A: Array<Item=T>> From<A> for VarLenArray<T> {
+    fn from(arr: A) -> VarLenArray<T> {
+        VarLenArray::new(unsafe {
+            slice::from_raw_parts(arr.as_ptr(), A::capacity())
+        })
     }
 }
 
