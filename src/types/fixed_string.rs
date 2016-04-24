@@ -1,9 +1,5 @@
-use std::borrow::{Borrow, Cow};
 use std::ffi::CStr;
-use std::fmt;
-use std::hash::{Hash, Hasher};
 use std::mem;
-use std::ops::{Deref, Index, RangeFull};
 use std::ptr;
 use std::str;
 
@@ -72,119 +68,7 @@ impl<A: Array<Item=u8>> FixedString<A> {
     }
 }
 
-impl<'a, A: Array<Item=u8>> From<&'a str> for FixedString<A> {
-    fn from(s: &'a str) -> FixedString<A> {
-        FixedString::from_str(s)
-    }
-}
-
-impl<A: Array<Item=u8>> From<String> for FixedString<A> {
-    fn from(s: String) -> FixedString<A> {
-        FixedString::from_str(&s)
-    }
-}
-
-impl<A: Array<Item=u8>> Into<Vec<u8>> for FixedString<A> {
-    fn into(self) -> Vec<u8> {
-        self.as_bytes().to_vec()
-    }
-}
-
-impl<A: Array<Item=u8>> Deref for FixedString<A> {
-    type Target = str;
-
-    #[inline]
-    fn deref(&self) -> &str {
-        unsafe { str::from_utf8_unchecked(self.as_bytes()) }
-    }
-}
-
-impl<A: Array<Item=u8>> Borrow<str> for FixedString<A> {
-    #[inline]
-    fn borrow(&self) -> &str {
-        self
-    }
-}
-
-impl<A: Array<Item=u8>> AsRef<str> for FixedString<A> {
-    #[inline]
-    fn as_ref(&self) -> &str {
-        self
-    }
-}
-
-impl<A: Array<Item=u8>> Index<RangeFull> for FixedString<A> {
-    type Output = str;
-
-    #[inline]
-    fn index(&self, _: RangeFull) -> &str {
-        self
-    }
-}
-
-impl<A: Array<Item=u8>> PartialEq for FixedString<A> {
-    #[inline]
-    fn eq(&self, other: &Self) -> bool {
-        PartialEq::eq(&self[..], &other[..])
-    }
-    #[inline]
-    fn ne(&self, other: &Self) -> bool {
-        PartialEq::ne(&self[..], &other[..])
-    }
-}
-
-impl<A: Array<Item=u8>> Eq for FixedString<A> { }
-
-macro_rules! impl_eq {
-    ($lhs:ty, $rhs: ty) => {
-        impl<'a, A: Array<Item=u8>> PartialEq<$rhs> for $lhs {
-            #[inline]
-            fn eq(&self, other: &$rhs) -> bool { PartialEq::eq(&self[..], &other[..]) }
-            #[inline]
-            fn ne(&self, other: &$rhs) -> bool { PartialEq::ne(&self[..], &other[..]) }
-        }
-
-        impl<'a, A: Array<Item=u8>> PartialEq<$lhs> for $rhs {
-            #[inline]
-            fn eq(&self, other: &$lhs) -> bool { PartialEq::eq(&self[..], &other[..]) }
-            #[inline]
-            fn ne(&self, other: &$lhs) -> bool { PartialEq::ne(&self[..], &other[..]) }
-        }
-    }
-}
-
-impl_eq!(FixedString<A>, str);
-impl_eq!(FixedString<A>, &'a str);
-impl_eq!(FixedString<A>, String);
-impl_eq!(FixedString<A>, Cow<'a, str>);
-
-impl<A: Array<Item=u8>> fmt::Debug for FixedString<A> {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        (**self).fmt(f)
-    }
-}
-
-impl<A: Array<Item=u8>> fmt::Display for FixedString<A> {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        (**self).fmt(f)
-    }
-}
-
-impl<A: Array<Item=u8>> Hash for FixedString<A> {
-    #[inline]
-    fn hash<H: Hasher>(&self, hasher: &mut H) {
-        (**self).hash(hasher)
-    }
-}
-
-impl<A: Array<Item=u8>> Default for FixedString<A> {
-    #[inline]
-    fn default() -> FixedString<A> {
-        FixedString::new()
-    }
-}
+impl_string_traits!(FixedString, FixedString<A>, A: Array<Item=u8>);
 
 #[cfg(test)]
 pub mod tests {

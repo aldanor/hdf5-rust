@@ -1,3 +1,6 @@
+#[macro_use]
+mod string_traits;
+
 mod fixed_string;
 mod value_type;
 
