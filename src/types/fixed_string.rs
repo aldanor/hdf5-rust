@@ -34,12 +34,9 @@ impl<A: Array<Item=u8>> FixedString<A> {
         }
     }
 
+    #[inline]
     pub fn as_ptr(&self) -> *const u8 {
         self.buf.as_ptr()
-    }
-
-    pub fn as_mut_ptr(&mut self) -> *mut u8 {
-        self.buf.as_mut_ptr()
     }
 
     #[inline(always)]
@@ -47,6 +44,7 @@ impl<A: Array<Item=u8>> FixedString<A> {
         A::capacity()
     }
 
+    #[inline]
     pub fn as_str(&self) -> &str {
         self
     }
@@ -57,10 +55,12 @@ impl<A: Array<Item=u8>> FixedString<A> {
         }
     }
 
+    #[inline]
     pub fn len(&self) -> usize {
         self.as_bytes().len()
     }
 
+    #[inline]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
