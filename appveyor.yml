@@ -16,7 +16,7 @@ environment:
     - CHANNEL: beta
       FEATURES: ""
     - CHANNEL: nightly
-      FEATURES: --features "varlen lint"
+      FEATURES: "varlen lint"
 install:
   - ps: Start-FileDownload "https://static.rust-lang.org/dist/rust-${env:CHANNEL}-${env:TARGET}.msi"
   - ps: Start-Process -FilePath msiexec -ArgumentList /i, rust-${env:CHANNEL}-${env:TARGET}.msi, INSTALLDIR="C:\Rust", /quiet -Wait
@@ -35,5 +35,5 @@ test_script:
   - cargo test -v --no-run
   - cargo test -v
   - cd %APPVEYOR_BUILD_FOLDER%
-  - cargo test -v --no-run %FEATURES%
-  - cargo test -v %FEATURES%
+  - cargo test -v --no-run --features "%FEATURES%"
+  - cargo test -v --features "%FEATURES%"
