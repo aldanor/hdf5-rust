@@ -99,6 +99,11 @@ pub mod tests {
 
     #[test]
     pub fn test_enum_type() {
+        assert_eq!((EnumType { size: IntSize::U8, signed: true, members: vec![] }).base_type(),
+                   VT::Integer(IntSize::U8));
+        assert_eq!((EnumType { size: IntSize::U1, signed: false, members: vec![] }).base_type(),
+                   VT::Unsigned(IntSize::U1));
+
         assert_eq!(X::value_type(), VT::Enum(EnumType {
             size: IntSize::U8,
             signed: true,

@@ -23,6 +23,16 @@ pub struct EnumType {
     pub members: Vec<EnumMember>,
 }
 
+impl EnumType {
+    pub fn base_type(&self) -> ValueType {
+        if self.signed {
+            ValueType::Integer(self.size)
+        } else {
+            ValueType::Unsigned(self.size)
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CompoundField {
     pub name: String,
