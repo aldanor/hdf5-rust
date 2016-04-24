@@ -46,6 +46,11 @@ impl VarLenString {
         self.ptr
     }
 
+    #[inline]
+    pub fn as_str(&self) -> &str {
+        self
+    }
+
     pub fn as_bytes(&self) -> &[u8] {
         unsafe { CStr::from_ptr(self.ptr as *const c_char).to_bytes() }
     }
