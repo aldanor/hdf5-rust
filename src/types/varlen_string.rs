@@ -29,10 +29,11 @@ unsafe impl ToValueType for VarLenString {
 }
 
 impl VarLenString {
-    pub fn new() -> VarLenString {
+    pub fn new(s: &str) -> VarLenString {
         unsafe {
-            let p = ::libc::malloc(1) as *mut u8;
-            *p = 0;
+            let p = ::libc::malloc(1 + s.len()) as *mut u8;
+            ptr::copy_nonoverlapping(s.as_ptr(), p, s.len());
+            *(p.offset(s.len() as isize)) = 0;
             VarLenString { ptr: p }
         }
     }
@@ -60,20 +61,11 @@ impl VarLenString {
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
-
-    pub fn from_str(s: &str) -> VarLenString {
-        unsafe {
-            let p = ::libc::malloc(1 + s.len()) as *mut u8;
-            ptr::copy_nonoverlapping(s.as_ptr(), p, s.len());
-            *(p.offset(s.len() as isize)) = 0;
-            VarLenString { ptr: p }
-        }
-    }
 }
 
 impl Clone for VarLenString {
     fn clone(&self) -> VarLenString {
-        VarLenString::from_str(&*self)
+        VarLenString::new(&*self)
     }
 }
 
@@ -96,9 +88,8 @@ pub mod tests {
         assert_eq!(S::value_type().size(), mem::size_of::<*mut u8>());
         assert_eq!(mem::size_of::<S>(), S::value_type().size());
 
-        assert!(S::from_str("").is_empty());
-        assert!(S::from_str("\0").is_empty());
-        assert!(S::new().is_empty());
+        assert!(S::new("").is_empty());
+        assert!(S::new("\0").is_empty());
         assert!(S::default().is_empty());
 
         assert_eq!(S::from("abc").as_str(), "abc");
@@ -106,7 +97,7 @@ pub mod tests {
         let v: Vec<u8> = S::from("abc").into();
         assert_eq!(v, "abc".as_bytes().to_vec());
 
-        let s = VarLenString::from_str("abc");
+        let s = VarLenString::new("abc");
         assert_eq!(s.len(), 3);
         assert!(!s.is_empty());
         assert_eq!(s.as_bytes(), "abc".as_bytes());

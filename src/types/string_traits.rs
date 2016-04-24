@@ -20,13 +20,13 @@ macro_rules! impl_string_traits {
     ($nm:ident, $ty:ty $(,$t:ident: $b:ident<$a:ident=$v:ty>)*) => (
         impl<'a $(,$t: $b<$a=$v>)*> From<&'a str> for $ty {
             fn from(s: &'a str) -> $ty {
-                $nm::from_str(s)
+                $nm::new(s)
             }
         }
 
         impl<'a $(,$t: $b<$a=$v>)*> From<String> for $ty {
             fn from(s: String) -> $ty {
-                $nm::from_str(&s)
+                $nm::new(&s)
             }
         }
 
@@ -112,7 +112,7 @@ macro_rules! impl_string_traits {
         impl<'a $(,$t: $b<$a=$v>)*> Default for $ty {
             #[inline]
             fn default() -> $ty {
-                $nm::new()
+                $nm::new("")
             }
         }
     )

@@ -21,8 +21,17 @@ unsafe impl<A: Array<Item=u8>> ToValueType for FixedString<A> {
 }
 
 impl<A: Array<Item=u8>> FixedString<A> {
-    pub fn new() -> FixedString<A> {
-        unsafe { FixedString { buf: mem::zeroed(), eof: 0 } }
+    pub fn new(s: &str) -> Self {
+        let len = if s.len() < Self::capacity() {
+            s.len()
+        } else {
+            Self::capacity()
+        };
+        unsafe {
+            let mut buf: A =  mem::zeroed();
+            ptr::copy_nonoverlapping(s.as_ptr(), buf.as_mut_ptr() as *mut u8, len);
+            FixedString { buf: buf, eof: 0 }
+        }
     }
 
     #[inline]
@@ -53,19 +62,6 @@ impl<A: Array<Item=u8>> FixedString<A> {
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
-
-    pub fn from_str(s: &str) -> Self {
-        let len = if s.len() < Self::capacity() {
-            s.len()
-        } else {
-            Self::capacity()
-        };
-        unsafe {
-            let mut buf: A =  mem::zeroed();
-            ptr::copy_nonoverlapping(s.as_ptr(), buf.as_mut_ptr() as *mut u8, len);
-            FixedString { buf: buf, eof: 0 }
-        }
-    }
 }
 
 impl_string_traits!(FixedString, FixedString<A>, A: Array<Item=u8>);
@@ -88,19 +84,18 @@ pub mod tests {
         assert_eq!(mem::size_of::<S>(), 6);
         assert_eq!(S::capacity(), 5);
 
-        assert_eq!(S::from_str("abcdefg"), "abcde");
 
-        assert!(S::from_str("").is_empty());
-        assert!(S::from_str("\0").is_empty());
-        assert!(S::new().is_empty());
+        assert!(S::new("").is_empty());
+        assert!(S::new("\0").is_empty());
         assert!(S::default().is_empty());
 
+        assert_eq!(S::new("abcdefg"), "abcde");
         assert_eq!(S::from("abc").as_str(), "abc");
         assert_eq!(S::from("abc".to_owned()).as_str(), "abc");
         let v: Vec<u8> = S::from("abc").into();
         assert_eq!(v, "abc".as_bytes().to_vec());
 
-        let s = FixedString::<[_; 5]>::from_str("abc");
+        let s = FixedString::<[_; 5]>::new("abc");
         assert_eq!(s.len(), 3);
         assert!(!s.is_empty());
         assert_eq!(s.as_bytes(), "abc".as_bytes());
