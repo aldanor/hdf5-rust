@@ -17,6 +17,7 @@ build = "build.rs"
 
 [features]
 lint = ["clippy"]
+varlen = []
 
 [dependencies]
 lazy_static = "0.1"
