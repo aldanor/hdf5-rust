@@ -1,4 +1,4 @@
-use std::borrow::Borrow;
+use std::borrow::{Borrow, Cow};
 use std::ffi::CStr;
 use std::fmt;
 use std::hash::{Hash, Hasher};
@@ -13,18 +13,18 @@ use types::{ValueType, ToValueType, Array};
 
 #[repr(C)]
 #[derive(Clone, Copy)]
-pub struct FixedString<A: Array<Item=c_char>> {
+pub struct FixedString<A: Array<Item=u8>> {
     buf: A,
-    eof: c_char,
+    eof: u8,
 }
 
-unsafe impl<A: Array<Item=c_char>> ToValueType for FixedString<A> {
+unsafe impl<A: Array<Item=u8>> ToValueType for FixedString<A> {
     fn value_type() -> ValueType {
         ValueType::FixedString(A::capacity())
     }
 }
 
-impl<A: Array<Item=c_char>> FixedString<A> {
+impl<A: Array<Item=u8>> FixedString<A> {
     pub fn new() -> FixedString<A> {
         unsafe {
             FixedString {
@@ -34,11 +34,11 @@ impl<A: Array<Item=c_char>> FixedString<A> {
         }
     }
 
-    pub fn as_ptr(&self) -> *const c_char {
+    pub fn as_ptr(&self) -> *const u8 {
         self.buf.as_ptr()
     }
 
-    pub fn as_mut_ptr(&mut self) -> *mut c_char {
+    pub fn as_mut_ptr(&mut self) -> *mut u8 {
         self.buf.as_mut_ptr()
     }
 
@@ -53,7 +53,7 @@ impl<A: Array<Item=c_char>> FixedString<A> {
 
     pub fn as_bytes(&self) -> &[u8] {
         unsafe {
-            CStr::from_ptr(self.buf.as_ptr()).to_bytes()
+            CStr::from_ptr(self.buf.as_ptr() as *const c_char).to_bytes()
         }
     }
 
@@ -79,44 +79,48 @@ impl<A: Array<Item=c_char>> FixedString<A> {
     }
 }
 
-impl<'a, A: Array<Item=c_char>> From<&'a str> for FixedString<A> {
+impl<'a, A: Array<Item=u8>> From<&'a str> for FixedString<A> {
     fn from(s: &'a str) -> FixedString<A> {
         FixedString::from_str(s)
     }
 }
 
-impl<A: Array<Item=c_char>> From<String> for FixedString<A> {
+impl<A: Array<Item=u8>> From<String> for FixedString<A> {
     fn from(s: String) -> FixedString<A> {
         FixedString::from_str(&s)
     }
 }
 
-impl<A: Array<Item=c_char>> Deref for FixedString<A> {
+impl<A: Array<Item=u8>> Into<Vec<u8>> for FixedString<A> {
+    fn into(self) -> Vec<u8> {
+        self.as_bytes().to_vec()
+    }
+}
+
+impl<A: Array<Item=u8>> Deref for FixedString<A> {
     type Target = str;
 
     #[inline]
     fn deref(&self) -> &str {
-        unsafe {
-            str::from_utf8_unchecked(self.as_bytes())
-        }
+        unsafe { str::from_utf8_unchecked(self.as_bytes()) }
     }
 }
 
-impl<A: Array<Item=c_char>> Borrow<str> for FixedString<A> {
+impl<A: Array<Item=u8>> Borrow<str> for FixedString<A> {
     #[inline]
     fn borrow(&self) -> &str {
         self
     }
 }
 
-impl<A: Array<Item=c_char>> AsRef<str> for FixedString<A> {
+impl<A: Array<Item=u8>> AsRef<str> for FixedString<A> {
     #[inline]
     fn as_ref(&self) -> &str {
         self
     }
 }
 
-impl<A: Array<Item=c_char>> Index<RangeFull> for FixedString<A> {
+impl<A: Array<Item=u8>> Index<RangeFull> for FixedString<A> {
     type Output = str;
 
     #[inline]
@@ -125,65 +129,67 @@ impl<A: Array<Item=c_char>> Index<RangeFull> for FixedString<A> {
     }
 }
 
-impl<A: Array<Item=c_char>> PartialEq for FixedString<A> {
-    fn eq(&self, rhs: &Self) -> bool {
-        **self == **rhs
+impl<A: Array<Item=u8>> PartialEq for FixedString<A> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        PartialEq::eq(&self[..], &other[..])
+    }
+    #[inline]
+    fn ne(&self, other: &Self) -> bool {
+        PartialEq::ne(&self[..], &other[..])
     }
 }
 
-impl<'a, A: Array<Item=c_char>> PartialEq<&'a str> for FixedString<A> {
-    fn eq(&self, rhs: & &'a str) -> bool {
-        &&**self == rhs
+impl<A: Array<Item=u8>> Eq for FixedString<A> { }
+
+macro_rules! impl_eq {
+    ($lhs:ty, $rhs: ty) => {
+        impl<'a, A: Array<Item=u8>> PartialEq<$rhs> for $lhs {
+            #[inline]
+            fn eq(&self, other: &$rhs) -> bool { PartialEq::eq(&self[..], &other[..]) }
+            #[inline]
+            fn ne(&self, other: &$rhs) -> bool { PartialEq::ne(&self[..], &other[..]) }
+        }
+
+        impl<'a, A: Array<Item=u8>> PartialEq<$lhs> for $rhs {
+            #[inline]
+            fn eq(&self, other: &$lhs) -> bool { PartialEq::eq(&self[..], &other[..]) }
+            #[inline]
+            fn ne(&self, other: &$lhs) -> bool { PartialEq::ne(&self[..], &other[..]) }
+        }
     }
 }
 
-impl<'a, A: Array<Item=c_char>> PartialEq<FixedString<A>> for &'a str {
-    fn eq(&self, rhs: &FixedString<A>) -> bool {
-        self == &&**rhs
-    }
-}
+impl_eq!(FixedString<A>, str);
+impl_eq!(FixedString<A>, &'a str);
+impl_eq!(FixedString<A>, String);
+impl_eq!(FixedString<A>, Cow<'a, str>);
 
-impl<A: Array<Item=c_char>> PartialEq<str> for FixedString<A> {
-    fn eq(&self, rhs: &str) -> bool {
-        &**self == rhs
-    }
-}
-
-impl<A: Array<Item=c_char>> PartialEq<FixedString<A>> for str {
-    fn eq(&self, rhs: &FixedString<A>) -> bool {
-        self == &**rhs
-    }
-}
-
-impl<A: Array<Item=c_char>> PartialEq<String> for FixedString<A> {
-    fn eq(&self, rhs: &String) -> bool {
-        &**self == rhs.as_str()
-    }
-}
-
-impl<A: Array<Item=c_char>> PartialEq<FixedString<A>> for String {
-    fn eq(&self, rhs: &FixedString<A>) -> bool {
-        self.as_str() == &**rhs
-    }
-}
-
-impl<A: Array<Item=c_char>> Eq for FixedString<A> { }
-
-impl<A: Array<Item=c_char>> fmt::Debug for FixedString<A> {
+impl<A: Array<Item=u8>> fmt::Debug for FixedString<A> {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         (**self).fmt(f)
     }
 }
 
-impl<A: Array<Item=c_char>> fmt::Display for FixedString<A> {
+impl<A: Array<Item=u8>> fmt::Display for FixedString<A> {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         (**self).fmt(f)
     }
 }
 
-impl<A: Array<Item=c_char>> Hash for FixedString<A> {
-    fn hash<H: Hasher>(&self, h: &mut H) {
-        (**self).hash(h)
+impl<A: Array<Item=u8>> Hash for FixedString<A> {
+    #[inline]
+    fn hash<H: Hasher>(&self, hasher: &mut H) {
+        (**self).hash(hasher)
+    }
+}
+
+impl<A: Array<Item=u8>> Default for FixedString<A> {
+    #[inline]
+    fn default() -> FixedString<A> {
+        FixedString::new()
     }
 }
 
@@ -193,15 +199,13 @@ pub mod tests {
     use std::hash::{Hash, Hasher, SipHasher};
     use std::mem;
 
-    use libc::c_char;
-
     use super::FixedString;
     use types::ToValueType;
     use types::ValueType as VT;
 
     #[test]
     pub fn test_fixed_string() {
-        type S = FixedString<[c_char; 5]>;
+        type S = FixedString<[u8; 5]>;
         assert_eq!(S::value_type(), VT::FixedString(5));
         assert_eq!(S::value_type().size(), 6);
         assert_eq!(mem::size_of::<S>(), 6);
@@ -212,9 +216,12 @@ pub mod tests {
         assert!(S::from_str("").is_empty());
         assert!(S::from_str("\0").is_empty());
         assert!(S::new().is_empty());
+        assert!(S::default().is_empty());
 
         assert_eq!(S::from("abc").as_str(), "abc");
         assert_eq!(S::from("abc".to_owned()).as_str(), "abc");
+        let v: Vec<u8> = S::from("abc").into();
+        assert_eq!(v, "abc".as_bytes().to_vec());
 
         let s = FixedString::<[_; 5]>::from_str("abc");
         assert_eq!(s.len(), 3);
