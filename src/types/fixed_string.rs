@@ -26,12 +26,7 @@ unsafe impl<A: Array<Item=u8>> ToValueType for FixedString<A> {
 
 impl<A: Array<Item=u8>> FixedString<A> {
     pub fn new() -> FixedString<A> {
-        unsafe {
-            FixedString {
-                buf: mem::zeroed(),
-                eof: 0,
-            }
-        }
+        unsafe { FixedString { buf: mem::zeroed(), eof: 0 } }
     }
 
     #[inline]
@@ -50,9 +45,7 @@ impl<A: Array<Item=u8>> FixedString<A> {
     }
 
     pub fn as_bytes(&self) -> &[u8] {
-        unsafe {
-            CStr::from_ptr(self.buf.as_ptr() as *const c_char).to_bytes()
-        }
+        unsafe { CStr::from_ptr(self.buf.as_ptr() as *const c_char).to_bytes() }
     }
 
     #[inline]
@@ -71,11 +64,11 @@ impl<A: Array<Item=u8>> FixedString<A> {
         } else {
             Self::capacity()
         };
-        let mut fs = Self::new();
         unsafe {
-            ptr::copy_nonoverlapping(s.as_ptr(), fs.buf.as_mut_ptr() as *mut u8, len);
+            let mut buf: A =  mem::zeroed();
+            ptr::copy_nonoverlapping(s.as_ptr(), buf.as_mut_ptr() as *mut u8, len);
+            FixedString { buf: buf, eof: 0 }
         }
-        fs
     }
 }
 
