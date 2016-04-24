@@ -23,11 +23,13 @@ script:
 - |
   cd $TRAVIS_BUILD_DIR &&
   case $TRAVIS_RUST_VERSION in
-    nightly)  cargo build -v --features lint ;;
-    *)        cargo build -v ;;
+    nightly)  cargo build -v --features "varlen lint" &&
+              cargo test -v --features varlen --no-run &&
+              cargo test -v --features varlen ;;
+    *)        cargo build -v &&
+              cargo test -v --no-run &&
+              cargo test -v ;;
   esac &&
-  cargo test -v --no-run &&
-  cargo test -v &&
   cargo doc --no-deps
 addons:
   apt:
