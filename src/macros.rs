@@ -41,7 +41,6 @@ macro_rules! assert_err {
             }
             Err(ref value) => {
                 use regex::Regex;
-                use std::error::Error as BaseError;
                 let re = Regex::new($err).unwrap();
                 let desc = value.description().to_string();
                 if !re.is_match(desc.as_ref()) {

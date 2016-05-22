@@ -16,7 +16,6 @@ use ffi::h5z::{
 use globals::H5P_DATASET_CREATE;
 
 use libc::{c_int, c_uint, size_t, c_char};
-use num::Bounded;
 
 /// Returns `true` if gzip filter is available.
 pub fn gzip_available() -> bool {
@@ -292,7 +291,6 @@ pub mod tests {
     use super::{Filters, gzip_available, szip_available};
     use datatype::ToDatatype;
     use error::{Result, silence_errors};
-    use num::Bounded;
 
     fn make_filters<T: ToDatatype>(filters: &Filters) -> Result<Filters> {
         let datatype = T::to_datatype().unwrap();

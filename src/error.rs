@@ -9,7 +9,6 @@ use util::{get_h5_str, string_from_cstr};
 use std::ptr;
 use std::fmt;
 use std::ops::Index;
-use std::error::Error as BaseError;
 
 use libc::{c_uint, c_void};
 use num::{Integer, Zero, Bounded};

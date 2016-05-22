@@ -104,8 +104,7 @@ macro_rules! impl_string_traits {
         impl<'a $(,$t: $b<$a=$v>)*> ::std::hash::Hash for $ty {
             #[inline]
             fn hash<H: ::std::hash::Hasher>(&self, hasher: &mut H) {
-                use std::hash::Hash;
-                (**self).hash(hasher)
+                ::std::hash::Hash::hash(&**self, hasher)
             }
         }
 

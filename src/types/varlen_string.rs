@@ -4,7 +4,7 @@ use std::str;
 
 use libc::{c_char, c_void};
 
-use types::{ValueType, ToValueType, Array};
+use types::{ValueType, ToValueType};
 
 #[repr(C)]
 #[unsafe_no_drop_flag]

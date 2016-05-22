@@ -4,7 +4,7 @@ use ffi::h5f::H5Fget_name;
 
 use error::Result;
 use file::File;
-use handle::{ID, FromID};
+use handle::FromID;
 use object::Object;
 use util::{get_h5_str, to_cstring};
 
