@@ -142,4 +142,19 @@ pub mod tests {
         assert!(S::default().is_empty());
         assert_eq!(S::default().len(), 0);
     }
+
+    #[test]
+    pub fn test_array_traits() {
+        use std::slice;
+
+        let s = &[1, 2, 3];
+        let a = VarLenArray::from_slice(s);
+        assert_eq!(a.as_slice(), s);
+        assert_eq!(a.len(), 3);
+        assert!(!a.is_empty());
+        assert_eq!(unsafe { slice::from_raw_parts(a.as_ptr(), a.len()) }, s);
+        assert_eq!(&*a, s);
+        let c = a.clone();
+        assert_eq!(&*a, &*c);
+    }
 }
