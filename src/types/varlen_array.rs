@@ -4,38 +4,48 @@ use std::ops::Deref;
 use std::ptr;
 use std::slice;
 
-use libc::size_t;
+use libc::{size_t, c_void};
 
-use ffi::h5t::hvl_t;
 use types::{ValueType, ToValueType, Array};
 
 #[repr(C)]
 #[unsafe_no_drop_flag]
-pub struct VarLenArray<T: Clone> {
-    vl: hvl_t,
+pub struct VarLenArray<T: Copy> {
+    len: size_t,
+    ptr: *const T,
     tag: PhantomData<T>,
 }
 
-impl<T: Clone> VarLenArray<T> {
-    pub fn new(arr: &[T]) -> VarLenArray<T> {
-        unsafe {
-            let p = ::libc::malloc(arr.len() * mem::size_of::<T>());
-            ptr::copy_nonoverlapping(arr.as_ptr(), p as *mut T, arr.len());
-            VarLenArray {
-                vl: hvl_t { len: arr.len() as size_t, p: p },
-                tag: PhantomData,
-            }
-        }
+impl<T: Copy> VarLenArray<T> {
+    pub unsafe fn from_parts(p: *const T, len: usize) -> VarLenArray<T> {
+        let (len, ptr) = if !p.is_null() && len != 0 {
+            let dst = ::libc::malloc(len * mem::size_of::<T>());
+            ptr::copy_nonoverlapping(p, dst as *mut T, len);
+            (len, dst)
+        } else {
+            (0, ptr::null_mut())
+        };
+        VarLenArray { len: len, ptr: ptr as *const T, tag: PhantomData }
+    }
+
+    #[inline]
+    pub fn from_slice(arr: &[T]) -> VarLenArray<T> {
+        unsafe { VarLenArray::from_parts(arr.as_ptr(), arr.len()) }
+    }
+
+    #[inline]
+    pub fn as_ptr(&self) -> *const T {
+        self.ptr
     }
 
     #[inline]
     pub fn len(&self) -> usize {
-        self.vl.len as usize
+        self.len as usize
     }
 
     #[inline]
     pub fn is_empty(&self) -> bool {
-        self.vl.len == 0
+        self.len == 0
     }
 
     #[inline]
@@ -44,55 +54,67 @@ impl<T: Clone> VarLenArray<T> {
     }
 }
 
-impl<T: Clone> Drop for VarLenArray<T> {
+// FIXME: temporary hack to prevent double free
+#[cfg(target_pointer_width = "32")] const DROP_FILL: usize = 0x1d1d1d1d;
+#[cfg(target_pointer_width = "64")] const DROP_FILL: usize = 0x1d1d1d1d1d1d1d1d;
+
+impl<T: Copy> Drop for VarLenArray<T> {
     fn drop(&mut self) {
-        if self.vl.len != 0 {
-            self.vl.len = 0;
+        if !self.ptr.is_null() && self.ptr as usize != DROP_FILL {
+            unsafe {
+                ::libc::free(self.ptr as *mut c_void);
+            }
+            self.ptr = ptr::null();
         }
-        if !self.vl.p.is_null() {
-            unsafe { ::libc::free(self.vl.p) };
-            self.vl.p = ptr::null_mut();
+        if self.len != 0 {
+            self.len = 0;
         }
     }
 }
 
-unsafe impl<T: Clone + ToValueType> ToValueType for VarLenArray<T> {
+impl<T: Copy> Clone for VarLenArray<T> {
+    fn clone(&self) -> VarLenArray<T> {
+        VarLenArray::from_slice(&*self)
+    }
+}
+
+unsafe impl<T: Copy + ToValueType> ToValueType for VarLenArray<T> {
     fn value_type() -> ValueType {
         ValueType::VarLenArray(Box::new(<T as ToValueType>::value_type()))
     }
 }
 
-impl<T: Clone> Deref for VarLenArray<T> {
+impl<T: Copy> Deref for VarLenArray<T> {
     type Target = [T];
 
     #[inline]
     fn deref(&self) -> &[T] {
-        if self.vl.len == 0 || self.vl.p.is_null() {
+        if self.len == 0 || self.ptr.is_null() {
             &[]
         } else {
-            unsafe { slice::from_raw_parts(self.vl.p as *const T,
-                                           self.vl.len as usize) }
+            unsafe { slice::from_raw_parts(self.as_ptr(), self.len()) }
         }
     }
 }
 
-impl<'a, T: Clone> From<&'a [T]> for VarLenArray<T> {
+impl<'a, T: Copy> From<&'a [T]> for VarLenArray<T> {
+    #[inline]
     fn from(arr: &[T]) -> VarLenArray<T> {
-        VarLenArray::new(arr)
+        VarLenArray::from_slice(arr)
     }
 }
 
-impl<T: Clone, A: Array<Item=T>> From<A> for VarLenArray<T> {
+impl<T: Copy, A: Array<Item=T>> From<A> for VarLenArray<T> {
+    #[inline]
     fn from(arr: A) -> VarLenArray<T> {
-        VarLenArray::new(unsafe {
-            slice::from_raw_parts(arr.as_ptr(), A::capacity())
-        })
+        unsafe { VarLenArray::from_parts(arr.as_ptr(), A::capacity()) }
     }
 }
 
-impl<T: Clone> Default for VarLenArray<T> {
+impl<T: Copy> Default for VarLenArray<T> {
+    #[inline]
     fn default() -> VarLenArray<T> {
-        VarLenArray::new(&[])
+        unsafe { VarLenArray::from_parts(ptr::null(), 0) }
     }
 }
 
@@ -115,9 +137,8 @@ pub mod tests {
     }
 
     #[test]
-    pub fn test_default_empty() {
+    pub fn test_empty_default() {
         assert_eq!(&*S::default(), &[]);
-        assert_eq!(&*S::default(), &*S::new(&[]));
         assert!(S::default().is_empty());
         assert_eq!(S::default().len(), 0);
     }
