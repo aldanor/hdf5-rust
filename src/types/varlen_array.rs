@@ -1,3 +1,4 @@
+use std::fmt;
 use std::marker::PhantomData;
 use std::mem;
 use std::ops::Deref;
@@ -125,6 +126,14 @@ impl<T: Copy> Default for VarLenArray<T> {
     }
 }
 
+
+impl<T: Copy + fmt::Debug> fmt::Debug for VarLenArray<T> {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.as_slice().fmt(f)
+    }
+}
+
 #[cfg(test)]
 pub mod tests {
     use super::VarLenArray;
@@ -168,5 +177,6 @@ pub mod tests {
         assert_eq!(&*a, &*VarLenArray::from(*s));
         let f: [u16; 3] = [1, 2, 3];
         assert_eq!(&*a, &*VarLenArray::from(f));
+        assert_eq!(format!("{:?}", a), "[1, 2, 3]");
     }
 }
