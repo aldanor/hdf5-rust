@@ -204,5 +204,7 @@ pub mod tests {
         assert_eq!(&a, s);
         assert_eq!(&a, a.as_slice());
         assert_eq!(a, a);
+        let v: Vec<_> = a.iter().cloned().collect();
+        assert_eq!(v, vec![1, 2, 3]);
     }
 }
