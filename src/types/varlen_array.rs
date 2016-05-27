@@ -65,9 +65,9 @@ impl<T: Copy> Drop for VarLenArray<T> {
                 ::libc::free(self.ptr as *mut c_void);
             }
             self.ptr = ptr::null();
-        }
-        if self.len != 0 {
-            self.len = 0;
+            if self.len != 0 {
+                self.len = 0;
+            }
         }
     }
 }
@@ -101,6 +101,13 @@ impl<'a, T: Copy> From<&'a [T]> for VarLenArray<T> {
     #[inline]
     fn from(arr: &[T]) -> VarLenArray<T> {
         VarLenArray::from_slice(arr)
+    }
+}
+
+impl<T: Copy> Into<Vec<T>> for VarLenArray<T> {
+    #[inline]
+    fn into(self) -> Vec<T> {
+        self.iter().cloned().collect()
     }
 }
 
@@ -147,7 +154,7 @@ pub mod tests {
     pub fn test_array_traits() {
         use std::slice;
 
-        let s = &[1, 2, 3];
+        let s = &[1u16, 2, 3];
         let a = VarLenArray::from_slice(s);
         assert_eq!(a.as_slice(), s);
         assert_eq!(a.len(), 3);
@@ -156,5 +163,10 @@ pub mod tests {
         assert_eq!(&*a, s);
         let c = a.clone();
         assert_eq!(&*a, &*c);
+        let v: Vec<u16> = c.into();
+        assert_eq!(v, vec![1, 2, 3]);
+        assert_eq!(&*a, &*VarLenArray::from(*s));
+        let f: [u16; 3] = [1, 2, 3];
+        assert_eq!(&*a, &*VarLenArray::from(f));
     }
 }
