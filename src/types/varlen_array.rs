@@ -126,6 +126,28 @@ impl<T: Copy> Default for VarLenArray<T> {
     }
 }
 
+impl<T: Copy + PartialEq> PartialEq for VarLenArray<T> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.as_slice() == other.as_slice()
+    }
+}
+
+impl<T: Copy + Eq> Eq for VarLenArray<T> { }
+
+impl<T: Copy + PartialEq> PartialEq<[T]> for VarLenArray<T> {
+    #[inline]
+    fn eq(&self, other: &[T]) -> bool {
+        self.as_slice() == other
+    }
+}
+
+impl<T: Copy + PartialEq, A: Array<Item=T>> PartialEq<A> for VarLenArray<T> {
+    #[inline]
+    fn eq(&self, other: &A) -> bool {
+        self.as_slice() == unsafe { slice::from_raw_parts(other.as_ptr(), A::capacity()) }
+    }
+}
 
 impl<T: Copy + fmt::Debug> fmt::Debug for VarLenArray<T> {
     #[inline]
@@ -178,5 +200,9 @@ pub mod tests {
         let f: [u16; 3] = [1, 2, 3];
         assert_eq!(&*a, &*VarLenArray::from(f));
         assert_eq!(format!("{:?}", a), "[1, 2, 3]");
+        assert_eq!(a, [1, 2, 3]);
+        assert_eq!(&a, s);
+        assert_eq!(&a, a.as_slice());
+        assert_eq!(a, a);
     }
 }
