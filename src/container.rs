@@ -98,7 +98,7 @@ pub trait Container: Location {
 
     /// Instantiates a new dataset builder.
     fn new_dataset<T: ToDatatype>(&self) -> DatasetBuilder<T> {
-        DatasetBuilder::<T>::new::<Self>(&self)
+        DatasetBuilder::<T>::new::<Self>(self)
     }
 
     /// Opens an existing dataset in the file or group.
