@@ -32,26 +32,46 @@ macro_rules! ensure {
     );
 }
 
-/// Panics if `$expr` is not an Err(err) with err.description() matching regexp `$err`.
+/// Panics if `$expr` is not an Err(err) with err.description() containing `$err`.
 macro_rules! assert_err {
-    ($expr:expr, $err:expr) => {
+    ($expr:expr, $err:expr) => (
         match $expr {
             Ok(_) => {
                 panic!("assertion failed: not an error in `{}`", stringify!($expr));
+            },
+            Err(ref value) => {
+                let desc = value.description().to_string();
+                if !desc.contains($err) {
+                    panic!(
+                        "assertion failed: error message `{}` doesn't contain `{}` in `{}`",
+                        desc, $err, stringify!($expr)
+                    );
+                }
             }
+        }
+    );
+}
+
+/// Panics if `$expr` is not an Err(err) with err.description() matching regexp `$err`.
+macro_rules! assert_err_re {
+    ($expr:expr, $err:expr) => (
+        match $expr {
+            Ok(_) => {
+                panic!("assertion failed: not an error in `{}`", stringify!($expr));
+            },
             Err(ref value) => {
                 use regex::Regex;
                 let re = Regex::new($err).unwrap();
                 let desc = value.description().to_string();
                 if !re.is_match(desc.as_ref()) {
                     panic!(
-                        "assertion failed: error message \"{}\" doesn't match \"{}\" in `{}`",
+                        "assertion failed: error message `{}` doesn't match `{}` in `{}`",
                         desc, re, stringify!($expr)
                     );
                 }
             }
         }
-    }
+    );
 }
 
 /// Run a safe expression in a closure synchronized by a global reentrant mutex.

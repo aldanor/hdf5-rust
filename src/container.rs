@@ -121,7 +121,7 @@ mod tests {
     pub fn test_group() {
         silence_errors();
         with_tmp_file(|file| {
-            assert_err!(file.group("a"), "unable to open group: object.+doesn't exist");
+            assert_err_re!(file.group("a"), "unable to open group: object.+doesn't exist");
             file.create_group("a").unwrap();
             let a = file.group("a").unwrap();
             assert!(a.name() == "/a");
@@ -164,7 +164,7 @@ mod tests {
             file.group("/foo/hard/inner").unwrap();
             assert_err!(file.link_hard("foo/test", "/foo/test/inner"),
                 "unable to create link: name already exists");
-            assert_err!(file.link_hard("foo/bar", "/foo/baz"),
+            assert_err_re!(file.link_hard("foo/bar", "/foo/baz"),
                 "unable to create link: object.+doesn't exist");
             file.relink("/foo/hard", "/foo/hard2").unwrap();
             file.group("/foo/hard2/inner").unwrap();
@@ -213,7 +213,7 @@ mod tests {
                 "unable to move link: name doesn't exist");
             file.relink("test", "/foo/test").unwrap();
             file.group("/foo/test").unwrap();
-            assert_err!(file.group("test"),
+            assert_err_re!(file.group("test"),
                 "unable to open group: object.+doesn't exist");
         })
     }

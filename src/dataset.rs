@@ -521,9 +521,9 @@ pub mod tests {
             assert_err!(b.clone().chunk((1, 2)).create_anon(1),
                 "Invalid chunk ndim: expected 1, got 2");
             assert_err!(b.clone().chunk((0, 2)).create_anon((1, 2)),
-                r"Invalid chunk: \[0, 2\] \(all dimensions must be positive\)");
+                "Invalid chunk: [0, 2] (all dimensions must be positive)");
             assert_err!(b.clone().chunk((1, 3)).create_anon((1, 2)),
-                r"Invalid chunk: \[1, 3\] \(must not exceed data shape in any dimension\)");
+                "Invalid chunk: [1, 3] (must not exceed data shape in any dimension)");
         })
     }
 
