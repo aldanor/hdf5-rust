@@ -54,6 +54,8 @@ mod space;
 mod sync;
 mod util;
 
+mod new_datatype;
+
 #[allow(dead_code)]
 mod globals;
 

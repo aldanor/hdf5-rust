@@ -9,4 +9,3 @@ Cargo.lock
 *.swp
 .vagrant/
 /tmp/
-*.rs
