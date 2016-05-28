@@ -73,24 +73,24 @@ fn value_type_to_datatype(value_type: &ValueType) -> Result<Datatype> {
     use types::ValueType::*;
 
     let datatype_id: Result<_> = h5lock!({
-        match value_type {
-            &Integer(size) => Ok(match size {
+        match *value_type {
+            Integer(size) => Ok(match size {
                 IntSize::U1 => be_le!(H5T_STD_I8BE, H5T_STD_I8LE),
                 IntSize::U2 => be_le!(H5T_STD_I16BE, H5T_STD_I16LE),
                 IntSize::U4 => be_le!(H5T_STD_I32BE, H5T_STD_I32LE),
                 IntSize::U8 => be_le!(H5T_STD_I64BE, H5T_STD_I64LE),
             }),
-            &Unsigned(size) => Ok(match size {
+            Unsigned(size) => Ok(match size {
                 IntSize::U1 => be_le!(H5T_STD_U8BE, H5T_STD_U8LE),
                 IntSize::U2 => be_le!(H5T_STD_U16BE, H5T_STD_U16LE),
                 IntSize::U4 => be_le!(H5T_STD_U32BE, H5T_STD_U32LE),
                 IntSize::U8 => be_le!(H5T_STD_U64BE, H5T_STD_U64LE),
             }),
-            &Float(size) => Ok(match size {
+            Float(size) => Ok(match size {
                 FloatSize::U4 => be_le!(H5T_IEEE_F32BE, H5T_IEEE_F32LE),
                 FloatSize::U8 => be_le!(H5T_IEEE_I16BE, H5T_IEEE_F64LE),
             }),
-            &Boolean => {
+            Boolean => {
                 let bool_id = h5try_s!(H5Tenum_create(*H5T_NATIVE_INT8));
                 h5try_s!(H5Tenum_insert(bool_id, b"FALSE\0".as_ptr() as *const c_char,
                                         &0i8 as *const i8 as *const c_void));
@@ -98,19 +98,19 @@ fn value_type_to_datatype(value_type: &ValueType) -> Result<Datatype> {
                                         &1i8 as *const i8 as *const c_void));
                 Ok(bool_id)
             },
-            &Enum(ref enum_type) => {
+            Enum(ref enum_type) => {
                 let base = try!(value_type_to_datatype(&enum_type.base_type()));
                 let enum_id = h5try_s!(H5Tenum_create(base.id()));
-                for member in enum_type.members.iter() {
+                for member in &enum_type.members {
                     let name = try!(to_cstring(member.name.as_ref()));
                     h5try_s!(H5Tenum_insert(enum_id, name.as_ptr(),
                                             &member.value as *const u64 as *const c_void));
                 }
                 Ok(enum_id)
             },
-            &Compound(ref compound_type) => {
-                let compound_id = h5try_s!(H5Tcreate(H5T_COMPOUND, 1));
-                for field in compound_type.fields.iter() {
+            Compound(ref compound_type) => {
+                let compound_id = h5try_s!(H5Tcreate(H5T_class_t::H5T_COMPOUND, 1));
+                for field in &compound_type.fields {
                     let name = try!(to_cstring(field.name.as_ref()));
                     let field_dt = try!(value_type_to_datatype(&field.ty));
                     h5try_s!(H5Tset_size(compound_id, field.offset + field.ty.size()));
@@ -119,23 +119,23 @@ fn value_type_to_datatype(value_type: &ValueType) -> Result<Datatype> {
                 h5try_s!(H5Tset_size(compound_id, compound_type.size));
                 Ok(compound_id)
             },
-            &FixedArray(ref ty, len) => {
+            FixedArray(ref ty, len) => {
                 let elem_dt = try!(value_type_to_datatype(&ty));
                 let dims = len as hsize_t;
                 Ok(h5try_s!(H5Tarray_create2(elem_dt.id(), 1, &dims as *const hsize_t)))
             },
-            &FixedString(size) => {
+            FixedString(size) => {
                 let string_id = h5try_s!(H5Tcopy(*H5T_C_S1));
                 h5try_s!(H5Tset_cset(string_id, H5T_cset_t::H5T_CSET_UTF8));
                 h5try_s!(H5Tset_size(string_id, size));
                 h5try_s!(H5Tset_strpad(string_id, H5T_str_t::H5T_STR_NULLPAD));
                 Ok(string_id)
             },
-            &VarLenArray(ref ty) => {
+            VarLenArray(ref ty) => {
                 let elem_dt = try!(value_type_to_datatype(&ty));
                 Ok(h5try_s!(H5Tvlen_create(elem_dt.id())))
             },
-            &VarLenString => {
+            VarLenString => {
                 let string_id = h5try_s!(H5Tcopy(*H5T_C_S1));
                 h5try_s!(H5Tset_cset(string_id, H5T_cset_t::H5T_CSET_UTF8));
                 h5try_s!(H5Tset_size(string_id, H5T_VARIABLE));
