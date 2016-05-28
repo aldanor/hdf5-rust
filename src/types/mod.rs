@@ -8,7 +8,10 @@ mod value_type;
 mod h5def;
 
 pub use self::fixed_string::FixedString;
-pub use self::value_type::{ValueType, ToValueType, Array};
+pub use self::value_type::{
+    ValueType, ToValueType, Array, IntSize, FloatSize,
+    CompoundField, CompoundType, EnumMember, EnumType
+};
 
 #[cfg(feature = "varlen")]
 mod varlen_string;

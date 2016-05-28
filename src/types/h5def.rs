@@ -43,7 +43,7 @@ macro_rules! h5def {
     (@impl_enum $s:ident($t:ident) { $($i:ident = $v:expr),+ }) => (
         unsafe impl $crate::types::ToValueType for $s {
             fn value_type() -> $crate::types::ValueType {
-                use $crate::types::value_type::{ValueType, EnumType, EnumMember, IntSize};
+                use $crate::types::{ValueType, EnumType, EnumMember, IntSize};
 
                 ValueType::Enum(
                     EnumType {
@@ -66,7 +66,7 @@ macro_rules! h5def {
     (@impl_struct $s:ident { $($i:ident: $t:ty),+ }) => (
         unsafe impl $crate::types::ToValueType for $s {
             fn value_type() -> $crate::types::ValueType {
-                use $crate::types::value_type::{ValueType, CompoundType, CompoundField, ToValueType};
+                use $crate::types::{ValueType, CompoundType, CompoundField, ToValueType};
 
                 let base = 0usize as *const $s;
                 ValueType::Compound(
