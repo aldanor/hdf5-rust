@@ -46,10 +46,10 @@ impl ID for Datatype {
 #[doc(hidden)]
 impl FromID for Datatype {
     fn from_id(id: hid_t) -> Result<Datatype> {
-        match get_id_type(id) {
+        h5lock_s!(match get_id_type(id) {
             H5I_DATATYPE => Ok(Datatype { handle: try!(Handle::new(id)) }),
             _ => Err(From::from(format!("Invalid datatype id: {}", id))),
-        }
+        })
     }
 }
 
