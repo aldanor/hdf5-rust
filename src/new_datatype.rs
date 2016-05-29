@@ -62,106 +62,110 @@ impl FromID for Datatype {
 
 impl Object for Datatype { }
 
+fn datatype_to_value_type(datatype: &Datatype) -> Result<ValueType> {
+    use ffi::h5t::H5T_class_t::*;
+    use ffi::h5t::H5T_sign_t::*;
+    use types::ValueType::*;
+
+    h5lock!({
+        let id = datatype.id();
+        let size = h5try_s!(H5Tget_size(id)) as usize;
+        match H5Tget_class(id) {
+            H5T_INTEGER => {
+                let signed = match H5Tget_sign(id) {
+                    H5T_SGN_NONE => false,
+                    H5T_SGN_2 => true,
+                    _ => return Err("Invalid sign of integer datatype".into())
+                };
+                let size = try!(IntSize::from_int(size)
+                                .ok_or("Invalid size of integer datatype"));
+                Ok(if signed {
+                    ValueType::Integer(size)
+                } else {
+                    ValueType::Unsigned(size)
+                })
+            },
+            H5T_FLOAT => {
+                let size = try!(FloatSize::from_int(size)
+                                .ok_or("Invalid size of float datatype"));
+                Ok(ValueType::Float(size))
+            },
+            H5T_ENUM => {
+                let mut members: Vec<EnumMember> = Vec::new();
+                for idx in 0 .. h5try_s!(H5Tget_nmembers(id)) as u32 {
+                    let mut value: u64 = 0;
+                    h5try_s!(H5Tget_member_value(
+                        id, idx, &mut value as *mut _ as *mut c_void
+                    ));
+                    let name = H5Tget_member_name(id, idx);
+                    members.push(EnumMember { name: string_from_cstr(name), value: value });
+                    ::libc::free(name as *mut c_void);
+                }
+                let base_dt = try!(Datatype::from_id(H5Tget_super(id)));
+                let (size, signed) = try!(match try!(base_dt.to_value_type()) {
+                    Integer(size) => Ok((size, true)),
+                    Unsigned(size) => Ok((size, false)),
+                    _ => Err("Invalid base type for enum datatype"),
+                });
+                let bool_members = [
+                    EnumMember { name: "FALSE".to_owned(), value: 0 },
+                    EnumMember { name: "TRUE".to_owned(), value: 1 },
+                ];
+                if size == IntSize::U1 && members == bool_members {
+                    Ok(ValueType::Boolean)
+                } else {
+                    Ok(ValueType::Enum(
+                        EnumType { size: size, signed: signed, members : members }
+                    ))
+                }
+            },
+            H5T_COMPOUND => {
+                let mut fields: Vec<CompoundField> = Vec::new();
+                for idx in 0 .. h5try_s!(H5Tget_nmembers(id)) as u32 {
+                    let name = H5Tget_member_name(id, idx);
+                    let offset = h5try_s!(H5Tget_member_offset(id, idx)) as usize;
+                    let ty = try!(Datatype::from_id(h5try_s!(H5Tget_member_type(id, idx))));
+                    fields.push(CompoundField {
+                        name: string_from_cstr(name),
+                        ty: try!(ty.to_value_type()),
+                        offset: offset
+                    });
+                    ::libc::free(name as *mut c_void);
+                }
+                Ok(ValueType::Compound(CompoundType { fields: fields, size: size }))
+            },
+            H5T_ARRAY => {
+                let base_dt = try!(Datatype::from_id(H5Tget_super(id)));
+                let ndims = h5try_s!(H5Tget_array_ndims(id));
+                if ndims == 1 {
+                    let mut len: hsize_t = 0;
+                    h5try_s!(H5Tget_array_dims2(id, &mut len as *mut hsize_t));
+                    Ok(ValueType::FixedArray(
+                        Box::new(try!(base_dt.to_value_type())), len as usize
+                    ))
+                } else {
+                    Err("Multi-dimensional array datatypes are not supported".into())
+                }
+            },
+            H5T_STRING => {
+                if h5try_s!(H5Tis_variable_str(id)) == 1 {
+                    Ok(ValueType::VarLenString)
+                } else {
+                    Ok(ValueType::FixedString(size))
+                }
+            },
+            H5T_VLEN => {
+                let base_dt = try!(Datatype::from_id(H5Tget_super(id)));
+                Ok(ValueType::VarLenArray(Box::new(try!(base_dt.to_value_type()))))
+            },
+            _ => Err("Unsupported datatype class".into())
+        }
+    })
+}
+
 impl Datatype {
     pub fn to_value_type(&self) -> Result<ValueType> {
-        use ffi::h5t::H5T_class_t::*;
-        use ffi::h5t::H5T_sign_t::*;
-        use types::ValueType::*;
-
-        h5lock!({
-            let id = self.id();
-            let size = h5try_s!(H5Tget_size(id)) as usize;
-            match H5Tget_class(id) {
-                H5T_INTEGER => {
-                    let signed = match H5Tget_sign(id) {
-                        H5T_SGN_NONE => false,
-                        H5T_SGN_2 => true,
-                        _ => return Err("Invalid sign of integer datatype".into())
-                    };
-                    let size = try!(IntSize::from_int(size)
-                                    .ok_or("Invalid size of integer datatype"));
-                    Ok(if signed {
-                        ValueType::Integer(size)
-                    } else {
-                        ValueType::Unsigned(size)
-                    })
-                },
-                H5T_FLOAT => {
-                    let size = try!(FloatSize::from_int(size)
-                                    .ok_or("Invalid size of float datatype"));
-                    Ok(ValueType::Float(size))
-                },
-                H5T_ENUM => {
-                    let mut members: Vec<EnumMember> = Vec::new();
-                    for idx in 0 .. h5try_s!(H5Tget_nmembers(id)) as u32 {
-                        let mut value: u64 = 0;
-                        h5try_s!(H5Tget_member_value(
-                            id, idx, &mut value as *mut _ as *mut c_void
-                        ));
-                        let name = H5Tget_member_name(id, idx);
-                        members.push(EnumMember { name: string_from_cstr(name), value: value });
-                        ::libc::free(name as *mut c_void);
-                    }
-                    let base_dt = try!(Datatype::from_id(H5Tget_super(id)));
-                    let (size, signed) = try!(match try!(base_dt.to_value_type()) {
-                        Integer(size) => Ok((size, true)),
-                        Unsigned(size) => Ok((size, false)),
-                        _ => Err("Invalid base type for enum datatype"),
-                    });
-                    let bool_members = [
-                        EnumMember { name: "FALSE".to_owned(), value: 0 },
-                        EnumMember { name: "TRUE".to_owned(), value: 1 },
-                    ];
-                    if size == IntSize::U1 && members == bool_members {
-                        Ok(ValueType::Boolean)
-                    } else {
-                        Ok(ValueType::Enum(
-                            EnumType { size: size, signed: signed, members : members }
-                        ))
-                    }
-                },
-                H5T_COMPOUND => {
-                    let mut fields: Vec<CompoundField> = Vec::new();
-                    for idx in 0 .. h5try_s!(H5Tget_nmembers(id)) as u32 {
-                        let name = H5Tget_member_name(id, idx);
-                        let offset = h5try_s!(H5Tget_member_offset(id, idx)) as usize;
-                        let ty = try!(Datatype::from_id(h5try_s!(H5Tget_member_type(id, idx))));
-                        fields.push(CompoundField {
-                            name: string_from_cstr(name),
-                            ty: try!(ty.to_value_type()),
-                            offset: offset
-                        });
-                        ::libc::free(name as *mut c_void);
-                    }
-                    Ok(ValueType::Compound(CompoundType { fields: fields, size: size }))
-                },
-                H5T_ARRAY => {
-                    let base_dt = try!(Datatype::from_id(H5Tget_super(id)));
-                    let ndims = h5try_s!(H5Tget_array_ndims(id));
-                    if ndims == 1 {
-                        let mut len: hsize_t = 0;
-                        h5try_s!(H5Tget_array_dims2(id, &mut len as *mut hsize_t));
-                        Ok(ValueType::FixedArray(
-                            Box::new(try!(base_dt.to_value_type())), len as usize
-                        ))
-                    } else {
-                        Err("Multi-dimensional array datatypes are not supported".into())
-                    }
-                },
-                H5T_STRING => {
-                    if h5try_s!(H5Tis_variable_str(id)) == 1 {
-                        Ok(ValueType::VarLenString)
-                    } else {
-                        Ok(ValueType::FixedString(size))
-                    }
-                },
-                H5T_VLEN => {
-                    let base_dt = try!(Datatype::from_id(H5Tget_super(id)));
-                    Ok(ValueType::VarLenArray(Box::new(try!(base_dt.to_value_type()))))
-                },
-                _ => Err("Unsupported datatype class".into())
-            }
-        })
+        datatype_to_value_type(self)
     }
 }
 
