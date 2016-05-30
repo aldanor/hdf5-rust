@@ -7,8 +7,36 @@ use ffi::h5t::hvl_t;
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum IntSize { U1 = 1, U2 = 2, U4 = 4, U8 = 8 }
 
+impl IntSize {
+    pub fn from_int(size: usize) -> Option<IntSize> {
+        if size == 1 {
+            Some(IntSize::U1)
+        } else if size == 2 {
+            Some(IntSize::U2)
+        } else if size == 4 {
+            Some(IntSize::U4)
+        } else if size == 8 {
+            Some(IntSize::U8)
+        } else {
+            None
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum FloatSize { U4 = 4, U8 = 8 }
+
+impl FloatSize {
+    pub fn from_int(size: usize) -> Option<FloatSize> {
+        if size == 4 {
+            Some(FloatSize::U4)
+        } else if size == 8 {
+            Some(FloatSize::U8)
+        } else {
+            None
+        }
+    }
+}
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct EnumMember {
