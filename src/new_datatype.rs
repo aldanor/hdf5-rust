@@ -270,43 +270,80 @@ impl<T: ToValueType> ToDatatype for T {
 #[cfg(test)]
 pub mod tests {
     use super::ToDatatype;
-    use types::FixedString;
+    use types::*;
+
+
+    macro_rules! check_roundtrip {
+        ($ty:ty, $vt:expr) => ({
+            let vt = <$ty as ToValueType>::value_type();
+            assert_eq!(vt, $vt);
+            let dt = <$ty as ToDatatype>::to_datatype().unwrap();
+            assert_eq!(vt, dt.to_value_type().unwrap());
+        })
+    }
 
     #[test]
-    pub fn test_smoke() {
-        h5def!(struct A { a: i64, b: u64 });
-        A::to_datatype().unwrap();
-
+    pub fn test_datatype_roundtrip() {
+        check_roundtrip!(i8, ValueType::Integer(IntSize::U1));
+        check_roundtrip!(i16, ValueType::Integer(IntSize::U2));
+        check_roundtrip!(i32, ValueType::Integer(IntSize::U4));
+        check_roundtrip!(i64, ValueType::Integer(IntSize::U8));
+        check_roundtrip!(u8, ValueType::Unsigned(IntSize::U1));
+        check_roundtrip!(u16, ValueType::Unsigned(IntSize::U2));
+        check_roundtrip!(u32, ValueType::Unsigned(IntSize::U4));
+        check_roundtrip!(u64, ValueType::Unsigned(IntSize::U8));
+        check_roundtrip!(f32, ValueType::Float(FloatSize::U4));
+        check_roundtrip!(f64, ValueType::Float(FloatSize::U8));
+        check_roundtrip!(bool, ValueType::Boolean);
+        check_roundtrip!([bool; 5], ValueType::FixedArray(Box::new(ValueType::Boolean), 5));
+        check_roundtrip!(FixedString<[_; 5]>, ValueType::FixedString(5));
         h5def!(#[repr(i64)] enum X { A = 1, B = -2 });
-        X::to_datatype().unwrap();
-
-        i8::to_datatype().unwrap();
-        i16::to_datatype().unwrap();
-        i32::to_datatype().unwrap();
-        i64::to_datatype().unwrap();
-
-        u8::to_datatype().unwrap();
-        u16::to_datatype().unwrap();
-        u32::to_datatype().unwrap();
-        u64::to_datatype().unwrap();
-
-        bool::to_datatype().unwrap();
-
-        f32::to_datatype().unwrap();
-        f64::to_datatype().unwrap();
-
-        type T = [u32; 10];
-        T::to_datatype().unwrap();
-
-        FixedString::<[_; 5]>::to_datatype().unwrap();
+        let x_vt = ValueType::Enum(EnumType {
+            size: IntSize::U8,
+            signed: true,
+            members: vec![
+                EnumMember { name: "A".into(), value: 1 },
+                EnumMember { name: "B".into(), value: -2i64 as u64 },
+            ]
+        });
+        check_roundtrip!(X, x_vt);
+        h5def!(struct A { a: i64, b: u64 });
+        let a_vt = ValueType::Compound(CompoundType {
+            fields: vec![
+                CompoundField { name: "a".into(), ty: i64::value_type(), offset: 0 },
+                CompoundField { name: "b".into(), ty: u64::value_type(), offset: 8 },
+            ],
+            size: 16,
+        });
+        check_roundtrip!(A, a_vt);
+        h5def!(struct C {
+            a: [X; 2],
+            b: [[A; 4]; 32],
+        });
+        let c_vt = ValueType::Compound(CompoundType {
+            fields: vec![
+                CompoundField {
+                    name: "a".into(),
+                    ty: ValueType::FixedArray(Box::new(x_vt), 2),
+                    offset: 0
+                },
+                CompoundField {
+                    name: "b".into(),
+                    ty: ValueType::FixedArray(Box::new(
+                        ValueType::FixedArray(Box::new(a_vt), 4)), 32),
+                    offset: 2 * 8
+                },
+            ],
+            size: 2 * 8 + 4 * 32 * 16,
+        });
+        check_roundtrip!(C, c_vt);
     }
 
     #[test]
     #[cfg(feature = "varlen")]
-    pub fn test_varlen() {
+    pub fn test_varlen_roundtrip() {
         use types::{VarLenArray, VarLenString};
-
-        VarLenArray::<u16>::to_datatype().unwrap();
-        VarLenString::to_datatype().unwrap();
+        check_roundtrip!(VarLenArray<bool>, ValueType::VarLenArray(Box::new(ValueType::Boolean)));
+        check_roundtrip!(VarLenString, ValueType::VarLenString);
     }
 }
