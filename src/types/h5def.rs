@@ -18,7 +18,7 @@ macro_rules! h5def {
 
     ($($(#[$a:meta])* struct $s:ident { $($i:ident: $t:ty),+$(,)* })*) => (
         $(
-            #[allow(dead_code)] #[derive(Clone)] #[repr(C)] $(#[$a])*
+            #[allow(dead_code)] #[repr(C)] $(#[$a])*
             struct $s { $($i: $t),+ }
             h5def!(@impl_struct $s { $($i: $t),+ });
         )*
@@ -26,7 +26,7 @@ macro_rules! h5def {
 
     ($($(#[$a:meta])* pub struct $s:ident { $($i:ident: $t:ty),+$(,)* })*) => (
         $(
-            #[allow(dead_code)] #[derive(Clone)] #[repr(C)] $(#[$a])*
+            #[allow(dead_code)] #[repr(C)] $(#[$a])*
             pub struct $s { $($i: $t),+ }
             h5def!(@impl_struct $s { $($i: $t),+ });
         )*
@@ -34,7 +34,7 @@ macro_rules! h5def {
 
     ($($(#[$a:meta])* pub struct $s:ident { $(pub $i:ident: $t:ty),+$(,)* })*) => (
         $(
-            #[allow(dead_code)] #[derive(Clone)] #[repr(C)] $(#[$a])*
+            #[allow(dead_code)] #[repr(C)] $(#[$a])*
             pub struct $s { $(pub $i: $t),+ }
             h5def!(@impl_struct $s { $($i: $t),+ });
         )*
