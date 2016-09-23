@@ -599,3 +599,9 @@ extern {
     pub fn H5Pget_core_write_tracking(fapl_id: hid_t, is_enabled: *mut hbool_t, page_size: *mut
                                       size_t) -> herr_t;
 }
+
+#[cfg(hdf5_1_8_17)]
+extern {
+    pub fn H5Pset_efile_prefix(dapl_id: hid_t, prefix: *const c_char) -> herr_t;
+    pub fn H5Pget_efile_prefix(dapl_id: hid_t, prefix: *const c_char, size: size_t) -> ssize_t;
+}
