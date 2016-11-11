@@ -21,7 +21,8 @@ Requires HDF5 library of version 1.8.4 or later.
 
 ### Rust
 
-`hdf5-rs` is tested for all three official release channels: stable, beta and nightly.
+`hdf5-rs` is tested for all three official release channels, and requires Rust compiler
+of version 1.13 or newer.
 
 ## Building
 
