@@ -340,7 +340,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "varlen")]
     pub fn test_varlen_roundtrip() {
         use types::{VarLenArray, VarLenString};
         check_roundtrip!(VarLenArray<bool>, ValueType::VarLenArray(Box::new(ValueType::Boolean)));

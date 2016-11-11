@@ -7,18 +7,13 @@ use libc::{c_char, c_void};
 use types::{ValueType, ToValueType};
 
 #[repr(C)]
-#[unsafe_no_drop_flag]
 pub struct VarLenString {
     ptr: *mut u8,
 }
 
-// FIXME: temporary hack to prevent double free
-#[cfg(target_pointer_width = "32")] const DROP_FILL: usize = 0x1d1d1d1d;
-#[cfg(target_pointer_width = "64")] const DROP_FILL: usize = 0x1d1d1d1d1d1d1d1d;
-
 impl Drop for VarLenString {
     fn drop(&mut self) {
-        if !self.ptr.is_null() && self.ptr as usize != DROP_FILL {
+        if !self.ptr.is_null() {
             unsafe {
                 ::libc::free(self.ptr as *mut c_void);
             }

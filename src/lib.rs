@@ -3,8 +3,6 @@
 #![cfg_attr(feature = "lint", allow(block_in_if_condition_stmt, needless_return))]
 #![cfg_attr(not(test), allow(dead_code))]
 
-#![cfg_attr(feature = "varlen", feature(unsafe_no_drop_flag))]
-
 pub use container::Container;
 pub use dataset::Dataset;
 pub use datatype::{Datatype, ToDatatype};

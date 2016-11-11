@@ -1,24 +1,18 @@
 #[macro_use]
 mod string_traits;
 
-mod fixed_string;
 mod value_type;
+mod fixed_string;
+mod varlen_string;
+mod varlen_array;
 
 #[macro_use]
 mod h5def;
 
-pub use self::fixed_string::FixedString;
 pub use self::value_type::{
     ValueType, ToValueType, Array, IntSize, FloatSize,
     CompoundField, CompoundType, EnumMember, EnumType
 };
-
-#[cfg(feature = "varlen")]
-mod varlen_string;
-#[cfg(feature = "varlen")]
+pub use self::fixed_string::FixedString;
 pub use self::varlen_string::VarLenString;
-
-#[cfg(feature = "varlen")]
-mod varlen_array;
-#[cfg(feature = "varlen")]
 pub use self::varlen_array::VarLenArray;

@@ -10,7 +10,6 @@ use libc::{size_t, c_void};
 use types::{ValueType, ToValueType, Array};
 
 #[repr(C)]
-#[unsafe_no_drop_flag]
 pub struct VarLenArray<T: Copy> {
     len: size_t,
     ptr: *const T,
@@ -55,13 +54,9 @@ impl<T: Copy> VarLenArray<T> {
     }
 }
 
-// FIXME: temporary hack to prevent double free
-#[cfg(target_pointer_width = "32")] const DROP_FILL: usize = 0x1d1d1d1d;
-#[cfg(target_pointer_width = "64")] const DROP_FILL: usize = 0x1d1d1d1d1d1d1d1d;
-
 impl<T: Copy> Drop for VarLenArray<T> {
     fn drop(&mut self) {
-        if !self.ptr.is_null() && self.ptr as usize != DROP_FILL {
+        if !self.ptr.is_null() {
             unsafe {
                 ::libc::free(self.ptr as *mut c_void);
             }
