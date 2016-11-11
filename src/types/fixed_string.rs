@@ -105,7 +105,8 @@ pub mod tests {
     #[test]
     pub fn test_string_traits() {
         use std::borrow::Borrow;
-        use std::hash::{Hash, Hasher, SipHasher};
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
 
         let s = FixedString::<[_; 5]>::new("abc");
         assert_eq!(s.len(), 3);
@@ -126,7 +127,7 @@ pub mod tests {
         assert_eq!(format!("{}", s), "abc");
         assert_eq!(format!("{:?}", s), "\"abc\"");
 
-        let (mut h1, mut h2) = (SipHasher::new(), SipHasher::new());
+        let (mut h1, mut h2) = (DefaultHasher::new(), DefaultHasher::new());
         s.hash(&mut h1);
         "abc".hash(&mut h2);
         assert_eq!(h1.finish(), h2.finish());
