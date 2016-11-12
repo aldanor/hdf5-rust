@@ -83,150 +83,80 @@ pub use self::globals::*;
 mod globals {
     pub use h5i::hid_t as id_t;
 
-    extern {
-        // Property list classes
-        static H5P_CLS_ROOT_g: id_t;
-        static H5P_CLS_OBJECT_CREATE_g: id_t;
-        static H5P_CLS_FILE_CREATE_g: id_t;
-        static H5P_CLS_FILE_ACCESS_g: id_t;
-        static H5P_CLS_DATASET_CREATE_g: id_t;
-        static H5P_CLS_DATASET_ACCESS_g: id_t;
-        static H5P_CLS_DATASET_XFER_g: id_t;
-        static H5P_CLS_FILE_MOUNT_g: id_t;
-        static H5P_CLS_GROUP_CREATE_g: id_t;
-        static H5P_CLS_GROUP_ACCESS_g: id_t;
-        static H5P_CLS_DATATYPE_CREATE_g: id_t;
-        static H5P_CLS_DATATYPE_ACCESS_g: id_t;
-        static H5P_CLS_STRING_CREATE_g: id_t;
-        static H5P_CLS_ATTRIBUTE_CREATE_g: id_t;
-        static H5P_CLS_OBJECT_COPY_g: id_t;
-        static H5P_CLS_LINK_CREATE_g: id_t;
-        static H5P_CLS_LINK_ACCESS_g: id_t;
+    // Property list classes
+    extern_static!(H5P_CLS_ROOT, H5P_CLS_ROOT_g);
+    extern_static!(H5P_CLS_OBJECT_CREATE, H5P_CLS_OBJECT_CREATE_g);
+    extern_static!(H5P_CLS_FILE_CREATE, H5P_CLS_FILE_CREATE_g);
+    extern_static!(H5P_CLS_FILE_ACCESS, H5P_CLS_FILE_ACCESS_g);
+    extern_static!(H5P_CLS_DATASET_CREATE, H5P_CLS_DATASET_CREATE_g);
+    extern_static!(H5P_CLS_DATASET_ACCESS, H5P_CLS_DATASET_ACCESS_g);
+    extern_static!(H5P_CLS_DATASET_XFER, H5P_CLS_DATASET_XFER_g);
+    extern_static!(H5P_CLS_FILE_MOUNT, H5P_CLS_FILE_MOUNT_g);
+    extern_static!(H5P_CLS_GROUP_CREATE, H5P_CLS_GROUP_CREATE_g);
+    extern_static!(H5P_CLS_GROUP_ACCESS, H5P_CLS_GROUP_ACCESS_g);
+    extern_static!(H5P_CLS_DATATYPE_CREATE, H5P_CLS_DATATYPE_CREATE_g);
+    extern_static!(H5P_CLS_DATATYPE_ACCESS, H5P_CLS_DATATYPE_ACCESS_g);
+    extern_static!(H5P_CLS_STRING_CREATE, H5P_CLS_STRING_CREATE_g);
+    extern_static!(H5P_CLS_ATTRIBUTE_CREATE, H5P_CLS_ATTRIBUTE_CREATE_g);
+    extern_static!(H5P_CLS_OBJECT_COPY, H5P_CLS_OBJECT_COPY_g);
+    extern_static!(H5P_CLS_LINK_CREATE, H5P_CLS_LINK_CREATE_g);
+    extern_static!(H5P_CLS_LINK_ACCESS, H5P_CLS_LINK_ACCESS_g);
 
-        // Default property lists
-        static H5P_LST_FILE_CREATE_g: id_t;
-        static H5P_LST_FILE_ACCESS_g: id_t;
-        static H5P_LST_DATASET_CREATE_g: id_t;
-        static H5P_LST_DATASET_ACCESS_g: id_t;
-        static H5P_LST_DATASET_XFER_g: id_t;
-        static H5P_LST_FILE_MOUNT_g: id_t;
-        static H5P_LST_GROUP_CREATE_g: id_t;
-        static H5P_LST_GROUP_ACCESS_g: id_t;
-        static H5P_LST_DATATYPE_CREATE_g: id_t;
-        static H5P_LST_DATATYPE_ACCESS_g: id_t;
-        static H5P_LST_ATTRIBUTE_CREATE_g: id_t;
-        static H5P_LST_OBJECT_COPY_g: id_t;
-        static H5P_LST_LINK_CREATE_g: id_t;
-        static H5P_LST_LINK_ACCESS_g: id_t;
-    }
-
-    pub static H5P_CLS_ROOT: &'static id_t = unsafe { &H5P_CLS_ROOT_g };
-    pub static H5P_CLS_OBJECT_CREATE: &'static id_t = unsafe { &H5P_CLS_OBJECT_CREATE_g };
-    pub static H5P_CLS_FILE_CREATE: &'static id_t = unsafe { &H5P_CLS_FILE_CREATE_g };
-    pub static H5P_CLS_FILE_ACCESS: &'static id_t = unsafe { &H5P_CLS_FILE_ACCESS_g };
-    pub static H5P_CLS_DATASET_CREATE: &'static id_t = unsafe { &H5P_CLS_DATASET_CREATE_g };
-    pub static H5P_CLS_DATASET_ACCESS: &'static id_t = unsafe { &H5P_CLS_DATASET_ACCESS_g };
-    pub static H5P_CLS_DATASET_XFER: &'static id_t = unsafe { &H5P_CLS_DATASET_XFER_g };
-    pub static H5P_CLS_FILE_MOUNT: &'static id_t = unsafe { &H5P_CLS_FILE_MOUNT_g };
-    pub static H5P_CLS_GROUP_CREATE: &'static id_t = unsafe { &H5P_CLS_GROUP_CREATE_g };
-    pub static H5P_CLS_GROUP_ACCESS: &'static id_t = unsafe { &H5P_CLS_GROUP_ACCESS_g };
-    pub static H5P_CLS_DATATYPE_CREATE: &'static id_t = unsafe { &H5P_CLS_DATATYPE_CREATE_g };
-    pub static H5P_CLS_DATATYPE_ACCESS: &'static id_t = unsafe { &H5P_CLS_DATATYPE_ACCESS_g };
-    pub static H5P_CLS_STRING_CREATE: &'static id_t = unsafe { &H5P_CLS_STRING_CREATE_g };
-    pub static H5P_CLS_ATTRIBUTE_CREATE: &'static id_t = unsafe { &H5P_CLS_ATTRIBUTE_CREATE_g };
-    pub static H5P_CLS_OBJECT_COPY: &'static id_t = unsafe { &H5P_CLS_OBJECT_COPY_g };
-    pub static H5P_CLS_LINK_CREATE: &'static id_t = unsafe { &H5P_CLS_LINK_CREATE_g };
-    pub static H5P_CLS_LINK_ACCESS: &'static id_t = unsafe { &H5P_CLS_LINK_ACCESS_g };
-
-    pub static H5P_LST_FILE_CREATE: &'static id_t = unsafe { &H5P_LST_FILE_CREATE_g };
-    pub static H5P_LST_FILE_ACCESS: &'static id_t = unsafe { &H5P_LST_FILE_ACCESS_g };
-    pub static H5P_LST_DATASET_CREATE: &'static id_t = unsafe { &H5P_LST_DATASET_CREATE_g };
-    pub static H5P_LST_DATASET_ACCESS: &'static id_t = unsafe { &H5P_LST_DATASET_ACCESS_g };
-    pub static H5P_LST_DATASET_XFER: &'static id_t = unsafe { &H5P_LST_DATASET_XFER_g };
-    pub static H5P_LST_FILE_MOUNT: &'static id_t = unsafe { &H5P_LST_FILE_MOUNT_g };
-    pub static H5P_LST_GROUP_CREATE: &'static id_t = unsafe { &H5P_LST_GROUP_CREATE_g };
-    pub static H5P_LST_GROUP_ACCESS: &'static id_t = unsafe { &H5P_LST_GROUP_ACCESS_g };
-    pub static H5P_LST_DATATYPE_CREATE: &'static id_t = unsafe { &H5P_LST_DATATYPE_CREATE_g };
-    pub static H5P_LST_DATATYPE_ACCESS: &'static id_t = unsafe { &H5P_LST_DATATYPE_ACCESS_g };
-    pub static H5P_LST_ATTRIBUTE_CREATE: &'static id_t = unsafe { &H5P_LST_ATTRIBUTE_CREATE_g };
-    pub static H5P_LST_OBJECT_COPY: &'static id_t = unsafe { &H5P_LST_OBJECT_COPY_g };
-    pub static H5P_LST_LINK_CREATE: &'static id_t = unsafe { &H5P_LST_LINK_CREATE_g };
-    pub static H5P_LST_LINK_ACCESS: &'static id_t = unsafe { &H5P_LST_LINK_ACCESS_g };
+    // Default property lists
+    extern_static!(H5P_LST_FILE_CREATE, H5P_LST_FILE_CREATE_g);
+    extern_static!(H5P_LST_FILE_ACCESS, H5P_LST_FILE_ACCESS_g);
+    extern_static!(H5P_LST_DATASET_CREATE, H5P_LST_DATASET_CREATE_g);
+    extern_static!(H5P_LST_DATASET_ACCESS, H5P_LST_DATASET_ACCESS_g);
+    extern_static!(H5P_LST_DATASET_XFER, H5P_LST_DATASET_XFER_g);
+    extern_static!(H5P_LST_FILE_MOUNT, H5P_LST_FILE_MOUNT_g);
+    extern_static!(H5P_LST_GROUP_CREATE, H5P_LST_GROUP_CREATE_g);
+    extern_static!(H5P_LST_GROUP_ACCESS, H5P_LST_GROUP_ACCESS_g);
+    extern_static!(H5P_LST_DATATYPE_CREATE, H5P_LST_DATATYPE_CREATE_g);
+    extern_static!(H5P_LST_DATATYPE_ACCESS, H5P_LST_DATATYPE_ACCESS_g);
+    extern_static!(H5P_LST_ATTRIBUTE_CREATE, H5P_LST_ATTRIBUTE_CREATE_g);
+    extern_static!(H5P_LST_OBJECT_COPY, H5P_LST_OBJECT_COPY_g);
+    extern_static!(H5P_LST_LINK_CREATE, H5P_LST_LINK_CREATE_g);
+    extern_static!(H5P_LST_LINK_ACCESS, H5P_LST_LINK_ACCESS_g);
 }
 
 #[cfg(all(hdf5_1_8_14, not(target_env = "msvc")))]
 mod globals {
     pub use h5i::hid_t as id_t;
 
-    extern {
-        // Property list classes
-        static H5P_CLS_ROOT_ID_g: id_t;
-        static H5P_CLS_OBJECT_CREATE_ID_g: id_t;
-        static H5P_CLS_FILE_CREATE_ID_g: id_t;
-        static H5P_CLS_FILE_ACCESS_ID_g: id_t;
-        static H5P_CLS_DATASET_CREATE_ID_g: id_t;
-        static H5P_CLS_DATASET_ACCESS_ID_g: id_t;
-        static H5P_CLS_DATASET_XFER_ID_g: id_t;
-        static H5P_CLS_FILE_MOUNT_ID_g: id_t;
-        static H5P_CLS_GROUP_CREATE_ID_g: id_t;
-        static H5P_CLS_GROUP_ACCESS_ID_g: id_t;
-        static H5P_CLS_DATATYPE_CREATE_ID_g: id_t;
-        static H5P_CLS_DATATYPE_ACCESS_ID_g: id_t;
-        static H5P_CLS_STRING_CREATE_ID_g: id_t;
-        static H5P_CLS_ATTRIBUTE_CREATE_ID_g: id_t;
-        static H5P_CLS_OBJECT_COPY_ID_g: id_t;
-        static H5P_CLS_LINK_CREATE_ID_g: id_t;
-        static H5P_CLS_LINK_ACCESS_ID_g: id_t;
+    // Property list classes
+    extern_static!(H5P_CLS_ROOT, H5P_CLS_ROOT_ID_g);
+    extern_static!(H5P_CLS_OBJECT_CREATE, H5P_CLS_OBJECT_CREATE_ID_g);
+    extern_static!(H5P_CLS_FILE_CREATE, H5P_CLS_FILE_CREATE_ID_g);
+    extern_static!(H5P_CLS_FILE_ACCESS, H5P_CLS_FILE_ACCESS_ID_g);
+    extern_static!(H5P_CLS_DATASET_CREATE, H5P_CLS_DATASET_CREATE_ID_g);
+    extern_static!(H5P_CLS_DATASET_ACCESS, H5P_CLS_DATASET_ACCESS_ID_g);
+    extern_static!(H5P_CLS_DATASET_XFER, H5P_CLS_DATASET_XFER_ID_g);
+    extern_static!(H5P_CLS_FILE_MOUNT, H5P_CLS_FILE_MOUNT_ID_g);
+    extern_static!(H5P_CLS_GROUP_CREATE, H5P_CLS_GROUP_CREATE_ID_g);
+    extern_static!(H5P_CLS_GROUP_ACCESS, H5P_CLS_GROUP_ACCESS_ID_g);
+    extern_static!(H5P_CLS_DATATYPE_CREATE, H5P_CLS_DATATYPE_CREATE_ID_g);
+    extern_static!(H5P_CLS_DATATYPE_ACCESS, H5P_CLS_DATATYPE_ACCESS_ID_g);
+    extern_static!(H5P_CLS_STRING_CREATE, H5P_CLS_STRING_CREATE_ID_g);
+    extern_static!(H5P_CLS_ATTRIBUTE_CREATE, H5P_CLS_ATTRIBUTE_CREATE_ID_g);
+    extern_static!(H5P_CLS_OBJECT_COPY, H5P_CLS_OBJECT_COPY_ID_g);
+    extern_static!(H5P_CLS_LINK_CREATE, H5P_CLS_LINK_CREATE_ID_g);
+    extern_static!(H5P_CLS_LINK_ACCESS, H5P_CLS_LINK_ACCESS_ID_g);
 
-        // Default property lists
-        static H5P_LST_FILE_CREATE_ID_g: id_t;
-        static H5P_LST_FILE_ACCESS_ID_g: id_t;
-        static H5P_LST_DATASET_CREATE_ID_g: id_t;
-        static H5P_LST_DATASET_ACCESS_ID_g: id_t;
-        static H5P_LST_DATASET_XFER_ID_g: id_t;
-        static H5P_LST_FILE_MOUNT_ID_g: id_t;
-        static H5P_LST_GROUP_CREATE_ID_g: id_t;
-        static H5P_LST_GROUP_ACCESS_ID_g: id_t;
-        static H5P_LST_DATATYPE_CREATE_ID_g: id_t;
-        static H5P_LST_DATATYPE_ACCESS_ID_g: id_t;
-        static H5P_LST_ATTRIBUTE_CREATE_ID_g: id_t;
-        static H5P_LST_OBJECT_COPY_ID_g: id_t;
-        static H5P_LST_LINK_CREATE_ID_g: id_t;
-        static H5P_LST_LINK_ACCESS_ID_g: id_t;
-    }
-
-    pub static H5P_CLS_ROOT: &'static id_t = unsafe { &H5P_CLS_ROOT_ID_g };
-    pub static H5P_CLS_OBJECT_CREATE: &'static id_t = unsafe { &H5P_CLS_OBJECT_CREATE_ID_g };
-    pub static H5P_CLS_FILE_CREATE: &'static id_t = unsafe { &H5P_CLS_FILE_CREATE_ID_g };
-    pub static H5P_CLS_FILE_ACCESS: &'static id_t = unsafe { &H5P_CLS_FILE_ACCESS_ID_g };
-    pub static H5P_CLS_DATASET_CREATE: &'static id_t = unsafe { &H5P_CLS_DATASET_CREATE_ID_g };
-    pub static H5P_CLS_DATASET_ACCESS: &'static id_t = unsafe { &H5P_CLS_DATASET_ACCESS_ID_g };
-    pub static H5P_CLS_DATASET_XFER: &'static id_t = unsafe { &H5P_CLS_DATASET_XFER_ID_g };
-    pub static H5P_CLS_FILE_MOUNT: &'static id_t = unsafe { &H5P_CLS_FILE_MOUNT_ID_g };
-    pub static H5P_CLS_GROUP_CREATE: &'static id_t = unsafe { &H5P_CLS_GROUP_CREATE_ID_g };
-    pub static H5P_CLS_GROUP_ACCESS: &'static id_t = unsafe { &H5P_CLS_GROUP_ACCESS_ID_g };
-    pub static H5P_CLS_DATATYPE_CREATE: &'static id_t = unsafe { &H5P_CLS_DATATYPE_CREATE_ID_g };
-    pub static H5P_CLS_DATATYPE_ACCESS: &'static id_t = unsafe { &H5P_CLS_DATATYPE_ACCESS_ID_g };
-    pub static H5P_CLS_STRING_CREATE: &'static id_t = unsafe { &H5P_CLS_STRING_CREATE_ID_g };
-    pub static H5P_CLS_ATTRIBUTE_CREATE: &'static id_t = unsafe { &H5P_CLS_ATTRIBUTE_CREATE_ID_g };
-    pub static H5P_CLS_OBJECT_COPY: &'static id_t = unsafe { &H5P_CLS_OBJECT_COPY_ID_g };
-    pub static H5P_CLS_LINK_CREATE: &'static id_t = unsafe { &H5P_CLS_LINK_CREATE_ID_g };
-    pub static H5P_CLS_LINK_ACCESS: &'static id_t = unsafe { &H5P_CLS_LINK_ACCESS_ID_g };
-
-    pub static H5P_LST_FILE_CREATE: &'static id_t = unsafe { &H5P_LST_FILE_CREATE_ID_g };
-    pub static H5P_LST_FILE_ACCESS: &'static id_t = unsafe { &H5P_LST_FILE_ACCESS_ID_g };
-    pub static H5P_LST_DATASET_CREATE: &'static id_t = unsafe { &H5P_LST_DATASET_CREATE_ID_g };
-    pub static H5P_LST_DATASET_ACCESS: &'static id_t = unsafe { &H5P_LST_DATASET_ACCESS_ID_g };
-    pub static H5P_LST_DATASET_XFER: &'static id_t = unsafe { &H5P_LST_DATASET_XFER_ID_g };
-    pub static H5P_LST_FILE_MOUNT: &'static id_t = unsafe { &H5P_LST_FILE_MOUNT_ID_g };
-    pub static H5P_LST_GROUP_CREATE: &'static id_t = unsafe { &H5P_LST_GROUP_CREATE_ID_g };
-    pub static H5P_LST_GROUP_ACCESS: &'static id_t = unsafe { &H5P_LST_GROUP_ACCESS_ID_g };
-    pub static H5P_LST_DATATYPE_CREATE: &'static id_t = unsafe { &H5P_LST_DATATYPE_CREATE_ID_g };
-    pub static H5P_LST_DATATYPE_ACCESS: &'static id_t = unsafe { &H5P_LST_DATATYPE_ACCESS_ID_g };
-    pub static H5P_LST_ATTRIBUTE_CREATE: &'static id_t = unsafe { &H5P_LST_ATTRIBUTE_CREATE_ID_g };
-    pub static H5P_LST_OBJECT_COPY: &'static id_t = unsafe { &H5P_LST_OBJECT_COPY_ID_g };
-    pub static H5P_LST_LINK_CREATE: &'static id_t = unsafe { &H5P_LST_LINK_CREATE_ID_g };
-    pub static H5P_LST_LINK_ACCESS: &'static id_t = unsafe { &H5P_LST_LINK_ACCESS_ID_g };
+    // Default property lists
+    extern_static!(H5P_LST_FILE_CREATE, H5P_LST_FILE_CREATE_ID_g);
+    extern_static!(H5P_LST_FILE_ACCESS, H5P_LST_FILE_ACCESS_ID_g);
+    extern_static!(H5P_LST_DATASET_CREATE, H5P_LST_DATASET_CREATE_ID_g);
+    extern_static!(H5P_LST_DATASET_ACCESS, H5P_LST_DATASET_ACCESS_ID_g);
+    extern_static!(H5P_LST_DATASET_XFER, H5P_LST_DATASET_XFER_ID_g);
+    extern_static!(H5P_LST_FILE_MOUNT, H5P_LST_FILE_MOUNT_ID_g);
+    extern_static!(H5P_LST_GROUP_CREATE, H5P_LST_GROUP_CREATE_ID_g);
+    extern_static!(H5P_LST_GROUP_ACCESS, H5P_LST_GROUP_ACCESS_ID_g);
+    extern_static!(H5P_LST_DATATYPE_CREATE, H5P_LST_DATATYPE_CREATE_ID_g);
+    extern_static!(H5P_LST_DATATYPE_ACCESS, H5P_LST_DATATYPE_ACCESS_ID_g);
+    extern_static!(H5P_LST_ATTRIBUTE_CREATE, H5P_LST_ATTRIBUTE_CREATE_ID_g);
+    extern_static!(H5P_LST_OBJECT_COPY, H5P_LST_OBJECT_COPY_ID_g);
+    extern_static!(H5P_LST_LINK_CREATE, H5P_LST_LINK_CREATE_ID_g);
+    extern_static!(H5P_LST_LINK_ACCESS, H5P_LST_LINK_ACCESS_ID_g);
 }
 
 #[cfg(all(not(hdf5_1_8_14), target_env = "msvc"))]
@@ -234,75 +164,40 @@ mod globals {
     // dllimport hack
     pub type id_t = usize;
 
-    extern {
-        // Property list classes
-        static __imp_H5P_CLS_ROOT_g: id_t;
-        static __imp_H5P_CLS_OBJECT_CREATE_g: id_t;
-        static __imp_H5P_CLS_FILE_CREATE_g: id_t;
-        static __imp_H5P_CLS_FILE_ACCESS_g: id_t;
-        static __imp_H5P_CLS_DATASET_CREATE_g: id_t;
-        static __imp_H5P_CLS_DATASET_ACCESS_g: id_t;
-        static __imp_H5P_CLS_DATASET_XFER_g: id_t;
-        static __imp_H5P_CLS_FILE_MOUNT_g: id_t;
-        static __imp_H5P_CLS_GROUP_CREATE_g: id_t;
-        static __imp_H5P_CLS_GROUP_ACCESS_g: id_t;
-        static __imp_H5P_CLS_DATATYPE_CREATE_g: id_t;
-        static __imp_H5P_CLS_DATATYPE_ACCESS_g: id_t;
-        static __imp_H5P_CLS_STRING_CREATE_g: id_t;
-        static __imp_H5P_CLS_ATTRIBUTE_CREATE_g: id_t;
-        static __imp_H5P_CLS_OBJECT_COPY_g: id_t;
-        static __imp_H5P_CLS_LINK_CREATE_g: id_t;
-        static __imp_H5P_CLS_LINK_ACCESS_g: id_t;
+    // Property list classes
+    extern_static!(H5P_CLS_ROOT, __imp_H5P_CLS_ROOT_g);
+    extern_static!(H5P_CLS_OBJECT_CREATE, __imp_H5P_CLS_OBJECT_CREATE_g);
+    extern_static!(H5P_CLS_FILE_CREATE, __imp_H5P_CLS_FILE_CREATE_g);
+    extern_static!(H5P_CLS_FILE_ACCESS, __imp_H5P_CLS_FILE_ACCESS_g);
+    extern_static!(H5P_CLS_DATASET_CREATE, __imp_H5P_CLS_DATASET_CREATE_g);
+    extern_static!(H5P_CLS_DATASET_ACCESS, __imp_H5P_CLS_DATASET_ACCESS_g);
+    extern_static!(H5P_CLS_DATASET_XFER, __imp_H5P_CLS_DATASET_XFER_g);
+    extern_static!(H5P_CLS_FILE_MOUNT, __imp_H5P_CLS_FILE_MOUNT_g);
+    extern_static!(H5P_CLS_GROUP_CREATE, __imp_H5P_CLS_GROUP_CREATE_g);
+    extern_static!(H5P_CLS_GROUP_ACCESS, __imp_H5P_CLS_GROUP_ACCESS_g);
+    extern_static!(H5P_CLS_DATATYPE_CREATE, __imp_H5P_CLS_DATATYPE_CREATE_g);
+    extern_static!(H5P_CLS_DATATYPE_ACCESS, __imp_H5P_CLS_DATATYPE_ACCESS_g);
+    extern_static!(H5P_CLS_STRING_CREATE, __imp_H5P_CLS_STRING_CREATE_g);
+    extern_static!(H5P_CLS_ATTRIBUTE_CREATE, __imp_H5P_CLS_ATTRIBUTE_CREATE_g);
+    extern_static!(H5P_CLS_OBJECT_COPY, __imp_H5P_CLS_OBJECT_COPY_g);
+    extern_static!(H5P_CLS_LINK_CREATE, __imp_H5P_CLS_LINK_CREATE_g);
+    extern_static!(H5P_CLS_LINK_ACCESS, __imp_H5P_CLS_LINK_ACCESS_g);
 
-        // Default property lists
-        static __imp_H5P_LST_FILE_CREATE_g: id_t;
-        static __imp_H5P_LST_FILE_ACCESS_g: id_t;
-        static __imp_H5P_LST_DATASET_CREATE_g: id_t;
-        static __imp_H5P_LST_DATASET_ACCESS_g: id_t;
-        static __imp_H5P_LST_DATASET_XFER_g: id_t;
-        static __imp_H5P_LST_FILE_MOUNT_g: id_t;
-        static __imp_H5P_LST_GROUP_CREATE_g: id_t;
-        static __imp_H5P_LST_GROUP_ACCESS_g: id_t;
-        static __imp_H5P_LST_DATATYPE_CREATE_g: id_t;
-        static __imp_H5P_LST_DATATYPE_ACCESS_g: id_t;
-        static __imp_H5P_LST_ATTRIBUTE_CREATE_g: id_t;
-        static __imp_H5P_LST_OBJECT_COPY_g: id_t;
-        static __imp_H5P_LST_LINK_CREATE_g: id_t;
-        static __imp_H5P_LST_LINK_ACCESS_g: id_t;
-    }
-
-    pub static H5P_CLS_ROOT: &'static id_t = unsafe { &__imp_H5P_CLS_ROOT_g };
-    pub static H5P_CLS_OBJECT_CREATE: &'static id_t = unsafe { &__imp_H5P_CLS_OBJECT_CREATE_g };
-    pub static H5P_CLS_FILE_CREATE: &'static id_t = unsafe { &__imp_H5P_CLS_FILE_CREATE_g };
-    pub static H5P_CLS_FILE_ACCESS: &'static id_t = unsafe { &__imp_H5P_CLS_FILE_ACCESS_g };
-    pub static H5P_CLS_DATASET_CREATE: &'static id_t = unsafe { &__imp_H5P_CLS_DATASET_CREATE_g };
-    pub static H5P_CLS_DATASET_ACCESS: &'static id_t = unsafe { &__imp_H5P_CLS_DATASET_ACCESS_g };
-    pub static H5P_CLS_DATASET_XFER: &'static id_t = unsafe { &__imp_H5P_CLS_DATASET_XFER_g };
-    pub static H5P_CLS_FILE_MOUNT: &'static id_t = unsafe { &__imp_H5P_CLS_FILE_MOUNT_g };
-    pub static H5P_CLS_GROUP_CREATE: &'static id_t = unsafe { &__imp_H5P_CLS_GROUP_CREATE_g };
-    pub static H5P_CLS_GROUP_ACCESS: &'static id_t = unsafe { &__imp_H5P_CLS_GROUP_ACCESS_g };
-    pub static H5P_CLS_DATATYPE_CREATE: &'static id_t = unsafe { &__imp_H5P_CLS_DATATYPE_CREATE_g };
-    pub static H5P_CLS_DATATYPE_ACCESS: &'static id_t = unsafe { &__imp_H5P_CLS_DATATYPE_ACCESS_g };
-    pub static H5P_CLS_STRING_CREATE: &'static id_t = unsafe { &__imp_H5P_CLS_STRING_CREATE_g };
-    pub static H5P_CLS_ATTRIBUTE_CREATE: &'static id_t = unsafe { &__imp_H5P_CLS_ATTRIBUTE_CREATE_g };
-    pub static H5P_CLS_OBJECT_COPY: &'static id_t = unsafe { &__imp_H5P_CLS_OBJECT_COPY_g };
-    pub static H5P_CLS_LINK_CREATE: &'static id_t = unsafe { &__imp_H5P_CLS_LINK_CREATE_g };
-    pub static H5P_CLS_LINK_ACCESS: &'static id_t = unsafe { &__imp_H5P_CLS_LINK_ACCESS_g };
-
-    pub static H5P_LST_FILE_CREATE: &'static id_t = unsafe { &__imp_H5P_LST_FILE_CREATE_g };
-    pub static H5P_LST_FILE_ACCESS: &'static id_t = unsafe { &__imp_H5P_LST_FILE_ACCESS_g };
-    pub static H5P_LST_DATASET_CREATE: &'static id_t = unsafe { &__imp_H5P_LST_DATASET_CREATE_g };
-    pub static H5P_LST_DATASET_ACCESS: &'static id_t = unsafe { &__imp_H5P_LST_DATASET_ACCESS_g };
-    pub static H5P_LST_DATASET_XFER: &'static id_t = unsafe { &__imp_H5P_LST_DATASET_XFER_g };
-    pub static H5P_LST_FILE_MOUNT: &'static id_t = unsafe { &__imp_H5P_LST_FILE_MOUNT_g };
-    pub static H5P_LST_GROUP_CREATE: &'static id_t = unsafe { &__imp_H5P_LST_GROUP_CREATE_g };
-    pub static H5P_LST_GROUP_ACCESS: &'static id_t = unsafe { &__imp_H5P_LST_GROUP_ACCESS_g };
-    pub static H5P_LST_DATATYPE_CREATE: &'static id_t = unsafe { &__imp_H5P_LST_DATATYPE_CREATE_g };
-    pub static H5P_LST_DATATYPE_ACCESS: &'static id_t = unsafe { &__imp_H5P_LST_DATATYPE_ACCESS_g };
-    pub static H5P_LST_ATTRIBUTE_CREATE: &'static id_t = unsafe { &__imp_H5P_LST_ATTRIBUTE_CREATE_g };
-    pub static H5P_LST_OBJECT_COPY: &'static id_t = unsafe { &__imp_H5P_LST_OBJECT_COPY_g };
-    pub static H5P_LST_LINK_CREATE: &'static id_t = unsafe { &__imp_H5P_LST_LINK_CREATE_g };
-    pub static H5P_LST_LINK_ACCESS: &'static id_t = unsafe { &__imp_H5P_LST_LINK_ACCESS_g };
+    // Default property lists
+    extern_static!(H5P_LST_FILE_CREATE, __imp_H5P_LST_FILE_CREATE_g);
+    extern_static!(H5P_LST_FILE_ACCESS, __imp_H5P_LST_FILE_ACCESS_g);
+    extern_static!(H5P_LST_DATASET_CREATE, __imp_H5P_LST_DATASET_CREATE_g);
+    extern_static!(H5P_LST_DATASET_ACCESS, __imp_H5P_LST_DATASET_ACCESS_g);
+    extern_static!(H5P_LST_DATASET_XFER, __imp_H5P_LST_DATASET_XFER_g);
+    extern_static!(H5P_LST_FILE_MOUNT, __imp_H5P_LST_FILE_MOUNT_g);
+    extern_static!(H5P_LST_GROUP_CREATE, __imp_H5P_LST_GROUP_CREATE_g);
+    extern_static!(H5P_LST_GROUP_ACCESS, __imp_H5P_LST_GROUP_ACCESS_g);
+    extern_static!(H5P_LST_DATATYPE_CREATE, __imp_H5P_LST_DATATYPE_CREATE_g);
+    extern_static!(H5P_LST_DATATYPE_ACCESS, __imp_H5P_LST_DATATYPE_ACCESS_g);
+    extern_static!(H5P_LST_ATTRIBUTE_CREATE, __imp_H5P_LST_ATTRIBUTE_CREATE_g);
+    extern_static!(H5P_LST_OBJECT_COPY, __imp_H5P_LST_OBJECT_COPY_g);
+    extern_static!(H5P_LST_LINK_CREATE, __imp_H5P_LST_LINK_CREATE_g);
+    extern_static!(H5P_LST_LINK_ACCESS, __imp_H5P_LST_LINK_ACCESS_g);
 }
 
 #[cfg(all(hdf5_1_8_14, target_env = "msvc"))]
@@ -310,75 +205,40 @@ mod globals {
     // dllimport hack
     pub type id_t = usize;
 
-    extern {
-        // Property list classes
-        static __imp_H5P_CLS_ROOT_ID_g: id_t;
-        static __imp_H5P_CLS_OBJECT_CREATE_ID_g: id_t;
-        static __imp_H5P_CLS_FILE_CREATE_ID_g: id_t;
-        static __imp_H5P_CLS_FILE_ACCESS_ID_g: id_t;
-        static __imp_H5P_CLS_DATASET_CREATE_ID_g: id_t;
-        static __imp_H5P_CLS_DATASET_ACCESS_ID_g: id_t;
-        static __imp_H5P_CLS_DATASET_XFER_ID_g: id_t;
-        static __imp_H5P_CLS_FILE_MOUNT_ID_g: id_t;
-        static __imp_H5P_CLS_GROUP_CREATE_ID_g: id_t;
-        static __imp_H5P_CLS_GROUP_ACCESS_ID_g: id_t;
-        static __imp_H5P_CLS_DATATYPE_CREATE_ID_g: id_t;
-        static __imp_H5P_CLS_DATATYPE_ACCESS_ID_g: id_t;
-        static __imp_H5P_CLS_STRING_CREATE_ID_g: id_t;
-        static __imp_H5P_CLS_ATTRIBUTE_CREATE_ID_g: id_t;
-        static __imp_H5P_CLS_OBJECT_COPY_ID_g: id_t;
-        static __imp_H5P_CLS_LINK_CREATE_ID_g: id_t;
-        static __imp_H5P_CLS_LINK_ACCESS_ID_g: id_t;
+    // Property list classes
+    extern_static!(H5P_CLS_ROOT, __imp_H5P_CLS_ROOT_ID_g);
+    extern_static!(H5P_CLS_OBJECT_CREATE, __imp_H5P_CLS_OBJECT_CREATE_ID_g);
+    extern_static!(H5P_CLS_FILE_CREATE, __imp_H5P_CLS_FILE_CREATE_ID_g);
+    extern_static!(H5P_CLS_FILE_ACCESS, __imp_H5P_CLS_FILE_ACCESS_ID_g);
+    extern_static!(H5P_CLS_DATASET_CREATE, __imp_H5P_CLS_DATASET_CREATE_ID_g);
+    extern_static!(H5P_CLS_DATASET_ACCESS, __imp_H5P_CLS_DATASET_ACCESS_ID_g);
+    extern_static!(H5P_CLS_DATASET_XFER, __imp_H5P_CLS_DATASET_XFER_ID_g);
+    extern_static!(H5P_CLS_FILE_MOUNT, __imp_H5P_CLS_FILE_MOUNT_ID_g);
+    extern_static!(H5P_CLS_GROUP_CREATE, __imp_H5P_CLS_GROUP_CREATE_ID_g);
+    extern_static!(H5P_CLS_GROUP_ACCESS, __imp_H5P_CLS_GROUP_ACCESS_ID_g);
+    extern_static!(H5P_CLS_DATATYPE_CREATE, __imp_H5P_CLS_DATATYPE_CREATE_ID_g);
+    extern_static!(H5P_CLS_DATATYPE_ACCESS, __imp_H5P_CLS_DATATYPE_ACCESS_ID_g);
+    extern_static!(H5P_CLS_STRING_CREATE, __imp_H5P_CLS_STRING_CREATE_ID_g);
+    extern_static!(H5P_CLS_ATTRIBUTE_CREATE, __imp_H5P_CLS_ATTRIBUTE_CREATE_ID_g);
+    extern_static!(H5P_CLS_OBJECT_COPY, __imp_H5P_CLS_OBJECT_COPY_ID_g);
+    extern_static!(H5P_CLS_LINK_CREATE, __imp_H5P_CLS_LINK_CREATE_ID_g);
+    extern_static!(H5P_CLS_LINK_ACCESS, __imp_H5P_CLS_LINK_ACCESS_ID_g);
 
-        // Default property lists
-        static __imp_H5P_LST_FILE_CREATE_ID_g: id_t;
-        static __imp_H5P_LST_FILE_ACCESS_ID_g: id_t;
-        static __imp_H5P_LST_DATASET_CREATE_ID_g: id_t;
-        static __imp_H5P_LST_DATASET_ACCESS_ID_g: id_t;
-        static __imp_H5P_LST_DATASET_XFER_ID_g: id_t;
-        static __imp_H5P_LST_FILE_MOUNT_ID_g: id_t;
-        static __imp_H5P_LST_GROUP_CREATE_ID_g: id_t;
-        static __imp_H5P_LST_GROUP_ACCESS_ID_g: id_t;
-        static __imp_H5P_LST_DATATYPE_CREATE_ID_g: id_t;
-        static __imp_H5P_LST_DATATYPE_ACCESS_ID_g: id_t;
-        static __imp_H5P_LST_ATTRIBUTE_CREATE_ID_g: id_t;
-        static __imp_H5P_LST_OBJECT_COPY_ID_g: id_t;
-        static __imp_H5P_LST_LINK_CREATE_ID_g: id_t;
-        static __imp_H5P_LST_LINK_ACCESS_ID_g: id_t;
-    }
-
-    pub static H5P_CLS_ROOT: &'static id_t = unsafe { &__imp_H5P_CLS_ROOT_ID_g };
-    pub static H5P_CLS_OBJECT_CREATE: &'static id_t = unsafe { &__imp_H5P_CLS_OBJECT_CREATE_ID_g };
-    pub static H5P_CLS_FILE_CREATE: &'static id_t = unsafe { &__imp_H5P_CLS_FILE_CREATE_ID_g };
-    pub static H5P_CLS_FILE_ACCESS: &'static id_t = unsafe { &__imp_H5P_CLS_FILE_ACCESS_ID_g };
-    pub static H5P_CLS_DATASET_CREATE: &'static id_t = unsafe { &__imp_H5P_CLS_DATASET_CREATE_ID_g };
-    pub static H5P_CLS_DATASET_ACCESS: &'static id_t = unsafe { &__imp_H5P_CLS_DATASET_ACCESS_ID_g };
-    pub static H5P_CLS_DATASET_XFER: &'static id_t = unsafe { &__imp_H5P_CLS_DATASET_XFER_ID_g };
-    pub static H5P_CLS_FILE_MOUNT: &'static id_t = unsafe { &__imp_H5P_CLS_FILE_MOUNT_ID_g };
-    pub static H5P_CLS_GROUP_CREATE: &'static id_t = unsafe { &__imp_H5P_CLS_GROUP_CREATE_ID_g };
-    pub static H5P_CLS_GROUP_ACCESS: &'static id_t = unsafe { &__imp_H5P_CLS_GROUP_ACCESS_ID_g };
-    pub static H5P_CLS_DATATYPE_CREATE: &'static id_t = unsafe { &__imp_H5P_CLS_DATATYPE_CREATE_ID_g };
-    pub static H5P_CLS_DATATYPE_ACCESS: &'static id_t = unsafe { &__imp_H5P_CLS_DATATYPE_ACCESS_ID_g };
-    pub static H5P_CLS_STRING_CREATE: &'static id_t = unsafe { &__imp_H5P_CLS_STRING_CREATE_ID_g };
-    pub static H5P_CLS_ATTRIBUTE_CREATE: &'static id_t = unsafe { &__imp_H5P_CLS_ATTRIBUTE_CREATE_ID_g };
-    pub static H5P_CLS_OBJECT_COPY: &'static id_t = unsafe { &__imp_H5P_CLS_OBJECT_COPY_ID_g };
-    pub static H5P_CLS_LINK_CREATE: &'static id_t = unsafe { &__imp_H5P_CLS_LINK_CREATE_ID_g };
-    pub static H5P_CLS_LINK_ACCESS: &'static id_t = unsafe { &__imp_H5P_CLS_LINK_ACCESS_ID_g };
-
-    pub static H5P_LST_FILE_CREATE: &'static id_t = unsafe { &__imp_H5P_LST_FILE_CREATE_ID_g };
-    pub static H5P_LST_FILE_ACCESS: &'static id_t = unsafe { &__imp_H5P_LST_FILE_ACCESS_ID_g };
-    pub static H5P_LST_DATASET_CREATE: &'static id_t = unsafe { &__imp_H5P_LST_DATASET_CREATE_ID_g };
-    pub static H5P_LST_DATASET_ACCESS: &'static id_t = unsafe { &__imp_H5P_LST_DATASET_ACCESS_ID_g };
-    pub static H5P_LST_DATASET_XFER: &'static id_t = unsafe { &__imp_H5P_LST_DATASET_XFER_ID_g };
-    pub static H5P_LST_FILE_MOUNT: &'static id_t = unsafe { &__imp_H5P_LST_FILE_MOUNT_ID_g };
-    pub static H5P_LST_GROUP_CREATE: &'static id_t = unsafe { &__imp_H5P_LST_GROUP_CREATE_ID_g };
-    pub static H5P_LST_GROUP_ACCESS: &'static id_t = unsafe { &__imp_H5P_LST_GROUP_ACCESS_ID_g };
-    pub static H5P_LST_DATATYPE_CREATE: &'static id_t = unsafe { &__imp_H5P_LST_DATATYPE_CREATE_ID_g };
-    pub static H5P_LST_DATATYPE_ACCESS: &'static id_t = unsafe { &__imp_H5P_LST_DATATYPE_ACCESS_ID_g };
-    pub static H5P_LST_ATTRIBUTE_CREATE: &'static id_t = unsafe { &__imp_H5P_LST_ATTRIBUTE_CREATE_ID_g };
-    pub static H5P_LST_OBJECT_COPY: &'static id_t = unsafe { &__imp_H5P_LST_OBJECT_COPY_ID_g };
-    pub static H5P_LST_LINK_CREATE: &'static id_t = unsafe { &__imp_H5P_LST_LINK_CREATE_ID_g };
-    pub static H5P_LST_LINK_ACCESS: &'static id_t = unsafe { &__imp_H5P_LST_LINK_ACCESS_ID_g };
+    // Default property lists
+    extern_static!(H5P_LST_FILE_CREATE, __imp_H5P_LST_FILE_CREATE_ID_g);
+    extern_static!(H5P_LST_FILE_ACCESS, __imp_H5P_LST_FILE_ACCESS_ID_g);
+    extern_static!(H5P_LST_DATASET_CREATE, __imp_H5P_LST_DATASET_CREATE_ID_g);
+    extern_static!(H5P_LST_DATASET_ACCESS, __imp_H5P_LST_DATASET_ACCESS_ID_g);
+    extern_static!(H5P_LST_DATASET_XFER, __imp_H5P_LST_DATASET_XFER_ID_g);
+    extern_static!(H5P_LST_FILE_MOUNT, __imp_H5P_LST_FILE_MOUNT_ID_g);
+    extern_static!(H5P_LST_GROUP_CREATE, __imp_H5P_LST_GROUP_CREATE_ID_g);
+    extern_static!(H5P_LST_GROUP_ACCESS, __imp_H5P_LST_GROUP_ACCESS_ID_g);
+    extern_static!(H5P_LST_DATATYPE_CREATE, __imp_H5P_LST_DATATYPE_CREATE_ID_g);
+    extern_static!(H5P_LST_DATATYPE_ACCESS, __imp_H5P_LST_DATATYPE_ACCESS_ID_g);
+    extern_static!(H5P_LST_ATTRIBUTE_CREATE, __imp_H5P_LST_ATTRIBUTE_CREATE_ID_g);
+    extern_static!(H5P_LST_OBJECT_COPY, __imp_H5P_LST_OBJECT_COPY_ID_g);
+    extern_static!(H5P_LST_LINK_CREATE, __imp_H5P_LST_LINK_CREATE_ID_g);
+    extern_static!(H5P_LST_LINK_ACCESS, __imp_H5P_LST_LINK_ACCESS_ID_g);
 }
 
 extern {
