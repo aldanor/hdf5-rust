@@ -33,7 +33,7 @@ default_features = false
 features = []
 
 [dev-dependencies]
-regex = "0.1"
+regex = "0.2"
 tempdir = "0.3"
 quickcheck = "0.4"
 quickcheck_macros = "0.4"
