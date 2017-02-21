@@ -320,6 +320,7 @@ impl VarLenUnicode {
         Self::from_bytes(s.borrow().as_bytes())
     }
 
+    #[cfg_attr(feature = "lint", allow(should_implement_trait))]
     pub fn from_str<S: Borrow<str>>(s: S) -> Result<Self> {
         let s = s.borrow();
         ensure!(s.chars().all(|c| c != '\0'),
@@ -501,6 +502,7 @@ impl<A: Array<Item=u8>> FixedUnicode<A> {
         Self::from_bytes(s.borrow().as_bytes())
     }
 
+    #[cfg_attr(feature = "lint", allow(should_implement_trait))]
     pub fn from_str<S: Borrow<str>>(s: S) -> Result<Self> {
         let s = s.borrow();
         ensure!(s.as_bytes().len() <= A::capacity(),
@@ -537,7 +539,7 @@ pub mod tests {
     impl Arbitrary for AsciiGen {
         fn arbitrary<G: Gen>(g: &mut G) -> Self {
             let mut bytes: Vec<u8> = Arbitrary::arbitrary(g);
-            for c in bytes.iter_mut() {
+            for c in &mut bytes {
                 *c = *c % 0x7e + 1;
             }
             if bytes.len() > 1024 {
@@ -648,7 +650,7 @@ pub mod tests {
             $s.hash(&mut h1);
             $bytes.hash(&mut h2);
             assert_eq!(h1.finish(), h2.finish());
-            assert_eq!(format!("{}", $s), format!("{}", $s.as_str()));
+            assert_eq!(format!("{}", $s), $s.as_str());
             assert_eq!(format!("{:?}", $s), format!("{:?}", $s.as_str()));
             assert_eq!($s.borrow() as &str, $s.as_str());
             assert_eq!($s.as_ref() as &str, $s.as_str());

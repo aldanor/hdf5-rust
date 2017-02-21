@@ -1,6 +1,5 @@
 use std::mem;
 
-use libc::c_char;
 use ffi::h5t::hvl_t;
 
 use types::{Array, FixedAscii, FixedUnicode, VarLenAscii, VarLenUnicode};
