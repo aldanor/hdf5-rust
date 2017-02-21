@@ -15,6 +15,7 @@ pub use object::Object;
 pub use space::{Dimension, Ix, Dataspace};
 pub use types::ToValueType;
 
+extern crate ascii;
 extern crate libc;
 extern crate num;
 
@@ -30,6 +31,10 @@ extern crate tempdir;
 
 #[cfg(test)]
 extern crate regex;
+
+#[cfg(test)]
+#[macro_use]
+extern crate quickcheck;
 
 #[macro_use]
 mod macros;

@@ -6,6 +6,8 @@ mod fixed_string;
 mod varlen_string;
 mod varlen_array;
 
+mod string;
+
 #[macro_use]
 mod h5def;
 
