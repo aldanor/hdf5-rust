@@ -42,7 +42,7 @@ macro_rules! h5def {
 
     (@impl_enum $s:ident($t:ident) { $($i:ident = $v:expr),+ }) => (
         unsafe impl $crate::types::H5Type for $s {
-            fn value_type() -> $crate::types::TypeDescriptor {
+            fn type_descriptor() -> $crate::types::TypeDescriptor {
                 use $crate::types::{TypeDescriptor, EnumType, EnumMember, IntSize};
 
                 TypeDescriptor::Enum(
@@ -65,7 +65,7 @@ macro_rules! h5def {
 
     (@impl_struct $s:ident { $($i:ident: $t:ty),+ }) => (
         unsafe impl $crate::types::H5Type for $s {
-            fn value_type() -> $crate::types::TypeDescriptor {
+            fn type_descriptor() -> $crate::types::TypeDescriptor {
                 use $crate::types::{TypeDescriptor, CompoundType, CompoundField, H5Type};
 
                 let base = 0usize as *const $s;
@@ -74,7 +74,7 @@ macro_rules! h5def {
                         fields: vec![$(
                             CompoundField {
                                 name: stringify!($i).into(),
-                                ty: <$t as H5Type>::value_type(),
+                                ty: <$t as H5Type>::type_descriptor(),
                                 offset: unsafe { &((*base).$i) as *const $t as usize }
                             }),+],
                         size: ::std::mem::size_of::<$s>(),
@@ -104,7 +104,7 @@ pub mod tests {
         assert_eq!((EnumType { size: IntSize::U1, signed: false, members: vec![] }).base_type(),
                    VT::Unsigned(IntSize::U1));
 
-        assert_eq!(X::value_type(), VT::Enum(EnumType {
+        assert_eq!(X::type_descriptor(), VT::Enum(EnumType {
             size: IntSize::U8,
             signed: true,
             members: vec![
@@ -112,9 +112,9 @@ pub mod tests {
                 EnumMember { name: "B".into(), value: -2i64 as u64 },
             ]
         }));
-        assert_eq!(X::value_type().size(), 8);
+        assert_eq!(X::type_descriptor().size(), 8);
 
-        assert_eq!(Y::value_type(), VT::Enum(EnumType {
+        assert_eq!(Y::type_descriptor(), VT::Enum(EnumType {
             size: IntSize::U1,
             signed: false,
             members: vec![
@@ -123,13 +123,13 @@ pub mod tests {
             ]
         }));
         assert_eq!(format!("{:?}", Y::A), "A");
-        assert_eq!(Y::value_type().size(), 1);
+        assert_eq!(Y::type_descriptor().size(), 1);
 
-        assert_eq!(E1::value_type(), Y::value_type());
-        assert_eq!(E2::value_type(), Y::value_type());
+        assert_eq!(E1::type_descriptor(), Y::type_descriptor());
+        assert_eq!(E2::type_descriptor(), Y::type_descriptor());
 
-        assert_eq!(E3::value_type(), Y::value_type());
-        assert_eq!(E4::value_type(), Y::value_type());
+        assert_eq!(E3::type_descriptor(), Y::type_descriptor());
+        assert_eq!(E4::type_descriptor(), Y::type_descriptor());
     }
 
     h5def!(struct A { a: i64, b: u64 });
@@ -144,27 +144,27 @@ pub mod tests {
 
     #[test]
     pub fn test_compound_type() {
-        assert_eq!(A::value_type(), VT::Compound(CompoundType {
+        assert_eq!(A::type_descriptor(), VT::Compound(CompoundType {
             fields: vec![
-                CompoundField { name: "a".into(), ty: i64::value_type(), offset: 0 },
-                CompoundField { name: "b".into(), ty: u64::value_type(), offset: 8 },
+                CompoundField { name: "a".into(), ty: i64::type_descriptor(), offset: 0 },
+                CompoundField { name: "b".into(), ty: u64::type_descriptor(), offset: 8 },
             ],
             size: 16,
         }));
-        assert_eq!(A::value_type().size(), 16);
+        assert_eq!(A::type_descriptor().size(), 16);
 
-        assert_eq!(B::value_type(), A::value_type());
+        assert_eq!(B::type_descriptor(), A::type_descriptor());
 
-        assert_eq!(C::value_type(), A::value_type());
+        assert_eq!(C::type_descriptor(), A::type_descriptor());
         assert!(format!("{:?}", C { a: 1, b: 2 }).len() > 0);
 
-        assert_eq!(S1::value_type(), A::value_type());
-        assert_eq!(S2::value_type(), A::value_type());
+        assert_eq!(S1::type_descriptor(), A::type_descriptor());
+        assert_eq!(S2::type_descriptor(), A::type_descriptor());
 
-        assert_eq!(S3::value_type(), A::value_type());
-        assert_eq!(S4::value_type(), A::value_type());
+        assert_eq!(S3::type_descriptor(), A::type_descriptor());
+        assert_eq!(S4::type_descriptor(), A::type_descriptor());
 
-        assert_eq!(S5::value_type(), A::value_type());
-        assert_eq!(S6::value_type(), A::value_type());
+        assert_eq!(S5::type_descriptor(), A::type_descriptor());
+        assert_eq!(S6::type_descriptor(), A::type_descriptor());
     }
 }

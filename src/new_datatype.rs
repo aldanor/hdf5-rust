@@ -63,7 +63,7 @@ impl FromID for Datatype {
 
 impl Object for Datatype { }
 
-fn datatype_to_value_type(datatype: &Datatype) -> Result<TypeDescriptor> {
+fn datatype_to_descriptor(datatype: &Datatype) -> Result<TypeDescriptor> {
     use ffi::h5t::H5T_class_t::*;
     use ffi::h5t::H5T_sign_t::*;
     use types::TypeDescriptor::*;
@@ -103,7 +103,7 @@ fn datatype_to_value_type(datatype: &Datatype) -> Result<TypeDescriptor> {
                     ::libc::free(name as *mut c_void);
                 }
                 let base_dt = try!(Datatype::from_id(H5Tget_super(id)));
-                let (size, signed) = try!(match try!(base_dt.to_value_type()) {
+                let (size, signed) = try!(match try!(base_dt.as_type_descriptor()) {
                     Integer(size) => Ok((size, true)),
                     Unsigned(size) => Ok((size, false)),
                     _ => Err("Invalid base type for enum datatype"),
@@ -128,7 +128,7 @@ fn datatype_to_value_type(datatype: &Datatype) -> Result<TypeDescriptor> {
                     let ty = try!(Datatype::from_id(h5try_s!(H5Tget_member_type(id, idx))));
                     fields.push(CompoundField {
                         name: string_from_cstr(name),
-                        ty: try!(ty.to_value_type()),
+                        ty: try!(ty.as_type_descriptor()),
                         offset: offset
                     });
                     ::libc::free(name as *mut c_void);
@@ -142,7 +142,7 @@ fn datatype_to_value_type(datatype: &Datatype) -> Result<TypeDescriptor> {
                     let mut len: hsize_t = 0;
                     h5try_s!(H5Tget_array_dims2(id, &mut len as *mut hsize_t));
                     Ok(TypeDescriptor::FixedArray(
-                        Box::new(try!(base_dt.to_value_type())), len as usize
+                        Box::new(try!(base_dt.as_type_descriptor())), len as usize
                     ))
                 } else {
                     Err("Multi-dimensional array datatypes are not supported".into())
@@ -161,7 +161,7 @@ fn datatype_to_value_type(datatype: &Datatype) -> Result<TypeDescriptor> {
             },
             H5T_VLEN => {
                 let base_dt = try!(Datatype::from_id(H5Tget_super(id)));
-                Ok(TypeDescriptor::VarLenArray(Box::new(try!(base_dt.to_value_type()))))
+                Ok(TypeDescriptor::VarLenArray(Box::new(try!(base_dt.as_type_descriptor()))))
             },
             _ => Err("Unsupported datatype class".into())
         }
@@ -169,8 +169,8 @@ fn datatype_to_value_type(datatype: &Datatype) -> Result<TypeDescriptor> {
 }
 
 impl Datatype {
-    pub fn to_value_type(&self) -> Result<TypeDescriptor> {
-        datatype_to_value_type(self)
+    pub fn as_type_descriptor(&self) -> Result<TypeDescriptor> {
+        datatype_to_descriptor(self)
     }
 }
 
@@ -188,7 +188,7 @@ macro_rules! be_le {
     ($be:expr, $le:expr) => (h5try_s!(H5Tcopy(*$le)))
 }
 
-pub fn value_type_to_datatype(value_type: &TypeDescriptor) -> Result<Datatype> {
+pub fn datatype_from_descriptor(desc: &TypeDescriptor) -> Result<Datatype> {
     use types::TypeDescriptor::*;
 
     unsafe fn string_type(size: Option<usize>, encoding: H5T_cset_t) -> Result<hid_t> {
@@ -206,7 +206,7 @@ pub fn value_type_to_datatype(value_type: &TypeDescriptor) -> Result<Datatype> {
     }
 
     let datatype_id: Result<_> = h5lock!({
-        match *value_type {
+        match *desc {
             Integer(size) => Ok(match size {
                 IntSize::U1 => be_le!(H5T_STD_I8BE, H5T_STD_I8LE),
                 IntSize::U2 => be_le!(H5T_STD_I16BE, H5T_STD_I16LE),
@@ -232,7 +232,7 @@ pub fn value_type_to_datatype(value_type: &TypeDescriptor) -> Result<Datatype> {
                 Ok(bool_id)
             },
             Enum(ref enum_type) => {
-                let base = try!(value_type_to_datatype(&enum_type.base_type()));
+                let base = try!(datatype_from_descriptor(&enum_type.base_type()));
                 let enum_id = h5try_s!(H5Tenum_create(base.id()));
                 for member in &enum_type.members {
                     let name = try!(to_cstring(member.name.as_ref()));
@@ -245,7 +245,7 @@ pub fn value_type_to_datatype(value_type: &TypeDescriptor) -> Result<Datatype> {
                 let compound_id = h5try_s!(H5Tcreate(H5T_class_t::H5T_COMPOUND, 1));
                 for field in &compound_type.fields {
                     let name = try!(to_cstring(field.name.as_ref()));
-                    let field_dt = try!(value_type_to_datatype(&field.ty));
+                    let field_dt = try!(datatype_from_descriptor(&field.ty));
                     h5try_s!(H5Tset_size(compound_id, field.offset + field.ty.size()));
                     h5try_s!(H5Tinsert(compound_id, name.as_ptr(), field.offset, field_dt.id()));
                 }
@@ -253,7 +253,7 @@ pub fn value_type_to_datatype(value_type: &TypeDescriptor) -> Result<Datatype> {
                 Ok(compound_id)
             },
             FixedArray(ref ty, len) => {
-                let elem_dt = try!(value_type_to_datatype(&ty));
+                let elem_dt = try!(datatype_from_descriptor(&ty));
                 let dims = len as hsize_t;
                 Ok(h5try_s!(H5Tarray_create2(elem_dt.id(), 1, &dims as *const hsize_t)))
             },
@@ -264,7 +264,7 @@ pub fn value_type_to_datatype(value_type: &TypeDescriptor) -> Result<Datatype> {
                 string_type(Some(size), H5T_cset_t::H5T_CSET_UTF8)
             },
             VarLenArray(ref ty) => {
-                let elem_dt = try!(value_type_to_datatype(&ty));
+                let elem_dt = try!(datatype_from_descriptor(&ty));
                 Ok(h5try_s!(H5Tvlen_create(elem_dt.id())))
             },
             VarLenAscii => {
@@ -281,7 +281,7 @@ pub fn value_type_to_datatype(value_type: &TypeDescriptor) -> Result<Datatype> {
 
 impl<T: H5Type> ToDatatype for T {
     fn to_datatype() -> Result<Datatype> {
-        value_type_to_datatype(&T::value_type())
+        datatype_from_descriptor(&T::type_descriptor())
     }
 }
 
@@ -292,11 +292,11 @@ pub mod tests {
 
 
     macro_rules! check_roundtrip {
-        ($ty:ty, $vt:expr) => ({
-            let vt = <$ty as H5Type>::value_type();
-            assert_eq!(vt, $vt);
+        ($ty:ty, $desc:expr) => ({
+            let desc = <$ty as H5Type>::type_descriptor();
+            assert_eq!(desc, $desc);
             let dt = <$ty as ToDatatype>::to_datatype().unwrap();
-            assert_eq!(vt, dt.to_value_type().unwrap());
+            assert_eq!(desc, dt.as_type_descriptor().unwrap());
         })
     }
 
@@ -320,7 +320,7 @@ pub mod tests {
         check_roundtrip!(VarLenAscii, TypeDescriptor::VarLenAscii);
         check_roundtrip!(VarLenUnicode, TypeDescriptor::VarLenUnicode);
         h5def!(#[repr(i64)] enum X { A = 1, B = -2 });
-        let x_vt = TypeDescriptor::Enum(EnumType {
+        let x_desc = TypeDescriptor::Enum(EnumType {
             size: IntSize::U8,
             signed: true,
             members: vec![
@@ -328,36 +328,36 @@ pub mod tests {
                 EnumMember { name: "B".into(), value: -2i64 as u64 },
             ]
         });
-        check_roundtrip!(X, x_vt);
+        check_roundtrip!(X, x_desc);
         h5def!(struct A { a: i64, b: u64 });
-        let a_vt = TypeDescriptor::Compound(CompoundType {
+        let a_desc = TypeDescriptor::Compound(CompoundType {
             fields: vec![
-                CompoundField { name: "a".into(), ty: i64::value_type(), offset: 0 },
-                CompoundField { name: "b".into(), ty: u64::value_type(), offset: 8 },
+                CompoundField { name: "a".into(), ty: i64::type_descriptor(), offset: 0 },
+                CompoundField { name: "b".into(), ty: u64::type_descriptor(), offset: 8 },
             ],
             size: 16,
         });
-        check_roundtrip!(A, a_vt);
+        check_roundtrip!(A, a_desc);
         h5def!(struct C {
             a: [X; 2],
             b: [[A; 4]; 32],
         });
-        let c_vt = TypeDescriptor::Compound(CompoundType {
+        let c_desc = TypeDescriptor::Compound(CompoundType {
             fields: vec![
                 CompoundField {
                     name: "a".into(),
-                    ty: TypeDescriptor::FixedArray(Box::new(x_vt), 2),
+                    ty: TypeDescriptor::FixedArray(Box::new(x_desc), 2),
                     offset: 0
                 },
                 CompoundField {
                     name: "b".into(),
                     ty: TypeDescriptor::FixedArray(Box::new(
-                        TypeDescriptor::FixedArray(Box::new(a_vt), 4)), 32),
+                        TypeDescriptor::FixedArray(Box::new(a_desc), 4)), 32),
                     offset: 2 * 8
                 },
             ],
             size: 2 * 8 + 4 * 32 * 16,
         });
-        check_roundtrip!(C, c_vt);
+        check_roundtrip!(C, c_desc);
     }
 }

@@ -109,81 +109,81 @@ impl TypeDescriptor {
 }
 
 pub unsafe trait H5Type {
-    fn value_type() -> TypeDescriptor;
+    fn type_descriptor() -> TypeDescriptor;
 }
 
-macro_rules! impl_value_type {
+macro_rules! impl_h5type {
     ($ty:ty, $variant:ident, $size:expr) => (
         unsafe impl H5Type for $ty {
-            fn value_type() -> TypeDescriptor {
+            fn type_descriptor() -> TypeDescriptor {
                 $crate::types::TypeDescriptor::$variant($size)
             }
         }
     )
 }
 
-impl_value_type!(i8, Integer, IntSize::U1);
-impl_value_type!(i16, Integer, IntSize::U2);
-impl_value_type!(i32, Integer, IntSize::U4);
-impl_value_type!(i64, Integer, IntSize::U8);
-impl_value_type!(u8, Unsigned, IntSize::U1);
-impl_value_type!(u16, Unsigned, IntSize::U2);
-impl_value_type!(u32, Unsigned, IntSize::U4);
-impl_value_type!(u64, Unsigned, IntSize::U8);
-impl_value_type!(f32, Float, FloatSize::U4);
-impl_value_type!(f64, Float, FloatSize::U8);
+impl_h5type!(i8, Integer, IntSize::U1);
+impl_h5type!(i16, Integer, IntSize::U2);
+impl_h5type!(i32, Integer, IntSize::U4);
+impl_h5type!(i64, Integer, IntSize::U8);
+impl_h5type!(u8, Unsigned, IntSize::U1);
+impl_h5type!(u16, Unsigned, IntSize::U2);
+impl_h5type!(u32, Unsigned, IntSize::U4);
+impl_h5type!(u64, Unsigned, IntSize::U8);
+impl_h5type!(f32, Float, FloatSize::U4);
+impl_h5type!(f64, Float, FloatSize::U8);
 
 #[cfg(target_pointer_width = "32")]
-impl_value_type!(isize, Integer, IntSize::U4);
+impl_h5type!(isize, Integer, IntSize::U4);
 #[cfg(target_pointer_width = "32")]
-impl_value_type!(usize, Unsigned, IntSize::U4);
+impl_h5type!(usize, Unsigned, IntSize::U4);
 
 #[cfg(target_pointer_width = "64")]
-impl_value_type!(isize, Integer, IntSize::U8);
+impl_h5type!(isize, Integer, IntSize::U8);
 #[cfg(target_pointer_width = "64")]
-impl_value_type!(usize, Unsigned, IntSize::U8);
+impl_h5type!(usize, Unsigned, IntSize::U8);
 
 unsafe impl H5Type for bool {
-    fn value_type() -> TypeDescriptor {
+    fn type_descriptor() -> TypeDescriptor {
         TypeDescriptor::Boolean
     }
 }
 
 unsafe impl<T: Array<Item=I>, I: H5Type> H5Type for T {
-    fn value_type() -> TypeDescriptor {
+    fn type_descriptor() -> TypeDescriptor {
         TypeDescriptor::FixedArray(
-            Box::new(<I as H5Type>::value_type()),
+            Box::new(<I as H5Type>::type_descriptor()),
             <T as Array>::capacity()
         )
     }
 }
 
 unsafe impl<T: Copy + H5Type> H5Type for VarLenArray<T> {
-    fn value_type() -> TypeDescriptor {
-        TypeDescriptor::VarLenArray(Box::new(<T as H5Type>::value_type()))
+    fn type_descriptor() -> TypeDescriptor {
+        TypeDescriptor::VarLenArray(Box::new(<T as H5Type>::type_descriptor()))
     }
 }
 
 unsafe impl<A: Array<Item=u8>> H5Type for FixedAscii<A> {
-    fn value_type() -> TypeDescriptor {
+    fn type_descriptor() -> TypeDescriptor {
         TypeDescriptor::FixedAscii(A::capacity())
     }
 }
 
 unsafe impl<A: Array<Item=u8>> H5Type for FixedUnicode<A> {
-    fn value_type() -> TypeDescriptor {
+    fn type_descriptor() -> TypeDescriptor {
         TypeDescriptor::FixedUnicode(A::capacity())
     }
 }
 
 unsafe impl H5Type for VarLenAscii {
-    fn value_type() -> TypeDescriptor {
+    fn type_descriptor() -> TypeDescriptor {
         TypeDescriptor::VarLenAscii
     }
 }
 
 unsafe impl H5Type for VarLenUnicode {
-    fn value_type() -> TypeDescriptor {
+    fn type_descriptor() -> TypeDescriptor {
         TypeDescriptor::VarLenUnicode
     }
 }
@@ -198,57 +198,57 @@ pub mod tests {
 
     #[test]
     pub fn test_scalar_types() {
-        assert_eq!(bool::value_type(), VT::Boolean);
-        assert_eq!(i8::value_type(), VT::Integer(IntSize::U1));
-        assert_eq!(i16::value_type(), VT::Integer(IntSize::U2));
-        assert_eq!(i32::value_type(), VT::Integer(IntSize::U4));
-        assert_eq!(i64::value_type(), VT::Integer(IntSize::U8));
-        assert_eq!(u8::value_type(), VT::Unsigned(IntSize::U1));
-        assert_eq!(u16::value_type(), VT::Unsigned(IntSize::U2));
-        assert_eq!(u32::value_type(), VT::Unsigned(IntSize::U4));
-        assert_eq!(u64::value_type(), VT::Unsigned(IntSize::U8));
-        assert_eq!(f32::value_type(), VT::Float(FloatSize::U4));
-        assert_eq!(f64::value_type(), VT::Float(FloatSize::U8));
+        assert_eq!(bool::type_descriptor(), VT::Boolean);
+        assert_eq!(i8::type_descriptor(), VT::Integer(IntSize::U1));
+        assert_eq!(i16::type_descriptor(), VT::Integer(IntSize::U2));
+        assert_eq!(i32::type_descriptor(), VT::Integer(IntSize::U4));
+        assert_eq!(i64::type_descriptor(), VT::Integer(IntSize::U8));
+        assert_eq!(u8::type_descriptor(), VT::Unsigned(IntSize::U1));
+        assert_eq!(u16::type_descriptor(), VT::Unsigned(IntSize::U2));
+        assert_eq!(u32::type_descriptor(), VT::Unsigned(IntSize::U4));
+        assert_eq!(u64::type_descriptor(), VT::Unsigned(IntSize::U8));
+        assert_eq!(f32::type_descriptor(), VT::Float(FloatSize::U4));
+        assert_eq!(f64::type_descriptor(), VT::Float(FloatSize::U8));
 
-        assert_eq!(bool::value_type().size(), 1);
-        assert_eq!(i16::value_type().size(), 2);
-        assert_eq!(u32::value_type().size(), 4);
-        assert_eq!(f64::value_type().size(), 8);
+        assert_eq!(bool::type_descriptor().size(), 1);
+        assert_eq!(i16::type_descriptor().size(), 2);
+        assert_eq!(u32::type_descriptor().size(), 4);
+        assert_eq!(f64::type_descriptor().size(), 8);
     }
 
     #[test]
     #[cfg(target_pointer_width = "32")]
     pub fn test_ptr_sized_ints() {
-        assert_eq!(isize::value_type(), VT::Integer(IntSize::U4));
-        assert_eq!(usize::value_type(), VT::Unsigned(IntSize::U4));
+        assert_eq!(isize::type_descriptor(), VT::Integer(IntSize::U4));
+        assert_eq!(usize::type_descriptor(), VT::Unsigned(IntSize::U4));
 
-        assert_eq!(usize::value_type().size(), 4);
+        assert_eq!(usize::type_descriptor().size(), 4);
     }
 
     #[test]
     #[cfg(target_pointer_width = "64")]
     pub fn test_ptr_sized_ints() {
-        assert_eq!(isize::value_type(), VT::Integer(IntSize::U8));
-        assert_eq!(usize::value_type(), VT::Unsigned(IntSize::U8));
+        assert_eq!(isize::type_descriptor(), VT::Integer(IntSize::U8));
+        assert_eq!(usize::type_descriptor(), VT::Unsigned(IntSize::U8));
 
-        assert_eq!(usize::value_type().size(), 8);
+        assert_eq!(usize::type_descriptor().size(), 8);
     }
 
     #[test]
     pub fn test_fixed_array() {
         type S = [T; 4];
         type T = [u32; 256];
-        assert_eq!(T::value_type(),
+        assert_eq!(T::type_descriptor(),
                    VT::FixedArray(Box::new(VT::Unsigned(IntSize::U4)), 256));
-        assert_eq!(S::value_type(),
-                   VT::FixedArray(Box::new(T::value_type()), 4));
+        assert_eq!(S::type_descriptor(),
+                   VT::FixedArray(Box::new(T::type_descriptor()), 4));
     }
 
     #[test]
     pub fn test_varlen_array() {
         type S = VarLenArray<u16>;
-        assert_eq!(S::value_type(),
-                   VT::VarLenArray(Box::new(u16::value_type())));
+        assert_eq!(S::type_descriptor(),
+                   VT::VarLenArray(Box::new(u16::type_descriptor())));
         assert_eq!(mem::size_of::<VarLenArray<u8>>(),
                    mem::size_of::<hvl_t>());
     }
@@ -257,9 +257,9 @@ pub mod tests {
     pub fn test_string_types() {
         type FA = FixedAscii<[u8; 16]>;
         type FU = FixedUnicode<[u8; 32]>;
-        assert_eq!(FA::value_type(), VT::FixedAscii(16));
-        assert_eq!(FU::value_type(), VT::FixedUnicode(32));
-        assert_eq!(VarLenAscii::value_type(), VT::VarLenAscii);
-        assert_eq!(VarLenUnicode::value_type(), VT::VarLenUnicode);
+        assert_eq!(FA::type_descriptor(), VT::FixedAscii(16));
+        assert_eq!(FU::type_descriptor(), VT::FixedUnicode(32));
+        assert_eq!(VarLenAscii::type_descriptor(), VT::VarLenAscii);
+        assert_eq!(VarLenUnicode::type_descriptor(), VT::VarLenUnicode);
     }
 }
