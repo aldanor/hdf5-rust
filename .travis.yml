@@ -23,7 +23,7 @@ script:
 - |
   cd $TRAVIS_BUILD_DIR &&
   case $TRAVIS_RUST_VERSION in
-    nightly)  cargo build -v --features lint &&
+    nightly)  cargo build -v --features clippy &&
               cargo test -v --no-run &&
               cargo test -v ;;
     *)        cargo build -v &&

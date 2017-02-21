@@ -16,7 +16,7 @@ environment:
     - CHANNEL: beta
       FEATURES: ""
     - CHANNEL: nightly
-      FEATURES: "lint"
+      FEATURES: "clippy"
 install:
   - ps: Start-FileDownload "https://static.rust-lang.org/dist/rust-${env:CHANNEL}-${env:TARGET}.msi"
   - ps: Start-Process -FilePath msiexec -ArgumentList /i, rust-${env:CHANNEL}-${env:TARGET}.msi, INSTALLDIR="C:\Rust", /quiet -Wait

@@ -1,8 +1,8 @@
-#![cfg_attr(feature = "lint", feature(plugin))]
-#![cfg_attr(feature = "lint", plugin(clippy))]
-#![cfg_attr(feature = "lint", allow(block_in_if_condition_stmt))]
-#![cfg_attr(feature = "lint", allow(needless_return))]
-#![cfg_attr(all(feature = "lint", test), allow(cyclomatic_complexity))]
+#![cfg_attr(feature = "clippy", feature(plugin))]
+#![cfg_attr(feature = "clippy", plugin(clippy))]
+#![cfg_attr(feature = "clippy", allow(block_in_if_condition_stmt))]
+#![cfg_attr(feature = "clippy", allow(needless_return))]
+#![cfg_attr(all(feature = "clippy", test), allow(cyclomatic_complexity))]
 #![cfg_attr(not(test), allow(dead_code))]
 
 pub use container::Container;

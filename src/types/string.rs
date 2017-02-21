@@ -320,7 +320,7 @@ impl VarLenUnicode {
         Self::from_bytes(s.borrow().as_bytes())
     }
 
-    #[cfg_attr(feature = "lint", allow(should_implement_trait))]
+    #[cfg_attr(feature = "clippy", allow(should_implement_trait))]
     pub fn from_str<S: Borrow<str>>(s: S) -> Result<Self> {
         let s = s.borrow();
         ensure!(s.chars().all(|c| c != '\0'),
@@ -502,7 +502,7 @@ impl<A: Array<Item=u8>> FixedUnicode<A> {
         Self::from_bytes(s.borrow().as_bytes())
     }
 
-    #[cfg_attr(feature = "lint", allow(should_implement_trait))]
+    #[cfg_attr(feature = "clippy", allow(should_implement_trait))]
     pub fn from_str<S: Borrow<str>>(s: S) -> Result<Self> {
         let s = s.borrow();
         ensure!(s.as_bytes().len() <= A::capacity(),
