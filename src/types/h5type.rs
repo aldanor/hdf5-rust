@@ -52,11 +52,11 @@ pub struct EnumType {
 }
 
 impl EnumType {
-    pub fn base_type(&self) -> ValueType {
+    pub fn base_type(&self) -> TypeDescriptor {
         if self.signed {
-            ValueType::Integer(self.size)
+            TypeDescriptor::Integer(self.size)
         } else {
-            ValueType::Unsigned(self.size)
+            TypeDescriptor::Unsigned(self.size)
         }
     }
 }
@@ -64,7 +64,7 @@ impl EnumType {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CompoundField {
     pub name: String,
-    pub ty: ValueType,
+    pub ty: TypeDescriptor,
     pub offset: usize,
 }
 
@@ -75,24 +75,24 @@ pub struct CompoundType {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum ValueType {
+pub enum TypeDescriptor {
     Integer(IntSize),
     Unsigned(IntSize),
     Float(FloatSize),
     Boolean,
     Enum(EnumType),
     Compound(CompoundType),
-    FixedArray(Box<ValueType>, usize),
+    FixedArray(Box<TypeDescriptor>, usize),
     FixedAscii(usize),
     FixedUnicode(usize),
-    VarLenArray(Box<ValueType>),
+    VarLenArray(Box<TypeDescriptor>),
     VarLenAscii,
     VarLenUnicode,
 }
 
-impl ValueType {
+impl TypeDescriptor {
     pub fn size(&self) -> usize {
-        use self::ValueType::*;
+        use self::TypeDescriptor::*;
 
         match *self {
             Integer(size) | Unsigned(size) => size as usize,
@@ -109,14 +109,14 @@ impl ValueType {
 }
 
 pub unsafe trait H5Type {
-    fn value_type() -> ValueType;
+    fn value_type() -> TypeDescriptor;
 }
 
 macro_rules! impl_value_type {
     ($ty:ty, $variant:ident, $size:expr) => (
         unsafe impl H5Type for $ty {
-            fn value_type() -> ValueType {
-                $crate::types::ValueType::$variant($size)
+            fn value_type() -> TypeDescriptor {
+                $crate::types::TypeDescriptor::$variant($size)
             }
         }
     )
@@ -144,14 +144,14 @@ impl_value_type!(isize, Integer, IntSize::U8);
 impl_value_type!(usize, Unsigned, IntSize::U8);
 
 unsafe impl H5Type for bool {
-    fn value_type() -> ValueType {
-        ValueType::Boolean
+    fn value_type() -> TypeDescriptor {
+        TypeDescriptor::Boolean
     }
 }
 
 unsafe impl<T: Array<Item=I>, I: H5Type> H5Type for T {
-    fn value_type() -> ValueType {
-        ValueType::FixedArray(
+    fn value_type() -> TypeDescriptor {
+        TypeDescriptor::FixedArray(
             Box::new(<I as H5Type>::value_type()),
             <T as Array>::capacity()
         )
@@ -159,38 +159,38 @@ unsafe impl<T: Array<Item=I>, I: H5Type> H5Type for T {
 }
 
 unsafe impl<T: Copy + H5Type> H5Type for VarLenArray<T> {
-    fn value_type() -> ValueType {
-        ValueType::VarLenArray(Box::new(<T as H5Type>::value_type()))
+    fn value_type() -> TypeDescriptor {
+        TypeDescriptor::VarLenArray(Box::new(<T as H5Type>::value_type()))
     }
 }
 
 unsafe impl<A: Array<Item=u8>> H5Type for FixedAscii<A> {
-    fn value_type() -> ValueType {
-        ValueType::FixedAscii(A::capacity())
+    fn value_type() -> TypeDescriptor {
+        TypeDescriptor::FixedAscii(A::capacity())
     }
 }
 
 unsafe impl<A: Array<Item=u8>> H5Type for FixedUnicode<A> {
-    fn value_type() -> ValueType {
-        ValueType::FixedUnicode(A::capacity())
+    fn value_type() -> TypeDescriptor {
+        TypeDescriptor::FixedUnicode(A::capacity())
     }
 }
 
 unsafe impl H5Type for VarLenAscii {
-    fn value_type() -> ValueType {
-        ValueType::VarLenAscii
+    fn value_type() -> TypeDescriptor {
+        TypeDescriptor::VarLenAscii
     }
 }
 
 unsafe impl H5Type for VarLenUnicode {
-    fn value_type() -> ValueType {
-        ValueType::VarLenUnicode
+    fn value_type() -> TypeDescriptor {
+        TypeDescriptor::VarLenUnicode
     }
 }
 
 #[cfg(test)]
 pub mod tests {
-    use super::ValueType as VT;
+    use super::TypeDescriptor as VT;
     use super::{IntSize, FloatSize, H5Type};
     use types::{VarLenArray, FixedAscii, FixedUnicode, VarLenAscii, VarLenUnicode};
     use std::mem;

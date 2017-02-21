@@ -42,10 +42,10 @@ macro_rules! h5def {
 
     (@impl_enum $s:ident($t:ident) { $($i:ident = $v:expr),+ }) => (
         unsafe impl $crate::types::H5Type for $s {
-            fn value_type() -> $crate::types::ValueType {
-                use $crate::types::{ValueType, EnumType, EnumMember, IntSize};
+            fn value_type() -> $crate::types::TypeDescriptor {
+                use $crate::types::{TypeDescriptor, EnumType, EnumMember, IntSize};
 
-                ValueType::Enum(
+                TypeDescriptor::Enum(
                     EnumType {
                         size: match ::std::mem::size_of::<$t>() {
                             1 => IntSize::U1, 2 => IntSize::U2, 4 => IntSize::U4, 8 => IntSize::U8,
@@ -65,11 +65,11 @@ macro_rules! h5def {
 
     (@impl_struct $s:ident { $($i:ident: $t:ty),+ }) => (
         unsafe impl $crate::types::H5Type for $s {
-            fn value_type() -> $crate::types::ValueType {
-                use $crate::types::{ValueType, CompoundType, CompoundField, H5Type};
+            fn value_type() -> $crate::types::TypeDescriptor {
+                use $crate::types::{TypeDescriptor, CompoundType, CompoundField, H5Type};
 
                 let base = 0usize as *const $s;
-                ValueType::Compound(
+                TypeDescriptor::Compound(
                     CompoundType {
                         fields: vec![$(
                             CompoundField {
@@ -88,7 +88,7 @@ macro_rules! h5def {
 #[cfg(test)]
 pub mod tests {
     use types::h5type::*;
-    use types::ValueType as VT;
+    use types::TypeDescriptor as VT;
 
     h5def!(#[repr(i64)] enum X { A = 1, B = -2 });
     h5def!(#[repr(u8)] #[derive(Debug)] pub enum Y { A = 1, B = 2, });

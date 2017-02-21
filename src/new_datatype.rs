@@ -2,7 +2,7 @@ use error::Result;
 use handle::{Handle, ID, FromID, get_id_type};
 use object::Object;
 use types::{
-    ValueType, H5Type, IntSize, FloatSize, EnumMember,
+    TypeDescriptor, H5Type, IntSize, FloatSize, EnumMember,
     EnumType, CompoundField, CompoundType
 };
 use util::{to_cstring, string_from_cstr};
@@ -63,10 +63,10 @@ impl FromID for Datatype {
 
 impl Object for Datatype { }
 
-fn datatype_to_value_type(datatype: &Datatype) -> Result<ValueType> {
+fn datatype_to_value_type(datatype: &Datatype) -> Result<TypeDescriptor> {
     use ffi::h5t::H5T_class_t::*;
     use ffi::h5t::H5T_sign_t::*;
-    use types::ValueType::*;
+    use types::TypeDescriptor::*;
 
     h5lock!({
         let id = datatype.id();
@@ -81,15 +81,15 @@ fn datatype_to_value_type(datatype: &Datatype) -> Result<ValueType> {
                 let size = try!(IntSize::from_int(size)
                                 .ok_or("Invalid size of integer datatype"));
                 Ok(if signed {
-                    ValueType::Integer(size)
+                    TypeDescriptor::Integer(size)
                 } else {
-                    ValueType::Unsigned(size)
+                    TypeDescriptor::Unsigned(size)
                 })
             },
             H5T_FLOAT => {
                 let size = try!(FloatSize::from_int(size)
                                 .ok_or("Invalid size of float datatype"));
-                Ok(ValueType::Float(size))
+                Ok(TypeDescriptor::Float(size))
             },
             H5T_ENUM => {
                 let mut members: Vec<EnumMember> = Vec::new();
@@ -113,9 +113,9 @@ fn datatype_to_value_type(datatype: &Datatype) -> Result<ValueType> {
                     EnumMember { name: "TRUE".to_owned(), value: 1 },
                 ];
                 if size == IntSize::U1 && members == bool_members {
-                    Ok(ValueType::Boolean)
+                    Ok(TypeDescriptor::Boolean)
                 } else {
-                    Ok(ValueType::Enum(
+                    Ok(TypeDescriptor::Enum(
                         EnumType { size: size, signed: signed, members : members }
                     ))
                 }
@@ -133,7 +133,7 @@ fn datatype_to_value_type(datatype: &Datatype) -> Result<ValueType> {
                     });
                     ::libc::free(name as *mut c_void);
                 }
-                Ok(ValueType::Compound(CompoundType { fields: fields, size: size }))
+                Ok(TypeDescriptor::Compound(CompoundType { fields: fields, size: size }))
             },
             H5T_ARRAY => {
                 let base_dt = try!(Datatype::from_id(H5Tget_super(id)));
@@ -141,7 +141,7 @@ fn datatype_to_value_type(datatype: &Datatype) -> Result<ValueType> {
                 if ndims == 1 {
                     let mut len: hsize_t = 0;
                     h5try_s!(H5Tget_array_dims2(id, &mut len as *mut hsize_t));
-                    Ok(ValueType::FixedArray(
+                    Ok(TypeDescriptor::FixedArray(
                         Box::new(try!(base_dt.to_value_type())), len as usize
                     ))
                 } else {
@@ -152,16 +152,16 @@ fn datatype_to_value_type(datatype: &Datatype) -> Result<ValueType> {
                 let is_variable = h5try_s!(H5Tis_variable_str(id)) == 1;
                 let encoding = h5lock_s!(H5Tget_cset(id));
                 match (is_variable, encoding) {
-                    (false, H5T_cset_t::H5T_CSET_ASCII) => Ok(ValueType::FixedAscii(size)),
-                    (false, H5T_cset_t::H5T_CSET_UTF8) => Ok(ValueType::FixedUnicode(size)),
-                    (true, H5T_cset_t::H5T_CSET_ASCII) => Ok(ValueType::VarLenAscii),
-                    (true, H5T_cset_t::H5T_CSET_UTF8) => Ok(ValueType::VarLenUnicode),
+                    (false, H5T_cset_t::H5T_CSET_ASCII) => Ok(TypeDescriptor::FixedAscii(size)),
+                    (false, H5T_cset_t::H5T_CSET_UTF8) => Ok(TypeDescriptor::FixedUnicode(size)),
+                    (true, H5T_cset_t::H5T_CSET_ASCII) => Ok(TypeDescriptor::VarLenAscii),
+                    (true, H5T_cset_t::H5T_CSET_UTF8) => Ok(TypeDescriptor::VarLenUnicode),
                     _ => Err("Invalid encoding for string datatype".into())
                 }
             },
             H5T_VLEN => {
                 let base_dt = try!(Datatype::from_id(H5Tget_super(id)));
-                Ok(ValueType::VarLenArray(Box::new(try!(base_dt.to_value_type()))))
+                Ok(TypeDescriptor::VarLenArray(Box::new(try!(base_dt.to_value_type()))))
             },
             _ => Err("Unsupported datatype class".into())
         }
@@ -169,7 +169,7 @@ fn datatype_to_value_type(datatype: &Datatype) -> Result<ValueType> {
 }
 
 impl Datatype {
-    pub fn to_value_type(&self) -> Result<ValueType> {
+    pub fn to_value_type(&self) -> Result<TypeDescriptor> {
         datatype_to_value_type(self)
     }
 }
@@ -188,8 +188,8 @@ macro_rules! be_le {
     ($be:expr, $le:expr) => (h5try_s!(H5Tcopy(*$le)))
 }
 
-pub fn value_type_to_datatype(value_type: &ValueType) -> Result<Datatype> {
-    use types::ValueType::*;
+pub fn value_type_to_datatype(value_type: &TypeDescriptor) -> Result<Datatype> {
+    use types::TypeDescriptor::*;
 
     unsafe fn string_type(size: Option<usize>, encoding: H5T_cset_t) -> Result<hid_t> {
         let string_id = h5try_s!(H5Tcopy(*H5T_C_S1));
@@ -302,25 +302,25 @@ pub mod tests {
 
     #[test]
     pub fn test_datatype_roundtrip() {
-        check_roundtrip!(i8, ValueType::Integer(IntSize::U1));
-        check_roundtrip!(i16, ValueType::Integer(IntSize::U2));
-        check_roundtrip!(i32, ValueType::Integer(IntSize::U4));
-        check_roundtrip!(i64, ValueType::Integer(IntSize::U8));
-        check_roundtrip!(u8, ValueType::Unsigned(IntSize::U1));
-        check_roundtrip!(u16, ValueType::Unsigned(IntSize::U2));
-        check_roundtrip!(u32, ValueType::Unsigned(IntSize::U4));
-        check_roundtrip!(u64, ValueType::Unsigned(IntSize::U8));
-        check_roundtrip!(f32, ValueType::Float(FloatSize::U4));
-        check_roundtrip!(f64, ValueType::Float(FloatSize::U8));
-        check_roundtrip!(bool, ValueType::Boolean);
-        check_roundtrip!([bool; 5], ValueType::FixedArray(Box::new(ValueType::Boolean), 5));
-        check_roundtrip!(VarLenArray<bool>, ValueType::VarLenArray(Box::new(ValueType::Boolean)));
-        check_roundtrip!(FixedAscii<[_; 5]>, ValueType::FixedAscii(5));
-        check_roundtrip!(FixedUnicode<[_; 5]>, ValueType::FixedUnicode(5));
-        check_roundtrip!(VarLenAscii, ValueType::VarLenAscii);
-        check_roundtrip!(VarLenUnicode, ValueType::VarLenUnicode);
+        check_roundtrip!(i8, TypeDescriptor::Integer(IntSize::U1));
+        check_roundtrip!(i16, TypeDescriptor::Integer(IntSize::U2));
+        check_roundtrip!(i32, TypeDescriptor::Integer(IntSize::U4));
+        check_roundtrip!(i64, TypeDescriptor::Integer(IntSize::U8));
+        check_roundtrip!(u8, TypeDescriptor::Unsigned(IntSize::U1));
+        check_roundtrip!(u16, TypeDescriptor::Unsigned(IntSize::U2));
+        check_roundtrip!(u32, TypeDescriptor::Unsigned(IntSize::U4));
+        check_roundtrip!(u64, TypeDescriptor::Unsigned(IntSize::U8));
+        check_roundtrip!(f32, TypeDescriptor::Float(FloatSize::U4));
+        check_roundtrip!(f64, TypeDescriptor::Float(FloatSize::U8));
+        check_roundtrip!(bool, TypeDescriptor::Boolean);
+        check_roundtrip!([bool; 5], TypeDescriptor::FixedArray(Box::new(TypeDescriptor::Boolean), 5));
+        check_roundtrip!(VarLenArray<bool>, TypeDescriptor::VarLenArray(Box::new(TypeDescriptor::Boolean)));
+        check_roundtrip!(FixedAscii<[_; 5]>, TypeDescriptor::FixedAscii(5));
+        check_roundtrip!(FixedUnicode<[_; 5]>, TypeDescriptor::FixedUnicode(5));
+        check_roundtrip!(VarLenAscii, TypeDescriptor::VarLenAscii);
+        check_roundtrip!(VarLenUnicode, TypeDescriptor::VarLenUnicode);
         h5def!(#[repr(i64)] enum X { A = 1, B = -2 });
-        let x_vt = ValueType::Enum(EnumType {
+        let x_vt = TypeDescriptor::Enum(EnumType {
             size: IntSize::U8,
             signed: true,
             members: vec![
@@ -330,7 +330,7 @@ pub mod tests {
         });
         check_roundtrip!(X, x_vt);
         h5def!(struct A { a: i64, b: u64 });
-        let a_vt = ValueType::Compound(CompoundType {
+        let a_vt = TypeDescriptor::Compound(CompoundType {
             fields: vec![
                 CompoundField { name: "a".into(), ty: i64::value_type(), offset: 0 },
                 CompoundField { name: "b".into(), ty: u64::value_type(), offset: 8 },
@@ -342,17 +342,17 @@ pub mod tests {
             a: [X; 2],
             b: [[A; 4]; 32],
         });
-        let c_vt = ValueType::Compound(CompoundType {
+        let c_vt = TypeDescriptor::Compound(CompoundType {
             fields: vec![
                 CompoundField {
                     name: "a".into(),
-                    ty: ValueType::FixedArray(Box::new(x_vt), 2),
+                    ty: TypeDescriptor::FixedArray(Box::new(x_vt), 2),
                     offset: 0
                 },
                 CompoundField {
                     name: "b".into(),
-                    ty: ValueType::FixedArray(Box::new(
-                        ValueType::FixedArray(Box::new(a_vt), 4)), 32),
+                    ty: TypeDescriptor::FixedArray(Box::new(
+                        TypeDescriptor::FixedArray(Box::new(a_vt), 4)), 32),
                     offset: 2 * 8
                 },
             ],
