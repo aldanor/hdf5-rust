@@ -4,7 +4,7 @@
 //! they can be then glob-imported all at once:
 //!
 //! ```ignore
-//! use hdf5_rs::prelude::*;
+//! use h5::prelude::*;
 //! ```
 //! This module provides reexports of such traits as `Object`, `Location` and `Container` and
 //! does not expose any structures or functions.

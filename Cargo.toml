@@ -15,6 +15,9 @@ exclude = [
 ]
 build = "build.rs"
 
+[lib]
+name = "h5"
+
 [features]
 default = []
 
