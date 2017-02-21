@@ -2,7 +2,7 @@ use std::mem;
 
 use ffi::h5t::hvl_t;
 
-use types::{Array, FixedAscii, FixedUnicode, VarLenAscii, VarLenUnicode};
+use types::{Array, VarLenArray, FixedAscii, FixedUnicode, VarLenAscii, VarLenUnicode};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum IntSize { U1 = 1, U2 = 2, U4 = 4, U8 = 8 }
@@ -158,6 +158,12 @@ unsafe impl<T: Array<Item=I>, I: ToValueType> ToValueType for T {
     }
 }
 
+unsafe impl<T: Copy + ToValueType> ToValueType for VarLenArray<T> {
+    fn value_type() -> ValueType {
+        ValueType::VarLenArray(Box::new(<T as ToValueType>::value_type()))
+    }
+}
+
 unsafe impl<A: Array<Item=u8>> ToValueType for FixedAscii<A> {
     fn value_type() -> ValueType {
         ValueType::FixedAscii(A::capacity())
@@ -186,6 +192,9 @@ unsafe impl ToValueType for VarLenUnicode {
 pub mod tests {
     use super::*;
     use super::ValueType as VT;
+    use types::VarLenArray;
+    use std::mem;
+    use ffi::h5t::hvl_t;
 
     #[test]
     pub fn test_scalar_types() {
@@ -231,5 +240,15 @@ pub mod tests {
         type T = [u32; 256];
         assert_eq!(T::value_type(), VT::FixedArray(Box::new(VT::Unsigned(IntSize::U4)), 256));
         assert_eq!(S::value_type(), VT::FixedArray(Box::new(T::value_type()), 4));
+    }
+
+    #[test]
+    pub fn test_var_len_array() {
+        type S = VarLenArray<u16>;
+
+        assert_eq!(S::value_type(),
+                   VT::VarLenArray(Box::new(u16::value_type())));
+        assert_eq!(mem::size_of::<VarLenArray<u8>>(),
+                   mem::size_of::<hvl_t>());
     }
 }
