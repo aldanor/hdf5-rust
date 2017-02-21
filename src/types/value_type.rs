@@ -190,9 +190,9 @@ unsafe impl ToValueType for VarLenUnicode {
 
 #[cfg(test)]
 pub mod tests {
-    use super::*;
     use super::ValueType as VT;
-    use types::VarLenArray;
+    use super::{IntSize, FloatSize, ToValueType};
+    use types::{VarLenArray, FixedAscii, FixedUnicode, VarLenAscii, VarLenUnicode};
     use std::mem;
     use ffi::h5t::hvl_t;
 
@@ -235,20 +235,31 @@ pub mod tests {
     }
 
     #[test]
-    pub fn test_fixed_size_array() {
+    pub fn test_fixed_array() {
         type S = [T; 4];
         type T = [u32; 256];
-        assert_eq!(T::value_type(), VT::FixedArray(Box::new(VT::Unsigned(IntSize::U4)), 256));
-        assert_eq!(S::value_type(), VT::FixedArray(Box::new(T::value_type()), 4));
+        assert_eq!(T::value_type(),
+                   VT::FixedArray(Box::new(VT::Unsigned(IntSize::U4)), 256));
+        assert_eq!(S::value_type(),
+                   VT::FixedArray(Box::new(T::value_type()), 4));
     }
 
     #[test]
-    pub fn test_var_len_array() {
+    pub fn test_varlen_array() {
         type S = VarLenArray<u16>;
-
         assert_eq!(S::value_type(),
                    VT::VarLenArray(Box::new(u16::value_type())));
         assert_eq!(mem::size_of::<VarLenArray<u8>>(),
                    mem::size_of::<hvl_t>());
+    }
+
+    #[test]
+    pub fn test_string_types() {
+        type FA = FixedAscii<[u8; 16]>;
+        type FU = FixedUnicode<[u8; 32]>;
+        assert_eq!(FA::value_type(), VT::FixedAscii(16));
+        assert_eq!(FU::value_type(), VT::FixedUnicode(32));
+        assert_eq!(VarLenAscii::value_type(), VT::VarLenAscii);
+        assert_eq!(VarLenUnicode::value_type(), VT::VarLenUnicode);
     }
 }
