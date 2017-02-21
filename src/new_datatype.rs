@@ -183,7 +183,7 @@ macro_rules! be_le {
     ($be:expr, $le:expr) => (h5try_s!(H5Tcopy(*$le)))
 }
 
-fn value_type_to_datatype(value_type: &ValueType) -> Result<Datatype> {
+pub fn value_type_to_datatype(value_type: &ValueType) -> Result<Datatype> {
     use types::ValueType::*;
 
     let datatype_id: Result<_> = h5lock!({
