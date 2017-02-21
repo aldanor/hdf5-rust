@@ -2,7 +2,7 @@ use error::Result;
 use handle::{Handle, ID, FromID, get_id_type};
 use object::Object;
 use types::{
-    ValueType, ToValueType, IntSize, FloatSize, EnumMember,
+    ValueType, H5Type, IntSize, FloatSize, EnumMember,
     EnumType, CompoundField, CompoundType
 };
 use util::{to_cstring, string_from_cstr};
@@ -279,7 +279,7 @@ pub fn value_type_to_datatype(value_type: &ValueType) -> Result<Datatype> {
     Datatype::from_id(try!(datatype_id))
 }
 
-impl<T: ToValueType> ToDatatype for T {
+impl<T: H5Type> ToDatatype for T {
     fn to_datatype() -> Result<Datatype> {
         value_type_to_datatype(&T::value_type())
     }
@@ -293,7 +293,7 @@ pub mod tests {
 
     macro_rules! check_roundtrip {
         ($ty:ty, $vt:expr) => ({
-            let vt = <$ty as ToValueType>::value_type();
+            let vt = <$ty as H5Type>::value_type();
             assert_eq!(vt, $vt);
             let dt = <$ty as ToDatatype>::to_datatype().unwrap();
             assert_eq!(vt, dt.to_value_type().unwrap());

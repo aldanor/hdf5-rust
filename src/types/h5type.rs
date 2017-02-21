@@ -108,13 +108,13 @@ impl ValueType {
     }
 }
 
-pub unsafe trait ToValueType {
+pub unsafe trait H5Type {
     fn value_type() -> ValueType;
 }
 
 macro_rules! impl_value_type {
     ($ty:ty, $variant:ident, $size:expr) => (
-        unsafe impl ToValueType for $ty {
+        unsafe impl H5Type for $ty {
             fn value_type() -> ValueType {
                 $crate::types::ValueType::$variant($size)
             }
@@ -143,46 +143,46 @@ impl_value_type!(isize, Integer, IntSize::U8);
 #[cfg(target_pointer_width = "64")]
 impl_value_type!(usize, Unsigned, IntSize::U8);
 
-unsafe impl ToValueType for bool {
+unsafe impl H5Type for bool {
     fn value_type() -> ValueType {
         ValueType::Boolean
     }
 }
 
-unsafe impl<T: Array<Item=I>, I: ToValueType> ToValueType for T {
+unsafe impl<T: Array<Item=I>, I: H5Type> H5Type for T {
     fn value_type() -> ValueType {
         ValueType::FixedArray(
-            Box::new(<I as ToValueType>::value_type()),
+            Box::new(<I as H5Type>::value_type()),
             <T as Array>::capacity()
         )
     }
 }
 
-unsafe impl<T: Copy + ToValueType> ToValueType for VarLenArray<T> {
+unsafe impl<T: Copy + H5Type> H5Type for VarLenArray<T> {
     fn value_type() -> ValueType {
-        ValueType::VarLenArray(Box::new(<T as ToValueType>::value_type()))
+        ValueType::VarLenArray(Box::new(<T as H5Type>::value_type()))
     }
 }
 
-unsafe impl<A: Array<Item=u8>> ToValueType for FixedAscii<A> {
+unsafe impl<A: Array<Item=u8>> H5Type for FixedAscii<A> {
     fn value_type() -> ValueType {
         ValueType::FixedAscii(A::capacity())
     }
 }
 
-unsafe impl<A: Array<Item=u8>> ToValueType for FixedUnicode<A> {
+unsafe impl<A: Array<Item=u8>> H5Type for FixedUnicode<A> {
     fn value_type() -> ValueType {
         ValueType::FixedUnicode(A::capacity())
     }
 }
 
-unsafe impl ToValueType for VarLenAscii {
+unsafe impl H5Type for VarLenAscii {
     fn value_type() -> ValueType {
         ValueType::VarLenAscii
     }
 }
 
-unsafe impl ToValueType for VarLenUnicode {
+unsafe impl H5Type for VarLenUnicode {
     fn value_type() -> ValueType {
         ValueType::VarLenUnicode
     }
@@ -191,7 +191,7 @@ unsafe impl ToValueType for VarLenUnicode {
 #[cfg(test)]
 pub mod tests {
     use super::ValueType as VT;
-    use super::{IntSize, FloatSize, ToValueType};
+    use super::{IntSize, FloatSize, H5Type};
     use types::{VarLenArray, FixedAscii, FixedUnicode, VarLenAscii, VarLenUnicode};
     use std::mem;
     use ffi::h5t::hvl_t;
