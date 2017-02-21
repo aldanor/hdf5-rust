@@ -16,7 +16,8 @@ use ffi::h5t::{
     H5Tarray_create2, H5T_str_t, H5Tset_strpad, H5T_cset_t, H5Tset_cset, H5Tvlen_create,
     H5Tget_class, H5T_VARIABLE, H5T_class_t, H5Tget_size, H5Tget_sign, H5Tget_nmembers,
     H5Tget_super, H5Tget_member_name, H5Tget_member_type, H5Tget_member_offset,
-    H5Tget_member_value, H5Tget_array_ndims, H5Tget_array_dims2, H5Tis_variable_str
+    H5Tget_member_value, H5Tget_array_ndims, H5Tget_array_dims2, H5Tis_variable_str,
+    H5Tget_cset
 };
 
 #[cfg(target_endian = "big")]
@@ -148,10 +149,14 @@ fn datatype_to_value_type(datatype: &Datatype) -> Result<ValueType> {
                 }
             },
             H5T_STRING => {
-                if h5try_s!(H5Tis_variable_str(id)) == 1 {
-                    Ok(ValueType::VarLenString)
-                } else {
-                    Ok(ValueType::FixedString(size))
+                let is_variable = h5try_s!(H5Tis_variable_str(id)) == 1;
+                let encoding = h5lock_s!(H5Tget_cset(id));
+                match (is_variable, encoding) {
+                    (false, H5T_cset_t::H5T_CSET_ASCII) => Ok(ValueType::FixedAscii(size)),
+                    (false, H5T_cset_t::H5T_CSET_UTF8) => Ok(ValueType::FixedUnicode(size)),
+                    (true, H5T_cset_t::H5T_CSET_ASCII) => Ok(ValueType::VarLenAscii),
+                    (true, H5T_cset_t::H5T_CSET_UTF8) => Ok(ValueType::VarLenUnicode),
+                    _ => Err("Invalid encoding for string datatype".into())
                 }
             },
             H5T_VLEN => {
@@ -185,6 +190,20 @@ macro_rules! be_le {
 
 pub fn value_type_to_datatype(value_type: &ValueType) -> Result<Datatype> {
     use types::ValueType::*;
+
+    unsafe fn string_type(size: Option<usize>, encoding: H5T_cset_t) -> Result<hid_t> {
+        let string_id = h5try_s!(H5Tcopy(*H5T_C_S1));
+        let padding = if size.is_none() {
+            H5T_str_t::H5T_STR_NULLPAD
+        } else {
+            H5T_str_t::H5T_STR_NULLTERM
+        };
+        let size = size.unwrap_or(H5T_VARIABLE);
+        h5try_s!(H5Tset_cset(string_id, encoding));
+        h5try_s!(H5Tset_strpad(string_id, padding));
+        h5try_s!(H5Tset_size(string_id, size));
+        Ok(string_id)
+    }
 
     let datatype_id: Result<_> = h5lock!({
         match *value_type {
@@ -238,22 +257,21 @@ pub fn value_type_to_datatype(value_type: &ValueType) -> Result<Datatype> {
                 let dims = len as hsize_t;
                 Ok(h5try_s!(H5Tarray_create2(elem_dt.id(), 1, &dims as *const hsize_t)))
             },
-            FixedString(size) => {
-                let string_id = h5try_s!(H5Tcopy(*H5T_C_S1));
-                h5try_s!(H5Tset_cset(string_id, H5T_cset_t::H5T_CSET_UTF8));
-                h5try_s!(H5Tset_size(string_id, size));
-                h5try_s!(H5Tset_strpad(string_id, H5T_str_t::H5T_STR_NULLPAD));
-                Ok(string_id)
+            FixedAscii(size) => {
+                string_type(Some(size), H5T_cset_t::H5T_CSET_ASCII)
+            },
+            FixedUnicode(size) => {
+                string_type(Some(size), H5T_cset_t::H5T_CSET_UTF8)
             },
             VarLenArray(ref ty) => {
                 let elem_dt = try!(value_type_to_datatype(&ty));
                 Ok(h5try_s!(H5Tvlen_create(elem_dt.id())))
             },
-            VarLenString => {
-                let string_id = h5try_s!(H5Tcopy(*H5T_C_S1));
-                h5try_s!(H5Tset_cset(string_id, H5T_cset_t::H5T_CSET_UTF8));
-                h5try_s!(H5Tset_size(string_id, H5T_VARIABLE));
-                Ok(string_id)
+            VarLenAscii => {
+                string_type(None, H5T_cset_t::H5T_CSET_ASCII)
+            },
+            VarLenUnicode => {
+                string_type(None, H5T_cset_t::H5T_CSET_UTF8)
             },
         }
     });
@@ -296,7 +314,11 @@ pub mod tests {
         check_roundtrip!(f64, ValueType::Float(FloatSize::U8));
         check_roundtrip!(bool, ValueType::Boolean);
         check_roundtrip!([bool; 5], ValueType::FixedArray(Box::new(ValueType::Boolean), 5));
-        check_roundtrip!(FixedString<[_; 5]>, ValueType::FixedString(5));
+        check_roundtrip!(VarLenArray<bool>, ValueType::VarLenArray(Box::new(ValueType::Boolean)));
+        check_roundtrip!(FixedAscii<[_; 5]>, ValueType::FixedAscii(5));
+        check_roundtrip!(FixedUnicode<[_; 5]>, ValueType::FixedUnicode(5));
+        check_roundtrip!(VarLenAscii, ValueType::VarLenAscii);
+        check_roundtrip!(VarLenUnicode, ValueType::VarLenUnicode);
         h5def!(#[repr(i64)] enum X { A = 1, B = -2 });
         let x_vt = ValueType::Enum(EnumType {
             size: IntSize::U8,
@@ -337,12 +359,5 @@ pub mod tests {
             size: 2 * 8 + 4 * 32 * 16,
         });
         check_roundtrip!(C, c_vt);
-    }
-
-    #[test]
-    pub fn test_varlen_roundtrip() {
-        use types::{VarLenArray, VarLenString};
-        check_roundtrip!(VarLenArray<bool>, ValueType::VarLenArray(Box::new(ValueType::Boolean)));
-        check_roundtrip!(VarLenString, ValueType::VarLenString);
     }
 }

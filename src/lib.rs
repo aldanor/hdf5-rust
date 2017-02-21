@@ -13,7 +13,8 @@ pub use group::Group;
 pub use location::Location;
 pub use object::Object;
 pub use space::{Dimension, Ix, Dataspace};
-pub use types::ToValueType;
+pub use types::{FixedAscii, FixedUnicode, VarLenAscii, VarLenUnicode};
+pub use types::{ToValueType, ValueType};
 
 extern crate ascii;
 extern crate libc;

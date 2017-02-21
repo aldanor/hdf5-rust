@@ -1,9 +1,6 @@
-#[macro_use]
-mod string_traits;
+mod array_trait;
 
 mod value_type;
-mod fixed_string;
-mod varlen_string;
 mod varlen_array;
 
 mod string;
@@ -11,10 +8,10 @@ mod string;
 #[macro_use]
 mod h5def;
 
+pub use self::array_trait::Array;
 pub use self::value_type::{
-    ValueType, ToValueType, Array, IntSize, FloatSize,
+    ValueType, ToValueType, IntSize, FloatSize,
     CompoundField, CompoundType, EnumMember, EnumType
 };
-pub use self::fixed_string::FixedString;
-pub use self::varlen_string::VarLenString;
 pub use self::varlen_array::VarLenArray;
+pub use self::string::{FixedAscii, FixedUnicode, VarLenAscii, VarLenUnicode};
