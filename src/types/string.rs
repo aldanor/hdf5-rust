@@ -180,7 +180,7 @@ impl VarLenAscii {
         unsafe {
             let ptr = libc::malloc(1) as *mut u8;
             *ptr = 0;
-            Self { ptr: ptr }
+            VarLenAscii { ptr: ptr }
         }
     }
 
@@ -189,7 +189,7 @@ impl VarLenAscii {
         let ptr = libc::malloc(bytes.len() + 1) as *mut u8;
         ptr::copy_nonoverlapping(bytes.as_ptr(), ptr, bytes.len());
         *(ptr.offset(bytes.len() as isize)) = 0;
-        Self { ptr: ptr }
+        VarLenAscii { ptr: ptr }
     }
 
     #[inline]
@@ -273,7 +273,7 @@ impl VarLenUnicode {
         unsafe {
             let ptr = libc::malloc(1) as *mut u8;
             *ptr = 0;
-            Self { ptr: ptr }
+            VarLenUnicode { ptr: ptr }
         }
     }
 
@@ -282,7 +282,7 @@ impl VarLenUnicode {
         let ptr = libc::malloc(bytes.len() + 1) as *mut u8;
         ptr::copy_nonoverlapping(bytes.as_ptr(), ptr, bytes.len());
         *(ptr.offset(bytes.len() as isize)) = 0;
-        Self { ptr: ptr }
+        VarLenUnicode { ptr: ptr }
     }
 
     #[inline]
