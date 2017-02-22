@@ -10,6 +10,7 @@ build: false
 environment:
   TARGET: x86_64-pc-windows-msvc
   HDF5_BINDIR: "C:\\Program Files\\HDF_Group\\HDF5\\1.8.17\\bin"
+  HDF5_URL: "https://support.hdfgroup.org/ftp/HDF5/prev-releases/hdf5-1.8.17/bin/windows/extra/hdf5-1.8.17-win64-vs2015-shared.zip"
   matrix:
     - CHANNEL: 1.15.0
       FEATURES: ""
@@ -23,7 +24,7 @@ install:
   - set PATH=%PATH%;C:\Rust\bin;%HDF5_BINDIR%
   - rustc -vV
   - cargo -vV
-  - ps: Invoke-WebRequest "http://www.hdfgroup.org/ftp/HDF5/current/bin/windows/extra/hdf5-1.8.17-win64-vs2015-shared.zip" -OutFile hdf5.zip
+  - ps: Invoke-WebRequest ${env:HDF5_URL} -OutFile hdf5.zip
   - 7z x hdf5.zip -y
   - ps: Start-Process -FilePath msiexec -ArgumentList /i, "hdf5\HDF5-1.8.17-win64.msi", /quiet -Wait
 
