@@ -39,7 +39,6 @@ features = []
 regex = "0.2"
 tempdir = "0.3"
 quickcheck = "0.4"
-quickcheck_macros = "0.4"
 
 [build-dependencies]
 libhdf5-lib = { path = "libhdf5-lib", version = "0.2.0" }
