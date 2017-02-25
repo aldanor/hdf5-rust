@@ -27,7 +27,6 @@ struct B {
 }
 
 #[derive(H5Type)]
-#[repr(C)]
 struct U;
 
 #[derive(H5Type)]
