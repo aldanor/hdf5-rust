@@ -169,8 +169,8 @@ fn test_enum_base_type() {
                     assert_eq!(e.members.len(), 1);
                     assert_eq!(e.members[0].name, "X");
                     assert_eq!(e.members[0].value as $ty, 42);
-                }
-                _ => panic!(""),
+                },
+                _ => panic!(),
             }
         })
     }
