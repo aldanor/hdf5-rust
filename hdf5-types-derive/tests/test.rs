@@ -31,6 +31,9 @@ struct U;
 #[derive(H5Type)]
 struct T(i64, pub u64);
 
+#[derive(H5Type)]
+struct T0();
+
 #[test]
 fn test_compound_unit() {
     assert_eq!(U::type_descriptor(),
@@ -38,6 +41,7 @@ fn test_compound_unit() {
                    fields: vec![],
                    size: 0,
                }));
+    assert_eq!(U::type_descriptor(), T0::type_descriptor());
 }
 
 #[test]
