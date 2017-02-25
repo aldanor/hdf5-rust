@@ -11,6 +11,5 @@ libc = "0.2"
 quickcheck = "0.4"
 
 [dependencies.error-chain]
-git = "https://github.com/brson/error-chain.git"  # FIXME
+version = "0.10"
 default-features = false
-features = []
