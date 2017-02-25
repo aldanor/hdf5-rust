@@ -109,11 +109,13 @@ fn impl_trait(ty: &Ident, body: &Body, attrs: &[Attribute]) -> quote::Tokens {
             impl_compound(ty, vec![], vec![])
         },
         Body::Struct(VariantData::Struct(ref fields)) => {
-            // TODO: check for repr(C)
+            find_repr(attrs, &["C"])
+                .expect("H5Type requires #[repr(C)] for structs");
             impl_compound(ty, pluck!(fields, ?ident), pluck!(fields, ty))
         },
         Body::Struct(VariantData::Tuple(ref fields)) => {
-            // TODO: check for repr(C)
+            find_repr(attrs, &["C"])
+                .expect("H5Type requires #[repr(C)] for structs");
             let index = (0..fields.len()).map(|i| format!("{}", i)).map(Ident::new);
             impl_compound(ty, index.collect(), pluck!(fields, ty))
         },

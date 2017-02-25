@@ -8,6 +8,7 @@ use hdf5_types::TypeDescriptor as TD;
 use hdf5_types::*;
 
 #[derive(H5Type)]
+#[repr(C)]
 struct A {
     a: i64,
     b: u64,
@@ -26,12 +27,15 @@ struct B {
 }
 
 #[derive(H5Type)]
+#[repr(C)]
 struct U;
 
 #[derive(H5Type)]
+#[repr(C)]
 struct T(i64, pub u64);
 
 #[derive(H5Type)]
+#[repr(C)]
 struct T0();
 
 #[test]
