@@ -22,7 +22,7 @@ use syn::{Body, VariantData, Ident, Ty, ConstExpr, Attribute};
 #[proc_macro_derive(H5Type)]
 pub fn derive(input: TokenStream) -> TokenStream {
     let input: String = input.to_string();
-    let ast = syn::parse_macro_input(&input).expect("#[derive(H5Type)]: unable to parse input");
+    let ast = syn::parse_macro_input(&input).unwrap();
     let name = &ast.ident;
     let (impl_generics, ty_generics, where_clause) = ast.generics.split_for_impl();
     let body = impl_trait(name, &ast.body, &ast.attrs);
@@ -35,7 +35,7 @@ pub fn derive(input: TokenStream) -> TokenStream {
             }
         }
     };
-    gen.parse().expect("#[derive(H5Type)]: unable to parse output")
+    gen.parse().unwrap()
 }
 
 fn impl_compound(ty: &Ident, names: Vec<Ident>, types: Vec<Ty>) -> quote::Tokens {
@@ -126,10 +126,8 @@ fn impl_trait(ty: &Ident, body: &Body, attrs: &[Attribute]) -> quote::Tokens {
             impl_compound(ty, index.collect(), pluck!(fields, ty))
         },
         Body::Enum(ref variants) => {
-            if variants.iter().any(|f| f.data != VariantData::Unit) {
-                panic!("H5Type can only be derived for enums with scalar variants");
-            } else if variants.iter().any(|f| f.discriminant.is_none()) {
-                panic!("H5Type can only be derived for enums with explicit discriminants");
+            if variants.iter().any(|f| f.data != VariantData::Unit || f.discriminant.is_none()) {
+                panic!("H5Type can only be derived for enums with scalar discriminants");
             }
             let enum_reprs = &["i8", "i16", "i32", "i64",
                                "u8", "u16", "u32", "u64",
