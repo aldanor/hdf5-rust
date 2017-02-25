@@ -2,6 +2,8 @@ extern crate hdf5_types;
 #[macro_use]
 extern crate hdf5_types_derive;
 
+use std::mem;
+
 use hdf5_types::TypeDescriptor as TD;
 use hdf5_types::*;
 
@@ -146,4 +148,34 @@ fn test_enum_simple() {
                    ]
                }));
     assert_eq!(E1::type_descriptor().size(), 2);
+}
+
+#[test]
+fn test_enum_base_type() {
+    macro_rules! check_base_type {
+        ($ty:ident, $signed:expr, $size:expr) => ({
+            #[repr($ty)] #[allow(dead_code)] #[derive(H5Type)] enum E { X = 1 }
+            let td = E::type_descriptor();
+            assert_eq!(td.size(), mem::size_of::<$ty>());
+            assert_eq!(td.size(), mem::size_of::<E>());
+            match td {
+                TD::Enum(e) => {
+                    assert_eq!(e.signed, ::std::$ty::MIN != 0);
+                    assert_eq!(e.size, IntSize::from_int($size).unwrap());
+                }
+                _ => panic!(""),
+            }
+        })
+    }
+
+    check_base_type!(u8, false, 1);
+    check_base_type!(u16, false, 2);
+    check_base_type!(u32, false, 4);
+    check_base_type!(u64, false, 8);
+    check_base_type!(i8, true, 1);
+    check_base_type!(i16, true, 2);
+    check_base_type!(i32, true, 4);
+    check_base_type!(i64, true, 8);
+    check_base_type!(usize, false, mem::size_of::<usize>());
+    check_base_type!(isize, true, mem::size_of::<isize>());
 }
