@@ -21,14 +21,12 @@ pub fn derive(input: TokenStream) -> TokenStream {
     let ast = syn::parse_macro_input(&input).expect("#[derive(H5Type)]: unable to parse input");
     let name = &ast.ident;
     let (impl_generics, ty_generics, where_clause) = ast.generics.split_for_impl();
-    let body = h5type_impl(&ast.body, &ast.attrs);
+    let body = impl_trait(name, &ast.body, &ast.attrs);
     let gen = quote! {
         #[allow(dead_code, unused_variables)]
         unsafe impl #impl_generics ::hdf5_types::H5Type for #name #ty_generics #where_clause {
             #[inline]
             fn type_descriptor() -> ::hdf5_types::TypeDescriptor {
-                let ty_size = ::std::mem::size_of::<#name>();
-                let origin = 0usize as *const #name;
                 #body
             }
         }
@@ -36,29 +34,27 @@ pub fn derive(input: TokenStream) -> TokenStream {
     gen.parse().expect("#[derive(H5Type)]: unable to parse output")
 }
 
-fn h5type_impl_compound(names: Vec<&Option<Ident>>, types: Vec<&Ty>) -> quote::Tokens {
-    let names_c = names.clone();
-    let (fname1, fname2, fty) = (names.iter(), names_c.iter(), types.iter());
-
+fn impl_compound(ty: &Ident, names: Vec<Ident>, types: Vec<Ty>) -> quote::Tokens {
+    let (names, names2) = (&names, &names);
     quote! {
+        let origin = 0usize as *const #ty;
         ::hdf5_types::TypeDescriptor::Compound(
             ::hdf5_types::CompoundType {
                 fields: vec![#(
                     ::hdf5_types::CompoundField {
-                        name: stringify!(#fname1).to_owned(),
-                        ty: <#fty as ::hdf5_types::H5Type>::type_descriptor(),
-                        offset: unsafe { &((*origin).#fname2) as *const _ as usize },
+                        name: stringify!(#names).to_owned(),
+                        ty: <#types as ::hdf5_types::H5Type>::type_descriptor(),
+                        offset: unsafe { &((*origin).#names2) as *const _ as usize },
                     }
                 ),*],
-                size: ty_size
+                size: ::std::mem::size_of::<#ty>()
             }
         )
     }
 }
 
-fn h5type_impl_enum(names: Vec<&Ident>, values: Vec<&ConstExpr>,
-                    size: usize, signed: bool) -> quote::Tokens {
-    let (names, values) = (names.iter(), values.iter());
+fn impl_enum(names: Vec<Ident>, values: Vec<ConstExpr>,
+             size: usize, signed: bool)-> quote::Tokens {
     let size = Ident::new(format!("U{}", size));
     quote! {
         ::hdf5_types::TypeDescriptor::Enum(
@@ -76,7 +72,7 @@ fn h5type_impl_enum(names: Vec<&Ident>, values: Vec<&ConstExpr>,
     }
 }
 
-fn h5type_find_repr(attrs: &Vec<Attribute>, expected: &[&str]) -> Option<Ident> {
+fn find_repr(attrs: &[Attribute], expected: &[&str]) -> Option<Ident> {
     use syn::{AttrStyle, MetaItem, NestedMetaItem};
 
     for attr in attrs.iter() {
@@ -98,45 +94,44 @@ fn h5type_find_repr(attrs: &Vec<Attribute>, expected: &[&str]) -> Option<Ident> 
     None
 }
 
-fn h5type_impl(body: &Body, attrs: &Vec<Attribute>) -> quote::Tokens {
+macro_rules! pluck {
+    ($seq:expr, $key:tt) => (
+        ($seq).iter().map(|f| f.$key.clone()).collect::<Vec<_>>()
+    );
+    ($seq:expr, ?$key:tt) => (
+        ($seq).iter().map(|f| f.$key.clone().unwrap()).collect::<Vec<_>>()
+    );
+}
+
+fn impl_trait(ty: &Ident, body: &Body, attrs: &[Attribute]) -> quote::Tokens {
     match *body {
         Body::Struct(VariantData::Unit) => {
-            quote! {
-                ::hdf5_types::TypeDescriptor::Compound(
-                    ::hdf5_types::CompoundType { fields: vec![], size: ty_size }
-                )
-            }
-        }
+            impl_compound(ty, vec![], vec![])
+        },
         Body::Struct(VariantData::Struct(ref fields)) => {
             // TODO: check for repr(C)
-            h5type_impl_compound(fields.iter().map(|f| &f.ident).collect(),
-                                 fields.iter().map(|f| &f.ty).collect())
+            impl_compound(ty, pluck!(fields, ?ident), pluck!(fields, ty))
         },
         Body::Struct(VariantData::Tuple(ref fields)) => {
             // TODO: check for repr(C)
-            let index: Vec<_> = (0..fields.len())
-                .map(|i| Some(Ident::new(format!("{}", i)))).collect();
-            h5type_impl_compound(index.iter().collect(),
-                                 fields.iter().map(|f| &f.ty).collect())
-        }
+            let index = (0..fields.len()).map(|i| format!("{}", i)).map(Ident::new);
+            impl_compound(ty, index.collect(), pluck!(fields, ty))
+        },
         Body::Enum(ref variants) => {
-            if !variants.iter().all(|f| f.data == VariantData::Unit) {
+            if variants.iter().any(|f| f.data != VariantData::Unit) {
                 panic!("H5Type can only be derived for enums with scalar variants");
-            } else if !variants.iter().all(|f| f.discriminant.is_some()) {
+            } else if variants.iter().any(|f| f.discriminant.is_none()) {
                 panic!("H5Type can only be derived for enums with explicit discriminants");
             }
-            let discriminants: Vec<_> = variants.iter()
-                .map(|f| f.discriminant.clone().unwrap()).collect();
-            let valid_reprs = &["i8", "i16", "i32", "i64",
-                                "u8", "u16", "u32", "u64",
-                                "isize", "usize"];
-            let repr = h5type_find_repr(attrs, valid_reprs)
+            let enum_reprs = &["i8", "i16", "i32", "i64",
+                               "u8", "u16", "u32", "u64",
+                               "isize", "usize"];
+            let repr = find_repr(attrs, enum_reprs)
                 .expect("H5Type can only be derived for enums with explicit representation");
             let repr = repr.as_ref();
             let size = usize::from_str(&repr[1..]).unwrap_or(mem::size_of::<usize>() * 8) / 8;
             let signed = repr.starts_with("i");
-            h5type_impl_enum(variants.iter().map(|f| &f.ident).collect(),
-                             discriminants.iter().collect(), size, signed)
+            impl_enum(pluck!(variants, ident), pluck!(variants, ?discriminant), size, signed)
         },
     }
 }
