@@ -1,0 +1,16 @@
+[package]
+name = "hdf5-types"
+version = "0.2.0"
+authors = ["Ivan Smirnov <i.s.smirnov@gmail.com>"]
+
+[dependencies]
+ascii = "0.8"
+libc = "0.2"
+
+[dev-dependencies]
+quickcheck = "0.4"
+
+[dependencies.error-chain]
+git = "https://github.com/brson/error-chain.git"  # FIXME
+default-features = false
+features = []
