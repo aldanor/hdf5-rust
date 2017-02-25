@@ -12,6 +12,7 @@ extern crate quote;
 
 extern crate hdf5_types;
 
+use std::iter;
 use std::mem;
 use std::str::FromStr;
 
@@ -56,9 +57,11 @@ fn impl_compound(ty: &Ident, names: Vec<Ident>, types: Vec<Ty>) -> quote::Tokens
     }
 }
 
-fn impl_enum(names: Vec<Ident>, values: Vec<ConstExpr>,
-             size: usize, signed: bool)-> quote::Tokens {
-    let size = Ident::new(format!("U{}", size));
+fn impl_enum(names: Vec<Ident>, values: Vec<ConstExpr>, repr: &Ident)-> quote::Tokens {
+    let size = Ident::new(format!(
+        "U{}", usize::from_str(&repr.as_ref()[1..]).unwrap_or(mem::size_of::<usize>() * 8) / 8));
+    let signed = repr.as_ref().starts_with('i');
+    let repr = iter::repeat(repr);
     quote! {
         ::hdf5_types::TypeDescriptor::Enum(
             ::hdf5_types::EnumType {
@@ -67,7 +70,7 @@ fn impl_enum(names: Vec<Ident>, values: Vec<ConstExpr>,
                 members: vec![#(
                     ::hdf5_types::EnumMember {
                         name: stringify!(#names).to_owned(),
-                        value: (#values) as i64 as u64,
+                        value: (#values) as #repr as u64,
                     }
                 ),*],
             }
@@ -133,10 +136,7 @@ fn impl_trait(ty: &Ident, body: &Body, attrs: &[Attribute]) -> quote::Tokens {
                                "isize", "usize"];
             let repr = find_repr(attrs, enum_reprs)
                 .expect("H5Type can only be derived for enums with explicit representation");
-            let repr = repr.as_ref();
-            let size = usize::from_str(&repr[1..]).unwrap_or(mem::size_of::<usize>() * 8) / 8;
-            let signed = repr.starts_with('i');
-            impl_enum(pluck!(variants, ident), pluck!(variants, ?discriminant), size, signed)
+            impl_enum(pluck!(variants, ident), pluck!(variants, ?discriminant), &repr)
         },
     }
 }
