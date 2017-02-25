@@ -122,3 +122,28 @@ fn test_compound_tuple() {
                }));
     assert_eq!(T::type_descriptor().size(), 16);
 }
+
+#[derive(H5Type)]
+#[derive(Clone, Copy)]
+#[repr(C)]
+#[repr(i16)]
+#[repr(isize)]
+#[allow(dead_code)]
+enum E1 {
+    X = -2,
+    Y = 3,
+}
+
+#[test]
+fn test_enum_simple() {
+    assert_eq!(E1::type_descriptor(),
+               TD::Enum(EnumType {
+                   size: IntSize::U2,
+                   signed: true,
+                   members: vec![
+                       EnumMember { name: "X".into(), value: -2i16 as u64 },
+                       EnumMember { name: "Y".into(), value: 3u64 },
+                   ]
+               }));
+    assert_eq!(E1::type_descriptor().size(), 2);
+}
