@@ -158,7 +158,7 @@ fn test_enum_simple() {
 fn test_enum_base_type() {
     macro_rules! check_base_type {
         ($ty:ident, $signed:expr, $size:expr) => ({
-            #[repr($ty)] #[allow(dead_code)] #[derive(H5Type)] enum E { X = 1 }
+            #[repr($ty)] #[allow(dead_code)] #[derive(H5Type)] enum E { X = 42 }
             let td = E::type_descriptor();
             assert_eq!(td.size(), mem::size_of::<$ty>());
             assert_eq!(td.size(), mem::size_of::<E>());
@@ -166,6 +166,9 @@ fn test_enum_base_type() {
                 TD::Enum(e) => {
                     assert_eq!(e.signed, ::std::$ty::MIN != 0);
                     assert_eq!(e.size, IntSize::from_int($size).unwrap());
+                    assert_eq!(e.members.len(), 1);
+                    assert_eq!(e.members[0].name, "X");
+                    assert_eq!(e.members[0].value as $ty, 42);
                 }
                 _ => panic!(""),
             }
