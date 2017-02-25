@@ -6,6 +6,7 @@ authors = ["Ivan Smirnov <i.s.smirnov@gmail.com>"]
 [dependencies]
 ascii = "0.8"
 libc = "0.2"
+clippy = { version = "*", optional = true }
 
 [dev-dependencies]
 quickcheck = "0.4"
