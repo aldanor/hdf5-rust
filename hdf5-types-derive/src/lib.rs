@@ -68,7 +68,7 @@ fn h5type_impl_enum(names: Vec<&Ident>, values: Vec<&ConstExpr>,
                 members: vec![#(
                     ::hdf5_types::EnumMember {
                         name: stringify!(#names).to_owned(),
-                        value: (#values) as u64,
+                        value: (#values) as i64 as u64,
                     }
                 ),*],
             }
