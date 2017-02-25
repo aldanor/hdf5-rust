@@ -83,7 +83,7 @@ fn find_repr(attrs: &[Attribute], expected: &[&str]) -> Option<Ident> {
             if let MetaItem::List(ref name, ref meta_items) = attr.value {
                 if name.as_ref() == "repr" {
                     for meta_item in meta_items.iter() {
-                        if let &NestedMetaItem::MetaItem(MetaItem::Word(ref ident)) = meta_item {
+                        if let NestedMetaItem::MetaItem(MetaItem::Word(ref ident)) = *meta_item {
                             if expected.iter().any(|&s| ident.as_ref() == s) {
                                 return Some(Ident::new(ident.as_ref()));
                             }
@@ -135,7 +135,7 @@ fn impl_trait(ty: &Ident, body: &Body, attrs: &[Attribute]) -> quote::Tokens {
                 .expect("H5Type can only be derived for enums with explicit representation");
             let repr = repr.as_ref();
             let size = usize::from_str(&repr[1..]).unwrap_or(mem::size_of::<usize>() * 8) / 8;
-            let signed = repr.starts_with("i");
+            let signed = repr.starts_with('i');
             impl_enum(pluck!(variants, ident), pluck!(variants, ?discriminant), size, signed)
         },
     }
