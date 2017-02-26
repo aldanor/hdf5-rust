@@ -134,6 +134,8 @@ fn impl_trait(ty: &Ident, body: &Body, attrs: &[Attribute]) -> quote::Tokens {
         Body::Enum(ref variants) => {
             if variants.iter().any(|f| f.data != VariantData::Unit || f.discriminant.is_none()) {
                 panic!("H5Type can only be derived for enums with scalar discriminants");
+            } else if variants.is_empty() {
+                panic!("Cannot derive H5Type for empty enums")
             }
             let enum_reprs = &["i8", "i16", "i32", "i64",
                                "u8", "u16", "u32", "u64",
