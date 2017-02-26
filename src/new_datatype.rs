@@ -288,6 +288,7 @@ impl<T: H5Type> ToDatatype for T {
 #[cfg(test)]
 pub mod tests {
     use super::ToDatatype;
+    use types::TypeDescriptor as TD;
     use types::*;
 
     macro_rules! check_roundtrip {
@@ -301,25 +302,31 @@ pub mod tests {
 
     #[test]
     pub fn test_datatype_roundtrip() {
-        check_roundtrip!(i8, TypeDescriptor::Integer(IntSize::U1));
-        check_roundtrip!(i16, TypeDescriptor::Integer(IntSize::U2));
-        check_roundtrip!(i32, TypeDescriptor::Integer(IntSize::U4));
-        check_roundtrip!(i64, TypeDescriptor::Integer(IntSize::U8));
-        check_roundtrip!(u8, TypeDescriptor::Unsigned(IntSize::U1));
-        check_roundtrip!(u16, TypeDescriptor::Unsigned(IntSize::U2));
-        check_roundtrip!(u32, TypeDescriptor::Unsigned(IntSize::U4));
-        check_roundtrip!(u64, TypeDescriptor::Unsigned(IntSize::U8));
-        check_roundtrip!(f32, TypeDescriptor::Float(FloatSize::U4));
-        check_roundtrip!(f64, TypeDescriptor::Float(FloatSize::U8));
-        check_roundtrip!(bool, TypeDescriptor::Boolean);
-        check_roundtrip!([bool; 5], TypeDescriptor::FixedArray(Box::new(TypeDescriptor::Boolean), 5));
-        check_roundtrip!(VarLenArray<bool>, TypeDescriptor::VarLenArray(Box::new(TypeDescriptor::Boolean)));
-        check_roundtrip!(FixedAscii<[_; 5]>, TypeDescriptor::FixedAscii(5));
-        check_roundtrip!(FixedUnicode<[_; 5]>, TypeDescriptor::FixedUnicode(5));
-        check_roundtrip!(VarLenAscii, TypeDescriptor::VarLenAscii);
-        check_roundtrip!(VarLenUnicode, TypeDescriptor::VarLenUnicode);
-        #[allow(dead_code)] #[derive(H5Type)] #[repr(i64)] enum X { A = 1, B = -2 };
-        let x_desc = TypeDescriptor::Enum(EnumType {
+        check_roundtrip!(i8, TD::Integer(IntSize::U1));
+        check_roundtrip!(i16, TD::Integer(IntSize::U2));
+        check_roundtrip!(i32, TD::Integer(IntSize::U4));
+        check_roundtrip!(i64, TD::Integer(IntSize::U8));
+        check_roundtrip!(u8, TD::Unsigned(IntSize::U1));
+        check_roundtrip!(u16, TD::Unsigned(IntSize::U2));
+        check_roundtrip!(u32, TD::Unsigned(IntSize::U4));
+        check_roundtrip!(u64, TD::Unsigned(IntSize::U8));
+        check_roundtrip!(f32, TD::Float(FloatSize::U4));
+        check_roundtrip!(f64, TD::Float(FloatSize::U8));
+        check_roundtrip!(bool, TD::Boolean);
+        check_roundtrip!([bool; 5], TD::FixedArray(Box::new(TD::Boolean), 5));
+        check_roundtrip!(VarLenArray<bool>, TD::VarLenArray(Box::new(TD::Boolean)));
+        check_roundtrip!(FixedAscii<[_; 5]>, TD::FixedAscii(5));
+        check_roundtrip!(FixedUnicode<[_; 5]>, TD::FixedUnicode(5));
+        check_roundtrip!(VarLenAscii, TD::VarLenAscii);
+        check_roundtrip!(VarLenUnicode, TD::VarLenUnicode);
+
+        #[allow(dead_code)]
+        #[derive(H5Type)]
+        #[repr(i64)] enum X {
+            A = 1,
+            B = -2
+        };
+        let x_desc = TD::Enum(EnumType {
             size: IntSize::U8,
             signed: true,
             members: vec![
@@ -328,8 +335,14 @@ pub mod tests {
             ]
         });
         check_roundtrip!(X, x_desc);
-        #[derive(H5Type)] #[repr(C)] struct A { a: i64, b: u64 };
-        let a_desc = TypeDescriptor::Compound(CompoundType {
+
+        #[derive(H5Type)]
+        #[repr(C)]
+        struct A {
+            a: i64,
+            b: u64
+        };
+        let a_desc = TD::Compound(CompoundType {
             fields: vec![
                 CompoundField { name: "a".into(), ty: i64::type_descriptor(), offset: 0 },
                 CompoundField { name: "b".into(), ty: u64::type_descriptor(), offset: 8 },
@@ -337,21 +350,24 @@ pub mod tests {
             size: 16,
         });
         check_roundtrip!(A, a_desc);
-        #[derive(H5Type)] #[repr(C)] struct C {
+
+        #[derive(H5Type)]
+        #[repr(C)]
+        struct C {
             a: [X; 2],
             b: [[A; 4]; 32],
         };
-        let c_desc = TypeDescriptor::Compound(CompoundType {
+        let c_desc = TD::Compound(CompoundType {
             fields: vec![
                 CompoundField {
                     name: "a".into(),
-                    ty: TypeDescriptor::FixedArray(Box::new(x_desc), 2),
+                    ty: TD::FixedArray(Box::new(x_desc), 2),
                     offset: 0
                 },
                 CompoundField {
                     name: "b".into(),
-                    ty: TypeDescriptor::FixedArray(Box::new(
-                        TypeDescriptor::FixedArray(Box::new(a_desc), 4)), 32),
+                    ty: TD::FixedArray(Box::new(
+                        TD::FixedArray(Box::new(a_desc), 4)), 32),
                     offset: 2 * 8
                 },
             ],
