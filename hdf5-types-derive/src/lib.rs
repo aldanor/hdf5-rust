@@ -39,9 +39,8 @@ pub fn derive(input: TokenStream) -> TokenStream {
 }
 
 fn impl_compound(ty: &Ident, ty_generics: &TyGenerics,
-                 names: Vec<Ident>, types: Vec<Ty>) -> quote::Tokens
+                 fields: Vec<Ident>, names: Vec<Ident>, types: Vec<Ty>) -> quote::Tokens
 {
-    let (names, names2) = (&names, &names);
     quote! {
         let origin = 0usize as *const #ty #ty_generics;
         ::hdf5_types::TypeDescriptor::Compound(
@@ -50,7 +49,7 @@ fn impl_compound(ty: &Ident, ty_generics: &TyGenerics,
                     ::hdf5_types::CompoundField {
                         name: stringify!(#names).to_owned(),
                         ty: <#types as ::hdf5_types::H5Type>::type_descriptor(),
-                        offset: unsafe { &((*origin).#names2) as *const _ as usize },
+                        offset: unsafe { &((*origin).#fields) as *const _ as usize },
                     }
                 ),*],
                 size: ::std::mem::size_of::<#ty #ty_generics>()
@@ -77,6 +76,16 @@ fn impl_enum(names: Vec<Ident>, values: Vec<ConstExpr>, repr: &Ident)-> quote::T
                 ),*],
             }
         )
+    }
+}
+
+fn is_phantom_data(ty: &Ty) -> bool {
+    match *ty {
+        Ty::Path(None, ref path) => {
+            path.segments.as_slice().last()
+                .map(|x| x.ident.as_ref() == "PhantomData").unwrap_or(false)
+        },
+        _ => false,
     }
 }
 
@@ -119,21 +128,30 @@ fn impl_trait(ty: &Ident, body: &Body, attrs: &[Attribute],
             panic!("Cannot derive H5Type for unit structs");
         },
         Body::Struct(VariantData::Struct(ref fields)) => {
+            let fields: Vec<_> = fields.iter()
+                .filter(|f| !is_phantom_data(&f.ty))
+                .collect();
             if fields.is_empty() {
                 panic!("Cannot derive H5Type for empty structs");
             }
             find_repr(attrs, &["C"])
                 .expect("H5Type requires #[repr(C)] for structs");
-            impl_compound(ty, ty_generics, pluck!(fields, ?ident), pluck!(fields, ty))
+            let names = pluck!(fields, ?ident);
+            impl_compound(ty, ty_generics, names.clone(), names, pluck!(fields, ty))
         },
         Body::Struct(VariantData::Tuple(ref fields)) => {
+            let (index, fields): (Vec<_>, Vec<_>) = fields.iter()
+                .enumerate()
+                .filter(|&(_, f)| !is_phantom_data(&f.ty))
+                .map(|(i, f)| (Ident::new(format!("{}", i)), f))
+                .unzip();
             if fields.is_empty() {
                 panic!("Cannot derive H5Type for empty tuple structs");
             }
             find_repr(attrs, &["C"])
                 .expect("H5Type requires #[repr(C)] for structs");
-            let index = (0..fields.len()).map(|i| format!("{}", i)).map(Ident::new);
-            impl_compound(ty, ty_generics, index.collect(), pluck!(fields, ty))
+            let names = (0..fields.len()).map(|i| Ident::new(format!("{}", i))).collect();
+            impl_compound(ty, ty_generics, index, names, pluck!(fields, ty))
         },
         Body::Enum(ref variants) => {
             if variants.iter().any(|f| f.data != VariantData::Unit || f.discriminant.is_none()) {
