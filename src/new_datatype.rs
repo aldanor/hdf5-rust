@@ -290,7 +290,6 @@ pub mod tests {
     use super::ToDatatype;
     use types::*;
 
-
     macro_rules! check_roundtrip {
         ($ty:ty, $desc:expr) => ({
             let desc = <$ty as H5Type>::type_descriptor();
@@ -319,7 +318,7 @@ pub mod tests {
         check_roundtrip!(FixedUnicode<[_; 5]>, TypeDescriptor::FixedUnicode(5));
         check_roundtrip!(VarLenAscii, TypeDescriptor::VarLenAscii);
         check_roundtrip!(VarLenUnicode, TypeDescriptor::VarLenUnicode);
-        h5def!(#[repr(i64)] enum X { A = 1, B = -2 });
+        #[allow(dead_code)] #[derive(H5Type)] #[repr(i64)] enum X { A = 1, B = -2 };
         let x_desc = TypeDescriptor::Enum(EnumType {
             size: IntSize::U8,
             signed: true,
@@ -329,7 +328,7 @@ pub mod tests {
             ]
         });
         check_roundtrip!(X, x_desc);
-        h5def!(struct A { a: i64, b: u64 });
+        #[derive(H5Type)] #[repr(C)] struct A { a: i64, b: u64 };
         let a_desc = TypeDescriptor::Compound(CompoundType {
             fields: vec![
                 CompoundField { name: "a".into(), ty: i64::type_descriptor(), offset: 0 },
@@ -338,10 +337,10 @@ pub mod tests {
             size: 16,
         });
         check_roundtrip!(A, a_desc);
-        h5def!(struct C {
+        #[derive(H5Type)] #[repr(C)] struct C {
             a: [X; 2],
             b: [[A; 4]; 32],
-        });
+        };
         let c_desc = TypeDescriptor::Compound(CompoundType {
             fields: vec![
                 CompoundField {

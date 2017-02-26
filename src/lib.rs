@@ -15,16 +15,18 @@ pub use group::Group;
 pub use location::Location;
 pub use object::Object;
 pub use space::{Dimension, Ix, Dataspace};
-pub use types::{FixedAscii, FixedUnicode, VarLenAscii, VarLenUnicode};
-pub use types::{H5Type, TypeDescriptor};
 
-extern crate ascii;
 extern crate libc;
 extern crate num;
 
 extern crate libhdf5_lib as lib;
 extern crate libhdf5_sys as ffi;
+extern crate hdf5_types;
 extern crate remutex;
+
+#[cfg(test)]
+#[macro_use]
+extern crate hdf5_types_derive;
 
 #[macro_use]
 extern crate lazy_static;
@@ -35,15 +37,8 @@ extern crate tempdir;
 #[cfg(test)]
 extern crate regex;
 
-#[cfg(test)]
-#[macro_use]
-extern crate quickcheck;
-
 #[macro_use]
 mod macros;
-
-#[macro_use]
-mod types;
 
 mod container;
 mod dataset;
@@ -64,6 +59,10 @@ mod new_datatype;
 
 #[allow(dead_code)]
 mod globals;
+
+pub mod types {
+    pub use hdf5_types::*;
+}
 
 pub mod prelude;
 
