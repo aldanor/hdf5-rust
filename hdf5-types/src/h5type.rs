@@ -254,25 +254,25 @@ unsafe impl H5Type for VarLenUnicode {
 
 #[cfg(test)]
 pub mod tests {
-    use super::TypeDescriptor as VT;
     use super::{IntSize, FloatSize, H5Type, hvl_t};
+    use super::TypeDescriptor as TD;
     use array::VarLenArray;
     use string::{FixedAscii, FixedUnicode, VarLenAscii, VarLenUnicode};
     use std::mem;
 
     #[test]
     pub fn test_scalar_types() {
-        assert_eq!(bool::type_descriptor(), VT::Boolean);
-        assert_eq!(i8::type_descriptor(), VT::Integer(IntSize::U1));
-        assert_eq!(i16::type_descriptor(), VT::Integer(IntSize::U2));
-        assert_eq!(i32::type_descriptor(), VT::Integer(IntSize::U4));
-        assert_eq!(i64::type_descriptor(), VT::Integer(IntSize::U8));
-        assert_eq!(u8::type_descriptor(), VT::Unsigned(IntSize::U1));
-        assert_eq!(u16::type_descriptor(), VT::Unsigned(IntSize::U2));
-        assert_eq!(u32::type_descriptor(), VT::Unsigned(IntSize::U4));
-        assert_eq!(u64::type_descriptor(), VT::Unsigned(IntSize::U8));
-        assert_eq!(f32::type_descriptor(), VT::Float(FloatSize::U4));
-        assert_eq!(f64::type_descriptor(), VT::Float(FloatSize::U8));
+        assert_eq!(bool::type_descriptor(), TD::Boolean);
+        assert_eq!(i8::type_descriptor(), TD::Integer(IntSize::U1));
+        assert_eq!(i16::type_descriptor(), TD::Integer(IntSize::U2));
+        assert_eq!(i32::type_descriptor(), TD::Integer(IntSize::U4));
+        assert_eq!(i64::type_descriptor(), TD::Integer(IntSize::U8));
+        assert_eq!(u8::type_descriptor(), TD::Unsigned(IntSize::U1));
+        assert_eq!(u16::type_descriptor(), TD::Unsigned(IntSize::U2));
+        assert_eq!(u32::type_descriptor(), TD::Unsigned(IntSize::U4));
+        assert_eq!(u64::type_descriptor(), TD::Unsigned(IntSize::U8));
+        assert_eq!(f32::type_descriptor(), TD::Float(FloatSize::U4));
+        assert_eq!(f64::type_descriptor(), TD::Float(FloatSize::U8));
 
         assert_eq!(bool::type_descriptor().size(), 1);
         assert_eq!(i16::type_descriptor().size(), 2);
@@ -283,8 +283,8 @@ pub mod tests {
     #[test]
     #[cfg(target_pointer_width = "32")]
     pub fn test_ptr_sized_ints() {
-        assert_eq!(isize::type_descriptor(), VT::Integer(IntSize::U4));
-        assert_eq!(usize::type_descriptor(), VT::Unsigned(IntSize::U4));
+        assert_eq!(isize::type_descriptor(), TD::Integer(IntSize::U4));
+        assert_eq!(usize::type_descriptor(), TD::Unsigned(IntSize::U4));
 
         assert_eq!(usize::type_descriptor().size(), 4);
     }
@@ -292,8 +292,8 @@ pub mod tests {
     #[test]
     #[cfg(target_pointer_width = "64")]
     pub fn test_ptr_sized_ints() {
-        assert_eq!(isize::type_descriptor(), VT::Integer(IntSize::U8));
-        assert_eq!(usize::type_descriptor(), VT::Unsigned(IntSize::U8));
+        assert_eq!(isize::type_descriptor(), TD::Integer(IntSize::U8));
+        assert_eq!(usize::type_descriptor(), TD::Unsigned(IntSize::U8));
 
         assert_eq!(usize::type_descriptor().size(), 8);
     }
@@ -303,16 +303,16 @@ pub mod tests {
         type S = [T; 4];
         type T = [u32; 256];
         assert_eq!(T::type_descriptor(),
-                   VT::FixedArray(Box::new(VT::Unsigned(IntSize::U4)), 256));
+                   TD::FixedArray(Box::new(TD::Unsigned(IntSize::U4)), 256));
         assert_eq!(S::type_descriptor(),
-                   VT::FixedArray(Box::new(T::type_descriptor()), 4));
+                   TD::FixedArray(Box::new(T::type_descriptor()), 4));
     }
 
     #[test]
     pub fn test_varlen_array() {
         type S = VarLenArray<u16>;
         assert_eq!(S::type_descriptor(),
-                   VT::VarLenArray(Box::new(u16::type_descriptor())));
+                   TD::VarLenArray(Box::new(u16::type_descriptor())));
         assert_eq!(mem::size_of::<VarLenArray<u8>>(),
                    mem::size_of::<hvl_t>());
     }
@@ -321,9 +321,9 @@ pub mod tests {
     pub fn test_string_types() {
         type FA = FixedAscii<[u8; 16]>;
         type FU = FixedUnicode<[u8; 32]>;
-        assert_eq!(FA::type_descriptor(), VT::FixedAscii(16));
-        assert_eq!(FU::type_descriptor(), VT::FixedUnicode(32));
-        assert_eq!(VarLenAscii::type_descriptor(), VT::VarLenAscii);
-        assert_eq!(VarLenUnicode::type_descriptor(), VT::VarLenUnicode);
+        assert_eq!(FA::type_descriptor(), TD::FixedAscii(16));
+        assert_eq!(FU::type_descriptor(), TD::FixedUnicode(32));
+        assert_eq!(VarLenAscii::type_descriptor(), TD::VarLenAscii);
+        assert_eq!(VarLenUnicode::type_descriptor(), TD::VarLenUnicode);
     }
 }
