@@ -26,7 +26,7 @@ extern crate remutex;
 
 #[cfg(test)]
 #[macro_use]
-extern crate hdf5_types_derive;
+extern crate hdf5_derive;
 
 #[macro_use]
 extern crate lazy_static;

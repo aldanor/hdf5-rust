@@ -1,6 +1,6 @@
 extern crate hdf5_types;
 #[macro_use]
-extern crate hdf5_types_derive;
+extern crate hdf5_derive;
 
 use std::marker::PhantomData;
 use std::mem;

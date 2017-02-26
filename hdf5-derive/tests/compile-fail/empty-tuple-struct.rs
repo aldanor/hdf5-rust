@@ -1,5 +1,5 @@
 #[macro_use]
-extern crate hdf5_types_derive;
+extern crate hdf5_derive;
 
 #[derive(H5Type)]
 //~^ ERROR proc-macro derive

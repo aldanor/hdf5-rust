@@ -1,5 +1,5 @@
 [package]
-name = "hdf5-types-derive"
+name = "hdf5-derive"
 version = "0.2.0"
 authors = ["Ivan Smirnov <i.s.smirnov@gmail.com>"]
 
