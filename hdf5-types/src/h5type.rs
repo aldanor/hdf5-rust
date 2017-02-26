@@ -254,8 +254,8 @@ unsafe impl H5Type for VarLenUnicode {
 
 #[cfg(test)]
 pub mod tests {
-    use super::{IntSize, FloatSize, H5Type, hvl_t};
     use super::TypeDescriptor as TD;
+    use super::{IntSize, FloatSize, H5Type, CompoundType, CompoundField, hvl_t};
     use array::VarLenArray;
     use string::{FixedAscii, FixedUnicode, VarLenAscii, VarLenUnicode};
     use std::mem;
@@ -325,5 +325,36 @@ pub mod tests {
         assert_eq!(FU::type_descriptor(), TD::FixedUnicode(32));
         assert_eq!(VarLenAscii::type_descriptor(), TD::VarLenAscii);
         assert_eq!(VarLenUnicode::type_descriptor(), TD::VarLenUnicode);
+    }
+
+    #[test]
+    pub fn test_tuples() {
+        type T1 = (u16,);
+        assert_eq!(T1::type_descriptor(), u16::type_descriptor());
+        type T2 = (i32, f32, (u64,));
+        let td = T2::type_descriptor();
+        assert_eq!(td,
+                   TD::Compound(CompoundType {
+                       fields: vec![
+                           CompoundField {
+                               name: "0".into(),
+                               ty: i32::type_descriptor(),
+                               offset: 0,
+                           },
+                           CompoundField {
+                               name: "1".into(),
+                               ty: f32::type_descriptor(),
+                               offset: 4,
+                           },
+                           CompoundField {
+                               name: "2".into(),
+                               ty: u64::type_descriptor(),
+                               offset: 8,
+                           },
+                       ],
+                       size: 16,
+                   }));
+        assert_eq!(td.size(), 16);
+        assert_eq!(mem::size_of::<T2>(), 16);
     }
 }
