@@ -59,6 +59,7 @@ pub struct EnumType {
 }
 
 impl EnumType {
+    #[inline]
     pub fn base_type(&self) -> TypeDescriptor {
         if self.signed {
             TypeDescriptor::Integer(self.size)
@@ -122,6 +123,7 @@ pub unsafe trait H5Type {
 macro_rules! impl_h5type {
     ($ty:ty, $variant:ident, $size:expr) => (
         unsafe impl H5Type for $ty {
+            #[inline]
             fn type_descriptor() -> TypeDescriptor {
                 $crate::h5type::TypeDescriptor::$variant($size)
             }
@@ -151,12 +153,14 @@ impl_h5type!(isize, Integer, IntSize::U8);
 impl_h5type!(usize, Unsigned, IntSize::U8);
 
 unsafe impl H5Type for bool {
+    #[inline]
     fn type_descriptor() -> TypeDescriptor {
         TypeDescriptor::Boolean
     }
 }
 
 unsafe impl<T: Array<Item=I>, I: H5Type> H5Type for T {
+    #[inline]
     fn type_descriptor() -> TypeDescriptor {
         TypeDescriptor::FixedArray(
             Box::new(<I as H5Type>::type_descriptor()),
@@ -166,30 +170,35 @@ unsafe impl<T: Array<Item=I>, I: H5Type> H5Type for T {
 }
 
 unsafe impl<T: Copy + H5Type> H5Type for VarLenArray<T> {
+    #[inline]
     fn type_descriptor() -> TypeDescriptor {
         TypeDescriptor::VarLenArray(Box::new(<T as H5Type>::type_descriptor()))
     }
 }
 
 unsafe impl<A: Array<Item=u8>> H5Type for FixedAscii<A> {
+    #[inline]
     fn type_descriptor() -> TypeDescriptor {
         TypeDescriptor::FixedAscii(A::capacity())
     }
 }
 
 unsafe impl<A: Array<Item=u8>> H5Type for FixedUnicode<A> {
+    #[inline]
     fn type_descriptor() -> TypeDescriptor {
         TypeDescriptor::FixedUnicode(A::capacity())
     }
 }
 
 unsafe impl H5Type for VarLenAscii {
+    #[inline]
     fn type_descriptor() -> TypeDescriptor {
         TypeDescriptor::VarLenAscii
     }
 }
 
 unsafe impl H5Type for VarLenUnicode {
+    #[inline]
     fn type_descriptor() -> TypeDescriptor {
         TypeDescriptor::VarLenUnicode
     }
