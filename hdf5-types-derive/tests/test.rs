@@ -172,3 +172,33 @@ fn test_enum_base_type() {
     check_base_type!(usize, false, mem::size_of::<usize>());
     check_base_type!(isize, true, mem::size_of::<isize>());
 }
+
+#[derive(H5Type)]
+#[repr(C)]
+struct G1<T: H5Type> {
+    x: u32,
+    y: T,
+    z: f32,
+}
+
+#[derive(H5Type)]
+#[repr(C)]
+struct C1 {
+    x: u32,
+    y: i64,
+    z: f32,
+}
+
+#[derive(H5Type)]
+#[repr(C)]
+struct G2<T: H5Type>(u32, T, f32);
+
+#[derive(H5Type)]
+#[repr(C)]
+struct C2(u32, i64, f32);
+
+#[test]
+fn test_generics() {
+    assert_eq!(G1::<i64>::type_descriptor(), C1::type_descriptor());
+    assert_eq!(G2::<i64>::type_descriptor(), C2::type_descriptor());
+}
