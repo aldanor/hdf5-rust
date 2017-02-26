@@ -31,6 +31,7 @@ pub fn derive(input: TokenStream) -> TokenStream {
         #[allow(dead_code, unused_variables, unused_attributes)]
         const #dummy: () = {
             extern crate hdf5_types as _h5t;
+            #[automatically_derived]
             unsafe impl #impl_generics _h5t::H5Type for #name #ty_generics #where_clause {
                 #[inline]
                 fn type_descriptor() -> _h5t::TypeDescriptor {
