@@ -1,4 +1,3 @@
-extern crate hdf5_types;
 #[macro_use]
 extern crate hdf5_types_derive;
 

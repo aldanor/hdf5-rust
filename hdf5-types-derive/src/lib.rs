@@ -26,14 +26,18 @@ pub fn derive(input: TokenStream) -> TokenStream {
     let name = &ast.ident;
     let (impl_generics, ty_generics, where_clause) = ast.generics.split_for_impl();
     let body = impl_trait(name, &ast.body, &ast.attrs, &ty_generics);
+    let dummy = Ident::new(format!("_IMPL_H5TYPE_FOR_{}", name));
     let gen = quote! {
-        #[allow(dead_code, unused_variables)]
-        unsafe impl #impl_generics ::hdf5_types::H5Type for #name #ty_generics #where_clause {
-            #[inline]
-            fn type_descriptor() -> ::hdf5_types::TypeDescriptor {
-                #body
+        #[allow(dead_code, unused_variables, unused_attributes)]
+        const #dummy: () = {
+            extern crate hdf5_types as _h5t;
+            unsafe impl #impl_generics _h5t::H5Type for #name #ty_generics #where_clause {
+                #[inline]
+                fn type_descriptor() -> _h5t::TypeDescriptor {
+                    #body
+                }
             }
-        }
+        };
     };
     gen.parse().unwrap()
 }
@@ -43,12 +47,12 @@ fn impl_compound(ty: &Ident, ty_generics: &TyGenerics,
 {
     quote! {
         let origin = 0usize as *const #ty #ty_generics;
-        ::hdf5_types::TypeDescriptor::Compound(
-            ::hdf5_types::CompoundType {
+        _h5t::TypeDescriptor::Compound(
+            _h5t::CompoundType {
                 fields: vec![#(
-                    ::hdf5_types::CompoundField {
+                    _h5t::CompoundField {
                         name: stringify!(#names).to_owned(),
-                        ty: <#types as ::hdf5_types::H5Type>::type_descriptor(),
+                        ty: <#types as _h5t::H5Type>::type_descriptor(),
                         offset: unsafe { &((*origin).#fields) as *const _ as usize },
                     }
                 ),*],
@@ -64,12 +68,12 @@ fn impl_enum(names: Vec<Ident>, values: Vec<ConstExpr>, repr: &Ident)-> quote::T
     let signed = repr.as_ref().starts_with('i');
     let repr = iter::repeat(repr);
     quote! {
-        ::hdf5_types::TypeDescriptor::Enum(
-            ::hdf5_types::EnumType {
-                size: ::hdf5_types::IntSize::#size,
+        _h5t::TypeDescriptor::Enum(
+            _h5t::EnumType {
+                size: _h5t::IntSize::#size,
                 signed: #signed,
                 members: vec![#(
-                    ::hdf5_types::EnumMember {
+                    _h5t::EnumMember {
                         name: stringify!(#names).to_owned(),
                         value: (#values) as #repr as u64,
                     }
