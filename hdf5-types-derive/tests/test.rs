@@ -2,6 +2,7 @@ extern crate hdf5_types;
 #[macro_use]
 extern crate hdf5_types_derive;
 
+use std::marker::PhantomData;
 use std::mem;
 
 use hdf5_types::TypeDescriptor as TD;
@@ -201,4 +202,33 @@ struct C2(u32, i64, f32);
 fn test_generics() {
     assert_eq!(G1::<i64>::type_descriptor(), C1::type_descriptor());
     assert_eq!(G2::<i64>::type_descriptor(), C2::type_descriptor());
+}
+
+#[derive(H5Type)]
+#[repr(C)]
+struct G3<T> {
+    x: i16,
+    y: PhantomData<T>,
+    z: u32,
+}
+
+#[derive(H5Type)]
+#[repr(C)]
+struct C3 {
+    x: i16,
+    z: u32,
+}
+
+#[derive(H5Type)]
+#[repr(C)]
+struct G4<T>(i16, PhantomData<T>, u32);
+
+#[derive(H5Type)]
+#[repr(C)]
+struct C4(i16, u32);
+
+#[test]
+fn test_phantom_data() {
+    assert_eq!(G3::<String>::type_descriptor(), C3::type_descriptor());
+    assert_eq!(G4::<String>::type_descriptor(), C4::type_descriptor());
 }
