@@ -1,44 +1,9 @@
-[package]
-name = "hdf5-rs"
-version = "0.2.0"
-authors = ["Ivan Smirnov <i.s.smirnov@gmail.com>"]
-keywords = ["hdf5"]
-license = "MIT/Apache-2.0"
-readme = "README.md"
-description = "Thread-safe Rust bindings for the HDF5 library."
-repository = "https://github.com/aldanor/hdf5-rs"
-homepage = "https://github.com/aldanor/hdf5-rs"
-exclude = [
-    "appveyor.yml",
-    ".travis.yml",
-    ".gitignore"
+[workspace]
+members = [
+    "hdf5-rs",
+    "hdf5-types",
+    "hdf5-derive",
+    "libhdf5-sys",
+    "libhdf5-lib",
+    "remutex",
 ]
-build = "build.rs"
-
-[lib]
-name = "h5"
-
-[features]
-default = []
-
-[dependencies]
-lazy_static = "0.2"
-libc = "0.2"
-libhdf5-lib = { path = "libhdf5-lib", version = "0.2.0" }
-libhdf5-sys = { path = "libhdf5-sys", version = "0.2.0" }
-hdf5-types = { path = "hdf5-types", version = "0.2.0" }
-remutex = { path = "remutex", version = "0.1.1" }
-clippy = { version = "*", optional = true }
-
-[dependencies.num]
-version = "0.1"
-default_features = false
-features = []
-
-[dev-dependencies]
-regex = "0.2"
-tempdir = "0.3"
-hdf5-derive = { path = "hdf5-derive", version = "0.2.0" }
-
-[build-dependencies]
-libhdf5-lib = { path = "libhdf5-lib", version = "0.2.0" }
