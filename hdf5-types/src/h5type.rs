@@ -159,6 +159,54 @@ unsafe impl H5Type for bool {
     }
 }
 
+macro_rules! impl_tuple {
+    (@second $a:tt $b:tt) => ($b);
+
+    (@parse_fields [$($s:ident)*] $origin:ident $fields:ident | $t:ty $(,$tt:ty)*) => (
+        let &$($s)*(.., ref f, $(impl_tuple!(@second $tt _),)*) = unsafe { &*$origin };
+        let index = $fields.len();
+        $fields.push(CompoundField {
+            name: format!("{}", index),
+            ty: <$t as H5Type>::type_descriptor(),
+            offset: f as *const _ as usize
+        });
+        impl_tuple!(@parse_fields [$($s)*] $origin $fields | $($tt),*);
+    );
+
+    (@parse_fields [$($s:ident)*] $origin:ident $fields:ident |) => ();
+
+    ($t:ident) => (
+        unsafe impl<$t> H5Type for ($t,) where $t: H5Type {
+            #[inline]
+            fn type_descriptor() -> TypeDescriptor {
+                assert!(mem::size_of::<$t>() == mem::size_of::<($t,)>());
+                <$t as H5Type>::type_descriptor()
+            }
+        }
+    );
+
+    ($t:ident, $($tt:ident),*) => (
+        unsafe impl<$t, $($tt),*> H5Type for ($t, $($tt),*)
+            where $t: H5Type, $($tt: H5Type),*
+        {
+            #[allow(dead_code, unused_variables)]
+            fn type_descriptor() -> TypeDescriptor {
+                let origin = 0usize as *const ($t, $($tt),*);
+                let mut fields = Vec::<CompoundField>::new();
+                impl_tuple!(@parse_fields [] origin fields | $t, $($tt),*);
+                TypeDescriptor::Compound(CompoundType {
+                    fields: fields,
+                    size: mem::size_of::<($t, $($tt),*)>(),
+                })
+            }
+        }
+
+        impl_tuple!($($tt),*);
+    );
+}
+
+impl_tuple! { T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15 }
+
 unsafe impl<T: Array<Item=I>, I: H5Type> H5Type for T {
     #[inline]
     fn type_descriptor() -> TypeDescriptor {
