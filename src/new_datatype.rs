@@ -66,7 +66,7 @@ impl Object for Datatype { }
 fn datatype_to_descriptor(datatype: &Datatype) -> Result<TypeDescriptor> {
     use ffi::h5t::H5T_class_t::*;
     use ffi::h5t::H5T_sign_t::*;
-    use types::TypeDescriptor::*;
+    use types::TypeDescriptor as TD;
 
     h5lock!({
         let id = datatype.id();
@@ -81,15 +81,15 @@ fn datatype_to_descriptor(datatype: &Datatype) -> Result<TypeDescriptor> {
                 let size = IntSize::from_int(size)
                                 .ok_or("Invalid size of integer datatype")?;
                 Ok(if signed {
-                    TypeDescriptor::Integer(size)
+                    TD::Integer(size)
                 } else {
-                    TypeDescriptor::Unsigned(size)
+                    TD::Unsigned(size)
                 })
             },
             H5T_FLOAT => {
                 let size = FloatSize::from_int(size)
                                 .ok_or("Invalid size of float datatype")?;
-                Ok(TypeDescriptor::Float(size))
+                Ok(TD::Float(size))
             },
             H5T_ENUM => {
                 let mut members: Vec<EnumMember> = Vec::new();
@@ -104,8 +104,8 @@ fn datatype_to_descriptor(datatype: &Datatype) -> Result<TypeDescriptor> {
                 }
                 let base_dt = Datatype::from_id(H5Tget_super(id))?;
                 let (size, signed) = match base_dt.as_type_descriptor()? {
-                    Integer(size) => Ok((size, true)),
-                    Unsigned(size) => Ok((size, false)),
+                    TD::Integer(size) => Ok((size, true)),
+                    TD::Unsigned(size) => Ok((size, false)),
                     _ => Err("Invalid base type for enum datatype"),
                 }?;
                 let bool_members = [
@@ -113,9 +113,9 @@ fn datatype_to_descriptor(datatype: &Datatype) -> Result<TypeDescriptor> {
                     EnumMember { name: "TRUE".to_owned(), value: 1 },
                 ];
                 if size == IntSize::U1 && members == bool_members {
-                    Ok(TypeDescriptor::Boolean)
+                    Ok(TD::Boolean)
                 } else {
-                    Ok(TypeDescriptor::Enum(
+                    Ok(TD::Enum(
                         EnumType { size: size, signed: signed, members : members }
                     ))
                 }
@@ -133,7 +133,7 @@ fn datatype_to_descriptor(datatype: &Datatype) -> Result<TypeDescriptor> {
                     });
                     ::libc::free(name as *mut c_void);
                 }
-                Ok(TypeDescriptor::Compound(CompoundType { fields: fields, size: size }))
+                Ok(TD::Compound(CompoundType { fields: fields, size: size }))
             },
             H5T_ARRAY => {
                 let base_dt = Datatype::from_id(H5Tget_super(id))?;
@@ -141,7 +141,7 @@ fn datatype_to_descriptor(datatype: &Datatype) -> Result<TypeDescriptor> {
                 if ndims == 1 {
                     let mut len: hsize_t = 0;
                     h5try_s!(H5Tget_array_dims2(id, &mut len as *mut hsize_t));
-                    Ok(TypeDescriptor::FixedArray(
+                    Ok(TD::FixedArray(
                         Box::new(base_dt.as_type_descriptor()?), len as usize
                     ))
                 } else {
@@ -152,16 +152,16 @@ fn datatype_to_descriptor(datatype: &Datatype) -> Result<TypeDescriptor> {
                 let is_variable = h5try_s!(H5Tis_variable_str(id)) == 1;
                 let encoding = h5lock_s!(H5Tget_cset(id));
                 match (is_variable, encoding) {
-                    (false, H5T_cset_t::H5T_CSET_ASCII) => Ok(TypeDescriptor::FixedAscii(size)),
-                    (false, H5T_cset_t::H5T_CSET_UTF8) => Ok(TypeDescriptor::FixedUnicode(size)),
-                    (true, H5T_cset_t::H5T_CSET_ASCII) => Ok(TypeDescriptor::VarLenAscii),
-                    (true, H5T_cset_t::H5T_CSET_UTF8) => Ok(TypeDescriptor::VarLenUnicode),
+                    (false, H5T_cset_t::H5T_CSET_ASCII) => Ok(TD::FixedAscii(size)),
+                    (false, H5T_cset_t::H5T_CSET_UTF8) => Ok(TD::FixedUnicode(size)),
+                    (true, H5T_cset_t::H5T_CSET_ASCII) => Ok(TD::VarLenAscii),
+                    (true, H5T_cset_t::H5T_CSET_UTF8) => Ok(TD::VarLenUnicode),
                     _ => Err("Invalid encoding for string datatype".into())
                 }
             },
             H5T_VLEN => {
                 let base_dt = Datatype::from_id(H5Tget_super(id))?;
-                Ok(TypeDescriptor::VarLenArray(Box::new(base_dt.as_type_descriptor()?)))
+                Ok(TD::VarLenArray(Box::new(base_dt.as_type_descriptor()?)))
             },
             _ => Err("Unsupported datatype class".into())
         }
@@ -189,7 +189,7 @@ macro_rules! be_le {
 }
 
 pub fn datatype_from_descriptor(desc: &TypeDescriptor) -> Result<Datatype> {
-    use types::TypeDescriptor::*;
+    use types::TypeDescriptor as TD;
 
     unsafe fn string_type(size: Option<usize>, encoding: H5T_cset_t) -> Result<hid_t> {
         let string_id = h5try_s!(H5Tcopy(*H5T_C_S1));
@@ -207,23 +207,23 @@ pub fn datatype_from_descriptor(desc: &TypeDescriptor) -> Result<Datatype> {
 
     let datatype_id: Result<_> = h5lock!({
         match *desc {
-            Integer(size) => Ok(match size {
+            TD::Integer(size) => Ok(match size {
                 IntSize::U1 => be_le!(H5T_STD_I8BE, H5T_STD_I8LE),
                 IntSize::U2 => be_le!(H5T_STD_I16BE, H5T_STD_I16LE),
                 IntSize::U4 => be_le!(H5T_STD_I32BE, H5T_STD_I32LE),
                 IntSize::U8 => be_le!(H5T_STD_I64BE, H5T_STD_I64LE),
             }),
-            Unsigned(size) => Ok(match size {
+            TD::Unsigned(size) => Ok(match size {
                 IntSize::U1 => be_le!(H5T_STD_U8BE, H5T_STD_U8LE),
                 IntSize::U2 => be_le!(H5T_STD_U16BE, H5T_STD_U16LE),
                 IntSize::U4 => be_le!(H5T_STD_U32BE, H5T_STD_U32LE),
                 IntSize::U8 => be_le!(H5T_STD_U64BE, H5T_STD_U64LE),
             }),
-            Float(size) => Ok(match size {
+            TD::Float(size) => Ok(match size {
                 FloatSize::U4 => be_le!(H5T_IEEE_F32BE, H5T_IEEE_F32LE),
                 FloatSize::U8 => be_le!(H5T_IEEE_I16BE, H5T_IEEE_F64LE),
             }),
-            Boolean => {
+            TD::Boolean => {
                 let bool_id = h5try_s!(H5Tenum_create(*H5T_NATIVE_INT8));
                 h5try_s!(H5Tenum_insert(bool_id, b"FALSE\0".as_ptr() as *const c_char,
                                         &0i8 as *const i8 as *const c_void));
@@ -231,7 +231,7 @@ pub fn datatype_from_descriptor(desc: &TypeDescriptor) -> Result<Datatype> {
                                         &1i8 as *const i8 as *const c_void));
                 Ok(bool_id)
             },
-            Enum(ref enum_type) => {
+            TD::Enum(ref enum_type) => {
                 let base = datatype_from_descriptor(&enum_type.base_type())?;
                 let enum_id = h5try_s!(H5Tenum_create(base.id()));
                 for member in &enum_type.members {
@@ -241,7 +241,7 @@ pub fn datatype_from_descriptor(desc: &TypeDescriptor) -> Result<Datatype> {
                 }
                 Ok(enum_id)
             },
-            Compound(ref compound_type) => {
+            TD::Compound(ref compound_type) => {
                 let compound_id = h5try_s!(H5Tcreate(H5T_class_t::H5T_COMPOUND, 1));
                 for field in &compound_type.fields {
                     let name = to_cstring(field.name.as_ref())?;
@@ -252,25 +252,25 @@ pub fn datatype_from_descriptor(desc: &TypeDescriptor) -> Result<Datatype> {
                 h5try_s!(H5Tset_size(compound_id, compound_type.size));
                 Ok(compound_id)
             },
-            FixedArray(ref ty, len) => {
+            TD::FixedArray(ref ty, len) => {
                 let elem_dt = datatype_from_descriptor(&ty)?;
                 let dims = len as hsize_t;
                 Ok(h5try_s!(H5Tarray_create2(elem_dt.id(), 1, &dims as *const hsize_t)))
             },
-            FixedAscii(size) => {
+            TD::FixedAscii(size) => {
                 string_type(Some(size), H5T_cset_t::H5T_CSET_ASCII)
             },
-            FixedUnicode(size) => {
+            TD::FixedUnicode(size) => {
                 string_type(Some(size), H5T_cset_t::H5T_CSET_UTF8)
             },
-            VarLenArray(ref ty) => {
+            TD::VarLenArray(ref ty) => {
                 let elem_dt = datatype_from_descriptor(&ty)?;
                 Ok(h5try_s!(H5Tvlen_create(elem_dt.id())))
             },
-            VarLenAscii => {
+            TD::VarLenAscii => {
                 string_type(None, H5T_cset_t::H5T_CSET_ASCII)
             },
-            VarLenUnicode => {
+            TD::VarLenUnicode => {
                 string_type(None, H5T_cset_t::H5T_CSET_UTF8)
             },
         }
