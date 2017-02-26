@@ -112,14 +112,20 @@ macro_rules! pluck {
 fn impl_trait(ty: &Ident, body: &Body, attrs: &[Attribute]) -> quote::Tokens {
     match *body {
         Body::Struct(VariantData::Unit) => {
-            impl_compound(ty, vec![], vec![])
+            panic!("Cannot derive H5Type for unit structs");
         },
         Body::Struct(VariantData::Struct(ref fields)) => {
+            if fields.is_empty() {
+                panic!("Cannot derive H5Type for empty structs");
+            }
             find_repr(attrs, &["C"])
                 .expect("H5Type requires #[repr(C)] for structs");
             impl_compound(ty, pluck!(fields, ?ident), pluck!(fields, ty))
         },
         Body::Struct(VariantData::Tuple(ref fields)) => {
+            if fields.is_empty() {
+                panic!("Cannot derive H5Type for empty tuple structs");
+            }
             find_repr(attrs, &["C"])
                 .expect("H5Type requires #[repr(C)] for structs");
             let index = (0..fields.len()).map(|i| format!("{}", i)).map(Ident::new);
