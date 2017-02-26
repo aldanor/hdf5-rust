@@ -142,7 +142,7 @@ impl ID for Dataspace {
 impl FromID for Dataspace {
     fn from_id(id: hid_t) -> Result<Dataspace> {
         match get_id_type(id) {
-            H5I_DATASPACE => Ok(Dataspace { handle: try!(Handle::new(id)) }),
+            H5I_DATASPACE => Ok(Dataspace { handle: Handle::new(id)? }),
             _ => Err(From::from(format!("Invalid dataspace id: {}", id))),
         }
     }

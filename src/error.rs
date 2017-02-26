@@ -88,12 +88,12 @@ impl ErrorStack {
                 }
                 let closure = |e: H5E_error2_t| -> Result<ErrorFrame> {
                     let (desc, func) = (string_from_cstr(e.desc), string_from_cstr(e.func_name));
-                    let major = try!(get_h5_str(|m, s| {
+                    let major = get_h5_str(|m, s| {
                         H5Eget_msg(e.maj_num, ptr::null_mut(), m, s)
-                    }));
-                    let minor = try!(get_h5_str(|m, s| {
+                    })?;
+                    let minor = get_h5_str(|m, s| {
                         H5Eget_msg(e.min_num, ptr::null_mut(), m, s)
-                    }));
+                    })?;
                     Ok(ErrorFrame::new(&desc, &func, &major, &minor))
                 };
                 match closure(*err_desc) {

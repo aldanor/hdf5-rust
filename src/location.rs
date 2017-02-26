@@ -39,7 +39,7 @@ pub trait Location: Object {
 
     /// Set or the commment attached to the named object.
     fn set_comment(&self, comment: &str) -> Result<()> {
-        let comment = try!(to_cstring(comment));
+        let comment = to_cstring(comment)?;
         h5call!(H5Oset_comment(self.id(), comment.as_ptr())).and(Ok(()))
     }
 

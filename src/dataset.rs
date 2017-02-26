@@ -54,9 +54,9 @@ impl FromID for Dataset {
         h5lock!({
             match get_id_type(id) {
                 H5I_DATASET => {
-                    let handle = try!(Handle::new(id));
-                    let dcpl = try!(PropertyList::from_id(h5try_s!(H5Dget_create_plist(id))));
-                    let filters = try!(Filters::from_dcpl(&dcpl));
+                    let handle = Handle::new(id)?;
+                    let dcpl = PropertyList::from_id(h5try_s!(H5Dget_create_plist(id)))?;
+                    let filters = Filters::from_dcpl(&dcpl)?;
                     Ok(Dataset {
                         handle: handle,
                         dcpl: dcpl,
@@ -172,7 +172,7 @@ impl Dataset {
                 H5D_fill_value_t::H5D_FILL_VALUE_ERROR => fail!("Invalid fill value"),
                 H5D_fill_value_t::H5D_FILL_VALUE_UNDEFINED => Ok(None),
                 _ => {
-                    let datatype = try!(T::to_datatype());
+                    let datatype = T::to_datatype()?;
                     let buf: *mut c_void = libc::malloc(datatype.size() as size_t);
                     h5try_s!(H5Pget_fill_value(self.dcpl.id(), datatype.id(), buf));
                     let result = Ok(Some(T::from_raw_ptr(buf)));
@@ -293,7 +293,7 @@ impl<T: ToDatatype> DatasetBuilder<T> {
 
     fn make_dcpl<D: Dimension>(&self, datatype: &Datatype, shape: D) -> Result<PropertyList> {
         h5lock!({
-            let dcpl = try!(self.filters.to_dcpl(datatype));
+            let dcpl = self.filters.to_dcpl(datatype)?;
             let id = dcpl.id();
 
             h5try_s!(H5Pset_obj_track_times(id, self.track_times as hbool_t));
@@ -345,23 +345,23 @@ impl<T: ToDatatype> DatasetBuilder<T> {
 
     fn make_lcpl(&self) -> Result<PropertyList> {
         h5lock_s!({
-            let lcpl = try!(PropertyList::from_id(h5try!(H5Pcreate(*H5P_LINK_CREATE))));
+            let lcpl = PropertyList::from_id(h5try!(H5Pcreate(*H5P_LINK_CREATE)))?;
             h5call!(H5Pset_create_intermediate_group(lcpl.id(), 1)).and(Ok(lcpl))
         })
     }
 
     fn finalize<D: Dimension>(&self, name: Option<&str>, shape: D) -> Result<Dataset> {
         h5lock!({
-            let datatype = try!(T::to_datatype());
+            let datatype = T::to_datatype()?;
             let parent = try_ref_clone!(self.parent);
 
-            let dataspace = try!(Dataspace::new(&shape, self.resizable));
-            let dcpl = try!(self.make_dcpl(&datatype, &shape));
+            let dataspace = Dataspace::new(&shape, self.resizable)?;
+            let dcpl = self.make_dcpl(&datatype, &shape)?;
 
             match name.clone() {
                 Some(name) => {
-                    let lcpl = try!(self.make_lcpl());
-                    let name = try!(to_cstring(name));
+                    let lcpl = self.make_lcpl()?;
+                    let name = to_cstring(name)?;
                     Dataset::from_id(h5try_s!(H5Dcreate2(
                         parent.id(), name.as_ptr(), datatype.id(),
                         dataspace.id(), lcpl.id(), dcpl.id(), H5P_DEFAULT

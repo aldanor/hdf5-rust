@@ -71,7 +71,7 @@ macro_rules! def_atomic {
                     if cls != $h5t {
                         return Err(From::from(format!("Invalid datatype class: {:?}", cls)));
                     }
-                    Ok($name { handle: try!(Handle::new(id)) })
+                    Ok($name { handle: Handle::new(id)? })
                 })
             }
         }
@@ -187,8 +187,8 @@ impl FromID for Datatype {
             match get_id_type(id) {
                 H5I_DATATYPE => {
                     match H5Tget_class(id) {
-                        H5T_INTEGER  => Ok(Datatype::Integer(try!(IntegerDatatype::from_id(id)))),
-                        H5T_FLOAT    => Ok(Datatype::Float(try!(FloatDatatype::from_id(id)))),
+                        H5T_INTEGER  => Ok(Datatype::Integer(IntegerDatatype::from_id(id)?)),
+                        H5T_FLOAT    => Ok(Datatype::Float(FloatDatatype::from_id(id)?)),
                         H5T_NO_CLASS |
                         H5T_NCLASSES => Err(From::from("Invalid datatype class")),
                         cls          => Err(From::from(format!("Unsupported datatype: {:?}", cls)))

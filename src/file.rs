@@ -43,8 +43,8 @@ impl FromID for File {
         h5lock_s!({
             match get_id_type(id) {
                 H5I_FILE => Ok(File {
-                    handle: try!(Handle::new(id)),
-                    fcpl: try!(PropertyList::from_id(h5try!(H5Fget_create_plist(id)))),
+                    handle: Handle::new(id)?,
+                    fcpl: PropertyList::from_id(h5try!(H5Fget_create_plist(id)))?,
                  }),
                 _ => Err(From::from(format!("Invalid file id: {}", id))),
             }
@@ -234,7 +234,7 @@ impl FileBuilder {
 
     fn make_fapl(&self) -> Result<PropertyList> {
         h5lock_s!({
-            let fapl = try!(PropertyList::from_id(h5try!(H5Pcreate(*H5P_FILE_ACCESS))));
+            let fapl = PropertyList::from_id(h5try!(H5Pcreate(*H5P_FILE_ACCESS)))?;
             match self.driver.as_ref() {
                 "sec2"  => h5try!(H5Pset_fapl_sec2(fapl.id())),
                 "stdio" => h5try!(H5Pset_fapl_stdio(fapl.id())),
@@ -250,12 +250,12 @@ impl FileBuilder {
     fn open_file<P: AsRef<Path>>(&self, filename: P, write: bool) -> Result<File> {
         ensure!(self.userblock == 0, "Cannot specify userblock when opening a file");
         h5lock_s!({
-            let fapl = try!(self.make_fapl());
+            let fapl = self.make_fapl()?;
             let flags = if write { H5F_ACC_RDWR } else { H5F_ACC_RDONLY };
             let filename = filename.as_ref();
             match filename.to_str() {
                 Some(filename) => {
-                    let filename = try!(to_cstring(filename));
+                    let filename = to_cstring(filename)?;
                     File::from_id(h5try!(H5Fopen(filename.as_ptr(), flags, fapl.id())))
                 },
                 None => fail!("Invalid UTF-8 in file name: {:?}", filename)
@@ -265,14 +265,14 @@ impl FileBuilder {
 
     fn create_file<P: AsRef<Path>>(&self, filename: P, exclusive: bool) -> Result<File> {
         h5lock_s!({
-            let fcpl = try!(PropertyList::from_id(h5try!(H5Pcreate(*H5P_FILE_CREATE))));
+            let fcpl = PropertyList::from_id(h5try!(H5Pcreate(*H5P_FILE_CREATE)))?;
             h5try!(H5Pset_userblock(fcpl.id(), self.userblock));
-            let fapl = try!(self.make_fapl());
+            let fapl = self.make_fapl()?;
             let flags = if exclusive { H5F_ACC_EXCL } else { H5F_ACC_TRUNC };
             let filename = filename.as_ref();
             match filename.to_str() {
                 Some(filename) => {
-                    let filename = try!(to_cstring(filename));
+                    let filename = to_cstring(filename)?;
                     File::from_id(h5try!(H5Fcreate(filename.as_ptr(), flags, fcpl.id(), fapl.id())))
                 },
                 None => fail!("Invalid UTF-8 in file name: {:?}", filename)

@@ -233,21 +233,21 @@ impl Filters {
 
     #[doc(hidden)]
     pub fn to_dcpl(&self, datatype: &Datatype) -> Result<PropertyList> {
-        try!(self.validate());
+        self.validate()?;
 
         h5lock!({
-            let plist = try!(PropertyList::from_id(H5Pcreate(*H5P_DATASET_CREATE)));
+            let plist = PropertyList::from_id(H5Pcreate(*H5P_DATASET_CREATE))?;
             let id = plist.id();
 
             // fletcher32
             if self.fletcher32 {
-                try!(self.ensure_available("fletcher32", H5Z_FILTER_FLETCHER32));
+                self.ensure_available("fletcher32", H5Z_FILTER_FLETCHER32)?;
                 H5Pset_fletcher32(id);
             }
 
             // scale-offset
             if let Some(offset) = self.scale_offset {
-                try!(self.ensure_available("scaleoffset", H5Z_FILTER_SCALEOFFSET));
+                self.ensure_available("scaleoffset", H5Z_FILTER_SCALEOFFSET)?;
                 match *datatype {
                     Datatype::Integer(_) => {
                         H5Pset_scaleoffset(id, H5Z_SO_INT, offset as c_int);
@@ -267,16 +267,16 @@ impl Filters {
 
             // shuffle
             if self.shuffle {
-                try!(self.ensure_available("shuffle", H5Z_FILTER_SHUFFLE));
+                self.ensure_available("shuffle", H5Z_FILTER_SHUFFLE)?;
                 h5try_s!(H5Pset_shuffle(id));
             }
 
             // compression
             if let Some(level) = self.gzip {
-                try!(self.ensure_available("gzip", H5Z_FILTER_DEFLATE));
+                self.ensure_available("gzip", H5Z_FILTER_DEFLATE)?;
                 h5try_s!(H5Pset_deflate(id, level as c_uint));
             } else if let Some((nn, pixels_per_block)) = self.szip {
-                try!(self.ensure_available("szip", H5Z_FILTER_SZIP));
+                self.ensure_available("szip", H5Z_FILTER_SZIP)?;
                 let options = if nn { H5_SZIP_NN_OPTION_MASK } else { H5_SZIP_EC_OPTION_MASK };
                 h5try_s!(H5Pset_szip(id, options, pixels_per_block as c_uint));
             }
@@ -294,7 +294,7 @@ pub mod tests {
 
     fn make_filters<T: ToDatatype>(filters: &Filters) -> Result<Filters> {
         let datatype = T::to_datatype().unwrap();
-        let dcpl = try!(filters.to_dcpl(&datatype));
+        let dcpl = filters.to_dcpl(&datatype)?;
         Filters::from_dcpl(&dcpl)
     }
 
