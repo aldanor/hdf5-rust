@@ -17,7 +17,7 @@ use std::mem;
 use std::str::FromStr;
 
 use proc_macro::TokenStream;
-use syn::{Body, VariantData, Ident, Ty, ConstExpr, Attribute};
+use syn::{Body, VariantData, Ident, Ty, ConstExpr, Attribute, TyGenerics};
 
 #[proc_macro_derive(H5Type)]
 pub fn derive(input: TokenStream) -> TokenStream {
@@ -25,7 +25,7 @@ pub fn derive(input: TokenStream) -> TokenStream {
     let ast = syn::parse_macro_input(&input).unwrap();
     let name = &ast.ident;
     let (impl_generics, ty_generics, where_clause) = ast.generics.split_for_impl();
-    let body = impl_trait(name, &ast.body, &ast.attrs);
+    let body = impl_trait(name, &ast.body, &ast.attrs, &ty_generics);
     let gen = quote! {
         #[allow(dead_code, unused_variables)]
         unsafe impl #impl_generics ::hdf5_types::H5Type for #name #ty_generics #where_clause {
@@ -38,10 +38,12 @@ pub fn derive(input: TokenStream) -> TokenStream {
     gen.parse().unwrap()
 }
 
-fn impl_compound(ty: &Ident, names: Vec<Ident>, types: Vec<Ty>) -> quote::Tokens {
+fn impl_compound(ty: &Ident, ty_generics: &TyGenerics,
+                 names: Vec<Ident>, types: Vec<Ty>) -> quote::Tokens
+{
     let (names, names2) = (&names, &names);
     quote! {
-        let origin = 0usize as *const #ty;
+        let origin = 0usize as *const #ty #ty_generics;
         ::hdf5_types::TypeDescriptor::Compound(
             ::hdf5_types::CompoundType {
                 fields: vec![#(
@@ -51,7 +53,7 @@ fn impl_compound(ty: &Ident, names: Vec<Ident>, types: Vec<Ty>) -> quote::Tokens
                         offset: unsafe { &((*origin).#names2) as *const _ as usize },
                     }
                 ),*],
-                size: ::std::mem::size_of::<#ty>()
+                size: ::std::mem::size_of::<#ty #ty_generics>()
             }
         )
     }
@@ -109,7 +111,9 @@ macro_rules! pluck {
     );
 }
 
-fn impl_trait(ty: &Ident, body: &Body, attrs: &[Attribute]) -> quote::Tokens {
+fn impl_trait(ty: &Ident, body: &Body, attrs: &[Attribute],
+              ty_generics: &TyGenerics) -> quote::Tokens
+{
     match *body {
         Body::Struct(VariantData::Unit) => {
             panic!("Cannot derive H5Type for unit structs");
@@ -120,7 +124,7 @@ fn impl_trait(ty: &Ident, body: &Body, attrs: &[Attribute]) -> quote::Tokens {
             }
             find_repr(attrs, &["C"])
                 .expect("H5Type requires #[repr(C)] for structs");
-            impl_compound(ty, pluck!(fields, ?ident), pluck!(fields, ty))
+            impl_compound(ty, ty_generics, pluck!(fields, ?ident), pluck!(fields, ty))
         },
         Body::Struct(VariantData::Tuple(ref fields)) => {
             if fields.is_empty() {
@@ -129,7 +133,7 @@ fn impl_trait(ty: &Ident, body: &Body, attrs: &[Attribute]) -> quote::Tokens {
             find_repr(attrs, &["C"])
                 .expect("H5Type requires #[repr(C)] for structs");
             let index = (0..fields.len()).map(|i| format!("{}", i)).map(Ident::new);
-            impl_compound(ty, index.collect(), pluck!(fields, ty))
+            impl_compound(ty, ty_generics, index.collect(), pluck!(fields, ty))
         },
         Body::Enum(ref variants) => {
             if variants.iter().any(|f| f.data != VariantData::Unit || f.discriminant.is_none()) {
