@@ -74,49 +74,32 @@ macro_rules! assert_err_re {
     );
 }
 
-/// Run a safe expression in a closure synchronized by a global reentrant mutex.
-#[macro_export]
-macro_rules! h5lock_s {
-    ($expr:expr) => (
-        $crate::sync::sync(|| { $expr })
-    )
-}
-
-/// Run an unsafe expression in a closure synchronized by a global reentrant mutex.
+/// Run a potentially unsafe expression in a closure synchronized by a global reentrant mutex.
 #[macro_export]
 macro_rules! h5lock {
-    ($expr:expr) => (
-        h5lock_s!(unsafe { $expr })
-    )
+    ($expr:expr) => ({
+        #[allow(unused_unsafe)]
+        unsafe {
+            $crate::sync::sync(|| { $expr })
+        }
+    })
 }
 
-#[macro_export]
-macro_rules! h5call_s {
-    ($expr:expr) => (
-        h5lock_s!($crate::error::h5check($expr))
-    )
-}
-
+/// Convert result of HDF5 call to Result; execution is guarded by a global reentrant mutex.
 #[macro_export]
 macro_rules! h5call {
     ($expr:expr) => (
-        h5call_s!(unsafe { $expr })
+        h5lock!($crate::error::h5check($expr))
     )
 }
 
+/// `h5try!(..)` is equivalent to try!(h5call!(..)).
 #[macro_export]
-macro_rules! h5try_s {
-    ($expr:expr) => (match h5call_s!($expr) {
+macro_rules! h5try {
+    ($expr:expr) => (match h5call!($expr) {
         Ok(value) => value,
         Err(err)  => {
             return Err(From::from(err))
         },
     })
-}
-
-#[macro_export]
-macro_rules! h5try {
-    ($expr:expr) => (
-        h5try_s!(unsafe { $expr })
-    )
 }

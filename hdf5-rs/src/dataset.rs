@@ -55,7 +55,7 @@ impl FromID for Dataset {
             match get_id_type(id) {
                 H5I_DATASET => {
                     let handle = Handle::new(id)?;
-                    let dcpl = PropertyList::from_id(h5try_s!(H5Dget_create_plist(id)))?;
+                    let dcpl = PropertyList::from_id(h5try!(H5Dget_create_plist(id)))?;
                     let filters = Filters::from_dcpl(&dcpl)?;
                     Ok(Dataset {
                         handle: handle,
@@ -96,7 +96,7 @@ impl Dataset {
 
     /// Returns whether this dataset is resizable along some axis.
     pub fn is_resizable(&self) -> bool {
-        h5lock_s!({
+        h5lock!({
             if let Ok(s) = self.dataspace() { s.resizable() } else { false }
         })
     }
@@ -143,7 +143,7 @@ impl Dataset {
     pub fn tracks_times(&self) -> bool {
         unsafe {
             let track_times: *mut hbool_t = &mut 0;
-            h5lock_s!(H5Pget_obj_track_times(self.dcpl.id(), track_times));
+            h5lock!(H5Pget_obj_track_times(self.dcpl.id(), track_times));
             *track_times == 1
         }
     }
@@ -167,14 +167,14 @@ impl Dataset {
     pub fn fill_value<T: ToDatatype>(&self) -> Result<Option<T>> {
         h5lock!({
             let defined: *mut H5D_fill_value_t = &mut H5D_fill_value_t::H5D_FILL_VALUE_UNDEFINED;
-            h5try_s!(H5Pfill_value_defined(self.dcpl.id(), defined));
+            h5try!(H5Pfill_value_defined(self.dcpl.id(), defined));
             match *defined {
                 H5D_fill_value_t::H5D_FILL_VALUE_ERROR => fail!("Invalid fill value"),
                 H5D_fill_value_t::H5D_FILL_VALUE_UNDEFINED => Ok(None),
                 _ => {
                     let datatype = T::to_datatype()?;
                     let buf: *mut c_void = libc::malloc(datatype.size() as size_t);
-                    h5try_s!(H5Pget_fill_value(self.dcpl.id(), datatype.id(), buf));
+                    h5try!(H5Pget_fill_value(self.dcpl.id(), datatype.id(), buf));
                     let result = Ok(Some(T::from_raw_ptr(buf)));
                     libc::free(buf);
                     result
@@ -206,7 +206,7 @@ pub struct DatasetBuilder<T> {
 impl<T: ToDatatype> DatasetBuilder<T> {
     /// Create a new dataset builder and bind it to the parent container.
     pub fn new<C: Container>(parent: &C) -> DatasetBuilder<T> {
-        h5lock_s!({
+        h5lock!({
             // Store the reference to the parent handle and try to increase its reference count.
             let handle = Handle::new(parent.id());
             if let Ok(ref handle) = handle {
@@ -296,10 +296,10 @@ impl<T: ToDatatype> DatasetBuilder<T> {
             let dcpl = self.filters.to_dcpl(datatype)?;
             let id = dcpl.id();
 
-            h5try_s!(H5Pset_obj_track_times(id, self.track_times as hbool_t));
+            h5try!(H5Pset_obj_track_times(id, self.track_times as hbool_t));
 
             if let Some(ref fill_value) = self.fill_value {
-                h5try_s!(T::with_raw_ptr(fill_value.clone(), |buf|
+                h5try!(T::with_raw_ptr(fill_value.clone(), |buf|
                     H5Pset_fill_value(id, datatype.id(), buf)
                 ));
             }
@@ -332,10 +332,10 @@ impl<T: ToDatatype> DatasetBuilder<T> {
                         "Invalid chunk: {:?} (must not exceed data shape in any dimension)", dims);
 
                     let c_dims: Vec<hsize_t> = dims.iter().map(|&x| x as hsize_t).collect();
-                    h5try_s!(H5Pset_chunk(id, dims.ndim() as c_int, c_dims.as_ptr()));
+                    h5try!(H5Pset_chunk(id, dims.ndim() as c_int, c_dims.as_ptr()));
 
                     // For chunked datasets, write fill values at the allocation time.
-                    h5try_s!(H5Pset_fill_time(id, H5D_FILL_TIME_ALLOC));
+                    h5try!(H5Pset_fill_time(id, H5D_FILL_TIME_ALLOC));
                 }
             }
 
@@ -344,7 +344,7 @@ impl<T: ToDatatype> DatasetBuilder<T> {
     }
 
     fn make_lcpl(&self) -> Result<PropertyList> {
-        h5lock_s!({
+        h5lock!({
             let lcpl = PropertyList::from_id(h5try!(H5Pcreate(*H5P_LINK_CREATE)))?;
             h5call!(H5Pset_create_intermediate_group(lcpl.id(), 1)).and(Ok(lcpl))
         })
@@ -362,13 +362,13 @@ impl<T: ToDatatype> DatasetBuilder<T> {
                 Some(name) => {
                     let lcpl = self.make_lcpl()?;
                     let name = to_cstring(name)?;
-                    Dataset::from_id(h5try_s!(H5Dcreate2(
+                    Dataset::from_id(h5try!(H5Dcreate2(
                         parent.id(), name.as_ptr(), datatype.id(),
                         dataspace.id(), lcpl.id(), dcpl.id(), H5P_DEFAULT
                     )))
                 },
                 _ => {
-                    Dataset::from_id(h5try_s!(H5Dcreate_anon(
+                    Dataset::from_id(h5try!(H5Dcreate_anon(
                         parent.id(), datatype.id(),
                         dataspace.id(), dcpl.id(), H5P_DEFAULT
                     )))

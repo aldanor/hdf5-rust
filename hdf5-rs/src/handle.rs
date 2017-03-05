@@ -9,7 +9,7 @@ use std::sync::{Arc, Mutex, RwLock};
 use std::collections::HashMap;
 
 pub fn get_id_type(id: hid_t) -> H5I_type_t {
-    h5lock_s!({
+    h5lock!({
         let tp = h5lock!(H5Iget_type(id));
         let valid = id > 0 && tp > H5I_BADID && tp < H5I_NTYPES;
         if valid { tp } else { H5I_BADID }
@@ -17,7 +17,7 @@ pub fn get_id_type(id: hid_t) -> H5I_type_t {
 }
 
 pub fn is_valid_id(id: hid_t) -> bool {
-    h5lock_s!({
+    h5lock!({
         let tp = get_id_type(id);
         tp > H5I_BADID && tp < H5I_NTYPES
     })
@@ -72,7 +72,7 @@ impl Handle {
         lazy_static! {
             static ref REGISTRY: Registry = Registry::new();
         }
-        h5lock_s!({
+        h5lock!({
             if is_valid_user_id(id) {
                 Ok(Handle{ id: REGISTRY.new_handle(id) })
             } else {
@@ -115,7 +115,7 @@ impl Handle {
 
 impl Clone for Handle {
     fn clone(&self) -> Handle {
-        h5lock_s!({
+        h5lock!({
             self.incref();
             Handle::from_id(self.id()).unwrap_or(Handle::invalid())
         })
@@ -124,7 +124,7 @@ impl Clone for Handle {
 
 impl Drop for Handle {
     fn drop(&mut self) {
-        h5lock_s!(self.decref());
+        h5lock!(self.decref());
     }
 }
 

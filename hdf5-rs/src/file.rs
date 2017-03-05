@@ -40,7 +40,7 @@ impl ID for File {
 #[doc(hidden)]
 impl FromID for File {
     fn from_id(id: hid_t) -> Result<File> {
-        h5lock_s!({
+        h5lock!({
             match get_id_type(id) {
                 H5I_FILE => Ok(File {
                     handle: Handle::new(id)?,
@@ -76,7 +76,7 @@ impl File {
     pub fn size(&self) -> u64 {
         unsafe {
             let size: *mut hsize_t = &mut 0;
-            h5lock_s!(H5Fget_filesize(self.id(), size));
+            h5lock!(H5Fget_filesize(self.id(), size));
             if *size > 0 { *size as u64 } else { 0 }
         }
     }
@@ -93,7 +93,7 @@ impl File {
     pub fn is_read_only(&self) -> bool {
         unsafe {
             let mode: *mut c_uint = &mut 0;
-            h5lock_s!(H5Fget_intent(self.id(), mode));
+            h5lock!(H5Fget_intent(self.id(), mode));
             *mode != H5F_ACC_RDWR
         }
     }
@@ -110,7 +110,7 @@ impl File {
     pub fn userblock(&self) -> u64 {
         unsafe {
             let userblock: *mut hsize_t = &mut 0;
-            h5lock_s!(H5Pget_userblock(self.fcpl.id(), userblock));
+            h5lock!(H5Pget_userblock(self.fcpl.id(), userblock));
             *userblock as u64
         }
     }
@@ -122,7 +122,7 @@ impl File {
 
     /// Get objects ids of the contained objects. Note: these are borrowed references.
     fn get_obj_ids(&self, types: c_uint) -> Vec<hid_t> {
-        h5lock_s!({
+        h5lock!({
             let count = h5call!(H5Fget_obj_count(self.id(), types)).unwrap_or(0) as size_t;
             if count > 0 {
                 let mut ids: Vec<hid_t> = Vec::with_capacity(count as usize);
@@ -138,7 +138,7 @@ impl File {
 
     /// Closes the file and invalidates all open handles for contained objects.
     pub fn close(&self) {
-        h5lock_s!({
+        h5lock!({
             let file_ids = self.get_obj_ids(H5F_OBJ_FILE);
             let object_ids = self.get_obj_ids(H5F_OBJ_ALL & !H5F_OBJ_FILE);
             for file_id in &file_ids {
@@ -233,7 +233,7 @@ impl FileBuilder {
     }
 
     fn make_fapl(&self) -> Result<PropertyList> {
-        h5lock_s!({
+        h5lock!({
             let fapl = PropertyList::from_id(h5try!(H5Pcreate(*H5P_FILE_ACCESS)))?;
             match self.driver.as_ref() {
                 "sec2"  => h5try!(H5Pset_fapl_sec2(fapl.id())),
@@ -249,7 +249,7 @@ impl FileBuilder {
 
     fn open_file<P: AsRef<Path>>(&self, filename: P, write: bool) -> Result<File> {
         ensure!(self.userblock == 0, "Cannot specify userblock when opening a file");
-        h5lock_s!({
+        h5lock!({
             let fapl = self.make_fapl()?;
             let flags = if write { H5F_ACC_RDWR } else { H5F_ACC_RDONLY };
             let filename = filename.as_ref();
@@ -264,7 +264,7 @@ impl FileBuilder {
     }
 
     fn create_file<P: AsRef<Path>>(&self, filename: P, exclusive: bool) -> Result<File> {
-        h5lock_s!({
+        h5lock!({
             let fcpl = PropertyList::from_id(h5try!(H5Pcreate(*H5P_FILE_CREATE)))?;
             h5try!(H5Pset_userblock(fcpl.id(), self.userblock));
             let fapl = self.make_fapl()?;

@@ -169,7 +169,7 @@ impl Filters {
         let mut filters = Filters::default();
         h5lock!({
             let id = dcpl.id();
-            let n_filters: c_int = h5try_s!(H5Pget_nfilters(id));
+            let n_filters: c_int = h5try!(H5Pget_nfilters(id));
 
             for idx in 0..n_filters {
                 let flags: *mut c_uint = &mut 0;
@@ -268,17 +268,17 @@ impl Filters {
             // shuffle
             if self.shuffle {
                 self.ensure_available("shuffle", H5Z_FILTER_SHUFFLE)?;
-                h5try_s!(H5Pset_shuffle(id));
+                h5try!(H5Pset_shuffle(id));
             }
 
             // compression
             if let Some(level) = self.gzip {
                 self.ensure_available("gzip", H5Z_FILTER_DEFLATE)?;
-                h5try_s!(H5Pset_deflate(id, level as c_uint));
+                h5try!(H5Pset_deflate(id, level as c_uint));
             } else if let Some((nn, pixels_per_block)) = self.szip {
                 self.ensure_available("szip", H5Z_FILTER_SZIP)?;
                 let options = if nn { H5_SZIP_NN_OPTION_MASK } else { H5_SZIP_EC_OPTION_MASK };
-                h5try_s!(H5Pset_szip(id, options, pixels_per_block as c_uint));
+                h5try!(H5Pset_szip(id, options, pixels_per_block as c_uint));
             }
 
             Ok(plist)

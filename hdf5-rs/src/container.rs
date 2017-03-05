@@ -22,7 +22,7 @@ fn group_info(id: hid_t) -> Result<H5G_info_t> {
 }
 
 fn make_lcpl() -> Result<PropertyList> {
-    h5lock_s!({
+    h5lock!({
         let lcpl = PropertyList::from_id(h5try!(H5Pcreate(*H5P_LINK_CREATE)))?;
         h5call!(H5Pset_create_intermediate_group(lcpl.id(), 1)).and(Ok(lcpl))
     })
@@ -42,7 +42,7 @@ pub trait Container: Location {
 
     /// Create a new group in a file or group.
     fn create_group(&self, name: &str) -> Result<Group> {
-        h5lock_s!({
+        h5lock!({
             let lcpl = make_lcpl()?;
             let name = to_cstring(name)?;
             Group::from_id(h5try!(H5Gcreate2(
@@ -60,7 +60,7 @@ pub trait Container: Location {
 
     /// Creates a soft link. Note: `src` and `dst` are relative to the current object.
     fn link_soft(&self, src: &str, dst: &str) -> Result<()> {
-        h5lock_s!({
+        h5lock!({
             let lcpl = make_lcpl()?;
             let src = to_cstring(src)?;
             let dst = to_cstring(dst)?;
