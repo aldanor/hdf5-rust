@@ -124,12 +124,12 @@ mod tests {
             assert_err_re!(file.group("a"), "unable to open group: object.+doesn't exist");
             file.create_group("a").unwrap();
             let a = file.group("a").unwrap();
-            assert!(a.name() == "/a");
-            assert!(a.file().unwrap().id() == file.id());
+            assert_eq!(a.name(), "/a");
+            assert_eq!(a.file().unwrap().id(), file.id());
             a.create_group("b").unwrap();
             let b = file.group("/a/b").unwrap();
-            assert!(b.name() == "/a/b");
-            assert!(b.file().unwrap().id() == file.id());
+            assert_eq!(b.name(), "/a/b");
+            assert_eq!(b.file().unwrap().id(), file.id());
             file.create_group("/foo/bar").unwrap();
             file.group("foo").unwrap().group("bar").unwrap();
             file.create_group("x/y/").unwrap();

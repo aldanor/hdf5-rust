@@ -613,7 +613,7 @@ pub mod tests {
             File::open(&path, "w").unwrap().new_dataset::<u32>()
                 .track_times(true).create("foo", 1).unwrap();
             fs::File::open(&path).unwrap().read_to_end(&mut buf2).unwrap();
-            assert!(buf1 != buf2);
+            assert_ne!(buf1, buf2);
         });
     }
 

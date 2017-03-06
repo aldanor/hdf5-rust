@@ -71,12 +71,16 @@ pub mod tests {
     pub fn test_clone_eq() {
         let fapl = PropertyList::from_id(h5call!(H5Pcreate(*H5P_FILE_ACCESS)).unwrap()).unwrap();
         let fcpl = PropertyList::from_id(h5call!(H5Pcreate(*H5P_FILE_CREATE)).unwrap()).unwrap();
-        assert!(fapl.is_valid() && fcpl.is_valid());
-        assert!(fapl != fcpl);
+        assert!(fapl.is_valid());
+        assert!(fcpl.is_valid());
+        assert_ne!(fapl, fcpl);
         let fapl_c = fapl.clone();
-        assert!(fapl.is_valid() && fapl.refcount() == 1);
-        assert!(fapl_c.is_valid() && fapl_c.refcount() == 1);
-        assert!(fapl == fapl_c && fapl.id() != fapl_c.id());
-        assert!(fcpl != fapl_c);
+        assert!(fapl.is_valid());
+        assert!(fapl_c.is_valid());
+        assert_eq!(fapl.refcount(), 1);
+        assert_eq!(fapl_c.refcount(), 1);
+        assert_eq!(fapl, fapl_c);
+        assert_ne!(fapl.id(), fapl_c.id());
+        assert_ne!(fcpl, fapl_c);
     }
 }

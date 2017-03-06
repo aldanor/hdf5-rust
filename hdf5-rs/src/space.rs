@@ -237,7 +237,8 @@ pub mod tests {
         assert_err!(Dataspace::from_id(H5I_INVALID_HID), "Invalid dataspace id");
 
         let dc = d.clone();
-        assert!(dc.is_valid() && dc.id() != d.id());
+        assert!(dc.is_valid());
+        assert_ne!(dc.id(), d.id());
         assert_eq!((d.ndim(), d.dims(), d.size()), (dc.ndim(), dc.dims(), dc.size()));
 
         assert_eq!(Dataspace::new((5, 6), false).unwrap().maxdims(), vec![5, 6]);

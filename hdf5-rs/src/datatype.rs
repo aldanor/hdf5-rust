@@ -253,8 +253,8 @@ pub mod tests {
 
     #[test]
     pub fn test_eq() {
-        assert!(u32::to_datatype().unwrap() == u32::to_datatype().unwrap());
-        assert!(u32::to_datatype().unwrap() != u16::to_datatype().unwrap());
+        assert_eq!(u32::to_datatype().unwrap(), u32::to_datatype().unwrap());
+        assert_ne!(u32::to_datatype().unwrap(), u16::to_datatype().unwrap());
     }
 
     #[test]

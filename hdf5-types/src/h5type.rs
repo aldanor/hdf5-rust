@@ -179,7 +179,7 @@ macro_rules! impl_tuple {
         unsafe impl<$t> H5Type for ($t,) where $t: H5Type {
             #[inline]
             fn type_descriptor() -> TypeDescriptor {
-                assert!(mem::size_of::<$t>() == mem::size_of::<($t,)>());
+                assert_eq!(mem::size_of::<$t>(), mem::size_of::<($t,)>());
                 <$t as H5Type>::type_descriptor()
             }
         }

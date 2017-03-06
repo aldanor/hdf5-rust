@@ -98,7 +98,7 @@ pub mod tests {
         let mut obj = TestObject::from_id(h5call!(H5Pcreate(*H5P_FILE_ACCESS)).unwrap()).unwrap();
         let obj_id = obj.id();
         obj = TestObject::from_id(h5call!(H5Pcreate(*H5P_FILE_ACCESS)).unwrap()).unwrap();
-        assert!(obj_id != obj.id());
+        assert_ne!(obj_id, obj.id());
         assert!(obj.id() > 0);
         assert!(obj.is_valid());
         assert!(is_valid_id(obj.id()));

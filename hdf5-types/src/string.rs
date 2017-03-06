@@ -591,11 +591,11 @@ pub mod tests {
     pub fn test_capacity() {
         type A = FixedAscii<[u8; 2]>;
         type U = FixedUnicode<[u8; 2]>;
-        assert!(A::from_ascii("ab").unwrap().as_str() == "ab");
+        assert_eq!(A::from_ascii("ab").unwrap().as_str(), "ab");
         assert!(A::from_ascii("abc").is_err());
-        assert!(U::from_str("ab").unwrap().as_str() == "ab");
+        assert_eq!(U::from_str("ab").unwrap().as_str(), "ab");
         assert!(U::from_str("abc").is_err());
-        assert!(U::from_str("®").unwrap().as_str() == "®");
+        assert_eq!(U::from_str("®").unwrap().as_str(), "®");
         assert!(U::from_str("€").is_err());
     }
 
