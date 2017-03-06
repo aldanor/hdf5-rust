@@ -8,6 +8,7 @@
 
 use std::cell::UnsafeCell;
 use std::mem;
+use std::ptr;
 use std::sync::{self, MutexGuard, Mutex};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::marker::PhantomData;
@@ -67,7 +68,7 @@ impl RecursiveMutex {
             owner: AtomicUsize::new(0),
             recursion: UnsafeCell::new(0),
             mutex: Mutex::new(()),
-            guard: UnsafeCell::new(0 as *mut _),
+            guard: UnsafeCell::new(ptr::null_mut()),
         }
     }
 
