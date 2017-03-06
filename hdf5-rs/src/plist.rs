@@ -1,3 +1,5 @@
+use std::fmt;
+
 use ffi::h5i::{H5I_GENPROP_LST, H5I_INVALID_HID, hid_t};
 use ffi::h5p::{H5Pcopy, H5Pequal};
 
@@ -7,6 +9,22 @@ use object::Object;
 
 pub struct PropertyList {
     handle: Handle,
+}
+
+impl fmt::Debug for PropertyList {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(self, f)
+    }
+}
+
+impl fmt::Display for PropertyList {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if !self.is_valid() {
+            "<HDF5 property list: invalid id>".fmt(f)
+        } else {
+            "<HDF5 property list>".fmt(f)
+        }
+    }
 }
 
 #[doc(hidden)]
