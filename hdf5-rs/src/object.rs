@@ -58,7 +58,7 @@ pub mod tests {
         }
     }
 
-    impl FromID for TestObject{
+    impl FromID for TestObject {
         fn from_id(id: hid_t) -> Result<TestObject> {
             Ok(TestObject { handle: Handle::new(id)? })
         }
