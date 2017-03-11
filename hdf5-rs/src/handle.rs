@@ -93,7 +93,6 @@ impl Handle {
         *self.id.write().unwrap() = H5I_INVALID_HID;
     }
 
-    #[allow(dead_code)]  // FIXME: spurious rustc warning
     pub fn incref(&self) {
         if is_valid_user_id(self.id()) {
             h5lock!(H5Iinc_ref(self.id()));
