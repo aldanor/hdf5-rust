@@ -40,6 +40,16 @@ use globals::{
 
 use globals::{H5T_NATIVE_INT8, H5T_C_S1};
 
+#[cfg(target_endian = "big")]
+macro_rules! be_le {
+    ($be:expr, $le:expr) => (h5try!(H5Tcopy(*$be)))
+}
+
+#[cfg(target_endian = "little")]
+macro_rules! be_le {
+    ($be:expr, $le:expr) => (h5try!(H5Tcopy(*$le)))
+}
+
 pub struct Datatype {
     handle: Handle,
 }
@@ -63,240 +73,220 @@ impl FromID for Datatype {
 
 impl Object for Datatype { }
 
-fn datatype_to_descriptor(datatype: &Datatype) -> Result<TypeDescriptor> {
-    use ffi::h5t::H5T_class_t::*;
-    use ffi::h5t::H5T_sign_t::*;
-    use types::TypeDescriptor as TD;
-
-    h5lock!({
-        let id = datatype.id();
-        let size = h5try!(H5Tget_size(id)) as usize;
-        match H5Tget_class(id) {
-            H5T_INTEGER => {
-                let signed = match H5Tget_sign(id) {
-                    H5T_SGN_NONE => false,
-                    H5T_SGN_2 => true,
-                    _ => return Err("Invalid sign of integer datatype".into())
-                };
-                let size = IntSize::from_int(size)
-                                .ok_or("Invalid size of integer datatype")?;
-                Ok(if signed {
-                    TD::Integer(size)
-                } else {
-                    TD::Unsigned(size)
-                })
-            },
-            H5T_FLOAT => {
-                let size = FloatSize::from_int(size)
-                                .ok_or("Invalid size of float datatype")?;
-                Ok(TD::Float(size))
-            },
-            H5T_ENUM => {
-                let mut members: Vec<EnumMember> = Vec::new();
-                for idx in 0 .. h5try!(H5Tget_nmembers(id)) as u32 {
-                    let mut value: u64 = 0;
-                    h5try!(H5Tget_member_value(
-                        id, idx, &mut value as *mut _ as *mut c_void
-                    ));
-                    let name = H5Tget_member_name(id, idx);
-                    members.push(EnumMember { name: string_from_cstr(name), value: value });
-                    ::libc::free(name as *mut c_void);
-                }
-                let base_dt = Datatype::from_id(H5Tget_super(id))?;
-                let (size, signed) = match base_dt.as_type_descriptor()? {
-                    TD::Integer(size) => Ok((size, true)),
-                    TD::Unsigned(size) => Ok((size, false)),
-                    _ => Err("Invalid base type for enum datatype"),
-                }?;
-                let bool_members = [
-                    EnumMember { name: "FALSE".to_owned(), value: 0 },
-                    EnumMember { name: "TRUE".to_owned(), value: 1 },
-                ];
-                if size == IntSize::U1 && members == bool_members {
-                    Ok(TD::Boolean)
-                } else {
-                    Ok(TD::Enum(
-                        EnumType { size: size, signed: signed, members : members }
-                    ))
-                }
-            },
-            H5T_COMPOUND => {
-                let mut fields: Vec<CompoundField> = Vec::new();
-                for idx in 0 .. h5try!(H5Tget_nmembers(id)) as u32 {
-                    let name = H5Tget_member_name(id, idx);
-                    let offset = h5try!(H5Tget_member_offset(id, idx)) as usize;
-                    let ty = Datatype::from_id(h5try!(H5Tget_member_type(id, idx)))?;
-                    fields.push(CompoundField {
-                        name: string_from_cstr(name),
-                        ty: ty.as_type_descriptor()?,
-                        offset: offset
-                    });
-                    ::libc::free(name as *mut c_void);
-                }
-                Ok(TD::Compound(CompoundType { fields: fields, size: size }))
-            },
-            H5T_ARRAY => {
-                let base_dt = Datatype::from_id(H5Tget_super(id))?;
-                let ndims = h5try!(H5Tget_array_ndims(id));
-                if ndims == 1 {
-                    let mut len: hsize_t = 0;
-                    h5try!(H5Tget_array_dims2(id, &mut len as *mut hsize_t));
-                    Ok(TD::FixedArray(
-                        Box::new(base_dt.as_type_descriptor()?), len as usize
-                    ))
-                } else {
-                    Err("Multi-dimensional array datatypes are not supported".into())
-                }
-            },
-            H5T_STRING => {
-                let is_variable = h5try!(H5Tis_variable_str(id)) == 1;
-                let encoding = h5lock!(H5Tget_cset(id));
-                match (is_variable, encoding) {
-                    (false, H5T_cset_t::H5T_CSET_ASCII) => Ok(TD::FixedAscii(size)),
-                    (false, H5T_cset_t::H5T_CSET_UTF8) => Ok(TD::FixedUnicode(size)),
-                    (true, H5T_cset_t::H5T_CSET_ASCII) => Ok(TD::VarLenAscii),
-                    (true, H5T_cset_t::H5T_CSET_UTF8) => Ok(TD::VarLenUnicode),
-                    _ => Err("Invalid encoding for string datatype".into())
-                }
-            },
-            H5T_VLEN => {
-                let base_dt = Datatype::from_id(H5Tget_super(id))?;
-                Ok(TD::VarLenArray(Box::new(base_dt.as_type_descriptor()?)))
-            },
-            _ => Err("Unsupported datatype class".into())
-        }
-    })
-}
-
 impl Datatype {
-    pub fn as_type_descriptor(&self) -> Result<TypeDescriptor> {
-        datatype_to_descriptor(self)
+    pub fn to_descriptor(&self) -> Result<TypeDescriptor> {
+        use ffi::h5t::H5T_class_t::*;
+        use ffi::h5t::H5T_sign_t::*;
+        use types::TypeDescriptor as TD;
+
+        h5lock!({
+            let id = self.id();
+            let size = h5try!(H5Tget_size(id)) as usize;
+            match H5Tget_class(id) {
+                H5T_INTEGER => {
+                    let signed = match H5Tget_sign(id) {
+                        H5T_SGN_NONE => false,
+                        H5T_SGN_2 => true,
+                        _ => return Err("Invalid sign of integer datatype".into())
+                    };
+                    let size = IntSize::from_int(size)
+                        .ok_or("Invalid size of integer datatype")?;
+                    Ok(if signed {
+                        TD::Integer(size)
+                    } else {
+                        TD::Unsigned(size)
+                    })
+                },
+                H5T_FLOAT => {
+                    let size = FloatSize::from_int(size)
+                        .ok_or("Invalid size of float datatype")?;
+                    Ok(TD::Float(size))
+                },
+                H5T_ENUM => {
+                    let mut members: Vec<EnumMember> = Vec::new();
+                    for idx in 0 .. h5try!(H5Tget_nmembers(id)) as u32 {
+                        let mut value: u64 = 0;
+                        h5try!(H5Tget_member_value(
+                            id, idx, &mut value as *mut _ as *mut c_void
+                        ));
+                        let name = H5Tget_member_name(id, idx);
+                        members.push(EnumMember { name: string_from_cstr(name), value: value });
+                        ::libc::free(name as *mut c_void);
+                    }
+                    let base_dt = Datatype::from_id(H5Tget_super(id))?;
+                    let (size, signed) = match base_dt.to_descriptor()? {
+                        TD::Integer(size) => Ok((size, true)),
+                        TD::Unsigned(size) => Ok((size, false)),
+                        _ => Err("Invalid base type for enum datatype"),
+                    }?;
+                    let bool_members = [
+                        EnumMember { name: "FALSE".to_owned(), value: 0 },
+                        EnumMember { name: "TRUE".to_owned(), value: 1 },
+                    ];
+                    if size == IntSize::U1 && members == bool_members {
+                        Ok(TD::Boolean)
+                    } else {
+                        Ok(TD::Enum(
+                            EnumType { size: size, signed: signed, members : members }
+                        ))
+                    }
+                },
+                H5T_COMPOUND => {
+                    let mut fields: Vec<CompoundField> = Vec::new();
+                    for idx in 0 .. h5try!(H5Tget_nmembers(id)) as u32 {
+                        let name = H5Tget_member_name(id, idx);
+                        let offset = h5try!(H5Tget_member_offset(id, idx)) as usize;
+                        let ty = Datatype::from_id(h5try!(H5Tget_member_type(id, idx)))?;
+                        fields.push(CompoundField {
+                            name: string_from_cstr(name),
+                            ty: ty.to_descriptor()?,
+                            offset: offset
+                        });
+                        ::libc::free(name as *mut c_void);
+                    }
+                    Ok(TD::Compound(CompoundType { fields: fields, size: size }))
+                },
+                H5T_ARRAY => {
+                    let base_dt = Datatype::from_id(H5Tget_super(id))?;
+                    let ndims = h5try!(H5Tget_array_ndims(id));
+                    if ndims == 1 {
+                        let mut len: hsize_t = 0;
+                        h5try!(H5Tget_array_dims2(id, &mut len as *mut hsize_t));
+                        Ok(TD::FixedArray(
+                            Box::new(base_dt.to_descriptor()?), len as usize
+                        ))
+                    } else {
+                        Err("Multi-dimensional array datatypes are not supported".into())
+                    }
+                },
+                H5T_STRING => {
+                    let is_variable = h5try!(H5Tis_variable_str(id)) == 1;
+                    let encoding = h5lock!(H5Tget_cset(id));
+                    match (is_variable, encoding) {
+                        (false, H5T_cset_t::H5T_CSET_ASCII) => Ok(TD::FixedAscii(size)),
+                        (false, H5T_cset_t::H5T_CSET_UTF8) => Ok(TD::FixedUnicode(size)),
+                        (true, H5T_cset_t::H5T_CSET_ASCII) => Ok(TD::VarLenAscii),
+                        (true, H5T_cset_t::H5T_CSET_UTF8) => Ok(TD::VarLenUnicode),
+                        _ => Err("Invalid encoding for string datatype".into())
+                    }
+                },
+                H5T_VLEN => {
+                    let base_dt = Datatype::from_id(H5Tget_super(id))?;
+                    Ok(TD::VarLenArray(Box::new(base_dt.to_descriptor()?)))
+                },
+                _ => Err("Unsupported datatype class".into())
+            }
+        })
     }
-}
 
-pub trait ToDatatype {
-    fn to_datatype() -> Result<Datatype>;
-}
-
-#[cfg(target_endian = "big")]
-macro_rules! be_le {
-    ($be:expr, $le:expr) => (h5try!(H5Tcopy(*$be)))
-}
-
-#[cfg(target_endian = "little")]
-macro_rules! be_le {
-    ($be:expr, $le:expr) => (h5try!(H5Tcopy(*$le)))
-}
-
-pub fn datatype_from_descriptor(desc: &TypeDescriptor) -> Result<Datatype> {
-    use types::TypeDescriptor as TD;
-
-    unsafe fn string_type(size: Option<usize>, encoding: H5T_cset_t) -> Result<hid_t> {
-        let string_id = h5try!(H5Tcopy(*H5T_C_S1));
-        let padding = if size.is_none() {
-            H5T_str_t::H5T_STR_NULLPAD
-        } else {
-            H5T_str_t::H5T_STR_NULLTERM
-        };
-        let size = size.unwrap_or(H5T_VARIABLE);
-        h5try!(H5Tset_cset(string_id, encoding));
-        h5try!(H5Tset_strpad(string_id, padding));
-        h5try!(H5Tset_size(string_id, size));
-        Ok(string_id)
+    pub fn from_type<T: H5Type>() -> Result<Datatype> {
+        Datatype::from_descriptor(&<T as H5Type>::type_descriptor())
     }
 
-    let datatype_id: Result<_> = h5lock!({
-        match *desc {
-            TD::Integer(size) => Ok(match size {
-                IntSize::U1 => be_le!(H5T_STD_I8BE, H5T_STD_I8LE),
-                IntSize::U2 => be_le!(H5T_STD_I16BE, H5T_STD_I16LE),
-                IntSize::U4 => be_le!(H5T_STD_I32BE, H5T_STD_I32LE),
-                IntSize::U8 => be_le!(H5T_STD_I64BE, H5T_STD_I64LE),
-            }),
-            TD::Unsigned(size) => Ok(match size {
-                IntSize::U1 => be_le!(H5T_STD_U8BE, H5T_STD_U8LE),
-                IntSize::U2 => be_le!(H5T_STD_U16BE, H5T_STD_U16LE),
-                IntSize::U4 => be_le!(H5T_STD_U32BE, H5T_STD_U32LE),
-                IntSize::U8 => be_le!(H5T_STD_U64BE, H5T_STD_U64LE),
-            }),
-            TD::Float(size) => Ok(match size {
-                FloatSize::U4 => be_le!(H5T_IEEE_F32BE, H5T_IEEE_F32LE),
-                FloatSize::U8 => be_le!(H5T_IEEE_I16BE, H5T_IEEE_F64LE),
-            }),
-            TD::Boolean => {
-                let bool_id = h5try!(H5Tenum_create(*H5T_NATIVE_INT8));
-                h5try!(H5Tenum_insert(bool_id, b"FALSE\0".as_ptr() as *const c_char,
-                                        &0i8 as *const i8 as *const c_void));
-                h5try!(H5Tenum_insert(bool_id, b"TRUE\0".as_ptr() as *const c_char,
-                                        &1i8 as *const i8 as *const c_void));
-                Ok(bool_id)
-            },
-            TD::Enum(ref enum_type) => {
-                let base = datatype_from_descriptor(&enum_type.base_type())?;
-                let enum_id = h5try!(H5Tenum_create(base.id()));
-                for member in &enum_type.members {
-                    let name = to_cstring(member.name.as_ref())?;
-                    h5try!(H5Tenum_insert(enum_id, name.as_ptr(),
-                                            &member.value as *const u64 as *const c_void));
-                }
-                Ok(enum_id)
-            },
-            TD::Compound(ref compound_type) => {
-                let compound_id = h5try!(H5Tcreate(H5T_class_t::H5T_COMPOUND, 1));
-                for field in &compound_type.fields {
-                    let name = to_cstring(field.name.as_ref())?;
-                    let field_dt = datatype_from_descriptor(&field.ty)?;
-                    h5try!(H5Tset_size(compound_id, field.offset + field.ty.size()));
-                    h5try!(H5Tinsert(compound_id, name.as_ptr(), field.offset, field_dt.id()));
-                }
-                h5try!(H5Tset_size(compound_id, compound_type.size));
-                Ok(compound_id)
-            },
-            TD::FixedArray(ref ty, len) => {
-                let elem_dt = datatype_from_descriptor(&ty)?;
-                let dims = len as hsize_t;
-                Ok(h5try!(H5Tarray_create2(elem_dt.id(), 1, &dims as *const hsize_t)))
-            },
-            TD::FixedAscii(size) => {
-                string_type(Some(size), H5T_cset_t::H5T_CSET_ASCII)
-            },
-            TD::FixedUnicode(size) => {
-                string_type(Some(size), H5T_cset_t::H5T_CSET_UTF8)
-            },
-            TD::VarLenArray(ref ty) => {
-                let elem_dt = datatype_from_descriptor(&ty)?;
-                Ok(h5try!(H5Tvlen_create(elem_dt.id())))
-            },
-            TD::VarLenAscii => {
-                string_type(None, H5T_cset_t::H5T_CSET_ASCII)
-            },
-            TD::VarLenUnicode => {
-                string_type(None, H5T_cset_t::H5T_CSET_UTF8)
-            },
+    pub fn from_descriptor(desc: &TypeDescriptor) -> Result<Datatype> {
+        use types::TypeDescriptor as TD;
+
+        unsafe fn string_type(size: Option<usize>, encoding: H5T_cset_t) -> Result<hid_t> {
+            let string_id = h5try!(H5Tcopy(*H5T_C_S1));
+            let padding = if size.is_none() {
+                H5T_str_t::H5T_STR_NULLPAD
+            } else {
+                H5T_str_t::H5T_STR_NULLTERM
+            };
+            let size = size.unwrap_or(H5T_VARIABLE);
+            h5try!(H5Tset_cset(string_id, encoding));
+            h5try!(H5Tset_strpad(string_id, padding));
+            h5try!(H5Tset_size(string_id, size));
+            Ok(string_id)
         }
-    });
 
-    Datatype::from_id(datatype_id?)
-}
+        let datatype_id: Result<_> = h5lock!({
+            match *desc {
+                TD::Integer(size) => Ok(match size {
+                    IntSize::U1 => be_le!(H5T_STD_I8BE, H5T_STD_I8LE),
+                    IntSize::U2 => be_le!(H5T_STD_I16BE, H5T_STD_I16LE),
+                    IntSize::U4 => be_le!(H5T_STD_I32BE, H5T_STD_I32LE),
+                    IntSize::U8 => be_le!(H5T_STD_I64BE, H5T_STD_I64LE),
+                }),
+                TD::Unsigned(size) => Ok(match size {
+                    IntSize::U1 => be_le!(H5T_STD_U8BE, H5T_STD_U8LE),
+                    IntSize::U2 => be_le!(H5T_STD_U16BE, H5T_STD_U16LE),
+                    IntSize::U4 => be_le!(H5T_STD_U32BE, H5T_STD_U32LE),
+                    IntSize::U8 => be_le!(H5T_STD_U64BE, H5T_STD_U64LE),
+                }),
+                TD::Float(size) => Ok(match size {
+                    FloatSize::U4 => be_le!(H5T_IEEE_F32BE, H5T_IEEE_F32LE),
+                    FloatSize::U8 => be_le!(H5T_IEEE_I16BE, H5T_IEEE_F64LE),
+                }),
+                TD::Boolean => {
+                    let bool_id = h5try!(H5Tenum_create(*H5T_NATIVE_INT8));
+                    h5try!(H5Tenum_insert(bool_id, b"FALSE\0".as_ptr() as *const c_char,
+                                          &0i8 as *const i8 as *const c_void));
+                    h5try!(H5Tenum_insert(bool_id, b"TRUE\0".as_ptr() as *const c_char,
+                                          &1i8 as *const i8 as *const c_void));
+                    Ok(bool_id)
+                },
+                TD::Enum(ref enum_type) => {
+                    let base = Datatype::from_descriptor(&enum_type.base_type())?;
+                    let enum_id = h5try!(H5Tenum_create(base.id()));
+                    for member in &enum_type.members {
+                        let name = to_cstring(member.name.as_ref())?;
+                        h5try!(H5Tenum_insert(enum_id, name.as_ptr(),
+                                              &member.value as *const u64 as *const c_void));
+                    }
+                    Ok(enum_id)
+                },
+                TD::Compound(ref compound_type) => {
+                    let compound_id = h5try!(H5Tcreate(H5T_class_t::H5T_COMPOUND, 1));
+                    for field in &compound_type.fields {
+                        let name = to_cstring(field.name.as_ref())?;
+                        let field_dt = Datatype::from_descriptor(&field.ty)?;
+                        h5try!(H5Tset_size(compound_id, field.offset + field.ty.size()));
+                        h5try!(H5Tinsert(compound_id, name.as_ptr(), field.offset, field_dt.id()));
+                    }
+                    h5try!(H5Tset_size(compound_id, compound_type.size));
+                    Ok(compound_id)
+                },
+                TD::FixedArray(ref ty, len) => {
+                    let elem_dt = Datatype::from_descriptor(&ty)?;
+                    let dims = len as hsize_t;
+                    Ok(h5try!(H5Tarray_create2(elem_dt.id(), 1, &dims as *const hsize_t)))
+                },
+                TD::FixedAscii(size) => {
+                    string_type(Some(size), H5T_cset_t::H5T_CSET_ASCII)
+                },
+                TD::FixedUnicode(size) => {
+                    string_type(Some(size), H5T_cset_t::H5T_CSET_UTF8)
+                },
+                TD::VarLenArray(ref ty) => {
+                    let elem_dt = Datatype::from_descriptor(&ty)?;
+                    Ok(h5try!(H5Tvlen_create(elem_dt.id())))
+                },
+                TD::VarLenAscii => {
+                    string_type(None, H5T_cset_t::H5T_CSET_ASCII)
+                },
+                TD::VarLenUnicode => {
+                    string_type(None, H5T_cset_t::H5T_CSET_UTF8)
+                },
+            }
+        });
 
-impl<T: H5Type> ToDatatype for T {
-    fn to_datatype() -> Result<Datatype> {
-        datatype_from_descriptor(&T::type_descriptor())
+        Datatype::from_id(datatype_id?)
     }
 }
 
 #[cfg(test)]
 pub mod tests {
-    use super::ToDatatype;
-    use types::TypeDescriptor as TD;
     use types::*;
+    use types::TypeDescriptor as TD;
+    use super::Datatype;
 
     macro_rules! check_roundtrip {
         ($ty:ty, $desc:expr) => ({
             let desc = <$ty as H5Type>::type_descriptor();
             assert_eq!(desc, $desc);
-            let dt = <$ty as ToDatatype>::to_datatype().unwrap();
-            assert_eq!(desc, dt.as_type_descriptor().unwrap());
+            let dt = Datatype::from_type::<$ty>().unwrap();
+            assert_eq!(desc, dt.to_descriptor().unwrap());
         })
     }
 
