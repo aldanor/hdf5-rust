@@ -47,7 +47,7 @@ fn impl_compound(ty: &Ident, ty_generics: &TyGenerics,
                  fields: Vec<Ident>, names: Vec<Ident>, types: Vec<Ty>) -> quote::Tokens
 {
     quote! {
-        let origin = 0usize as *const #ty #ty_generics;
+        let origin: *const #ty #ty_generics = ::std::ptr::null();
         _h5t::TypeDescriptor::Compound(
             _h5t::CompoundType {
                 fields: vec![#(

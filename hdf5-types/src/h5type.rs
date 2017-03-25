@@ -191,7 +191,7 @@ macro_rules! impl_tuple {
         {
             #[allow(dead_code, unused_variables)]
             fn type_descriptor() -> TypeDescriptor {
-                let origin = 0usize as *const ($t, $($tt),*);
+                let origin: *const ($t, $($tt),*) = ::std::ptr::null();
                 let mut fields = Vec::<CompoundField>::new();
                 impl_tuple!(@parse_fields [] origin fields | $t, $($tt),*);
                 TypeDescriptor::Compound(CompoundType {
