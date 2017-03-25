@@ -1,11 +1,8 @@
 Cargo.lock
-**/target/doc
-**/target/debug
-**/target/release
-**/target/package
-/tmp.*
+target/
+/tmp*
 **/*.h5
 *~
 *.swp
 .vagrant/
-/tmp/
+*.ipynb*
