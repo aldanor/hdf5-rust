@@ -12,7 +12,6 @@ use ffi::h5p::{
 use globals::H5P_LINK_CREATE;
 
 use container::Container;
-use datatype::{Datatype, ToDatatype, AnyDatatype};
 use error::Result;
 use filters::Filters;
 use handle::{Handle, ID, FromID, get_id_type};
@@ -22,9 +21,12 @@ use plist::PropertyList;
 use space::{Dataspace, Dimension, Ix};
 use util::to_cstring;
 
-use libc;
-use libc::{c_int, c_void, size_t};
+use hdf5_types::H5Type;
+use new_datatype::Datatype;
+
 use num::integer::div_floor;
+
+use std::mem;
 
 #[derive(Clone, Debug)]
 pub enum Chunk {
@@ -105,14 +107,8 @@ impl Dataset {
     }
 
     /// Returns whether this dataset's type is equivalent to the given type.
-    pub fn is_type<T: ToDatatype>(&self) -> bool {
-        match T::to_datatype() {
-            Ok(ref datatype) => match self.datatype() {
-                Ok(ref ds_datatype) => ds_datatype.eq(datatype),
-                _ => false,
-            },
-            _ => false,
-        }
+    pub fn is_type<T: H5Type>(&self) -> bool {
+        Datatype::from_type::<T>().and_then(|a| self.datatype().map(|b| a == b)).unwrap_or(false)
     }
 
     /// Returns the chunk shape if the dataset is chunked.
@@ -123,7 +119,7 @@ impl Dataset {
                     let ndim = self.ndim();
                     let mut dims: Vec<hsize_t> = Vec::with_capacity(ndim);
                     dims.set_len(ndim);
-                    H5Pget_chunk(self.dcpl.id(), ndim as c_int, dims.as_mut_ptr());
+                    H5Pget_chunk(self.dcpl.id(), ndim as _, dims.as_mut_ptr());
                     dims.iter().map(|&x| x as Ix).collect()
                 })
             } else {
@@ -162,7 +158,7 @@ impl Dataset {
     /// Returns default fill value for the dataset if such value is set. Note that conversion
     /// to the requested type is done by HDF5 which may result in loss of precision for
     /// floating-point values if the datatype differs from the datatype of of the dataset.
-    pub fn fill_value<T: ToDatatype>(&self) -> Result<Option<T>> {
+    pub fn fill_value<T: H5Type>(&self) -> Result<Option<T>> {
         h5lock!({
             let defined: *mut H5D_fill_value_t = &mut H5D_fill_value_t::H5D_FILL_VALUE_UNDEFINED;
             h5try!(H5Pfill_value_defined(self.dcpl.id(), defined));
@@ -170,12 +166,11 @@ impl Dataset {
                 H5D_fill_value_t::H5D_FILL_VALUE_ERROR => fail!("Invalid fill value"),
                 H5D_fill_value_t::H5D_FILL_VALUE_UNDEFINED => Ok(None),
                 _ => {
-                    let datatype = T::to_datatype()?;
-                    let buf: *mut c_void = libc::malloc(datatype.size() as size_t);
-                    h5try!(H5Pget_fill_value(self.dcpl.id(), datatype.id(), buf));
-                    let result = Ok(Some(T::from_raw_ptr(buf)));
-                    libc::free(buf);
-                    result
+                    let datatype = Datatype::from_type::<T>()?;
+                    let mut value: T = mem::uninitialized();
+                    h5try!(H5Pget_fill_value(self.dcpl.id(), datatype.id(),
+                                             &mut value as *mut _ as *mut _));
+                    Ok(Some(value))
                 }
             }
         })
@@ -201,7 +196,7 @@ pub struct DatasetBuilder<T> {
     fill_value: Option<T>,
 }
 
-impl<T: ToDatatype> DatasetBuilder<T> {
+impl<T: H5Type> DatasetBuilder<T> {
     /// Create a new dataset builder and bind it to the parent container.
     pub fn new<C: Container>(parent: &C) -> DatasetBuilder<T> {
         h5lock!({
@@ -223,7 +218,7 @@ impl<T: ToDatatype> DatasetBuilder<T> {
     }
 
     pub fn fill_value(&mut self, fill_value: T) -> &mut DatasetBuilder<T> {
-        self.fill_value = Some(fill_value.clone()); self
+        self.fill_value = Some(fill_value); self
     }
 
     /// Disable chunking.
@@ -297,9 +292,7 @@ impl<T: ToDatatype> DatasetBuilder<T> {
             h5try!(H5Pset_obj_track_times(id, self.track_times as hbool_t));
 
             if let Some(ref fill_value) = self.fill_value {
-                h5try!(T::with_raw_ptr(fill_value.clone(), |buf|
-                    H5Pset_fill_value(id, datatype.id(), buf)
-                ));
+                h5try!(H5Pset_fill_value(id, datatype.id(), fill_value as *const T as *const _));
             }
 
             if let Chunk::None = self.chunk {
@@ -330,7 +323,7 @@ impl<T: ToDatatype> DatasetBuilder<T> {
                         "Invalid chunk: {:?} (must not exceed data shape in any dimension)", dims);
 
                     let c_dims: Vec<hsize_t> = dims.iter().map(|&x| x as hsize_t).collect();
-                    h5try!(H5Pset_chunk(id, dims.ndim() as c_int, c_dims.as_ptr()));
+                    h5try!(H5Pset_chunk(id, dims.ndim() as _, c_dims.as_ptr()));
 
                     // For chunked datasets, write fill values at the allocation time.
                     h5try!(H5Pset_fill_time(id, H5D_FILL_TIME_ALLOC));
@@ -350,7 +343,7 @@ impl<T: ToDatatype> DatasetBuilder<T> {
 
     fn finalize<D: Dimension>(&self, name: Option<&str>, shape: D) -> Result<Dataset> {
         h5lock!({
-            let datatype = T::to_datatype()?;
+            let datatype = Datatype::from_type::<T>()?;
             let parent = try_ref_clone!(self.parent);
 
             let dataspace = Dataspace::new(&shape, self.resizable)?;
@@ -432,7 +425,7 @@ pub mod tests {
     use ffi::h5s::H5S_ALL;
     use ffi::h5p::H5P_DEFAULT;
     use container::Container;
-    use datatype::ToDatatype;
+    use new_datatype::Datatype;
     use file::File;
     use filters::{Filters, gzip_available, szip_available};
     use handle::ID;
@@ -624,7 +617,7 @@ pub mod tests {
 
             let buf: Vec<u16> = vec![1, 2, 3];
             h5call!(H5Dwrite(
-                ds.id(), u16::to_datatype().unwrap().id(), H5S_ALL,
+                ds.id(), Datatype::from_type::<u16>().unwrap().id(), H5S_ALL,
                 H5S_ALL, H5P_DEFAULT, buf.as_ptr() as *const c_void
             )).unwrap();
             assert_eq!(ds.storage_size(), 6);
@@ -636,7 +629,7 @@ pub mod tests {
     pub fn test_datatype() {
         with_tmp_file(|file| {
             assert_eq!(file.new_dataset::<f32>().create_anon(1).unwrap().datatype().unwrap(),
-                       f32::to_datatype().unwrap());
+                       Datatype::from_type::<f32>().unwrap());
         })
     }
 

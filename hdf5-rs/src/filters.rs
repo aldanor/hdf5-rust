@@ -1,4 +1,4 @@
-use datatype::Datatype;
+use new_datatype::Datatype;
 use error::Result;
 use handle::{ID, FromID};
 use plist::PropertyList;
@@ -7,6 +7,7 @@ use ffi::h5p::{
     H5Pcreate, H5Pset_fletcher32, H5Pset_scaleoffset, H5Pset_shuffle,
     H5Pset_deflate, H5Pset_szip, H5Pget_nfilters, H5Pget_filter2
 };
+use ffi::h5t::{H5Tget_class, H5T_INTEGER, H5T_FLOAT};
 use ffi::h5z::{
     H5Z_SO_INT, H5Z_SO_FLOAT_DSCALE, H5_SZIP_EC_OPTION_MASK, H5_SZIP_NN_OPTION_MASK,
     H5Z_FILTER_DEFLATE, H5Z_FILTER_SZIP, H5Z_FILTER_SHUFFLE, H5Z_FILTER_FLETCHER32,
@@ -248,20 +249,18 @@ impl Filters {
             // scale-offset
             if let Some(offset) = self.scale_offset {
                 self.ensure_available("scaleoffset", H5Z_FILTER_SCALEOFFSET)?;
-                match *datatype {
-                    Datatype::Integer(_) => {
+                match H5Tget_class(datatype.id()) {
+                    H5T_INTEGER => {
                         H5Pset_scaleoffset(id, H5Z_SO_INT, offset as c_int);
                     },
-                    Datatype::Float(_) => {
+                    H5T_FLOAT => {
                         ensure!(offset > 0,
                             "Can only use positive scale-offset factor with floats");
                         H5Pset_scaleoffset(id, H5Z_SO_FLOAT_DSCALE, offset as c_int);
                     },
-
-                    // FIXME: uncomment when datatypes other than Integer/Float are implemented
-                    // _ => {
-                    //     fail!("Can only use scale/offset with integer/float datatypes.");
-                    // }
+                    _ => {
+                        fail!("Can only use scale/offset with integer/float datatypes.");
+                    }
                 }
             }
 
@@ -289,16 +288,17 @@ impl Filters {
 #[cfg(test)]
 pub mod tests {
     use super::{Filters, gzip_available, szip_available};
-    use datatype::ToDatatype;
+    use hdf5_types::H5Type;
+    use new_datatype::Datatype;
     use error::{Result, silence_errors};
 
-    fn make_filters<T: ToDatatype>(filters: &Filters) -> Result<Filters> {
-        let datatype = T::to_datatype().unwrap();
+    fn make_filters<T: H5Type>(filters: &Filters) -> Result<Filters> {
+        let datatype = Datatype::from_type::<T>().unwrap();
         let dcpl = filters.to_dcpl(&datatype)?;
         Filters::from_dcpl(&dcpl)
     }
 
-    fn check_roundtrip<T: ToDatatype>(filters: &Filters) {
+    fn check_roundtrip<T: H5Type>(filters: &Filters) {
         assert_eq!(make_filters::<T>(filters).unwrap(), *filters);
     }
 
@@ -412,7 +412,7 @@ pub mod tests {
         if gzip_available() {
             filters.gzip_default();
         }
-        let datatype = u32::to_datatype().unwrap();
+        let datatype = Datatype::from_type::<u32>().unwrap();
         let dcpl = filters.to_dcpl(&datatype).unwrap();
         let filters2 = Filters::from_dcpl(&dcpl).unwrap();
         assert_eq!(filters2, filters);

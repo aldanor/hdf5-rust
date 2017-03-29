@@ -6,13 +6,14 @@ use ffi::h5p::{H5Pcreate, H5Pset_create_intermediate_group, H5P_DEFAULT};
 use globals::H5P_LINK_CREATE;
 
 use dataset::{Dataset, DatasetBuilder};
-use datatype::ToDatatype;
 use error::Result;
 use group::Group;
 use handle::{ID, FromID};
 use location::Location;
 use plist::PropertyList;
 use util::to_cstring;
+
+use hdf5_types::H5Type;
 
 use std::default::Default;
 
@@ -97,7 +98,7 @@ pub trait Container: Location {
     }
 
     /// Instantiates a new dataset builder.
-    fn new_dataset<T: ToDatatype>(&self) -> DatasetBuilder<T> {
+    fn new_dataset<T: H5Type>(&self) -> DatasetBuilder<T> {
         DatasetBuilder::<T>::new::<Self>(self)
     }
 

@@ -7,6 +7,8 @@ use types::{
 };
 use util::{to_cstring, string_from_cstr};
 
+use std::fmt;
+
 use libc::{c_char, c_void};
 
 use ffi::h5::hsize_t;
@@ -17,7 +19,7 @@ use ffi::h5t::{
     H5Tget_class, H5T_VARIABLE, H5T_class_t, H5Tget_size, H5Tget_sign, H5Tget_nmembers,
     H5Tget_super, H5Tget_member_name, H5Tget_member_type, H5Tget_member_offset,
     H5Tget_member_value, H5Tget_array_ndims, H5Tget_array_dims2, H5Tis_variable_str,
-    H5Tget_cset
+    H5Tget_cset, H5Tequal
 };
 
 #[cfg(target_endian = "big")]
@@ -73,7 +75,33 @@ impl FromID for Datatype {
 
 impl Object for Datatype { }
 
+impl fmt::Debug for Datatype {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(self, f)
+    }
+}
+
+impl fmt::Display for Datatype {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if !self.is_valid() {
+            return "<HDF5 datatype: invalid id>".fmt(f);
+        }
+        "<HDF5 datatype>".fmt(f)
+    }
+}
+
+impl PartialEq for Datatype {
+    fn eq(&self, other: &Datatype) -> bool {
+        h5call!(H5Tequal(self.id(), other.id())).unwrap_or(0) == 1
+    }
+}
+
 impl Datatype {
+    /// Get the total size of the datatype in bytes.
+    pub fn size(&self) -> usize {
+        h5call!(H5Tget_size(self.id())).unwrap_or(0) as usize
+    }
+
     pub fn to_descriptor(&self) -> Result<TypeDescriptor> {
         use ffi::h5t::H5T_class_t::*;
         use ffi::h5t::H5T_sign_t::*;
@@ -280,6 +308,8 @@ pub mod tests {
     use types::*;
     use types::TypeDescriptor as TD;
     use super::Datatype;
+    use handle::FromID;
+    use ffi::h5i::H5I_INVALID_HID;
 
     macro_rules! check_roundtrip {
         ($ty:ty, $desc:expr) => ({
@@ -364,5 +394,22 @@ pub mod tests {
             size: 2 * 8 + 4 * 32 * 16,
         });
         check_roundtrip!(C, c_desc);
+    }
+
+    #[test]
+    pub fn test_invalid_datatype() {
+        assert_err!(Datatype::from_id(H5I_INVALID_HID), "Invalid datatype id");
+    }
+
+    #[test]
+    pub fn test_eq() {
+        assert_eq!(Datatype::from_type::<u32>().unwrap(), Datatype::from_type::<u32>().unwrap());
+        assert_ne!(Datatype::from_type::<u16>().unwrap(), Datatype::from_type::<u32>().unwrap());
+    }
+
+    #[test]
+    pub fn test_debug_display() {
+        assert_eq!(format!("{}", Datatype::from_type::<u32>().unwrap()), "<HDF5 datatype>");
+        assert_eq!(format!("{:?}", Datatype::from_type::<u32>().unwrap()), "<HDF5 datatype>");
     }
 }
