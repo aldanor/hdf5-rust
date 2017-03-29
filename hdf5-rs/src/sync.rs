@@ -73,7 +73,7 @@ impl RecursiveMutex {
     }
 
     fn get_thread_id(&self) -> usize {
-        THREAD_ID.with(|x| x as *const _ as usize)
+        THREAD_ID.with(|x| x as *const _ as _)
     }
 
     fn is_same_thread(&self) -> bool {

@@ -54,7 +54,7 @@ fn impl_compound(ty: &Ident, ty_generics: &TyGenerics,
                     _h5t::CompoundField {
                         name: stringify!(#names).to_owned(),
                         ty: <#types as _h5t::H5Type>::type_descriptor(),
-                        offset: unsafe { &((*origin).#fields) as *const _ as usize },
+                        offset: unsafe { &((*origin).#fields) as *const _ as _ },
                     }
                 ),*],
                 size: ::std::mem::size_of::<#ty #ty_generics>()
@@ -76,7 +76,7 @@ fn impl_enum(names: Vec<Ident>, values: Vec<ConstExpr>, repr: &Ident)-> quote::T
                 members: vec![#(
                     _h5t::EnumMember {
                         name: stringify!(#names).to_owned(),
-                        value: (#values) as #repr as u64,
+                        value: (#values) as #repr as _,
                     }
                 ),*],
             }

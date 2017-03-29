@@ -9,7 +9,7 @@ use h5i::hid_t;
 
 pub const H5S_ALL: hid_t = 0;
 
-pub const H5S_UNLIMITED: hsize_t = (-1 as hssize_t) as hsize_t;
+pub const H5S_UNLIMITED: hsize_t = (-1 as hssize_t) as _;
 
 pub const H5S_MAX_RANK: c_uint = 32;
 

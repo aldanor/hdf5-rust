@@ -15,7 +15,7 @@ pub fn hdf5_version() -> Result<(u8, u8, u8), &'static str> {
             if H5get_libversion(&mut v.0, &mut v.1, &mut v.2) != 0 {
                 Err("cannot get HDF5 version")
             } else {
-                Ok((v.0 as u8, v.1 as u8, v.2 as u8))
+                Ok((v.0 as _, v.1 as _, v.2 as _))
             }
         }
     }

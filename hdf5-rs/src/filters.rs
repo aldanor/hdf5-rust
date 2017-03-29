@@ -151,7 +151,7 @@ impl Filters {
                 "Invalid pixels per block for szip compression, expected even 0-32 integer.");
         }
         if let Some(offset) = self.scale_offset {
-            ensure!(offset <= c_int::max_value() as u32,
+            ensure!(offset <= c_int::max_value() as _,
                 "Scale-offset factor too large, maximum is {}.", c_int::max_value());
         }
         if self.scale_offset.is_some() && self.fletcher32 {
@@ -180,14 +180,14 @@ impl Filters {
                 let filter_config: *mut c_uint = &mut 0;
 
                 let code = H5Pget_filter2(
-                    id, idx as c_uint, flags, n_elements, values.as_mut_ptr(),
+                    id, idx as _, flags, n_elements, values.as_mut_ptr(),
                     256, name.as_mut_ptr(), filter_config
                 );
                 name.push(0);
 
                 match code {
                     H5Z_FILTER_DEFLATE => {
-                        filters.gzip(values[0] as u8);
+                        filters.gzip(values[0] as _);
                     },
                     H5Z_FILTER_SZIP => {
                         let nn = match values[0] {
@@ -195,7 +195,7 @@ impl Filters {
                             v if v & H5_SZIP_NN_OPTION_MASK != 0 => true,
                             _ => fail!("Unknown szip method: {:?}", values[0]),
                         };
-                        filters.szip(nn, values[1] as u8);
+                        filters.szip(nn, values[1] as _);
                     },
                     H5Z_FILTER_SHUFFLE => {
                         filters.shuffle(true);
@@ -246,12 +246,12 @@ impl Filters {
                 self.ensure_available("scaleoffset", H5Z_FILTER_SCALEOFFSET)?;
                 match H5Tget_class(datatype.id()) {
                     H5T_INTEGER => {
-                        H5Pset_scaleoffset(id, H5Z_SO_INT, offset as c_int);
+                        H5Pset_scaleoffset(id, H5Z_SO_INT, offset as _);
                     },
                     H5T_FLOAT => {
                         ensure!(offset > 0,
                             "Can only use positive scale-offset factor with floats");
-                        H5Pset_scaleoffset(id, H5Z_SO_FLOAT_DSCALE, offset as c_int);
+                        H5Pset_scaleoffset(id, H5Z_SO_FLOAT_DSCALE, offset as _);
                     },
                     _ => {
                         fail!("Can only use scale/offset with integer/float datatypes.");
@@ -268,11 +268,11 @@ impl Filters {
             // compression
             if let Some(level) = self.gzip {
                 self.ensure_available("gzip", H5Z_FILTER_DEFLATE)?;
-                h5try!(H5Pset_deflate(id, level as c_uint));
+                h5try!(H5Pset_deflate(id, level as _));
             } else if let Some((nn, pixels_per_block)) = self.szip {
                 self.ensure_available("szip", H5Z_FILTER_SZIP)?;
                 let options = if nn { H5_SZIP_NN_OPTION_MASK } else { H5_SZIP_EC_OPTION_MASK };
-                h5try!(H5Pset_szip(id, options, pixels_per_block as c_uint));
+                h5try!(H5Pset_szip(id, options, pixels_per_block as _));
             }
 
             Ok(plist)

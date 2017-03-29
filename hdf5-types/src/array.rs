@@ -5,7 +5,7 @@ use std::ops::Deref;
 use std::ptr;
 use std::slice;
 
-use libc::{size_t, c_void};
+use libc::{self, size_t};
 
 /* This trait is borrowed from arrayvec::Array (C) @bluss */
 pub unsafe trait Array {
@@ -62,13 +62,13 @@ pub struct VarLenArray<T: Copy> {
 impl<T: Copy> VarLenArray<T> {
     pub unsafe fn from_parts(p: *const T, len: usize) -> VarLenArray<T> {
         let (len, ptr) = if !p.is_null() && len != 0 {
-            let dst = ::libc::malloc(len * mem::size_of::<T>());
-            ptr::copy_nonoverlapping(p, dst as *mut T, len);
+            let dst = libc::malloc(len * mem::size_of::<T>());
+            ptr::copy_nonoverlapping(p, dst as *mut _, len);
             (len, dst)
         } else {
             (0, ptr::null_mut())
         };
-        VarLenArray { len: len, ptr: ptr as *const T, tag: PhantomData }
+        VarLenArray { len: len, ptr: ptr as *const _, tag: PhantomData }
     }
 
     #[inline]
@@ -83,7 +83,7 @@ impl<T: Copy> VarLenArray<T> {
 
     #[inline]
     pub fn len(&self) -> usize {
-        self.len as usize
+        self.len as _
     }
 
     #[inline]
@@ -101,7 +101,7 @@ impl<T: Copy> Drop for VarLenArray<T> {
     fn drop(&mut self) {
         if !self.ptr.is_null() {
             unsafe {
-                ::libc::free(self.ptr as *mut c_void);
+                libc::free(self.ptr as *mut _);
             }
             self.ptr = ptr::null();
             if self.len != 0 {

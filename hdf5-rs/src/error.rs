@@ -102,7 +102,7 @@ impl ErrorStack {
         }
 
         let mut data = CallbackData { stack: ErrorStack::new(), err: None };
-        let data_ptr: *mut c_void = &mut data as *mut _ as *mut c_void;
+        let data_ptr: *mut c_void = &mut data as *mut _ as *mut _;
 
         // known HDF5 bug: H5Eget_msg() may corrupt the current stack, so we copy it first
         unsafe {

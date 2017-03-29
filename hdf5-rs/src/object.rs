@@ -9,10 +9,7 @@ pub trait Object: ID {
     /// Returns reference count if the handle is valid and 0 otherwise.
     fn refcount(&self) -> u32 {
         if self.is_valid() {
-            match h5call!(H5Iget_ref(self.id())) {
-                Ok(count) if count >= 0 => count as u32,
-                _ => 0,
-            }
+            h5call!(H5Iget_ref(self.id())).unwrap_or(0) as _
         } else {
             0
         }

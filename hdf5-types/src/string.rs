@@ -8,7 +8,7 @@ use std::str;
 use std::slice;
 
 use ascii::{AsciiStr, AsAsciiStr, AsAsciiStrError};
-use libc::{self, c_void, c_char};
+use libc;
 
 use errors::Result;
 use array::Array;
@@ -162,7 +162,7 @@ impl Drop for VarLenAscii {
     #[inline]
     fn drop(&mut self) {
         if !self.ptr.is_null() {
-            unsafe { libc::free(self.ptr as *mut c_void) };
+            unsafe { libc::free(self.ptr as *mut _) };
         }
     }
 }
@@ -178,7 +178,7 @@ impl VarLenAscii {
     #[inline]
     pub fn new() -> Self {
         unsafe {
-            let ptr = libc::malloc(1) as *mut u8;
+            let ptr = libc::malloc(1) as *mut _;
             *ptr = 0;
             VarLenAscii { ptr: ptr }
         }
@@ -186,15 +186,15 @@ impl VarLenAscii {
 
     #[inline]
     unsafe fn from_bytes(bytes: &[u8]) -> Self {
-        let ptr = libc::malloc(bytes.len() + 1) as *mut u8;
+        let ptr = libc::malloc(bytes.len() + 1) as *mut _;
         ptr::copy_nonoverlapping(bytes.as_ptr(), ptr, bytes.len());
-        *(ptr.offset(bytes.len() as isize)) = 0;
+        *(ptr.offset(bytes.len() as _)) = 0;
         VarLenAscii { ptr: ptr }
     }
 
     #[inline]
     pub fn len(&self) -> usize {
-        unsafe { libc::strlen(self.ptr as *const c_char) }
+        unsafe { libc::strlen(self.ptr as *const _) }
     }
 
     #[inline]
@@ -209,7 +209,7 @@ impl VarLenAscii {
 
     #[inline]
     pub fn as_bytes(&self) -> &[u8] {
-        unsafe { slice::from_raw_parts(self.ptr as *const u8, self.len()) }
+        unsafe { slice::from_raw_parts(self.ptr as *const _, self.len()) }
     }
 
     #[inline]
@@ -255,7 +255,7 @@ impl Drop for VarLenUnicode {
     #[inline]
     fn drop(&mut self) {
         if !self.ptr.is_null() {
-            unsafe { libc::free(self.ptr as *mut c_void) };
+            unsafe { libc::free(self.ptr as *mut _) };
         }
     }
 }
@@ -271,7 +271,7 @@ impl VarLenUnicode {
     #[inline]
     pub fn new() -> Self {
         unsafe {
-            let ptr = libc::malloc(1) as *mut u8;
+            let ptr = libc::malloc(1) as *mut _;
             *ptr = 0;
             VarLenUnicode { ptr: ptr }
         }
@@ -279,15 +279,15 @@ impl VarLenUnicode {
 
     #[inline]
     unsafe fn from_bytes(bytes: &[u8]) -> Self {
-        let ptr = libc::malloc(bytes.len() + 1) as *mut u8;
+        let ptr = libc::malloc(bytes.len() + 1) as *mut _;
         ptr::copy_nonoverlapping(bytes.as_ptr(), ptr, bytes.len());
-        *(ptr.offset(bytes.len() as isize)) = 0;
+        *(ptr.offset(bytes.len() as _)) = 0;
         VarLenUnicode { ptr: ptr }
     }
 
     #[inline]
     unsafe fn raw_len(&self) -> usize {
-        libc::strlen(self.ptr as *const c_char)
+        libc::strlen(self.ptr as *const _)
     }
 
     #[inline]
@@ -307,7 +307,7 @@ impl VarLenUnicode {
 
     #[inline]
     pub fn as_bytes(&self) -> &[u8] {
-        unsafe { slice::from_raw_parts(self.ptr as *const u8, self.raw_len()) }
+        unsafe { slice::from_raw_parts(self.ptr as *const _, self.raw_len()) }
     }
 
     #[inline]
@@ -358,7 +358,7 @@ impl<A: Array<Item=u8>> FixedAscii<A> {
     unsafe fn from_bytes(bytes: &[u8]) -> Self {
         let len = if bytes.len() < A::capacity() { bytes.len() } else { A::capacity() };
         let mut buf: A = mem::zeroed();
-        ptr::copy_nonoverlapping(bytes.as_ptr(), buf.as_mut_ptr() as *mut u8, len);
+        ptr::copy_nonoverlapping(bytes.as_ptr(), buf.as_mut_ptr() as *mut _, len);
         FixedAscii { buf: buf }
     }
 
@@ -453,7 +453,7 @@ impl<A: Array<Item=u8>> FixedUnicode<A> {
     unsafe fn from_bytes(bytes: &[u8]) -> Self {
         let len = if bytes.len() < A::capacity() { bytes.len() } else { A::capacity() };
         let mut buf: A = mem::zeroed();
-        ptr::copy_nonoverlapping(bytes.as_ptr(), buf.as_mut_ptr() as *mut u8, len);
+        ptr::copy_nonoverlapping(bytes.as_ptr(), buf.as_mut_ptr() as *mut _, len);
         FixedUnicode { buf: buf }
     }
 

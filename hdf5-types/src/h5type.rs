@@ -103,10 +103,10 @@ impl TypeDescriptor {
         use self::TypeDescriptor::*;
 
         match *self {
-            Integer(size) | Unsigned(size) => size as usize,
-            Float(size) => size as usize,
+            Integer(size) | Unsigned(size) => size as _,
+            Float(size) => size as _,
             Boolean => 1,
-            Enum(ref enum_type) => enum_type.size as usize,
+            Enum(ref enum_type) => enum_type.size as _,
             Compound(ref compound) => compound.size,
             FixedArray(ref ty, len) => ty.size() * len,
             FixedAscii(len) | FixedUnicode(len) => len,
@@ -168,7 +168,7 @@ macro_rules! impl_tuple {
         $fields.push(CompoundField {
             name: format!("{}", index),
             ty: <$t as H5Type>::type_descriptor(),
-            offset: f as *const _ as usize
+            offset: f as *const _ as _,
         });
         impl_tuple!(@parse_fields [$($s)*] $origin $fields | $($tt),*);
     );

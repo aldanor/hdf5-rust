@@ -134,7 +134,7 @@ fn test_enum_simple() {
                    size: IntSize::U2,
                    signed: true,
                    members: vec![
-                       EnumMember { name: "X".into(), value: -2i16 as u64 },
+                       EnumMember { name: "X".into(), value: -2i16 as _ },
                        EnumMember { name: "Y".into(), value: 3u64 },
                    ]
                }));

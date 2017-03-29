@@ -54,7 +54,7 @@ macro_rules! impl_tuple {
             #[inline]
             fn dims(&self) -> Vec<Ix> {
                 unsafe {
-                    slice::from_raw_parts(self as *const _ as *const Ix, self.ndim())
+                    slice::from_raw_parts(self as *const _ as *const _, self.ndim())
                 }.iter().cloned().collect()
             }
         }
@@ -81,11 +81,11 @@ impl Dataspace {
         let mut dims: Vec<hsize_t> = vec![];
         let mut max_dims: Vec<hsize_t> = vec![];
         for dim in &d.dims() {
-            dims.push(*dim as hsize_t);
-            max_dims.push(if resizable { H5S_UNLIMITED } else { *dim as hsize_t });
+            dims.push(*dim as _);
+            max_dims.push(if resizable { H5S_UNLIMITED } else { *dim as _ });
         }
         Dataspace::from_id(h5try!(H5Screate_simple(
-            rank as c_int, dims.as_ptr(), max_dims.as_ptr()
+            rank as _, dims.as_ptr(), max_dims.as_ptr()
         )))
     }
 
@@ -97,20 +97,20 @@ impl Dataspace {
             if h5call!(H5Sget_simple_extent_dims(
                 self.id(), ptr::null_mut(), maxdims.as_mut_ptr()
             )).is_ok() {
-                return maxdims.iter().cloned().map(|x| x as usize).collect();
+                return maxdims.iter().cloned().map(|x| x as _).collect();
             }
         }
         vec![]
     }
 
     pub fn resizable(&self) -> bool {
-        self.maxdims().iter().any(|&x| x == H5S_UNLIMITED as Ix )
+        self.maxdims().iter().any(|&x| x == H5S_UNLIMITED as _)
     }
 }
 
 impl Dimension for Dataspace {
     fn ndim(&self) -> usize {
-        h5call!(H5Sget_simple_extent_ndims(self.id())).unwrap_or(0) as usize
+        h5call!(H5Sget_simple_extent_ndims(self.id())).unwrap_or(0) as _
     }
 
     fn dims(&self) -> Vec<Ix> {
@@ -121,7 +121,7 @@ impl Dimension for Dataspace {
             if h5call!(H5Sget_simple_extent_dims(
                 self.id(), dims.as_mut_ptr(), ptr::null_mut()
             )).is_ok() {
-                return dims.iter().cloned().map(|x| x as usize).collect();
+                return dims.iter().cloned().map(|x| x as _).collect();
             }
         }
         vec![]
@@ -219,7 +219,7 @@ pub mod tests {
     #[test]
     pub fn test_dataspace() {
         silence_errors();
-        assert_err!(Dataspace::new(H5S_UNLIMITED as usize, true),
+        assert_err!(Dataspace::new(H5S_UNLIMITED as Ix, true),
             "current dimension must have a specific size");
 
         let d = Dataspace::new((5, 6), true).unwrap();
@@ -237,7 +237,7 @@ pub mod tests {
         assert_eq!(Dataspace::new((5, 6), false).unwrap().maxdims(), vec![5, 6]);
         assert_eq!(Dataspace::new((5, 6), false).unwrap().resizable(), false);
         assert_eq!(Dataspace::new((5, 6), true).unwrap().maxdims(),
-            vec![H5S_UNLIMITED as Ix, H5S_UNLIMITED as Ix]);
+            vec![H5S_UNLIMITED as _, H5S_UNLIMITED as _]);
         assert_eq!(Dataspace::new((5, 6), true).unwrap().resizable(), true);
     }
 }

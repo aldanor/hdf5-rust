@@ -108,7 +108,7 @@ impl Dataset {
                     let mut dims: Vec<hsize_t> = Vec::with_capacity(ndim);
                     dims.set_len(ndim);
                     H5Pget_chunk(self.dcpl.id(), ndim as _, dims.as_mut_ptr());
-                    dims.iter().map(|&x| x as Ix).collect()
+                    dims.iter().map(|&x| x as _).collect()
                 })
             } else {
                 None
@@ -133,14 +133,14 @@ impl Dataset {
     /// Returns the amount of file space required for the dataset. Note that this only
     /// accounts for the space which has actually been allocated (it can be equal to zero).
     pub fn storage_size(&self) -> u64 {
-        h5lock!(H5Dget_storage_size(self.id())) as u64
+        h5lock!(H5Dget_storage_size(self.id())) as _
     }
 
     /// Returns the absolute byte offset of the dataset in the file if such offset is defined
     /// (which is not the case for datasets that are chunked, compact or not allocated yet).
     pub fn offset(&self) -> Option<u64> {
         let offset: haddr_t = h5lock!(H5Dget_offset(self.id()));
-        if offset == HADDR_UNDEF { None } else { Some(offset as u64) }
+        if offset == HADDR_UNDEF { None } else { Some(offset as _) }
     }
 
     /// Returns default fill value for the dataset if such value is set. Note that conversion
@@ -277,10 +277,10 @@ impl<T: H5Type> DatasetBuilder<T> {
             let dcpl = self.filters.to_dcpl(datatype)?;
             let id = dcpl.id();
 
-            h5try!(H5Pset_obj_track_times(id, self.track_times as hbool_t));
+            h5try!(H5Pset_obj_track_times(id, self.track_times as _));
 
             if let Some(ref fill_value) = self.fill_value {
-                h5try!(H5Pset_fill_value(id, datatype.id(), fill_value as *const T as *const _));
+                h5try!(H5Pset_fill_value(id, datatype.id(), fill_value as *const _ as *const _));
             }
 
             if let Chunk::None = self.chunk {
@@ -310,7 +310,7 @@ impl<T: H5Type> DatasetBuilder<T> {
                     ensure!(dims.iter().zip(shape.dims().iter()).all(|(&c, &s)| c <= s),
                         "Invalid chunk: {:?} (must not exceed data shape in any dimension)", dims);
 
-                    let c_dims: Vec<hsize_t> = dims.iter().map(|&x| x as hsize_t).collect();
+                    let c_dims: Vec<hsize_t> = dims.iter().map(|&x| x as _).collect();
                     h5try!(H5Pset_chunk(id, dims.ndim() as _, c_dims.as_ptr()));
 
                     // For chunked datasets, write fill values at the allocation time.
@@ -370,9 +370,9 @@ impl<T: H5Type> DatasetBuilder<T> {
 fn infer_chunk_size<D: Dimension>(shape: D, typesize: usize) -> Vec<Ix> {
     // This algorithm is borrowed from h5py, though the idea originally comes from PyTables.
 
-    const CHUNK_BASE: f64 = (16 * 1024) as f64;
-    const CHUNK_MIN:  f64 = (8 * 1024) as f64;
-    const CHUNK_MAX:  f64 = (1024 * 1024) as f64;
+    const CHUNK_BASE: f64 = (16 * 1024) as _;
+    const CHUNK_MIN:  f64 = (8 * 1024) as _;
+    const CHUNK_MAX:  f64 = (1024 * 1024) as _;
 
     if shape.ndim() == 0 {
         return vec![];
@@ -598,7 +598,7 @@ pub mod tests {
             let buf: Vec<u16> = vec![1, 2, 3];
             h5call!(H5Dwrite(
                 ds.id(), Datatype::from_type::<u16>().unwrap().id(), H5S_ALL,
-                H5S_ALL, H5P_DEFAULT, buf.as_ptr() as *const c_void
+                H5S_ALL, H5P_DEFAULT, buf.as_ptr() as *const _
             )).unwrap();
             assert_eq!(ds.storage_size(), 6);
             assert!(ds.offset().is_some());

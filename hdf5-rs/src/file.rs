@@ -66,16 +66,13 @@ impl File {
         unsafe {
             let size: *mut hsize_t = &mut 0;
             h5lock!(H5Fget_filesize(self.id(), size));
-            if *size > 0 { *size as u64 } else { 0 }
+            if *size > 0 { *size as _ } else { 0 }
         }
     }
 
     /// Returns the free space in the file in bytes (or 0 if the file handle is invalid).
     pub fn free_space(&self) -> u64 {
-        match h5call!(H5Fget_freespace(self.id())) {
-            Ok(size) => size as u64,
-            _ => 0,
-        }
+        h5call!(H5Fget_freespace(self.id())).unwrap_or(0) as _
     }
 
     /// Returns true if the file was opened in a read-only mode.
@@ -100,7 +97,7 @@ impl File {
         unsafe {
             let userblock: *mut hsize_t = &mut 0;
             h5lock!(H5Pget_userblock(self.fcpl.id(), userblock));
-            *userblock as u64
+            *userblock as _
         }
     }
 
@@ -114,8 +111,8 @@ impl File {
         h5lock!({
             let count = h5call!(H5Fget_obj_count(self.id(), types)).unwrap_or(0) as size_t;
             if count > 0 {
-                let mut ids: Vec<hid_t> = Vec::with_capacity(count as usize);
-                unsafe { ids.set_len(count as usize); }
+                let mut ids: Vec<hid_t> = Vec::with_capacity(count as _);
+                unsafe { ids.set_len(count as _); }
                 if h5call!(H5Fget_obj_ids(self.id(), types, count, ids.as_mut_ptr())).is_ok() {
                     ids.retain(|id| *id != self.id());
                     return ids;
@@ -228,7 +225,7 @@ impl FileBuilder {
                 "sec2"  => h5try!(H5Pset_fapl_sec2(fapl.id())),
                 "stdio" => h5try!(H5Pset_fapl_stdio(fapl.id())),
                 "core"  => h5try!(H5Pset_fapl_core(
-                               fapl.id(), self.increment as size_t, self.filebacked as hbool_t
+                               fapl.id(), self.increment as _, self.filebacked as _
                            )),
                 _ => fail!(format!("Invalid file driver: {}", self.driver)),
             };

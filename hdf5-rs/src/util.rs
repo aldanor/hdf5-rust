@@ -31,10 +31,10 @@ where F: Fn(*mut c_char, size_t) -> T, T: Integer + NumCast {
         if len == 1 {
             return Ok("".to_owned());
         }
-        let buf = libc::malloc(((len as usize) * mem::size_of::<c_char>()) as _) as *mut c_char;
-        func(buf, len as size_t);
+        let buf: *mut c_char = libc::malloc(((len as usize) * mem::size_of::<c_char>()) as _) as _;
+        func(buf, len as _);
         let msg = string_from_cstr(buf);
-        libc::free(buf as *mut c_void);
+        libc::free(buf as *mut _);
         Ok(msg)
     }
 }

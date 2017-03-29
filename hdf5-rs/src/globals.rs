@@ -24,7 +24,7 @@ macro_rules! link_hid {
             pub static ref $rust_name: $crate::ffi::h5i::hid_t = {
                 h5lock!($crate::ffi::h5::H5open());
                 unsafe {
-                    *(*$crate::ffi::$mod_name::$c_name as *const $crate::ffi::h5i::hid_t)
+                    *(*$crate::ffi::$mod_name::$c_name as *const _)
                 }
             };
         }

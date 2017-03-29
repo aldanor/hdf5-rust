@@ -36,6 +36,8 @@ use globals::{H5T_NATIVE_INT8, H5T_C_S1};
 
 use std::fmt;
 
+use libc;
+
 #[cfg(target_endian = "big")]
 macro_rules! be_le {
     ($be:expr, $le:expr) => (h5try!(H5Tcopy(*$be)))
@@ -126,14 +128,12 @@ impl Datatype {
                 },
                 H5T_ENUM => {
                     let mut members: Vec<EnumMember> = Vec::new();
-                    for idx in 0 .. h5try!(H5Tget_nmembers(id)) as u32 {
+                    for idx in 0 .. h5try!(H5Tget_nmembers(id)) as _ {
                         let mut value: u64 = 0;
-                        h5try!(H5Tget_member_value(
-                            id, idx, &mut value as *mut _ as *mut c_void
-                        ));
+                        h5try!(H5Tget_member_value(id, idx, &mut value as *mut _ as *mut _));
                         let name = H5Tget_member_name(id, idx);
                         members.push(EnumMember { name: string_from_cstr(name), value: value });
-                        ::libc::free(name as *mut c_void);
+                        libc::free(name as *mut _);
                     }
                     let base_dt = Datatype::from_id(H5Tget_super(id))?;
                     let (size, signed) = match base_dt.to_descriptor()? {
@@ -155,16 +155,16 @@ impl Datatype {
                 },
                 H5T_COMPOUND => {
                     let mut fields: Vec<CompoundField> = Vec::new();
-                    for idx in 0 .. h5try!(H5Tget_nmembers(id)) as u32 {
+                    for idx in 0 .. h5try!(H5Tget_nmembers(id)) as _ {
                         let name = H5Tget_member_name(id, idx);
-                        let offset = h5try!(H5Tget_member_offset(id, idx)) as usize;
+                        let offset = h5try!(H5Tget_member_offset(id, idx));
                         let ty = Datatype::from_id(h5try!(H5Tget_member_type(id, idx)))?;
                         fields.push(CompoundField {
                             name: string_from_cstr(name),
                             ty: ty.to_descriptor()?,
-                            offset: offset
+                            offset: offset as _,
                         });
-                        ::libc::free(name as *mut c_void);
+                        libc::free(name as *mut _);
                     }
                     Ok(TD::Compound(CompoundType { fields: fields, size: size }))
                 },
@@ -173,10 +173,8 @@ impl Datatype {
                     let ndims = h5try!(H5Tget_array_ndims(id));
                     if ndims == 1 {
                         let mut len: hsize_t = 0;
-                        h5try!(H5Tget_array_dims2(id, &mut len as *mut hsize_t));
-                        Ok(TD::FixedArray(
-                            Box::new(base_dt.to_descriptor()?), len as usize
-                        ))
+                        h5try!(H5Tget_array_dims2(id, &mut len as *mut _));
+                        Ok(TD::FixedArray(Box::new(base_dt.to_descriptor()?), len as _))
                     } else {
                         Err("Multi-dimensional array datatypes are not supported".into())
                     }
@@ -242,10 +240,10 @@ impl Datatype {
                 }),
                 TD::Boolean => {
                     let bool_id = h5try!(H5Tenum_create(*H5T_NATIVE_INT8));
-                    h5try!(H5Tenum_insert(bool_id, b"FALSE\0".as_ptr() as *const c_char,
-                                          &0i8 as *const i8 as *const c_void));
-                    h5try!(H5Tenum_insert(bool_id, b"TRUE\0".as_ptr() as *const c_char,
-                                          &1i8 as *const i8 as *const c_void));
+                    h5try!(H5Tenum_insert(bool_id, b"FALSE\0".as_ptr() as *const _,
+                                          &0i8 as *const _ as *const _));
+                    h5try!(H5Tenum_insert(bool_id, b"TRUE\0".as_ptr() as *const _,
+                                          &1i8 as *const _ as *const _));
                     Ok(bool_id)
                 },
                 TD::Enum(ref enum_type) => {
@@ -254,7 +252,7 @@ impl Datatype {
                     for member in &enum_type.members {
                         let name = to_cstring(member.name.as_ref())?;
                         h5try!(H5Tenum_insert(enum_id, name.as_ptr(),
-                                              &member.value as *const u64 as *const c_void));
+                                              &member.value as *const _ as *const _));
                     }
                     Ok(enum_id)
                 },
@@ -272,7 +270,7 @@ impl Datatype {
                 TD::FixedArray(ref ty, len) => {
                     let elem_dt = Datatype::from_descriptor(&ty)?;
                     let dims = len as hsize_t;
-                    Ok(h5try!(H5Tarray_create2(elem_dt.id(), 1, &dims as *const hsize_t)))
+                    Ok(h5try!(H5Tarray_create2(elem_dt.id(), 1, &dims as *const _)))
                 },
                 TD::FixedAscii(size) => {
                     string_type(Some(size), H5T_cset_t::H5T_CSET_ASCII)
@@ -344,7 +342,7 @@ pub mod tests {
             signed: true,
             members: vec![
                 EnumMember { name: "A".into(), value: 1 },
-                EnumMember { name: "B".into(), value: -2i64 as u64 },
+                EnumMember { name: "B".into(), value: -2i64 as _ },
             ]
         });
         check_roundtrip!(X, x_desc);
