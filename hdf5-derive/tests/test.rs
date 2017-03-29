@@ -206,7 +206,7 @@ fn test_generics() {
 
 #[derive(H5Type)]
 #[repr(C)]
-struct G3<T> {
+struct G3<T: 'static> {
     x: i16,
     y: PhantomData<T>,
     z: u32,
@@ -221,7 +221,7 @@ struct C3 {
 
 #[derive(H5Type)]
 #[repr(C)]
-struct G4<T>(i16, PhantomData<T>, u32);
+struct G4<T: 'static>(i16, PhantomData<T>, u32);
 
 #[derive(H5Type)]
 #[repr(C)]

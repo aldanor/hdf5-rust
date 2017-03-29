@@ -116,7 +116,7 @@ impl TypeDescriptor {
     }
 }
 
-pub unsafe trait H5Type {
+pub unsafe trait H5Type : 'static {
     fn type_descriptor() -> TypeDescriptor;
 }
 
@@ -207,7 +207,7 @@ macro_rules! impl_tuple {
 
 impl_tuple! { T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15 }
 
-unsafe impl<T: Array<Item=I>, I: H5Type> H5Type for T {
+unsafe impl<T: Array<Item=I> + 'static, I: H5Type> H5Type for T {
     #[inline]
     fn type_descriptor() -> TypeDescriptor {
         TypeDescriptor::FixedArray(
@@ -224,14 +224,14 @@ unsafe impl<T: Copy + H5Type> H5Type for VarLenArray<T> {
     }
 }
 
-unsafe impl<A: Array<Item=u8>> H5Type for FixedAscii<A> {
+unsafe impl<A: Array<Item=u8> + 'static> H5Type for FixedAscii<A> {
     #[inline]
     fn type_descriptor() -> TypeDescriptor {
         TypeDescriptor::FixedAscii(A::capacity())
     }
 }
 
-unsafe impl<A: Array<Item=u8>> H5Type for FixedUnicode<A> {
+unsafe impl<A: Array<Item=u8> + 'static> H5Type for FixedUnicode<A> {
     #[inline]
     fn type_descriptor() -> TypeDescriptor {
         TypeDescriptor::FixedUnicode(A::capacity())
