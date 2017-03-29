@@ -317,6 +317,7 @@ pub mod tests {
             assert_eq!(desc, $desc);
             let dt = Datatype::from_type::<$ty>().unwrap();
             assert_eq!(desc, dt.to_descriptor().unwrap());
+            assert_eq!(dt.size(), desc.size());
         })
     }
 
