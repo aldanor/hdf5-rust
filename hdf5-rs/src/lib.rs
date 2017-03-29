@@ -16,6 +16,8 @@ pub use location::Location;
 pub use object::Object;
 pub use space::{Dimension, Ix, Dataspace};
 
+pub use hdf5_types::H5Type;
+
 extern crate libc;
 extern crate num;
 

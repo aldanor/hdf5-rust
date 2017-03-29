@@ -14,3 +14,4 @@ pub use super::Object;
 pub use super::Location;
 pub use super::Container;
 pub use super::Dimension;
+pub use hdf5_types::H5Type;
