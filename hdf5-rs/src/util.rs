@@ -1,4 +1,6 @@
-use libc::{self, c_char, c_void, size_t};
+use internal_prelude::*;
+
+use libc;
 
 use std::borrow::Borrow;
 use std::mem;
@@ -6,8 +8,6 @@ use std::ptr;
 use num::{Integer, NumCast};
 use num::traits::cast;
 use std::ffi::{CStr, CString};
-
-use error::Result;
 
 /// Convert a zero-terminated string (`const char *`) into a `String`.
 pub fn string_from_cstr(string: *const c_char) -> String {
@@ -31,7 +31,7 @@ where F: Fn(*mut c_char, size_t) -> T, T: Integer + NumCast {
         if len == 1 {
             return Ok("".to_owned());
         }
-        let buf = libc::malloc((len as size_t) * mem::size_of::<c_char>() as size_t) as *mut c_char;
+        let buf = libc::malloc(((len as usize) * mem::size_of::<c_char>()) as _) as *mut c_char;
         func(buf, len as size_t);
         let msg = string_from_cstr(buf);
         libc::free(buf as *mut c_void);

@@ -1,32 +1,20 @@
-use ffi::h5::{hsize_t, hbool_t, haddr_t, HADDR_UNDEF};
+use internal_prelude::*;
+
+use ffi::h5::HADDR_UNDEF;
 use ffi::h5d::{
     H5Dcreate2, H5Dcreate_anon, H5D_FILL_TIME_ALLOC, H5Dget_create_plist, H5D_layout_t,
     H5Dget_space, H5Dget_storage_size, H5Dget_offset, H5Dget_type, H5D_fill_value_t
 };
-use ffi::h5i::{H5I_DATASET, hid_t};
 use ffi::h5p::{
-    H5Pcreate, H5Pset_create_intermediate_group, H5P_DEFAULT, H5Pset_obj_track_times,
+    H5Pcreate, H5Pset_create_intermediate_group, H5Pset_obj_track_times,
     H5Pset_fill_time, H5Pset_chunk, H5Pget_layout, H5Pget_chunk, H5Pset_fill_value,
     H5Pget_obj_track_times, H5Pget_fill_value, H5Pfill_value_defined
 };
 use globals::H5P_LINK_CREATE;
 
-use container::Container;
-use datatype::Datatype;
-use error::Result;
-use filters::Filters;
-use handle::{Handle, ID, FromID, get_id_type};
-use location::Location;
-use object::Object;
-use plist::PropertyList;
-use space::{Dataspace, Dimension, Ix};
-use util::to_cstring;
-
-use hdf5_types::H5Type;
+use std::mem;
 
 use num::integer::div_floor;
-
-use std::mem;
 
 #[derive(Clone, Debug)]
 pub enum Chunk {
@@ -420,19 +408,11 @@ fn infer_chunk_size<D: Dimension>(shape: D, typesize: usize) -> Vec<Ix> {
 
 #[cfg(test)]
 pub mod tests {
+    use internal_prelude::*;
     use super::infer_chunk_size;
     use ffi::h5d::H5Dwrite;
     use ffi::h5s::H5S_ALL;
-    use ffi::h5p::H5P_DEFAULT;
-    use container::Container;
-    use datatype::Datatype;
-    use file::File;
-    use filters::{Filters, gzip_available, szip_available};
-    use handle::ID;
-    use location::Location;
-    use object::Object;
-    use test::{with_tmp_file, with_tmp_path};
-    use libc::c_void;
+    use filters::{gzip_available, szip_available};
     use std::io::Read;
     use std::fs;
 

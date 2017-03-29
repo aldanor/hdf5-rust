@@ -1,18 +1,10 @@
-use error::Result;
-use handle::{Handle, ID, FromID, get_id_type};
-use object::Object;
+use internal_prelude::*;
+
 use types::{
     TypeDescriptor, H5Type, IntSize, FloatSize, EnumMember,
     EnumType, CompoundField, CompoundType
 };
-use util::{to_cstring, string_from_cstr};
 
-use std::fmt;
-
-use libc::{c_char, c_void};
-
-use ffi::h5::hsize_t;
-use ffi::h5i::{hid_t, H5I_DATATYPE};
 use ffi::h5t::{
     H5Tcreate, H5Tset_size, H5Tinsert, H5Tenum_create, H5Tenum_insert, H5Tcopy,
     H5Tarray_create2, H5T_str_t, H5Tset_strpad, H5T_cset_t, H5Tset_cset, H5Tvlen_create,
@@ -41,6 +33,8 @@ use globals::{
 };
 
 use globals::{H5T_NATIVE_INT8, H5T_C_S1};
+
+use std::fmt;
 
 #[cfg(target_endian = "big")]
 macro_rules! be_le {
@@ -305,11 +299,9 @@ impl Datatype {
 
 #[cfg(test)]
 pub mod tests {
+    use internal_prelude::*;
     use types::*;
     use types::TypeDescriptor as TD;
-    use super::Datatype;
-    use handle::FromID;
-    use ffi::h5i::H5I_INVALID_HID;
 
     macro_rules! check_roundtrip {
         ($ty:ty, $desc:expr) => ({

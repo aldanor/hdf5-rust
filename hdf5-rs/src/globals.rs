@@ -1,6 +1,6 @@
-use ffi::h5::haddr_t;
+use internal_prelude::*;
+
 use ffi::h5fd::{H5FD_core_init, H5FD_sec2_init, H5FD_stdio_init};
-use ffi::h5i::hid_t;
 
 use std::mem;
 

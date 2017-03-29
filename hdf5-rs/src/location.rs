@@ -1,12 +1,8 @@
+use internal_prelude::*;
+
 use ffi::h5o::{H5Oget_comment, H5Oset_comment};
 use ffi::h5i::{H5Iget_name, H5Iget_file_id};
 use ffi::h5f::H5Fget_name;
-
-use error::Result;
-use file::File;
-use handle::FromID;
-use object::Object;
-use util::{get_h5_str, to_cstring};
 
 use std::ptr;
 
@@ -51,10 +47,7 @@ pub trait Location: Object {
 
 #[cfg(test)]
 pub mod tests {
-    use super::Location;
-    use file::File;
-    use handle::ID;
-    use test::{with_tmp_path, with_tmp_file};
+    use internal_prelude::*;
 
     #[test]
     pub fn test_filename() {

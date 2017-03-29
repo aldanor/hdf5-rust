@@ -1,14 +1,11 @@
-use ffi::h5::hsize_t;
-use ffi::h5i::{H5I_DATASPACE, H5I_INVALID_HID, hid_t};
+use internal_prelude::*;
+
 use ffi::h5s::{H5S_UNLIMITED, H5Sget_simple_extent_dims, H5Sget_simple_extent_ndims, H5Scopy,
                H5Screate_simple};
 
-use error::Result;
-use handle::{Handle, ID, FromID, get_id_type};
-use object::Object;
-
-use std::{fmt, ptr, slice};
-use libc::c_int;
+use std::fmt;
+use std::ptr;
+use std::slice;
 
 /// A scalar integer type used by `Dimension` trait for indexing.
 pub type Ix = usize;
@@ -184,11 +181,7 @@ impl fmt::Display for Dataspace {
 
 #[cfg(test)]
 pub mod tests {
-    use super::{Dimension, Ix, Dataspace};
-    use error::silence_errors;
-    use handle::{ID, FromID};
-    use object::Object;
-    use ffi::h5i::H5I_INVALID_HID;
+    use internal_prelude::*;
     use ffi::h5s::H5S_UNLIMITED;
 
     #[test]

@@ -1,19 +1,10 @@
+use internal_prelude::*;
+
 use ffi::h5d::H5Dopen2;
 use ffi::h5g::{H5G_info_t, H5Gget_info, H5Gcreate2, H5Gopen2};
-use ffi::h5i::hid_t;
 use ffi::h5l::{H5Lmove, H5Lcreate_soft, H5Lcreate_hard, H5Ldelete, H5L_SAME_LOC};
-use ffi::h5p::{H5Pcreate, H5Pset_create_intermediate_group, H5P_DEFAULT};
+use ffi::h5p::{H5Pcreate, H5Pset_create_intermediate_group};
 use globals::H5P_LINK_CREATE;
-
-use dataset::{Dataset, DatasetBuilder};
-use error::Result;
-use group::Group;
-use handle::{ID, FromID};
-use location::Location;
-use plist::PropertyList;
-use util::to_cstring;
-
-use hdf5_types::H5Type;
 
 use std::default::Default;
 
@@ -112,11 +103,7 @@ pub trait Container: Location {
 
 #[cfg(test)]
 mod tests {
-    use error::silence_errors;
-    use handle::ID;
-    use test::with_tmp_file;
-    use super::Container;
-    use location::Location;
+    use internal_prelude::*;
 
     #[test]
     pub fn test_group() {

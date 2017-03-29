@@ -1,5 +1,5 @@
-use ffi::h5::{hsize_t, hbool_t};
-use ffi::h5i::{H5I_FILE, hid_t};
+use internal_prelude::*;
+
 use ffi::h5p::{H5Pcreate, H5Pset_userblock, H5Pget_userblock};
 use ffi::h5f::{
     H5F_ACC_RDONLY, H5F_ACC_RDWR, H5F_ACC_EXCL, H5F_ACC_TRUNC, H5F_SCOPE_LOCAL,
@@ -7,22 +7,11 @@ use ffi::h5f::{
     H5Fflush, H5Fget_obj_ids, H5Fget_create_plist, H5Fget_intent, H5Fget_obj_count, H5Fclose
 };
 use ffi::h5fd::{H5Pset_fapl_sec2, H5Pset_fapl_stdio, H5Pset_fapl_core};
-
 use globals::{H5P_FILE_CREATE, H5P_FILE_ACCESS};
-
-use container::Container;
-use error::Result;
-use location::Location;
-use object::Object;
-use handle::{Handle, ID, FromID, get_id_type};
-use plist::PropertyList;
-use util::to_cstring;
 
 use std::fmt;
 use std::path::Path;
 use std::process::Command;
-
-use libc::{size_t, c_uint};
 
 /// Represents the HDF5 file object.
 pub struct File {
@@ -297,13 +286,7 @@ impl FileBuilder {
 
 #[cfg(test)]
 pub mod tests {
-    use super::{File, FileBuilder};
-    use container::Container;
-    use error::silence_errors;
-    use location::Location;
-    use object::Object;
-    use test::{with_tmp_dir, with_tmp_path, with_tmp_file};
-
+    use internal_prelude::*;
     use std::fs;
     use std::io::{Read, Write};
 

@@ -1,11 +1,9 @@
-use std::fmt;
+use internal_prelude::*;
 
-use ffi::h5i::{H5I_GENPROP_LST, H5I_INVALID_HID, hid_t};
+use ffi::h5i::H5I_GENPROP_LST;
 use ffi::h5p::{H5Pcopy, H5Pequal};
 
-use error::Result;
-use handle::{Handle, ID, FromID, get_id_type};
-use object::Object;
+use std::fmt;
 
 pub struct PropertyList {
     handle: Handle,
@@ -61,11 +59,10 @@ impl PartialEq for PropertyList {
 
 #[cfg(test)]
 pub mod tests {
+    use internal_prelude::*;
     use super::PropertyList;
     use globals::{H5P_FILE_ACCESS, H5P_FILE_CREATE};
     use ffi::h5p::H5Pcreate;
-    use handle::{ID, FromID};
-    use object::Object;
 
     #[test]
     pub fn test_clone_eq() {

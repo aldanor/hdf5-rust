@@ -1,7 +1,4 @@
-use datatype::Datatype;
-use error::Result;
-use handle::{ID, FromID};
-use plist::PropertyList;
+use internal_prelude::*;
 
 use ffi::h5p::{
     H5Pcreate, H5Pset_fletcher32, H5Pset_scaleoffset, H5Pset_shuffle,
@@ -15,8 +12,6 @@ use ffi::h5z::{
     H5Zfilter_avail, H5Zget_filter_info, H5Z_filter_t
 };
 use globals::H5P_DATASET_CREATE;
-
-use libc::{c_int, c_uint, size_t, c_char};
 
 /// Returns `true` if gzip filter is available.
 pub fn gzip_available() -> bool {
@@ -287,10 +282,8 @@ impl Filters {
 
 #[cfg(test)]
 pub mod tests {
-    use super::{Filters, gzip_available, szip_available};
-    use datatype::Datatype;
-    use error::{Result, silence_errors};
-    use hdf5_types::H5Type;
+    use internal_prelude::*;
+    use super::{gzip_available, szip_available};
 
     fn make_filters<T: H5Type>(filters: &Filters) -> Result<Filters> {
         let datatype = Datatype::from_type::<T>().unwrap();

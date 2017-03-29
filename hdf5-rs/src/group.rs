@@ -1,10 +1,4 @@
-use ffi::h5i::{H5I_GROUP, hid_t};
-
-use error::Result;
-use handle::{Handle, ID, FromID, get_id_type};
-use object::Object;
-use container::Container;
-use location::Location;
+use internal_prelude::*;
 
 use std::fmt;
 
@@ -58,8 +52,7 @@ impl Container for Group {}
 
 #[cfg(test)]
 pub mod tests {
-    use container::Container;
-    use test::with_tmp_file;
+    use internal_prelude::*;
 
     #[test]
     pub fn test_debug_display() {

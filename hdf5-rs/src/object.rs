@@ -1,6 +1,8 @@
-use ffi::h5i::{H5I_type_t, H5Iget_ref};
+use internal_prelude::*;
 
-use handle::{ID, is_valid_user_id, get_id_type};
+use handle::is_valid_user_id;
+
+use ffi::h5i::{H5I_type_t, H5Iget_ref};
 
 /// A trait for all HDF5 objects that can be referenced through an identifier.
 pub trait Object: ID {
@@ -30,13 +32,12 @@ pub trait Object: ID {
 
 #[cfg(test)]
 pub mod tests {
-    use ffi::h5i::{H5I_INVALID_HID, hid_t};
-    use ffi::h5p::{H5P_DEFAULT, H5Pcreate};
+    use internal_prelude::*;
+
+    use ffi::h5p::H5Pcreate;
     use globals::H5P_FILE_ACCESS;
 
-    use super::Object;
-    use error::Result;
-    use handle::{Handle, ID, FromID, is_valid_id, is_valid_user_id};
+    use handle::{is_valid_id, is_valid_user_id};
 
     struct TestObject {
         handle: Handle,
