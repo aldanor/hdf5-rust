@@ -7,7 +7,7 @@
 
 pub use container::Container;
 pub use dataset::Dataset;
-pub use datatype::{Datatype, ToDatatype};
+pub use datatype::Datatype;
 pub use error::{Result, Error};
 pub use file::File;
 pub use filters::Filters;
@@ -54,8 +54,6 @@ mod plist;
 mod space;
 mod sync;
 mod util;
-
-mod new_datatype;
 
 #[allow(dead_code)]
 mod globals;

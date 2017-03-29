@@ -12,6 +12,7 @@ use ffi::h5p::{
 use globals::H5P_LINK_CREATE;
 
 use container::Container;
+use datatype::Datatype;
 use error::Result;
 use filters::Filters;
 use handle::{Handle, ID, FromID, get_id_type};
@@ -22,7 +23,6 @@ use space::{Dataspace, Dimension, Ix};
 use util::to_cstring;
 
 use hdf5_types::H5Type;
-use new_datatype::Datatype;
 
 use num::integer::div_floor;
 
@@ -425,7 +425,7 @@ pub mod tests {
     use ffi::h5s::H5S_ALL;
     use ffi::h5p::H5P_DEFAULT;
     use container::Container;
-    use new_datatype::Datatype;
+    use datatype::Datatype;
     use file::File;
     use filters::{Filters, gzip_available, szip_available};
     use handle::ID;

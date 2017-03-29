@@ -1,4 +1,4 @@
-use new_datatype::Datatype;
+use datatype::Datatype;
 use error::Result;
 use handle::{ID, FromID};
 use plist::PropertyList;
@@ -288,9 +288,9 @@ impl Filters {
 #[cfg(test)]
 pub mod tests {
     use super::{Filters, gzip_available, szip_available};
-    use hdf5_types::H5Type;
-    use new_datatype::Datatype;
+    use datatype::Datatype;
     use error::{Result, silence_errors};
+    use hdf5_types::H5Type;
 
     fn make_filters<T: H5Type>(filters: &Filters) -> Result<Filters> {
         let datatype = Datatype::from_type::<T>().unwrap();
