@@ -96,9 +96,7 @@ impl Dataset {
 
     /// Returns whether this dataset is resizable along some axis.
     pub fn is_resizable(&self) -> bool {
-        h5lock!({
-            if let Ok(s) = self.dataspace() { s.resizable() } else { false }
-        })
+        h5lock!(self.dataspace().map(|s| s.resizable()).unwrap_or(false))
     }
 
     /// Returns whether this dataset has a chunked layout.
