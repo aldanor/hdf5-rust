@@ -207,7 +207,7 @@ macro_rules! impl_tuple {
 
 impl_tuple! { A, B, C, D, E, F, G, H, I, J, K, L }
 
-unsafe impl<T: Array<Item=I> + 'static, I: H5Type> H5Type for T {
+unsafe impl<T: Array<Item=I>, I: H5Type> H5Type for T {
     #[inline]
     fn type_descriptor() -> TypeDescriptor {
         TypeDescriptor::FixedArray(
@@ -224,14 +224,14 @@ unsafe impl<T: Copy + H5Type> H5Type for VarLenArray<T> {
     }
 }
 
-unsafe impl<A: Array<Item=u8> + 'static> H5Type for FixedAscii<A> {
+unsafe impl<A: Array<Item=u8>> H5Type for FixedAscii<A> {
     #[inline]
     fn type_descriptor() -> TypeDescriptor {
         TypeDescriptor::FixedAscii(A::capacity())
     }
 }
 
-unsafe impl<A: Array<Item=u8> + 'static> H5Type for FixedUnicode<A> {
+unsafe impl<A: Array<Item=u8>> H5Type for FixedUnicode<A> {
     #[inline]
     fn type_descriptor() -> TypeDescriptor {
         TypeDescriptor::FixedUnicode(A::capacity())

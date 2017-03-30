@@ -8,7 +8,7 @@ use std::slice;
 use libc::{self, size_t};
 
 /* This trait is borrowed from arrayvec::Array (C) @bluss */
-pub unsafe trait Array {
+pub unsafe trait Array : 'static {
     type Item;
 
     fn as_ptr(&self) -> *const Self::Item;
@@ -20,7 +20,7 @@ macro_rules! impl_array {
     () => ();
 
     ($n:expr, $($ns:expr,)*) => (
-        unsafe impl<T> Array for [T; $n] {
+        unsafe impl<T: 'static> Array for [T; $n] {
             type Item = T;
 
             #[inline(always)]
