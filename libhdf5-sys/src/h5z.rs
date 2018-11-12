@@ -58,7 +58,7 @@ pub const H5Z_CLASS_T_VERS: c_uint = 1;
 pub const H5Z_FILTER_CONFIG_ENCODE_ENABLED: c_uint = 0x0001;
 pub const H5Z_FILTER_CONFIG_DECODE_ENABLED: c_uint = 0x0002;
 
-pub type H5Z_filter_t = c_int;
+pub type H5Z_filter_t = hid_t;
 
 #[repr(C)]
 #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
