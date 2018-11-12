@@ -4,13 +4,13 @@ version = "0.2.0"
 authors = ["Ivan Smirnov <i.s.smirnov@gmail.com>"]
 
 [dependencies]
-ascii = "0.8"
+ascii = "0.9"
 libc = "0.2"
 clippy = { version = "*", optional = true }
 
 [dev-dependencies]
-quickcheck = "0.4"
+quickcheck = "0.7"
 
 [dependencies.error-chain]
-version = "0.10"
+version = "0.12"
 default-features = false
