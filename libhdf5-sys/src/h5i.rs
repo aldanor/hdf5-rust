@@ -25,7 +25,13 @@ pub enum H5I_type_t {
     H5I_NTYPES      = 14,
 }
 
-pub type hid_t = c_int;
+cfg_if! {
+    if #[cfg(hdf5_1_10_0)] {
+        pub type hid_t = i64;
+    } else {
+        pub type hid_t = c_int;
+    }
+}
 
 pub const H5I_INVALID_HID: hid_t = -1;
 

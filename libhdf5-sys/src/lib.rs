@@ -1,5 +1,7 @@
 #![allow(non_camel_case_types, non_snake_case, dead_code)]
 
+#[macro_use]
+extern crate cfg_if;
 extern crate libc;
 extern crate libhdf5_lib as lib;
 

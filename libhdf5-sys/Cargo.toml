@@ -14,6 +14,7 @@ name = "libhdf5_sys"
 
 [dependencies]
 libc = "0.2"
+cfg-if = "0.1"
 libhdf5-lib = { path = "../libhdf5-lib", version = "0.2.0" }
 
 [build-dependencies]
