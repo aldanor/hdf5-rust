@@ -24,8 +24,8 @@ pub fn hdf5_version() -> Result<(u8, u8, u8), &'static str> {
 pub fn dump_build_flags() {
     let version = hdf5_version().unwrap();
     assert!(version >= (1, 8, 4));
-    let mut vs: Vec<_> = (5..18).map(|v| (1, 8, v)).collect();
-    vs.extend((0..1).map(|v| (1, 10, v)));
+    let mut vs: Vec<_> = (5..=21).map(|v| (1, 8, v)).collect();
+    vs.extend((0..=1).map(|v| (1, 10, v)));
     for v in vs.into_iter().filter(|&v| version >= v) {
         println!("cargo:rustc-cfg=hdf5_{}_{}_{}", v.0, v.1, v.2);
     }
