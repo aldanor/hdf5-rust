@@ -16,7 +16,7 @@ use std::iter;
 use std::mem;
 use std::str::FromStr;
 
-use proc_macro::TokenStream;
+use crate::proc_macro::TokenStream;
 use syn::{Body, VariantData, Ident, Ty, ConstExpr, Attribute, TyGenerics};
 
 #[proc_macro_derive(H5Type)]
