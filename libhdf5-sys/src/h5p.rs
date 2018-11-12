@@ -4,21 +4,21 @@ pub use self::H5D_mpio_no_collective_cause_t::*;
 
 use libc::{c_int, c_uint, c_void, c_char, c_double, size_t, ssize_t, off_t};
 
-use h5::{herr_t, hsize_t, htri_t, hbool_t};
-use h5ac::H5AC_cache_config_t;
-use h5d::{H5D_alloc_time_t, H5D_fill_time_t, H5D_fill_value_t, H5D_layout_t};
-use h5f::{H5F_libver_t, H5F_close_degree_t};
-use h5fd::H5FD_mem_t;
-use h5i::hid_t;
-use h5l::H5L_elink_traverse_t;
-use h5mm::{H5MM_allocate_t, H5MM_free_t};
-use h5t::{H5T_cset_t, H5T_conv_except_func_t};
-use h5z::{H5Z_filter_t, H5Z_EDC_t, H5Z_filter_func_t, H5Z_SO_scale_type_t};
+use crate::h5::{herr_t, hsize_t, htri_t, hbool_t};
+use crate::h5ac::H5AC_cache_config_t;
+use crate::h5d::{H5D_alloc_time_t, H5D_fill_time_t, H5D_fill_value_t, H5D_layout_t};
+use crate::h5f::{H5F_libver_t, H5F_close_degree_t};
+use crate::h5fd::H5FD_mem_t;
+use crate::h5i::hid_t;
+use crate::h5l::H5L_elink_traverse_t;
+use crate::h5mm::{H5MM_allocate_t, H5MM_free_t};
+use crate::h5t::{H5T_cset_t, H5T_conv_except_func_t};
+use crate::h5z::{H5Z_filter_t, H5Z_EDC_t, H5Z_filter_func_t, H5Z_SO_scale_type_t};
 
 #[cfg(hdf5_1_8_9)]
-use h5fd::H5FD_file_image_callbacks_t;
+use crate::h5fd::H5FD_file_image_callbacks_t;
 #[cfg(hdf5_1_8_9)]
-use h5o::H5O_mcdt_search_cb_t;
+use crate::h5o::H5O_mcdt_search_cb_t;
 
 pub const H5P_CRT_ORDER_TRACKED: c_uint = 0x0001;
 pub const H5P_CRT_ORDER_INDEXED: c_uint = 0x0002;
@@ -121,7 +121,7 @@ mod globals {
 
 #[cfg(all(hdf5_1_8_14, not(target_env = "msvc")))]
 mod globals {
-    pub use h5i::hid_t as id_t;
+    pub use crate::h5i::hid_t as id_t;
 
     // Property list classes
     extern_static!(H5P_CLS_ROOT, H5P_CLS_ROOT_ID_g);

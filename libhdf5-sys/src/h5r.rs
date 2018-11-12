@@ -2,9 +2,9 @@ pub use self::H5R_type_t::*;
 
 use libc::{c_void, c_char, c_uchar, size_t, ssize_t};
 
-use h5::{herr_t, haddr_t};
-use h5i::hid_t;
-use h5o::H5O_type_t;
+use crate::h5::{herr_t, haddr_t};
+use crate::h5i::hid_t;
+use crate::h5o::H5O_type_t;
 
 #[repr(C)]
 #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]

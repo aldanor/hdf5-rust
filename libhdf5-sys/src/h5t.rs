@@ -14,8 +14,8 @@ pub use self::H5T_conv_ret_t::*;
 
 use libc::{c_int, c_uint, c_void, c_char, size_t};
 
-use h5::{herr_t, htri_t, hsize_t, hbool_t};
-use h5i::hid_t;
+use crate::h5::{herr_t, htri_t, hsize_t, hbool_t};
+use crate::h5i::hid_t;
 
 #[repr(C)]
 #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
@@ -303,7 +303,7 @@ pub use self::globals::*;
 
 #[cfg(not(target_env = "msvc"))]
 mod globals {
-    pub use h5i::hid_t as id_t;
+    pub use crate::h5i::hid_t as id_t;
 
     // Datatypes
     extern_static!(H5T_IEEE_F32BE, H5T_IEEE_F32BE_g);

@@ -1,6 +1,6 @@
 use libc::c_int;
 
-use h5::herr_t;
+use crate::h5::herr_t;
 
 #[cfg(hdf5_1_8_15)]
 extern {

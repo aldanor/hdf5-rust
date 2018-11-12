@@ -1,13 +1,13 @@
-use internal_prelude::*;
+use crate::internal_prelude::*;
 
-use ffi::h5p::{H5Pcreate, H5Pset_userblock, H5Pget_userblock};
-use ffi::h5f::{
+use crate::ffi::h5p::{H5Pcreate, H5Pset_userblock, H5Pget_userblock};
+use crate::ffi::h5f::{
     H5F_ACC_RDONLY, H5F_ACC_RDWR, H5F_ACC_EXCL, H5F_ACC_TRUNC, H5F_SCOPE_LOCAL,
     H5F_OBJ_FILE, H5F_OBJ_ALL, H5Fopen, H5Fcreate, H5Fget_filesize, H5Fget_freespace,
     H5Fflush, H5Fget_obj_ids, H5Fget_create_plist, H5Fget_intent, H5Fget_obj_count, H5Fclose
 };
-use ffi::h5fd::{H5Pset_fapl_sec2, H5Pset_fapl_stdio, H5Pset_fapl_core};
-use globals::{H5P_FILE_CREATE, H5P_FILE_ACCESS};
+use crate::ffi::h5fd::{H5Pset_fapl_sec2, H5Pset_fapl_stdio, H5Pset_fapl_core};
+use crate::globals::{H5P_FILE_CREATE, H5P_FILE_ACCESS};
 
 use std::fmt;
 use std::path::Path;
@@ -283,8 +283,8 @@ impl FileBuilder {
 
 #[cfg(test)]
 pub mod tests {
-    use internal_prelude::*;
-    use lib::hdf5_version;
+    use crate::internal_prelude::*;
+    use crate::lib::hdf5_version;
     use std::fs;
     use std::io::{Read, Write};
 

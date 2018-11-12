@@ -4,8 +4,8 @@ pub use self::H5Z_cb_return_t::*;
 
 use libc::{c_int, c_uint, c_void, c_char, size_t};
 
-use h5::{herr_t, htri_t};
-use h5i::hid_t;
+use crate::h5::{herr_t, htri_t};
+use crate::h5i::hid_t;
 
 pub const H5Z_FILTER_ERROR:       hid_t = -1;
 pub const H5Z_FILTER_NONE:        hid_t = 0;

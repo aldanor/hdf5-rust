@@ -2,8 +2,8 @@ use std::mem;
 
 use libc::{size_t, c_void};
 
-use array::{Array, VarLenArray};
-use string::{FixedAscii, FixedUnicode, VarLenAscii, VarLenUnicode};
+use crate::array::{Array, VarLenArray};
+use crate::string::{FixedAscii, FixedUnicode, VarLenAscii, VarLenUnicode};
 
 #[repr(C)]
 struct hvl_t {
@@ -256,8 +256,8 @@ unsafe impl H5Type for VarLenUnicode {
 pub mod tests {
     use super::TypeDescriptor as TD;
     use super::{IntSize, FloatSize, H5Type, CompoundType, CompoundField, hvl_t};
-    use array::VarLenArray;
-    use string::{FixedAscii, FixedUnicode, VarLenAscii, VarLenUnicode};
+    use crate::array::VarLenArray;
+    use crate::string::{FixedAscii, FixedUnicode, VarLenAscii, VarLenUnicode};
     use std::mem;
 
     #[test]

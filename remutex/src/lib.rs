@@ -12,4 +12,4 @@ extern crate libc;
 mod poison;
 mod remutex;
 
-pub use remutex::ReentrantMutex;
+pub use crate::remutex::ReentrantMutex;

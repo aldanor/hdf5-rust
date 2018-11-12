@@ -1,7 +1,7 @@
-use internal_prelude::*;
+use crate::internal_prelude::*;
 
-use ffi::h5i::H5I_GENPROP_LST;
-use ffi::h5p::{H5Pcopy, H5Pequal};
+use crate::ffi::h5i::H5I_GENPROP_LST;
+use crate::ffi::h5p::{H5Pcopy, H5Pequal};
 
 use std::fmt;
 
@@ -59,10 +59,10 @@ impl PartialEq for PropertyList {
 
 #[cfg(test)]
 pub mod tests {
-    use internal_prelude::*;
+    use crate::internal_prelude::*;
     use super::PropertyList;
-    use globals::{H5P_FILE_ACCESS, H5P_FILE_CREATE};
-    use ffi::h5p::H5Pcreate;
+    use crate::globals::{H5P_FILE_ACCESS, H5P_FILE_CREATE};
+    use crate::ffi::h5p::H5Pcreate;
 
     #[test]
     pub fn test_clone_eq() {

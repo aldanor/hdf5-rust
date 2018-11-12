@@ -2,7 +2,7 @@ pub use self::H5I_type_t::*;
 
 use libc::{c_int, c_uint, c_void, c_char, size_t, ssize_t};
 
-use h5::{htri_t, hbool_t, herr_t, hsize_t};
+use crate::h5::{htri_t, hbool_t, herr_t, hsize_t};
 
 #[repr(C)]
 #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]

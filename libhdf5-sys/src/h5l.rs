@@ -3,9 +3,9 @@ pub use self::H5L_type_t::*;
 use libc::{c_int, c_uint, c_void, c_char, size_t, ssize_t, int64_t, uint32_t};
 use std::mem::transmute;
 
-use h5::{htri_t, haddr_t, herr_t, hbool_t, hsize_t, H5_index_t, H5_iter_order_t};
-use h5i::hid_t;
-use h5t::{H5T_cset_t};
+use crate::h5::{htri_t, haddr_t, herr_t, hbool_t, hsize_t, H5_index_t, H5_iter_order_t};
+use crate::h5i::hid_t;
+use crate::h5t::{H5T_cset_t};
 
 pub const H5L_MAX_LINK_NAME_LEN: uint32_t = !0;
 

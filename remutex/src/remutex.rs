@@ -10,8 +10,8 @@ use std::fmt;
 use std::marker;
 use std::ops::Deref;
 
-use sys;
-use poison::{self, TryLockError, TryLockResult, LockResult};
+use crate::sys;
+use crate::poison::{self, TryLockError, TryLockResult, LockResult};
 
 /// A re-entrant mutual exclusion
 ///

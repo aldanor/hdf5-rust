@@ -1,4 +1,4 @@
-use internal_prelude::*;
+use crate::internal_prelude::*;
 
 use libc;
 
@@ -41,8 +41,8 @@ where F: Fn(*mut c_char, size_t) -> T, T: Integer + NumCast {
 
 #[cfg(test)]
 mod tests {
-    use ffi::h5e::H5Eget_msg;
-    use globals::H5E_CANTOPENOBJ;
+    use crate::ffi::h5e::H5Eget_msg;
+    use crate::globals::H5E_CANTOPENOBJ;
     use super::{string_from_cstr, to_cstring, get_h5_str};
 
     use std::ptr;

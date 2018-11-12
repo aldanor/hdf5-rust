@@ -5,9 +5,9 @@ pub use self::H5F_libver_t::*;
 
 use libc::{c_int, c_uint, c_void, c_char, c_double, size_t, ssize_t};
 
-use h5::{herr_t, hsize_t, htri_t, hssize_t, H5_ih_info_t};
-use h5i::hid_t;
-use h5ac::H5AC_cache_config_t;
+use crate::h5::{herr_t, hsize_t, htri_t, hssize_t, H5_ih_info_t};
+use crate::h5i::hid_t;
+use crate::h5ac::H5AC_cache_config_t;
 
 /* these flags call H5check() in the C library */
 pub const H5F_ACC_RDONLY:   c_uint = 0x0000;

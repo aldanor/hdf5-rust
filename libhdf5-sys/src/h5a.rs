@@ -1,9 +1,9 @@
 use libc::{c_void, c_char, size_t, ssize_t};
 
-use h5::{herr_t, hbool_t, hsize_t, htri_t, H5_index_t, H5_iter_order_t};
-use h5i::hid_t;
-use h5o::H5O_msg_crt_idx_t;
-use h5t::H5T_cset_t;
+use crate::h5::{herr_t, hbool_t, hsize_t, htri_t, H5_index_t, H5_iter_order_t};
+use crate::h5i::hid_t;
+use crate::h5o::H5O_msg_crt_idx_t;
+use crate::h5t::H5T_cset_t;
 
 #[repr(C)]
 #[derive(Copy, Clone)]

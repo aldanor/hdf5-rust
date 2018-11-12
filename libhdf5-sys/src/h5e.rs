@@ -3,8 +3,8 @@ pub use self::H5E_direction_t::*;
 
 use libc::{c_uint, c_void, c_char, size_t, ssize_t, FILE};
 
-use h5::herr_t;
-use h5i::hid_t;
+use crate::h5::herr_t;
+use crate::h5i::hid_t;
 
 pub const H5E_DEFAULT: hid_t = 0;
 
@@ -73,7 +73,7 @@ pub use self::globals::*;
 
 #[cfg(not(target_env = "msvc"))]
 mod globals {
-    pub use h5i::hid_t as id_t;
+    pub use crate::h5i::hid_t as id_t;
 
     // Error class
     extern_static!(H5E_ERR_CLS, H5E_ERR_CLS_g);

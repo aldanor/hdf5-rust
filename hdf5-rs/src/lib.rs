@@ -5,18 +5,18 @@
 #![cfg_attr(all(feature = "clippy", test), allow(cyclomatic_complexity))]
 #![cfg_attr(not(test), allow(dead_code))]
 
-pub use container::Container;
-pub use dataset::Dataset;
-pub use datatype::Datatype;
-pub use error::{Result, Error};
-pub use file::File;
-pub use filters::Filters;
-pub use group::Group;
-pub use location::Location;
-pub use object::Object;
-pub use space::{Dimension, Ix, Dataspace};
+pub use crate::container::Container;
+pub use crate::dataset::Dataset;
+pub use crate::datatype::Datatype;
+pub use crate::error::{Result, Error};
+pub use crate::file::File;
+pub use crate::filters::Filters;
+pub use crate::group::Group;
+pub use crate::location::Location;
+pub use crate::object::Object;
+pub use crate::space::{Dimension, Ix, Dataspace};
 
-pub use types::H5Type;
+pub use crate::types::H5Type;
 
 extern crate libc;
 extern crate num;
@@ -84,30 +84,30 @@ pub mod prelude {
 }
 
 mod internal_prelude {
-    pub use container::Container;
-    pub use dataset::{Dataset, DatasetBuilder};
-    pub use datatype::Datatype;
-    pub use error::{Error, Result, silence_errors};
-    pub use file::{File, FileBuilder};
-    pub use filters::Filters;
-    pub use group::Group;
-    pub use handle::{Handle, ID, FromID, get_id_type};
-    pub use location::Location;
-    pub use object::Object;
-    pub use plist::PropertyList;
-    pub use space::{Dataspace, Dimension, Ix};
-    pub use types::H5Type;
-    pub use util::{to_cstring, string_from_cstr, get_h5_str};
+    pub use crate::container::Container;
+    pub use crate::dataset::{Dataset, DatasetBuilder};
+    pub use crate::datatype::Datatype;
+    pub use crate::error::{Error, Result, silence_errors};
+    pub use crate::file::{File, FileBuilder};
+    pub use crate::filters::Filters;
+    pub use crate::group::Group;
+    pub use crate::handle::{Handle, ID, FromID, get_id_type};
+    pub use crate::location::Location;
+    pub use crate::object::Object;
+    pub use crate::plist::PropertyList;
+    pub use crate::space::{Dataspace, Dimension, Ix};
+    pub use crate::types::H5Type;
+    pub use crate::util::{to_cstring, string_from_cstr, get_h5_str};
 
     pub use libc::{c_int, c_uint, c_void, c_char, size_t};
 
-    pub use ffi::h5::{hsize_t, hbool_t, haddr_t, herr_t};
-    pub use ffi::h5i::{H5I_INVALID_HID, hid_t};
-    pub use ffi::h5p::H5P_DEFAULT;
-    pub use ffi::h5i::H5I_type_t::*;
+    pub use crate::ffi::h5::{hsize_t, hbool_t, haddr_t, herr_t};
+    pub use crate::ffi::h5i::{H5I_INVALID_HID, hid_t};
+    pub use crate::ffi::h5p::H5P_DEFAULT;
+    pub use crate::ffi::h5i::H5I_type_t::*;
 
     #[cfg(test)]
-    pub use test::{with_tmp_file, with_tmp_dir, with_tmp_path};
+    pub use crate::test::{with_tmp_file, with_tmp_dir, with_tmp_path};
 }
 
 #[cfg(test)]

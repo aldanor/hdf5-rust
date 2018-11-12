@@ -1,6 +1,6 @@
-use internal_prelude::*;
+use crate::internal_prelude::*;
 
-use ffi::h5fd::{H5FD_core_init, H5FD_sec2_init, H5FD_stdio_init};
+use crate::ffi::h5fd::{H5FD_core_init, H5FD_sec2_init, H5FD_stdio_init};
 
 use std::mem;
 
@@ -321,14 +321,14 @@ lazy_static! {
 #[cfg(test)]
 mod tests
 {
-    use ffi::h5::haddr_t;
+    use crate::ffi::h5::haddr_t;
     use super::{H5T_IEEE_F32BE, H5T_NATIVE_INT, H5P_ROOT, H5P_LST_LINK_ACCESS_ID,
                 H5E_ERR_CLS, H5E_DATASET, H5R_OBJ_REF_BUF_SIZE, H5R_DSET_REG_REF_BUF_SIZE};
     use std::mem;
 
     #[test]
     pub fn test_lazy_globals() {
-        use ffi::h5i::H5I_INVALID_HID;
+        use crate::ffi::h5i::H5I_INVALID_HID;
 
         assert_ne!(*H5T_IEEE_F32BE, H5I_INVALID_HID);
         assert_ne!(*H5T_NATIVE_INT, H5I_INVALID_HID);

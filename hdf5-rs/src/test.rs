@@ -1,4 +1,4 @@
-use file::File;
+use crate::file::File;
 
 use std::path::PathBuf;
 use tempdir::TempDir;

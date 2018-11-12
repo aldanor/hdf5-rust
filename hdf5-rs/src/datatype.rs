@@ -1,11 +1,11 @@
-use internal_prelude::*;
+use crate::internal_prelude::*;
 
-use types::{
+use crate::types::{
     TypeDescriptor, H5Type, IntSize, FloatSize, EnumMember,
     EnumType, CompoundField, CompoundType
 };
 
-use ffi::h5t::{
+use crate::ffi::h5t::{
     H5Tcreate, H5Tset_size, H5Tinsert, H5Tenum_create, H5Tenum_insert, H5Tcopy,
     H5Tarray_create2, H5T_str_t, H5Tset_strpad, H5T_cset_t, H5Tset_cset, H5Tvlen_create,
     H5Tget_class, H5T_VARIABLE, H5T_class_t, H5Tget_size, H5Tget_sign, H5Tget_nmembers,
@@ -24,7 +24,7 @@ use globals::{
 };
 
 #[cfg(target_endian = "little")]
-use globals::{
+use crate::globals::{
     H5T_STD_I8LE, H5T_STD_I16LE,
     H5T_STD_I32LE, H5T_STD_I64LE,
     H5T_STD_U8LE, H5T_STD_U16LE,
@@ -32,7 +32,7 @@ use globals::{
     H5T_IEEE_F32LE, H5T_IEEE_F64LE,
 };
 
-use globals::{H5T_NATIVE_INT8, H5T_C_S1};
+use crate::globals::{H5T_NATIVE_INT8, H5T_C_S1};
 
 use std::fmt;
 
@@ -99,9 +99,9 @@ impl Datatype {
     }
 
     pub fn to_descriptor(&self) -> Result<TypeDescriptor> {
-        use ffi::h5t::H5T_class_t::*;
-        use ffi::h5t::H5T_sign_t::*;
-        use types::TypeDescriptor as TD;
+        use crate::ffi::h5t::H5T_class_t::*;
+        use crate::ffi::h5t::H5T_sign_t::*;
+        use crate::types::TypeDescriptor as TD;
 
         h5lock!({
             let id = self.id();
@@ -204,7 +204,7 @@ impl Datatype {
     }
 
     pub fn from_descriptor(desc: &TypeDescriptor) -> Result<Datatype> {
-        use types::TypeDescriptor as TD;
+        use crate::types::TypeDescriptor as TD;
 
         unsafe fn string_type(size: Option<usize>, encoding: H5T_cset_t) -> Result<hid_t> {
             let string_id = h5try!(H5Tcopy(*H5T_C_S1));
@@ -297,9 +297,9 @@ impl Datatype {
 
 #[cfg(test)]
 pub mod tests {
-    use internal_prelude::*;
-    use types::*;
-    use types::TypeDescriptor as TD;
+    use crate::internal_prelude::*;
+    use crate::types::*;
+    use crate::types::TypeDescriptor as TD;
 
     macro_rules! check_roundtrip {
         ($ty:ty, $desc:expr) => ({

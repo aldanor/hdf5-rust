@@ -10,8 +10,8 @@ use std::slice;
 use ascii::{AsciiStr, AsAsciiStr, AsAsciiStrError};
 use libc;
 
-use errors::Result;
-use array::Array;
+use crate::errors::Result;
+use crate::array::Array;
 
 // ================================================================================
 

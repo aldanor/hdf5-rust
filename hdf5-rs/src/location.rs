@@ -1,8 +1,8 @@
-use internal_prelude::*;
+use crate::internal_prelude::*;
 
-use ffi::h5o::{H5Oget_comment, H5Oset_comment};
-use ffi::h5i::{H5Iget_name, H5Iget_file_id};
-use ffi::h5f::H5Fget_name;
+use crate::ffi::h5o::{H5Oget_comment, H5Oset_comment};
+use crate::ffi::h5i::{H5Iget_name, H5Iget_file_id};
+use crate::ffi::h5f::H5Fget_name;
 
 use std::ptr;
 
@@ -47,7 +47,7 @@ pub trait Location: Object {
 
 #[cfg(test)]
 pub mod tests {
-    use internal_prelude::*;
+    use crate::internal_prelude::*;
 
     #[test]
     pub fn test_filename() {

@@ -1,6 +1,6 @@
-use internal_prelude::*;
+use crate::internal_prelude::*;
 
-use ffi::h5i::{ H5I_type_t, H5Iget_type, H5Iis_valid, H5Iinc_ref, H5Idec_ref};
+use crate::ffi::h5i::{ H5I_type_t, H5Iget_type, H5Iis_valid, H5Iinc_ref, H5Idec_ref};
 
 use std::sync::{Arc, Mutex, RwLock};
 use std::collections::HashMap;

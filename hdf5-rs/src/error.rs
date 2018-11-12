@@ -1,6 +1,6 @@
-use internal_prelude::*;
+use crate::internal_prelude::*;
 
-use ffi::h5e::{
+use crate::ffi::h5e::{
     H5Ewalk2, H5Eget_msg, H5E_error2_t, H5Eset_auto2, H5Eget_current_stack,
     H5Eclose_stack, H5E_WALK_DOWNWARD, H5E_DEFAULT
 };
@@ -242,9 +242,9 @@ pub fn h5check<T>(value: T) -> Result<T> where T: Integer + Zero + Bounded,
 
 #[cfg(test)]
     pub mod tests {
-    use internal_prelude::*;
-    use ffi::h5p::{H5Pcreate, H5Pclose};
-    use globals::H5P_ROOT;
+    use crate::internal_prelude::*;
+    use crate::ffi::h5p::{H5Pcreate, H5Pclose};
+    use crate::globals::H5P_ROOT;
     use super::ErrorStack;
 
     #[test]

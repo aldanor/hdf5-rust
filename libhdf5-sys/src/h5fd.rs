@@ -3,9 +3,9 @@ pub use self::H5FD_file_image_op_t::*;
 
 use libc::{c_int, c_uint, c_void, c_char, c_uchar, c_ulong, size_t};
 
-use h5::{herr_t, haddr_t, hsize_t, hbool_t};
-use h5f::{H5F_mem_t, H5F_close_degree_t};
-use h5i::hid_t;
+use crate::h5::{herr_t, haddr_t, hsize_t, hbool_t};
+use crate::h5f::{H5F_mem_t, H5F_close_degree_t};
+use crate::h5i::hid_t;
 
 pub const H5_HAVE_VFL: c_uint = 1;
 

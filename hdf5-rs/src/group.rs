@@ -1,4 +1,4 @@
-use internal_prelude::*;
+use crate::internal_prelude::*;
 
 use std::fmt;
 
@@ -52,7 +52,7 @@ impl Container for Group {}
 
 #[cfg(test)]
 pub mod tests {
-    use internal_prelude::*;
+    use crate::internal_prelude::*;
 
     #[test]
     pub fn test_debug_display() {

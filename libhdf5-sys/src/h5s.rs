@@ -4,8 +4,8 @@ pub use self::H5S_sel_type::*;
 
 use libc::{c_int, c_uint, c_void, size_t};
 
-use h5::{herr_t, hsize_t, hssize_t, htri_t};
-use h5i::hid_t;
+use crate::h5::{herr_t, hsize_t, hssize_t, htri_t};
+use crate::h5i::hid_t;
 
 pub const H5S_ALL: hid_t = 0;
 
