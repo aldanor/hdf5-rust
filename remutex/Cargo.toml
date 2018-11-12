@@ -6,6 +6,7 @@ keywords = ["mutex"]
 license = "MIT/Apache-2.0"
 repository = "https://github.com/aldanor/hdf5-rs"
 description = "Recursive mutex, adapted from Rust's standard library"
+edition = "2018"
 
 [dependencies]
 libc = "0.2.6"

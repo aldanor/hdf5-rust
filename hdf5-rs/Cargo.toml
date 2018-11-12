@@ -9,6 +9,7 @@ description = "Thread-safe Rust bindings for the HDF5 library."
 repository = "https://github.com/aldanor/hdf5-rs"
 homepage = "https://github.com/aldanor/hdf5-rs"
 build = "build.rs"
+edition = "2018"
 
 [lib]
 name = "h5"

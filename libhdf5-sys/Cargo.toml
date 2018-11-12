@@ -8,6 +8,7 @@ build = "build.rs"
 repository = "https://github.com/aldanor/hdf5-rs"
 homepage = "https://github.com/aldanor/hdf5-rs"
 description = "Native bindings to the HDF5 library."
+edition = "2018"
 
 [lib]
 name = "libhdf5_sys"
