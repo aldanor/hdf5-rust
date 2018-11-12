@@ -284,6 +284,7 @@ impl FileBuilder {
 #[cfg(test)]
 pub mod tests {
     use internal_prelude::*;
+    use lib::hdf5_version;
     use std::fs;
     use std::io::{Read, Write};
 
@@ -381,10 +382,18 @@ pub mod tests {
     pub fn test_flush() {
         with_tmp_file(|file| {
             assert!(file.size() > 0);
-            assert_eq!(fs::metadata(file.filename()).unwrap().len(), 0);
+            let orig_size = fs::metadata(file.filename()).unwrap().len();
+            assert!(file.size() > orig_size);
+            if hdf5_version().unwrap() >= (1, 10, 0) {
+                assert_ne!(orig_size, 0);
+            } else {
+                assert_eq!(orig_size, 0);
+            }
             assert!(file.flush().is_ok());
             assert!(file.size() > 0);
-            assert_eq!(file.size(), fs::metadata(file.filename()).unwrap().len());
+            let new_size = fs::metadata(file.filename()).unwrap().len();
+            assert!(new_size > orig_size);
+            assert_eq!(file.size(), new_size);
         })
     }
 
