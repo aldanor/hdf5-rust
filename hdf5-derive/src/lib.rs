@@ -12,7 +12,7 @@ use std::mem;
 use std::str::FromStr;
 
 use proc_macro2::{Span, Ident, TokenStream};
-use quote::quote;
+use quote::{quote, ToTokens};
 use syn::{
     parse_macro_input,
     DeriveInput, Data, Type, TypePath, Expr, Attribute, TypeGenerics, Fields,
@@ -41,8 +41,9 @@ pub fn derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     proc_macro::TokenStream::from(expanded)
 }
 
-fn impl_compound(ty: &Ident, ty_generics: &TypeGenerics,
-                 fields: Vec<Ident>, names: Vec<Ident>, types: Vec<Type>) -> TokenStream
+fn impl_compound<F>(ty: &Ident, ty_generics: &TypeGenerics,
+                 fields: Vec<F>, names: Vec<String>, types: Vec<Type>) -> TokenStream
+where F: ToTokens,
 {
     quote! {
         let origin: *const #ty #ty_generics = ::std::ptr::null();
@@ -50,7 +51,7 @@ fn impl_compound(ty: &Ident, ty_generics: &TypeGenerics,
             ::hdf5_types::CompoundType {
                 fields: vec![#(
                     ::hdf5_types::CompoundField {
-                        name: stringify!(#names).to_owned(),
+                        name: #names.to_owned(),
                         ty: <#types as ::hdf5_types::H5Type>::type_descriptor(),
                         offset: unsafe { &((*origin).#fields) as *const _ as _ },
                     }
@@ -117,16 +118,11 @@ fn find_repr(attrs: &[Attribute], expected: &[&str]) -> Option<Ident> {
     None
 }
 
-macro_rules! pluck {
-    ($seq:expr, $key:tt) => (
-        ($seq).iter().map(|f| f.$key.clone()).collect::<Vec<_>>()
-    );
-    ($seq:expr, ?$key:tt) => (
-        ($seq).iter().map(|f| f.$key.clone().unwrap()).collect::<Vec<_>>()
-    );
-    ($seq:expr, ?$key:tt [$idx:tt]) => (
-        ($seq).iter().map(|f| f.$key.clone().unwrap().$idx).collect::<Vec<_>>()
-    );
+fn pluck<'a, I, F, T, S>(iter: I, func: F) -> Vec<S>
+where
+    I: Iterator<Item=&'a T>, F: Fn(&'a T) -> S, T: 'a,
+{
+    iter.map(func).collect()
 }
 
 fn impl_trait(ty: &Ident, data: &Data, attrs: &[Attribute],
@@ -147,24 +143,24 @@ fn impl_trait(ty: &Ident, data: &Data, attrs: &[Attribute],
                     }
                     find_repr(attrs, &["C"])
                         .expect("H5Type requires #[repr(C)] for structs");
-                    let names = pluck!(fields, ?ident);
-                    impl_compound(ty, ty_generics, names.clone(), names, pluck!(fields, ty))
+                    let types = pluck(fields.iter(), |f| f.ty.clone());
+                    let fields = pluck(fields.iter(), |f| f.ident.clone().unwrap());
+                    let names = fields.iter().map(|f| f.to_string()).collect();
+                    impl_compound(ty, ty_generics, fields, names, types)
                 },
                 Fields::Unnamed(ref fields) => {
-                    let (index, fields): (Vec<_>, Vec<_>) = fields.unnamed.iter()
+                    let (index, fields): (Vec<usize>, Vec<_>) = fields.unnamed.iter()
                         .enumerate()
                         .filter(|&(_, f)| !is_phantom_data(&f.ty))
-                        .map(|(i, f)| (Ident::new(&format!("{}", i), Span::call_site()), f))
                         .unzip();
                     if fields.is_empty() {
                         panic!("Cannot derive H5Type for empty tuple structs");
                     }
                     find_repr(attrs, &["C"])
                         .expect("H5Type requires #[repr(C)] for structs");
-                    let names = (0..fields.len()).map(|i|
-                        Ident::new(&format!("{}", i), Span::call_site())
-                    ).collect();
-                    impl_compound(ty, ty_generics, index, names, pluck!(fields, ty))
+                    let names = (0..fields.len()).map(|f| f.to_string()).collect();
+                    let types = pluck(fields.iter(), |f| f.ty.clone());
+                    impl_compound(ty, ty_generics, index, names, types)
                 }
             }
         }
@@ -180,7 +176,9 @@ fn impl_trait(ty: &Ident, data: &Data, attrs: &[Attribute],
                                "isize", "usize"];
             let repr = find_repr(attrs, enum_reprs)
                 .expect("H5Type can only be derived for enums with explicit representation");
-            impl_enum(pluck!(variants, ident), pluck!(variants, ?discriminant [1]), &repr)
+            let names = pluck(variants.iter(), |v| v.ident.clone());
+            let values = pluck(variants.iter(), |v| v.discriminant.clone().unwrap().1);
+            impl_enum(names, values, &repr)
         },
         Data::Union(_) => {
             panic!("Cannot derive H5Type for tagged unions");
