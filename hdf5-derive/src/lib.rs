@@ -92,7 +92,7 @@ fn is_phantom_data(ty: &Type) -> bool {
     match *ty {
         Type::Path(TypePath { qself: None, ref path }) => {
             path.segments.iter().last()
-                .map(|x| x.ident.to_string() == "PhantomData").unwrap_or(false)
+                .map(|x| x.ident == "PhantomData").unwrap_or(false)
         },
         _ => false,
     }
@@ -102,10 +102,10 @@ fn find_repr(attrs: &[Attribute], expected: &[&str]) -> Option<Ident> {
     for attr in attrs.iter() {
         if attr.style == AttrStyle::Outer {
             if let Ok(Meta::List(ref list)) = attr.parse_meta() {
-                if list.ident.to_string() == "repr" {
+                if list.ident == "repr" {
                     for item in list.nested.iter() {
-                        if let &NestedMeta::Meta(Meta::Word(ref ident)) = item {
-                            if expected.iter().any(|&s| ident.to_string() == s) {
+                        if let NestedMeta::Meta(Meta::Word(ref ident)) = *item {
+                            if expected.iter().any(|&s| *ident == s) {
                                 return Some(Ident::new(&ident.to_string(), Span::call_site()));
                             }
                         }
@@ -165,7 +165,7 @@ fn impl_trait(ty: &Ident, data: &Data, attrs: &[Attribute],
             }
         }
         Data::Enum(ref data) => {
-            let ref variants = data.variants;
+            let variants = &data.variants;
             if variants.iter().any(|v| v.fields != Fields::Unit || v.discriminant.is_none()) {
                 panic!("H5Type can only be derived for enums with scalar discriminants");
             } else if variants.is_empty() {

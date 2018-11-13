@@ -180,7 +180,7 @@ impl VarLenAscii {
         unsafe {
             let ptr = libc::malloc(1) as *mut _;
             *ptr = 0;
-            VarLenAscii { ptr: ptr }
+            VarLenAscii { ptr }
         }
     }
 
@@ -189,7 +189,7 @@ impl VarLenAscii {
         let ptr = libc::malloc(bytes.len() + 1) as *mut _;
         ptr::copy_nonoverlapping(bytes.as_ptr(), ptr, bytes.len());
         *(ptr.offset(bytes.len() as _)) = 0;
-        VarLenAscii { ptr: ptr }
+        VarLenAscii { ptr }
     }
 
     #[inline]
@@ -343,7 +343,7 @@ impl<A: Array<Item=u8>> Clone for FixedAscii<A> {
         unsafe {
             let mut buf: A = mem::uninitialized();
             ptr::copy_nonoverlapping(self.buf.as_ptr(), buf.as_mut_ptr(), A::capacity());
-            FixedAscii { buf: buf }
+            FixedAscii { buf }
         }
     }
 }
@@ -359,7 +359,7 @@ impl<A: Array<Item=u8>> FixedAscii<A> {
         let len = if bytes.len() < A::capacity() { bytes.len() } else { A::capacity() };
         let mut buf: A = mem::zeroed();
         ptr::copy_nonoverlapping(bytes.as_ptr(), buf.as_mut_ptr() as *mut _, len);
-        FixedAscii { buf: buf }
+        FixedAscii { buf }
     }
 
     #[inline]
@@ -438,7 +438,7 @@ impl<A: Array<Item=u8>> Clone for FixedUnicode<A> {
         unsafe {
             let mut buf: A = mem::uninitialized();
             ptr::copy_nonoverlapping(self.buf.as_ptr(), buf.as_mut_ptr(), A::capacity());
-            FixedUnicode { buf: buf }
+            FixedUnicode { buf }
         }
     }
 }
@@ -454,7 +454,7 @@ impl<A: Array<Item=u8>> FixedUnicode<A> {
         let len = if bytes.len() < A::capacity() { bytes.len() } else { A::capacity() };
         let mut buf: A = mem::zeroed();
         ptr::copy_nonoverlapping(bytes.as_ptr(), buf.as_mut_ptr() as *mut _, len);
-        FixedUnicode { buf: buf }
+        FixedUnicode { buf }
     }
 
     #[inline]
