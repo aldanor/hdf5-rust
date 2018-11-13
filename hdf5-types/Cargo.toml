@@ -7,7 +7,6 @@ edition = "2018"
 [dependencies]
 ascii = "0.9"
 libc = "0.2"
-clippy = { version = "*", optional = true }
 
 [dev-dependencies]
 quickcheck = "0.7"

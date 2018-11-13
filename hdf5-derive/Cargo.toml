@@ -14,7 +14,6 @@ compiletest = ["compiletest_rs"]
 hdf5-types = { path = "../hdf5-types", version = "0.2.0" }
 quote = "0.6"
 proc-macro2 = "0.4"
-clippy = { version = "*", optional = true }
 compiletest_rs = { version = "0.3", optional = true }
 
 [dependencies.syn]
