@@ -33,6 +33,8 @@ macro_rules! ensure {
 }
 
 /// Panics if `$expr` is not an Err(err) with err.description() containing `$err`.
+#[cfg(test)]
+#[allow(unused_macros)]
 macro_rules! assert_err {
     ($expr:expr, $err:expr) => (
         match $expr {
@@ -53,6 +55,8 @@ macro_rules! assert_err {
 }
 
 /// Panics if `$expr` is not an Err(err) with err.description() matching regexp `$err`.
+#[cfg(test)]
+#[allow(unused_macros)]
 macro_rules! assert_err_re {
     ($expr:expr, $err:expr) => (
         match $expr {
