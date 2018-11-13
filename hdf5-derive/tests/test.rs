@@ -118,9 +118,7 @@ fn test_compound_tuple() {
 
 #[derive(H5Type)]
 #[derive(Clone, Copy)]
-#[repr(C)]
 #[repr(i16)]
-#[repr(isize)]
 #[allow(dead_code)]
 enum E1 {
     X = -2,
