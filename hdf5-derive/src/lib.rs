@@ -2,9 +2,6 @@
 
 #![recursion_limit = "192"]
 
-#![cfg_attr(feature = "clippy", feature(plugin))]
-#![cfg_attr(feature = "clippy", plugin(clippy))]
-
 extern crate proc_macro;
 
 use std::iter;

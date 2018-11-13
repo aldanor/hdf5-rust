@@ -1,8 +1,6 @@
-#![cfg_attr(feature = "clippy", feature(plugin))]
-#![cfg_attr(feature = "clippy", plugin(clippy))]
-#![cfg_attr(feature = "clippy", allow(block_in_if_condition_stmt))]
-#![cfg_attr(feature = "clippy", allow(needless_return))]
-#![cfg_attr(all(feature = "clippy", test), allow(cyclomatic_complexity))]
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::block_in_if_condition_stmt))]
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::needless_return))]
+#![cfg_attr(all(feature = "cargo-clippy", test), allow(clippy::cyclomatic_complexity))]
 #![cfg_attr(not(test), allow(dead_code))]
 
 pub use crate::container::Container;

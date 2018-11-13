@@ -1,5 +1,7 @@
 #![allow(non_camel_case_types, non_snake_case, dead_code)]
 
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::unreadable_literal))]
+
 #[macro_use]
 extern crate cfg_if;
 extern crate libc;
