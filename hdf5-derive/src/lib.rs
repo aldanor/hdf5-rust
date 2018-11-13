@@ -38,9 +38,6 @@ pub fn derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
             }
         };
     };
-    println!("---");
-    println!("{}", expanded.to_string());
-    println!("---");
     proc_macro::TokenStream::from(expanded)
 }
 
