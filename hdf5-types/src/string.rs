@@ -4,7 +4,7 @@ use std::hash::{Hash, Hasher};
 use std::mem;
 use std::ops::{Deref, Index, RangeFull};
 use std::ptr;
-use std::str;
+use std::str::{self, FromStr};
 use std::slice;
 
 use ascii::{AsciiStr, AsAsciiStr, AsAsciiStrError};
@@ -319,10 +319,12 @@ impl VarLenUnicode {
     pub unsafe fn from_str_unchecked<S: Borrow<str>>(s: S) -> Self {
         Self::from_bytes(s.borrow().as_bytes())
     }
+}
 
-    #[cfg_attr(feature = "clippy", allow(should_implement_trait))]
-    pub fn from_str<S: Borrow<str>>(s: S) -> Result<Self> {
-        let s = s.borrow();
+impl FromStr for VarLenUnicode {
+    type Err = crate::errors::Error;
+
+    fn from_str(s: &str) -> Result<Self> {
         ensure!(s.chars().all(|c| c != '\0'),
                 "Variable length unicode string with internal null");
         unsafe { Ok(Self::from_bytes(s.as_bytes())) }
@@ -501,10 +503,15 @@ impl<A: Array<Item=u8>> FixedUnicode<A> {
     pub unsafe fn from_str_unchecked<S: Borrow<str>>(s: S) -> Self {
         Self::from_bytes(s.borrow().as_bytes())
     }
+}
 
-    #[cfg_attr(feature = "clippy", allow(should_implement_trait))]
-    pub fn from_str<S: Borrow<str>>(s: S) -> Result<Self> {
-        let s = s.borrow();
+impl<A> FromStr for FixedUnicode<A>
+where
+    A: Array<Item=u8>
+{
+    type Err = crate::errors::Error;
+
+    fn from_str(s: &str) -> Result<Self> {
         ensure!(s.as_bytes().len() <= A::capacity(),
                 "Insufficient capacity for fixed-size unicode string");
         unsafe { Ok(Self::from_bytes(s.as_bytes())) }
