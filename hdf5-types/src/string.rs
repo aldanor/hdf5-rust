@@ -188,7 +188,7 @@ impl VarLenAscii {
     unsafe fn from_bytes(bytes: &[u8]) -> Self {
         let ptr = libc::malloc(bytes.len() + 1) as *mut _;
         ptr::copy_nonoverlapping(bytes.as_ptr(), ptr, bytes.len());
-        *(ptr.offset(bytes.len() as _)) = 0;
+        *ptr.add(bytes.len()) = 0;
         VarLenAscii { ptr }
     }
 
@@ -273,7 +273,7 @@ impl VarLenUnicode {
         unsafe {
             let ptr = libc::malloc(1) as *mut _;
             *ptr = 0;
-            VarLenUnicode { ptr: ptr }
+            VarLenUnicode { ptr }
         }
     }
 
@@ -281,8 +281,8 @@ impl VarLenUnicode {
     unsafe fn from_bytes(bytes: &[u8]) -> Self {
         let ptr = libc::malloc(bytes.len() + 1) as *mut _;
         ptr::copy_nonoverlapping(bytes.as_ptr(), ptr, bytes.len());
-        *(ptr.offset(bytes.len() as _)) = 0;
-        VarLenUnicode { ptr: ptr }
+        *ptr.add(bytes.len()) = 0;
+        VarLenUnicode { ptr }
     }
 
     #[inline]

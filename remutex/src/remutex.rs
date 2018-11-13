@@ -120,7 +120,7 @@ impl<'mutex, T> ReentrantMutexGuard<'mutex, T> {
 impl<'mutex, T> Deref for ReentrantMutexGuard<'mutex, T> {
     type Target = T;
 
-    fn deref<'a>(&'a self) -> &'a T {
+    fn deref(&self) -> &T {
         &self.__lock.data
     }
 }

@@ -268,11 +268,11 @@ impl Filters {
             // compression
             if let Some(level) = self.gzip {
                 self.ensure_available("gzip", H5Z_FILTER_DEFLATE)?;
-                h5try!(H5Pset_deflate(id, level as _));
+                h5try!(H5Pset_deflate(id, c_uint::from(level)));
             } else if let Some((nn, pixels_per_block)) = self.szip {
                 self.ensure_available("szip", H5Z_FILTER_SZIP)?;
                 let options = if nn { H5_SZIP_NN_OPTION_MASK } else { H5_SZIP_EC_OPTION_MASK };
-                h5try!(H5Pset_szip(id, options, pixels_per_block as _));
+                h5try!(H5Pset_szip(id, options, c_uint::from(pixels_per_block)));
             }
 
             Ok(plist)

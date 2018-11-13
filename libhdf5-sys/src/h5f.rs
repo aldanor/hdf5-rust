@@ -31,7 +31,7 @@ pub const H5F_OBJ_LOCAL:    c_uint = 0x0020;
 
 pub const H5F_FAMILY_DEFAULT: hsize_t = 0;
 
-pub const H5F_MPIO_DEBUG_KEY: &'static str = "H5F_mpio_debug_key";
+pub const H5F_MPIO_DEBUG_KEY: &str = "H5F_mpio_debug_key";
 
 pub const H5F_UNLIMITED: hsize_t = !0;
 

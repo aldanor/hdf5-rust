@@ -113,7 +113,7 @@ impl Clone for Handle {
     fn clone(&self) -> Handle {
         h5lock!({
             self.incref();
-            Handle::from_id(self.id()).unwrap_or(Handle::invalid())
+            Handle::from_id(self.id()).unwrap_or_else(|_| Handle::invalid())
         })
     }
 }

@@ -17,7 +17,7 @@ pub trait Dimension: Clone {
 
     fn size(&self) -> Ix {
         let dims = self.dims();
-        if dims.is_empty() { 1 } else { dims.iter().fold(1, |acc, &el| acc * el) }
+        if dims.is_empty() { 1 } else { dims.iter().product() }
     }
 }
 

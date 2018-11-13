@@ -110,7 +110,7 @@ impl<T: Send + Any> Error for PoisonError<T> {
 impl<T> PoisonError<T> {
     /// Create a `PoisonError`.
     pub fn new(guard: T) -> PoisonError<T> {
-        PoisonError { guard: guard }
+        PoisonError { guard }
     }
 
     /// Consumes this error indicating that a lock is poisoned, returning the

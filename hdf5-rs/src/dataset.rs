@@ -337,7 +337,7 @@ impl<T: H5Type> DatasetBuilder<T> {
             let dataspace = Dataspace::new(&shape, self.resizable)?;
             let dcpl = self.make_dcpl(&datatype, &shape)?;
 
-            match name.clone() {
+            match name {
                 Some(name) => {
                     let lcpl = self.make_lcpl()?;
                     let name = to_cstring(name)?;
@@ -394,7 +394,7 @@ fn infer_chunk_size<D: Dimension>(shape: D, typesize: usize) -> Vec<Ix> {
     // - chunk size is smaller than the target chunk size or is within 50% of target chunk size
     // - chunk size is smaller than the maximum chunk size
     for i in 0.. {
-        let size = chunks.iter().fold(1, |acc, &el| acc * el);
+        let size: usize = chunks.iter().product();
         let bytes = (size * typesize) as f64;
         if (bytes < target * 1.5 && bytes < CHUNK_MAX) || size == 1 {
             break;

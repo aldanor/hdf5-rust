@@ -53,6 +53,7 @@ impl ReentrantMutex {
     }
 }
 
+#[allow(non_camel_case_types)]
 mod ffi {
     use libc;
     pub use self::os::{pthread_mutex_t, pthread_mutexattr_t, PTHREAD_MUTEX_RECURSIVE};

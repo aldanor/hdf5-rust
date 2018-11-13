@@ -11,12 +11,10 @@ pub fn hdf5_version() -> Result<(u8, u8, u8), &'static str> {
     unsafe {
         if H5open() != 0 {
             Err("cannot open HDF5 library")
+        } else if H5get_libversion(&mut v.0, &mut v.1, &mut v.2) != 0 {
+            Err("cannot get HDF5 version")
         } else {
-            if H5get_libversion(&mut v.0, &mut v.1, &mut v.2) != 0 {
-                Err("cannot get HDF5 version")
-            } else {
-                Ok((v.0 as _, v.1 as _, v.2 as _))
-            }
+            Ok((v.0 as _, v.1 as _, v.2 as _))
         }
     }
 }

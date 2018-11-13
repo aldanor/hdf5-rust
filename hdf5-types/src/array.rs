@@ -68,7 +68,7 @@ impl<T: Copy> VarLenArray<T> {
         } else {
             (0, ptr::null_mut())
         };
-        VarLenArray { len: len, ptr: ptr as *const _, tag: PhantomData }
+        VarLenArray { len, ptr: ptr as *const _, tag: PhantomData }
     }
 
     #[inline]

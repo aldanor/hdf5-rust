@@ -96,7 +96,7 @@ impl ErrorStack {
                 };
                 match closure(*err_desc) {
                     Ok(frame) => { data.stack.push(frame); 0 },
-                    Err(err)  => { data.err = Some(From::from(err)); 0 }
+                    Err(err)  => { data.err = Some(err); 0 }
                 }
             }
         }
@@ -129,7 +129,7 @@ impl ErrorStack {
 
     pub fn push(&mut self, frame: ErrorFrame) {
         self.frames.push(frame);
-        if self.len() >= 1 {
+        if !self.is_empty() {
             let top_desc = self.frames[0].description().to_owned();
             if self.len() == 1 {
                 self.description = Some(top_desc);
@@ -181,7 +181,7 @@ pub type Result<T> = ::std::result::Result<T, Error>;
 impl Error {
     pub fn query() -> Option<Error> {
         match ErrorStack::query() {
-            Err(err)        => Some(From::from(err)),
+            Err(err)        => Some(err),
             Ok(Some(stack)) => Some(Error::HDF5(stack)),
             Ok(None)        => None,
         }
@@ -233,7 +233,7 @@ pub fn h5check<T>(value: T) -> Result<T> where T: Integer + Zero + Bounded,
     if maybe_error {
         match Error::query() {
             None       => Ok(value),
-            Some(err)  => Err(From::from(err)),
+            Some(err)  => Err(err),
         }
     } else {
         Ok(value)

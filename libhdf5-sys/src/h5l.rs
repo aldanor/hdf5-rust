@@ -1,7 +1,6 @@
 pub use self::H5L_type_t::*;
 
 use libc::{c_int, c_uint, c_void, c_char, size_t, ssize_t, int64_t, uint32_t};
-use std::mem::transmute;
 
 use crate::h5::{htri_t, haddr_t, herr_t, hbool_t, hsize_t, H5_index_t, H5_iter_order_t};
 use crate::h5i::hid_t;
@@ -52,10 +51,10 @@ impl Default for __H5L_info_t__u {
 
 impl __H5L_info_t__u {
     pub unsafe fn address(&mut self) -> *mut haddr_t {
-        transmute(&self._bindgen_data_)
+        &self._bindgen_data_ as *const [u64; 1] as *mut haddr_t
     }
     pub unsafe fn val_size(&mut self) -> *mut size_t {
-        transmute(&self._bindgen_data_)
+        &self._bindgen_data_ as *const [u64; 1] as *mut size_t
     }
 }
 

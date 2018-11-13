@@ -14,10 +14,10 @@ pub const H5D_CHUNK_CACHE_NBYTES_DEFAULT: size_t = !0;
 
 pub const H5D_CHUNK_CACHE_W0_DEFAULT: c_float = -1.0;
 
-pub const H5D_XFER_DIRECT_CHUNK_WRITE_FLAG_NAME:     &'static str = "direct_chunk_flag";
-pub const H5D_XFER_DIRECT_CHUNK_WRITE_FILTERS_NAME:  &'static str = "direct_chunk_filters";
-pub const H5D_XFER_DIRECT_CHUNK_WRITE_OFFSET_NAME:   &'static str = "direct_chunk_offset";
-pub const H5D_XFER_DIRECT_CHUNK_WRITE_DATASIZE_NAME: &'static str = "direct_chunk_datasize";
+pub const H5D_XFER_DIRECT_CHUNK_WRITE_FLAG_NAME:     &str = "direct_chunk_flag";
+pub const H5D_XFER_DIRECT_CHUNK_WRITE_FILTERS_NAME:  &str = "direct_chunk_filters";
+pub const H5D_XFER_DIRECT_CHUNK_WRITE_OFFSET_NAME:   &str = "direct_chunk_offset";
+pub const H5D_XFER_DIRECT_CHUNK_WRITE_DATASIZE_NAME: &str = "direct_chunk_datasize";
 
 #[repr(C)]
 #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
