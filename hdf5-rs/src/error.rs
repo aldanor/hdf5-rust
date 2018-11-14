@@ -105,12 +105,12 @@ impl ErrorStack {
         let data_ptr: *mut c_void = &mut data as *mut _ as *mut _;
 
         // known HDF5 bug: H5Eget_msg() may corrupt the current stack, so we copy it first
-        unsafe {
-            let stack_id = H5Eget_current_stack();
-            ensure!(stack_id >= 0, "failed to copy the current error stack");
+        let stack_id = h5lock!(H5Eget_current_stack());
+        ensure!(stack_id >= 0, "failed to copy the current error stack");
+        h5lock!({
             H5Ewalk2(stack_id, H5E_WALK_DOWNWARD, Some(callback), data_ptr);
-            H5Eclose_stack(stack_id)
-        };
+            H5Eclose_stack(stack_id);
+        });
 
         match (data.err, data.stack.is_empty()) {
             (Some(err), _) => Err(err),
