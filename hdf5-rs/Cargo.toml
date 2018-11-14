@@ -24,7 +24,6 @@ parking_lot = "0.6"
 libhdf5-lib = { path = "../libhdf5-lib", version = "0.2.0" }
 libhdf5-sys = { path = "../libhdf5-sys", version = "0.2.0" }
 hdf5-types = { path = "../hdf5-types", version = "0.2.0" }
-remutex = { path = "../remutex", version = "0.1.1" }
 
 [dependencies.num]
 version = "0.2"

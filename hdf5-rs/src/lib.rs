@@ -22,7 +22,6 @@ extern crate num;
 extern crate libhdf5_lib as lib;
 extern crate libhdf5_sys as ffi;
 extern crate hdf5_types;
-extern crate remutex;
 
 #[cfg(test)]
 #[macro_use]

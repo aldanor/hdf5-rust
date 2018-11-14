@@ -6,11 +6,6 @@ rust:
 - nightly
 script:
 - |
-  cd $TRAVIS_BUILD_DIR/remutex &&
-  cargo build -v &&
-  cargo test -v --no-run &&
-  cargo test -v
-- |
   cd $TRAVIS_BUILD_DIR/libhdf5-lib &&
   cargo build -v &&
   cargo test -v --no-run &&
