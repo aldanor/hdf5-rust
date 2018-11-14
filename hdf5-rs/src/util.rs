@@ -59,7 +59,7 @@ mod tests {
 
     #[test]
     pub fn test_get_h5_str() {
-        let s = h5call!({
+        let s = h5lock!({
             get_h5_str(|msg, size| {
                 H5Eget_msg(*H5E_CANTOPENOBJ, ptr::null_mut(), msg, size)
             }).ok().unwrap()
