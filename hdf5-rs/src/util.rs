@@ -59,11 +59,11 @@ mod tests {
 
     #[test]
     pub fn test_get_h5_str() {
-        let s = unsafe {
+        let s = h5call!({
             get_h5_str(|msg, size| {
                 H5Eget_msg(*H5E_CANTOPENOBJ, ptr::null_mut(), msg, size)
             }).ok().unwrap()
-        };
+        });
         assert_eq!(s, "Can't open object");
     }
 }
