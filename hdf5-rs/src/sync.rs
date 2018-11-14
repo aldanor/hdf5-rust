@@ -158,7 +158,7 @@ impl<'a> Drop for RecursiveMutexGuard<'a> {
 /// Guards the execution of the provided closure with a recursive static mutex.
 pub fn sync<T, F>(func: F) -> T where F: FnOnce() -> T,
 {
-    use remutex::ReentrantMutex;
+    use parking_lot::ReentrantMutex;
     lazy_static! {
         static ref LOCK: ReentrantMutex<()> = ReentrantMutex::new(());
     }
@@ -168,16 +168,20 @@ pub fn sync<T, F>(func: F) -> T where F: FnOnce() -> T,
 
 #[cfg(test)]
 mod tests {
-    use super::RecursiveMutex;
+    use parking_lot::ReentrantMutex;
 
     #[test]
-    pub fn test_recursive_mutex() {
+    pub fn test_reentrant_mutex() {
         lazy_static! {
-            static ref LOCK: RecursiveMutex = RecursiveMutex::new();
+            static ref LOCK: ReentrantMutex<()> = ReentrantMutex::new(());
         }
-        let _g1 = LOCK.try_lock();
-        let _g2 = LOCK.lock();
-        let _g3 = LOCK.try_lock();
-        let _g4 = LOCK.lock();
+        let g1 = LOCK.try_lock();
+        assert!(g1.is_some());
+        let g2 = LOCK.lock();
+        assert_eq!(*g2, ());
+        let g3 = LOCK.try_lock();
+        assert!(g3.is_some());
+        let g4 = LOCK.lock();
+        assert_eq!(*g4, ());
     }
 }
