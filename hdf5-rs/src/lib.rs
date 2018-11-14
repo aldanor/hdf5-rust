@@ -113,7 +113,7 @@ pub mod test;
 
 /// Returns the version of the HDF5 library that the crate was compiled against.
 pub fn hdf5_version() -> (u8, u8, u8) {
-    lib::hdf5_version().unwrap_or((0, 0, 0))
+    h5call!(lib::hdf5_version()).unwrap_or((0, 0, 0))
 }
 
 #[cfg(test)]

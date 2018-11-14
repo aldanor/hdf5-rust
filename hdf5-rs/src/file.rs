@@ -284,7 +284,7 @@ impl FileBuilder {
 #[cfg(test)]
 pub mod tests {
     use crate::internal_prelude::*;
-    use crate::lib::hdf5_version;
+    use crate::hdf5_version;
     use std::fs;
     use std::io::{Read, Write};
 
@@ -384,7 +384,7 @@ pub mod tests {
             assert!(file.size() > 0);
             let orig_size = fs::metadata(file.filename()).unwrap().len();
             assert!(file.size() > orig_size);
-            if hdf5_version().unwrap() >= (1, 10, 0) {
+            if hdf5_version() >= (1, 10, 0) {
                 assert_ne!(orig_size, 0);
             } else {
                 assert_eq!(orig_size, 0);
