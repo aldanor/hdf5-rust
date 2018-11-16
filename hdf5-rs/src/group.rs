@@ -1,6 +1,6 @@
-use crate::internal_prelude::*;
-
 use std::fmt;
+
+use crate::internal_prelude::*;
 
 /// Represents the HDF5 group object.
 pub struct Group {

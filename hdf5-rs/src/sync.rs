@@ -1,3 +1,4 @@
+use lazy_static::lazy_static;
 use parking_lot::ReentrantMutex;
 
 /// Guards the execution of the provided closure with a recursive static mutex.
@@ -12,6 +13,7 @@ pub fn sync<T, F>(func: F) -> T where F: FnOnce() -> T,
 
 #[cfg(test)]
 mod tests {
+    use lazy_static::lazy_static;
     use parking_lot::ReentrantMutex;
 
     #[test]

@@ -1,11 +1,13 @@
-use crate::internal_prelude::*;
-
-use crate::ffi::h5s::{H5S_UNLIMITED, H5Sget_simple_extent_dims, H5Sget_simple_extent_ndims, H5Scopy,
-               H5Screate_simple};
-
 use std::fmt;
 use std::ptr;
 use std::slice;
+
+use ffi::h5s::{
+    H5S_UNLIMITED, H5Sget_simple_extent_dims, H5Sget_simple_extent_ndims, H5Scopy,
+    H5Screate_simple,
+};
+
+use crate::internal_prelude::*;
 
 /// A scalar integer type used by `Dimension` trait for indexing.
 pub type Ix = usize;
@@ -181,8 +183,9 @@ impl fmt::Display for Dataspace {
 
 #[cfg(test)]
 pub mod tests {
+    use ffi::h5s::H5S_UNLIMITED;
+
     use crate::internal_prelude::*;
-    use crate::ffi::h5s::H5S_UNLIMITED;
 
     #[test]
     pub fn test_dimension() {

@@ -1,16 +1,16 @@
-use crate::internal_prelude::*;
-
-use crate::ffi::h5p::{
+use ffi::h5p::{
     H5Pcreate, H5Pset_fletcher32, H5Pset_scaleoffset, H5Pset_shuffle,
     H5Pset_deflate, H5Pset_szip, H5Pget_nfilters, H5Pget_filter2
 };
-use crate::ffi::h5t::{H5Tget_class, H5T_INTEGER, H5T_FLOAT};
-use crate::ffi::h5z::{
+use ffi::h5t::{H5Tget_class, H5T_INTEGER, H5T_FLOAT};
+use ffi::h5z::{
     H5Z_SO_INT, H5Z_SO_FLOAT_DSCALE, H5_SZIP_EC_OPTION_MASK, H5_SZIP_NN_OPTION_MASK,
     H5Z_FILTER_DEFLATE, H5Z_FILTER_SZIP, H5Z_FILTER_SHUFFLE, H5Z_FILTER_FLETCHER32,
     H5Z_FILTER_SCALEOFFSET, H5Z_FILTER_CONFIG_ENCODE_ENABLED, H5Z_FILTER_CONFIG_DECODE_ENABLED,
     H5Zfilter_avail, H5Zget_filter_info, H5Z_filter_t
-};
+}
+;
+use crate::internal_prelude::*;
 use crate::globals::H5P_DATASET_CREATE;
 
 /// Returns `true` if gzip filter is available.

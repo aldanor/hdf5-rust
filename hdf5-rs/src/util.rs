@@ -1,13 +1,13 @@
-use crate::internal_prelude::*;
-
-use libc;
-
 use std::borrow::Borrow;
 use std::mem;
 use std::ptr;
-use num::{Integer, NumCast};
-use num::traits::cast;
 use std::ffi::{CStr, CString};
+
+use libc;
+use num_integer::Integer;
+use num_traits::{NumCast, cast};
+
+use crate::internal_prelude::*;
 
 /// Convert a zero-terminated string (`const char *`) into a `String`.
 pub fn string_from_cstr(string: *const c_char) -> String {
@@ -41,11 +41,13 @@ where F: Fn(*mut c_char, size_t) -> T, T: Integer + NumCast {
 
 #[cfg(test)]
 mod tests {
-    use crate::ffi::h5e::H5Eget_msg;
-    use crate::globals::H5E_CANTOPENOBJ;
-    use super::{string_from_cstr, to_cstring, get_h5_str};
-
     use std::ptr;
+
+    use ffi::h5e::H5Eget_msg;
+
+    use crate::globals::H5E_CANTOPENOBJ;
+
+    use super::{string_from_cstr, to_cstring, get_h5_str};
 
     #[test]
     pub fn test_string_cstr() {

@@ -1,21 +1,23 @@
-use crate::internal_prelude::*;
+use std::fmt;
 
-use crate::types::{
-    TypeDescriptor, H5Type, IntSize, FloatSize, EnumMember,
-    EnumType, CompoundField, CompoundType
-};
-
-use crate::ffi::h5t::{
+use ffi::h5t::{
     H5Tcreate, H5Tset_size, H5Tinsert, H5Tenum_create, H5Tenum_insert, H5Tcopy,
     H5Tarray_create2, H5T_str_t, H5Tset_strpad, H5T_cset_t, H5Tset_cset, H5Tvlen_create,
     H5Tget_class, H5T_VARIABLE, H5T_class_t, H5Tget_size, H5Tget_sign, H5Tget_nmembers,
     H5Tget_super, H5Tget_member_name, H5Tget_member_type, H5Tget_member_offset,
     H5Tget_member_value, H5Tget_array_ndims, H5Tget_array_dims2, H5Tis_variable_str,
-    H5Tget_cset, H5Tequal
+    H5Tget_cset, H5Tequal,
+};
+use hdf5_types::{
+    TypeDescriptor, H5Type, IntSize, FloatSize, EnumMember,
+    EnumType, CompoundField, CompoundType,
 };
 
+use crate::internal_prelude::*;
+use crate::globals::{H5T_NATIVE_INT8, H5T_C_S1};
+
 #[cfg(target_endian = "big")]
-use globals::{
+use crate::globals::{
     H5T_STD_I8BE, H5T_STD_I16BE,
     H5T_STD_I32BE, H5T_STD_I64BE,
     H5T_STD_U8BE, H5T_STD_U16BE,
@@ -31,12 +33,6 @@ use crate::globals::{
     H5T_STD_U32LE, H5T_STD_U64LE,
     H5T_IEEE_F32LE, H5T_IEEE_F64LE,
 };
-
-use crate::globals::{H5T_NATIVE_INT8, H5T_C_S1};
-
-use std::fmt;
-
-use libc;
 
 #[cfg(target_endian = "big")]
 macro_rules! be_le {
@@ -99,9 +95,9 @@ impl Datatype {
     }
 
     pub fn to_descriptor(&self) -> Result<TypeDescriptor> {
-        use crate::ffi::h5t::H5T_class_t::*;
-        use crate::ffi::h5t::H5T_sign_t::*;
-        use crate::types::TypeDescriptor as TD;
+        use ffi::h5t::H5T_class_t::*;
+        use ffi::h5t::H5T_sign_t::*;
+        use hdf5_types::TypeDescriptor as TD;
 
         h5lock!({
             let id = self.id();
@@ -297,9 +293,11 @@ impl Datatype {
 
 #[cfg(test)]
 pub mod tests {
+    use hdf5_types::*;
+    use hdf5_types::TypeDescriptor as TD;
+    use hdf5_derive::H5Type;
+
     use crate::internal_prelude::*;
-    use crate::types::*;
-    use crate::types::TypeDescriptor as TD;
 
     macro_rules! check_roundtrip {
         ($ty:ty, $desc:expr) => ({

@@ -1,8 +1,7 @@
+use ffi::h5i::{H5I_type_t, H5Iget_ref};
+
 use crate::internal_prelude::*;
-
 use crate::handle::is_valid_user_id;
-
-use crate::ffi::h5i::{H5I_type_t, H5Iget_ref};
 
 /// A trait for all HDF5 objects that can be referenced through an identifier.
 pub trait Object: ID {
@@ -29,11 +28,10 @@ pub trait Object: ID {
 
 #[cfg(test)]
 pub mod tests {
+    use ffi::h5p::H5Pcreate;
+
     use crate::internal_prelude::*;
-
-    use crate::ffi::h5p::H5Pcreate;
     use crate::globals::H5P_FILE_ACCESS;
-
     use crate::handle::{is_valid_id, is_valid_user_id};
 
     struct TestObject {

@@ -1,12 +1,12 @@
-use crate::internal_prelude::*;
-
-use crate::ffi::h5d::H5Dopen2;
-use crate::ffi::h5g::{H5G_info_t, H5Gget_info, H5Gcreate2, H5Gopen2};
-use crate::ffi::h5l::{H5Lmove, H5Lcreate_soft, H5Lcreate_hard, H5Ldelete, H5L_SAME_LOC};
-use crate::ffi::h5p::{H5Pcreate, H5Pset_create_intermediate_group};
-use crate::globals::H5P_LINK_CREATE;
-
 use std::default::Default;
+
+use ffi::h5d::H5Dopen2;
+use ffi::h5g::{H5G_info_t, H5Gget_info, H5Gcreate2, H5Gopen2};
+use ffi::h5l::{H5Lmove, H5Lcreate_soft, H5Lcreate_hard, H5Ldelete, H5L_SAME_LOC};
+use ffi::h5p::{H5Pcreate, H5Pset_create_intermediate_group};
+
+use crate::internal_prelude::*;
+use crate::globals::H5P_LINK_CREATE;
 
 fn group_info(id: hid_t) -> Result<H5G_info_t> {
     let info: *mut H5G_info_t = &mut H5G_info_t::default();

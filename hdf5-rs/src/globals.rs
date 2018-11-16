@@ -1,16 +1,18 @@
-use crate::internal_prelude::*;
-
-use crate::ffi::h5fd::{H5FD_core_init, H5FD_sec2_init, H5FD_stdio_init};
-
 use std::mem;
+
+use lazy_static::lazy_static;
+
+use ffi::h5fd::{H5FD_core_init, H5FD_sec2_init, H5FD_stdio_init};
+
+use crate::internal_prelude::*;
 
 #[cfg(not(target_env = "msvc"))]
 macro_rules! link_hid {
     ($rust_name:ident, $mod_name:ident::$c_name:ident) => {
         lazy_static! {
-            pub static ref $rust_name: $crate::ffi::h5i::hid_t = {
-                h5lock!($crate::ffi::h5::H5open());
-                *$crate::ffi::$mod_name::$c_name
+            pub static ref $rust_name: ::ffi::h5i::hid_t = {
+                h5lock!(::ffi::h5::H5open());
+                *::ffi::$mod_name::$c_name
             };
         }
     }
@@ -21,10 +23,10 @@ macro_rules! link_hid {
 macro_rules! link_hid {
     ($rust_name:ident, $mod_name:ident::$c_name:ident) => {
         lazy_static! {
-            pub static ref $rust_name: $crate::ffi::h5i::hid_t = {
-                h5lock!($crate::ffi::h5::H5open());
+            pub static ref $rust_name: ::ffi::h5i::hid_t = {
+                h5lock!(::ffi::h5::H5open());
                 unsafe {
-                    *(*$crate::ffi::$mod_name::$c_name as *const _)
+                    *(*::ffi::$mod_name::$c_name as *const _)
                 }
             };
         }
@@ -321,14 +323,18 @@ lazy_static! {
 #[cfg(test)]
 mod tests
 {
-    use crate::ffi::h5::haddr_t;
-    use super::{H5T_IEEE_F32BE, H5T_NATIVE_INT, H5P_ROOT, H5P_LST_LINK_ACCESS_ID,
-                H5E_ERR_CLS, H5E_DATASET, H5R_OBJ_REF_BUF_SIZE, H5R_DSET_REG_REF_BUF_SIZE};
     use std::mem;
+
+    use ffi::h5::haddr_t;
+    use ffi::h5i::H5I_INVALID_HID;
+
+    use super::{
+        H5T_IEEE_F32BE, H5T_NATIVE_INT, H5P_ROOT, H5P_LST_LINK_ACCESS_ID,
+        H5E_ERR_CLS, H5E_DATASET, H5R_OBJ_REF_BUF_SIZE, H5R_DSET_REG_REF_BUF_SIZE,
+    };
 
     #[test]
     pub fn test_lazy_globals() {
-        use crate::ffi::h5i::H5I_INVALID_HID;
 
         assert_ne!(*H5T_IEEE_F32BE, H5I_INVALID_HID);
         assert_ne!(*H5T_NATIVE_INT, H5I_INVALID_HID);

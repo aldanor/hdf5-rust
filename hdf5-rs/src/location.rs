@@ -1,10 +1,10 @@
-use crate::internal_prelude::*;
-
-use crate::ffi::h5o::{H5Oget_comment, H5Oset_comment};
-use crate::ffi::h5i::{H5Iget_name, H5Iget_file_id};
-use crate::ffi::h5f::H5Fget_name;
-
 use std::ptr;
+
+use ffi::h5o::{H5Oget_comment, H5Oset_comment};
+use ffi::h5i::{H5Iget_name, H5Iget_file_id};
+use ffi::h5f::H5Fget_name;
+
+use crate::internal_prelude::*;
 
 /// A trait for HDF5 objects that can have a named location (file, group, dataset).
 pub trait Location: Object {
