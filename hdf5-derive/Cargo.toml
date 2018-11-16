@@ -7,15 +7,14 @@ edition = "2018"
 [lib]
 proc-macro = true
 
-[features]
-compiletest = ["compiletest_rs"]
-
 [dependencies]
 hdf5-types = { path = "../hdf5-types", version = "0.2.0" }
 quote = "0.6"
 proc-macro2 = "0.4"
-compiletest_rs = { version = "0.3", optional = true }
 
 [dependencies.syn]
 version = "0.15"
 features = ["derive", "extra-traits"]
+
+[dev-dependencies]
+compiletest_rs = "0.3"
