@@ -1,5 +1,5 @@
-#[macro_use]
 extern crate hdf5_derive;
+use hdf5_derive::H5Type;
 
 use std::marker::PhantomData;
 
