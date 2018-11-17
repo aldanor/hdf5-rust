@@ -27,7 +27,6 @@ pub enum Chunk {
 /// Represents the HDF5 dataset object.
 pub struct Dataset {
     handle: Handle,
-    dcpl: PropertyList,
     filters: Filters,
 }
 
@@ -47,7 +46,7 @@ impl FromID for Dataset {
                     let handle = Handle::new(id)?;
                     let dcpl = PropertyList::from_id(h5try!(H5Dget_create_plist(id)))?;
                     let filters = Filters::from_dcpl(&dcpl)?;
-                    Ok(Dataset { handle, dcpl, filters })
+                    Ok(Dataset { handle, filters })
                 }
                 _ => Err(From::from(format!("Invalid property list id: {}", id))),
             }
@@ -95,7 +94,11 @@ impl Dataset {
 
     /// Returns whether this dataset has a chunked layout.
     pub fn is_chunked(&self) -> bool {
-        h5lock!(H5Pget_layout(self.dcpl.id()) == H5D_layout_t::H5D_CHUNKED)
+        h5lock!({
+            self.dcpl_id()
+                .map(|dcpl_id| H5Pget_layout(dcpl_id) == H5D_layout_t::H5D_CHUNKED)
+                .unwrap_or(false)
+        })
     }
 
     /// Returns whether this dataset's type is equivalent to the given type.
@@ -106,17 +109,21 @@ impl Dataset {
     /// Returns the chunk shape if the dataset is chunked.
     pub fn chunks(&self) -> Option<Vec<Ix>> {
         h5lock!({
-            if self.is_chunked() {
-                Some({
-                    let ndim = self.ndim();
-                    let mut dims: Vec<hsize_t> = Vec::with_capacity(ndim);
-                    dims.set_len(ndim);
-                    H5Pget_chunk(self.dcpl.id(), ndim as _, dims.as_mut_ptr());
-                    dims.iter().map(|&x| x as _).collect()
+            self.dcpl_id()
+                .map(|dcpl_id| {
+                    if self.is_chunked() {
+                        Some({
+                            let ndim = self.ndim();
+                            let mut dims: Vec<hsize_t> = Vec::with_capacity(ndim);
+                            dims.set_len(ndim);
+                            H5Pget_chunk(dcpl_id, ndim as _, dims.as_mut_ptr());
+                            dims.iter().map(|&x| x as _).collect()
+                        })
+                    } else {
+                        None
+                    }
                 })
-            } else {
-                None
-            }
+                .unwrap_or(None)
         })
     }
 
@@ -127,11 +134,15 @@ impl Dataset {
 
     /// Returns `true` if object modification time is tracked by the dataset.
     pub fn tracks_times(&self) -> bool {
-        unsafe {
-            let track_times: *mut hbool_t = &mut 0;
-            h5lock!(H5Pget_obj_track_times(self.dcpl.id(), track_times));
-            *track_times == 1
-        }
+        h5lock!({
+            self.dcpl_id()
+                .map(|dcpl_id| {
+                    let track_times: *mut hbool_t = &mut 0;
+                    h5lock!(H5Pget_obj_track_times(dcpl_id, track_times));
+                    *track_times == 1
+                })
+                .unwrap_or(false)
+        })
     }
 
     /// Returns the amount of file space required for the dataset. Note that this only
@@ -157,7 +168,8 @@ impl Dataset {
     pub fn fill_value<T: H5Type>(&self) -> Result<Option<T>> {
         h5lock!({
             let defined: *mut H5D_fill_value_t = &mut H5D_fill_value_t::H5D_FILL_VALUE_UNDEFINED;
-            h5try!(H5Pfill_value_defined(self.dcpl.id(), defined));
+            let dcpl_id = self.dcpl_id()?;
+            h5try!(H5Pfill_value_defined(dcpl_id, defined));
             match *defined {
                 H5D_fill_value_t::H5D_FILL_VALUE_ERROR => fail!("Invalid fill value"),
                 H5D_fill_value_t::H5D_FILL_VALUE_UNDEFINED => Ok(None),
@@ -165,7 +177,7 @@ impl Dataset {
                     let datatype = Datatype::from_type::<T>()?;
                     let mut value: T = mem::uninitialized();
                     h5try!(H5Pget_fill_value(
-                        self.dcpl.id(),
+                        dcpl_id,
                         datatype.id(),
                         &mut value as *mut _ as *mut _
                     ));
@@ -182,6 +194,10 @@ impl Dataset {
     /// Returns a new `Datatype` object associated with this dataset.
     pub fn datatype(&self) -> Result<Datatype> {
         Datatype::from_id(h5try!(H5Dget_type(self.id())))
+    }
+
+    fn dcpl_id(&self) -> Result<hid_t> {
+        h5call!(H5Dget_create_plist(self.id()))
     }
 }
 
