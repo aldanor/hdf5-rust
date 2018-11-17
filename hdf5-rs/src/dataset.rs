@@ -55,20 +55,12 @@ impl Location for Dataset {}
 impl Dataset {
     /// Returns the shape of the dataset.
     pub fn shape(&self) -> Vec<Ix> {
-        if let Ok(s) = self.dataspace() {
-            s.dims()
-        } else {
-            vec![]
-        }
+        self.dataspace().ok().map_or_else(Vec::new, |s| s.dims())
     }
 
     /// Returns the number of dimensions in the dataset.
     pub fn ndim(&self) -> usize {
-        if let Ok(s) = self.dataspace() {
-            s.ndim()
-        } else {
-            0
-        }
+        self.dataspace().ok().map_or(0, |s| s.ndim())
     }
 
     /// Returns the total number of elements in the dataset.
