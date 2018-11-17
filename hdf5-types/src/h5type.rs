@@ -1,6 +1,6 @@
 use std::mem;
 
-use libc::{size_t, c_void};
+use libc::{c_void, size_t};
 
 use crate::array::{Array, VarLenArray};
 use crate::string::{FixedAscii, FixedUnicode, VarLenAscii, VarLenUnicode};
@@ -12,7 +12,12 @@ struct hvl_t {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub enum IntSize { U1 = 1, U2 = 2, U4 = 4, U8 = 8 }
+pub enum IntSize {
+    U1 = 1,
+    U2 = 2,
+    U4 = 4,
+    U8 = 8,
+}
 
 impl IntSize {
     pub fn from_int(size: usize) -> Option<IntSize> {
@@ -31,7 +36,10 @@ impl IntSize {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub enum FloatSize { U4 = 4, U8 = 8 }
+pub enum FloatSize {
+    U4 = 4,
+    U8 = 8,
+}
 
 impl FloatSize {
     pub fn from_int(size: usize) -> Option<FloatSize> {
@@ -116,19 +124,19 @@ impl TypeDescriptor {
     }
 }
 
-pub unsafe trait H5Type : 'static {
+pub unsafe trait H5Type: 'static {
     fn type_descriptor() -> TypeDescriptor;
 }
 
 macro_rules! impl_h5type {
-    ($ty:ty, $variant:ident, $size:expr) => (
+    ($ty:ty, $variant:ident, $size:expr) => {
         unsafe impl H5Type for $ty {
             #[inline]
             fn type_descriptor() -> TypeDescriptor {
                 $crate::h5type::TypeDescriptor::$variant($size)
             }
         }
-    )
+    };
 }
 
 impl_h5type!(i8, Integer, IntSize::U1);
@@ -207,12 +215,12 @@ macro_rules! impl_tuple {
 
 impl_tuple! { A, B, C, D, E, F, G, H, I, J, K, L }
 
-unsafe impl<T: Array<Item=I>, I: H5Type> H5Type for T {
+unsafe impl<T: Array<Item = I>, I: H5Type> H5Type for T {
     #[inline]
     fn type_descriptor() -> TypeDescriptor {
         TypeDescriptor::FixedArray(
             Box::new(<I as H5Type>::type_descriptor()),
-            <T as Array>::capacity()
+            <T as Array>::capacity(),
         )
     }
 }
@@ -224,14 +232,14 @@ unsafe impl<T: Copy + H5Type> H5Type for VarLenArray<T> {
     }
 }
 
-unsafe impl<A: Array<Item=u8>> H5Type for FixedAscii<A> {
+unsafe impl<A: Array<Item = u8>> H5Type for FixedAscii<A> {
     #[inline]
     fn type_descriptor() -> TypeDescriptor {
         TypeDescriptor::FixedAscii(A::capacity())
     }
 }
 
-unsafe impl<A: Array<Item=u8>> H5Type for FixedUnicode<A> {
+unsafe impl<A: Array<Item = u8>> H5Type for FixedUnicode<A> {
     #[inline]
     fn type_descriptor() -> TypeDescriptor {
         TypeDescriptor::FixedUnicode(A::capacity())
@@ -255,7 +263,7 @@ unsafe impl H5Type for VarLenUnicode {
 #[cfg(test)]
 pub mod tests {
     use super::TypeDescriptor as TD;
-    use super::{IntSize, FloatSize, H5Type, CompoundType, CompoundField, hvl_t};
+    use super::{hvl_t, CompoundField, CompoundType, FloatSize, H5Type, IntSize};
     use crate::array::VarLenArray;
     use crate::string::{FixedAscii, FixedUnicode, VarLenAscii, VarLenUnicode};
     use std::mem;
@@ -302,19 +310,15 @@ pub mod tests {
     pub fn test_fixed_array() {
         type S = [T; 4];
         type T = [u32; 256];
-        assert_eq!(T::type_descriptor(),
-                   TD::FixedArray(Box::new(TD::Unsigned(IntSize::U4)), 256));
-        assert_eq!(S::type_descriptor(),
-                   TD::FixedArray(Box::new(T::type_descriptor()), 4));
+        assert_eq!(T::type_descriptor(), TD::FixedArray(Box::new(TD::Unsigned(IntSize::U4)), 256));
+        assert_eq!(S::type_descriptor(), TD::FixedArray(Box::new(T::type_descriptor()), 4));
     }
 
     #[test]
     pub fn test_varlen_array() {
         type S = VarLenArray<u16>;
-        assert_eq!(S::type_descriptor(),
-                   TD::VarLenArray(Box::new(u16::type_descriptor())));
-        assert_eq!(mem::size_of::<VarLenArray<u8>>(),
-                   mem::size_of::<hvl_t>());
+        assert_eq!(S::type_descriptor(), TD::VarLenArray(Box::new(u16::type_descriptor())));
+        assert_eq!(mem::size_of::<VarLenArray<u8>>(), mem::size_of::<hvl_t>());
     }
 
     #[test]
@@ -333,27 +337,17 @@ pub mod tests {
         assert_eq!(T1::type_descriptor(), u16::type_descriptor());
         type T2 = (i32, f32, (u64,));
         let td = T2::type_descriptor();
-        assert_eq!(td,
-                   TD::Compound(CompoundType {
-                       fields: vec![
-                           CompoundField {
-                               name: "0".into(),
-                               ty: i32::type_descriptor(),
-                               offset: 0,
-                           },
-                           CompoundField {
-                               name: "1".into(),
-                               ty: f32::type_descriptor(),
-                               offset: 4,
-                           },
-                           CompoundField {
-                               name: "2".into(),
-                               ty: u64::type_descriptor(),
-                               offset: 8,
-                           },
-                       ],
-                       size: 16,
-                   }));
+        assert_eq!(
+            td,
+            TD::Compound(CompoundType {
+                fields: vec![
+                    CompoundField { name: "0".into(), ty: i32::type_descriptor(), offset: 0 },
+                    CompoundField { name: "1".into(), ty: f32::type_descriptor(), offset: 4 },
+                    CompoundField { name: "2".into(), ty: u64::type_descriptor(), offset: 8 },
+                ],
+                size: 16,
+            })
+        );
         assert_eq!(td.size(), 16);
         assert_eq!(mem::size_of::<T2>(), 16);
     }

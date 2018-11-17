@@ -1,5 +1,4 @@
 #![recursion_limit = "1024"]
-
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::transmute_bytes_to_str))]
 
 extern crate ascii;
@@ -13,8 +12,8 @@ extern crate error_chain;
 extern crate quickcheck;
 
 mod array;
-mod string;
 mod h5type;
+mod string;
 
 mod errors {
     error_chain! {
@@ -27,7 +26,6 @@ mod errors {
 pub use self::array::{Array, VarLenArray};
 pub use self::errors::Error;
 pub use self::h5type::{
-    TypeDescriptor, H5Type, IntSize, FloatSize,
-    CompoundField, CompoundType, EnumMember, EnumType
+    CompoundField, CompoundType, EnumMember, EnumType, FloatSize, H5Type, IntSize, TypeDescriptor,
 };
 pub use self::string::{FixedAscii, FixedUnicode, VarLenAscii, VarLenUnicode};

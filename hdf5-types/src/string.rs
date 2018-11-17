@@ -4,14 +4,14 @@ use std::hash::{Hash, Hasher};
 use std::mem;
 use std::ops::{Deref, Index, RangeFull};
 use std::ptr;
-use std::str::{self, FromStr};
 use std::slice;
+use std::str::{self, FromStr};
 
-use ascii::{AsciiStr, AsAsciiStr, AsAsciiStrError};
+use ascii::{AsAsciiStr, AsAsciiStrError, AsciiStr};
 use libc;
 
-use crate::errors::Result;
 use crate::array::Array;
+use crate::errors::Result;
 
 // ================================================================================
 
@@ -146,8 +146,8 @@ macro_rules! impl_string_traits {
     )
 }
 
-impl_string_traits!(FixedAscii, FixedAscii<A>, A: Array<Item=u8>);
-impl_string_traits!(FixedUnicode, FixedUnicode<A>, A: Array<Item=u8>);
+impl_string_traits!(FixedAscii, FixedAscii<A>, A: Array<Item = u8>);
+impl_string_traits!(FixedUnicode, FixedUnicode<A>, A: Array<Item = u8>);
 impl_string_traits!(VarLenAscii, VarLenAscii);
 impl_string_traits!(VarLenUnicode, VarLenUnicode);
 
@@ -225,8 +225,9 @@ impl VarLenAscii {
     pub fn from_ascii<B: ?Sized + AsRef<[u8]>>(bytes: &B) -> Result<Self> {
         let bytes = bytes.as_ref();
         if !bytes.iter().all(|&c| c != 0) {
-            bail!("Variable length ASCII string with internal null: {:?}",
-                  unsafe { str::from_utf8_unchecked(bytes) });
+            bail!("Variable length ASCII string with internal null: {:?}", unsafe {
+                str::from_utf8_unchecked(bytes)
+            });
         }
         let s = AsciiStr::from_ascii(bytes)?;
         unsafe { Ok(Self::from_bytes(s.as_bytes())) }
@@ -325,8 +326,7 @@ impl FromStr for VarLenUnicode {
     type Err = crate::errors::Error;
 
     fn from_str(s: &str) -> Result<Self> {
-        ensure!(s.chars().all(|c| c != '\0'),
-                "Variable length unicode string with internal null");
+        ensure!(s.chars().all(|c| c != '\0'), "Variable length unicode string with internal null");
         unsafe { Ok(Self::from_bytes(s.as_bytes())) }
     }
 }
@@ -335,11 +335,11 @@ impl FromStr for VarLenUnicode {
 
 #[repr(C)]
 #[derive(Copy)]
-pub struct FixedAscii<A: Array<Item=u8>> {
+pub struct FixedAscii<A: Array<Item = u8>> {
     buf: A,
 }
 
-impl<A: Array<Item=u8>> Clone for FixedAscii<A> {
+impl<A: Array<Item = u8>> Clone for FixedAscii<A> {
     #[inline]
     fn clone(&self) -> Self {
         unsafe {
@@ -350,7 +350,7 @@ impl<A: Array<Item=u8>> Clone for FixedAscii<A> {
     }
 }
 
-impl<A: Array<Item=u8>> FixedAscii<A> {
+impl<A: Array<Item = u8>> FixedAscii<A> {
     #[inline]
     pub fn new() -> Self {
         unsafe { FixedAscii { buf: mem::zeroed() } }
@@ -406,16 +406,15 @@ impl<A: Array<Item=u8>> FixedAscii<A> {
 
     pub fn from_ascii<B: ?Sized + AsRef<[u8]>>(bytes: &B) -> Result<Self> {
         let bytes = bytes.as_ref();
-        ensure!(bytes.len() <= A::capacity(),
-                "Insufficient capacity for fixed-size ASCII string");
-        let s = AsciiStr::from_ascii(bytes)
-            .map_err(|_| format!("Invalid ASCII string: `{}`",
-                                 unsafe { str::from_utf8_unchecked(bytes) }))?;
-        unsafe { Ok(Self::from_bytes(s.as_bytes()))}
+        ensure!(bytes.len() <= A::capacity(), "Insufficient capacity for fixed-size ASCII string");
+        let s = AsciiStr::from_ascii(bytes).map_err(|_| {
+            format!("Invalid ASCII string: `{}`", unsafe { str::from_utf8_unchecked(bytes) })
+        })?;
+        unsafe { Ok(Self::from_bytes(s.as_bytes())) }
     }
 }
 
-impl<A: Array<Item=u8>> AsAsciiStr for FixedAscii<A> {
+impl<A: Array<Item = u8>> AsAsciiStr for FixedAscii<A> {
     #[inline]
     unsafe fn as_ascii_str_unchecked(&self) -> &AsciiStr {
         AsciiStr::from_ascii_unchecked(self.as_bytes())
@@ -430,11 +429,11 @@ impl<A: Array<Item=u8>> AsAsciiStr for FixedAscii<A> {
 
 #[repr(C)]
 #[derive(Copy)]
-pub struct FixedUnicode<A: Array<Item=u8>> {
+pub struct FixedUnicode<A: Array<Item = u8>> {
     buf: A,
 }
 
-impl<A: Array<Item=u8>> Clone for FixedUnicode<A> {
+impl<A: Array<Item = u8>> Clone for FixedUnicode<A> {
     #[inline]
     fn clone(&self) -> Self {
         unsafe {
@@ -445,7 +444,7 @@ impl<A: Array<Item=u8>> Clone for FixedUnicode<A> {
     }
 }
 
-impl<A: Array<Item=u8>> FixedUnicode<A> {
+impl<A: Array<Item = u8>> FixedUnicode<A> {
     #[inline]
     pub fn new() -> Self {
         unsafe { FixedUnicode { buf: mem::zeroed() } }
@@ -507,13 +506,15 @@ impl<A: Array<Item=u8>> FixedUnicode<A> {
 
 impl<A> FromStr for FixedUnicode<A>
 where
-    A: Array<Item=u8>
+    A: Array<Item = u8>,
 {
     type Err = crate::errors::Error;
 
     fn from_str(s: &str) -> Result<Self> {
-        ensure!(s.as_bytes().len() <= A::capacity(),
-                "Insufficient capacity for fixed-size unicode string");
+        ensure!(
+            s.as_bytes().len() <= A::capacity(),
+            "Insufficient capacity for fixed-size unicode string"
+        );
         unsafe { Ok(Self::from_bytes(s.as_bytes())) }
     }
 }
@@ -529,7 +530,7 @@ pub mod tests {
     use std::hash::{Hash, Hasher};
     use std::slice;
 
-    use ascii::{AsciiString, AsAsciiStr};
+    use ascii::{AsAsciiStr, AsciiString};
     use quickcheck::{Arbitrary, Gen};
 
     type VA = VarLenAscii;
@@ -627,7 +628,7 @@ pub mod tests {
     }
 
     macro_rules! test_default {
-        ($test_name:ident, $ty:ident) => (
+        ($test_name:ident, $ty:ident) => {
             #[test]
             pub fn $test_name() {
                 for s in &vec![$ty::new(), Default::default()] {
@@ -637,7 +638,7 @@ pub mod tests {
                     assert_eq!(s.as_str(), "");
                 }
             }
-        )
+        };
     }
 
     test_default!(test_default_va, VA);
@@ -646,7 +647,7 @@ pub mod tests {
     test_default!(test_default_fu, FU);
 
     macro_rules! check_invariants {
-        ($s:ident, $exp:ident, $bytes:ident) => ({
+        ($s:ident, $exp:ident, $bytes:ident) => {{
             assert_eq!($s.len(), $exp.len());
             assert_eq!($s.is_empty(), $exp.is_empty());
             assert_eq!($s.is_empty(), $bytes.is_empty());
@@ -682,11 +683,11 @@ pub mod tests {
             unsafe {
                 assert_eq!(slice::from_raw_parts($s.as_ptr(), $s.len()), $bytes);
             }
-        })
+        }};
     }
 
     macro_rules! test_quickcheck_ascii {
-        ($test_name:ident, $ty:ident) => (
+        ($test_name:ident, $ty:ident) => {
             quickcheck! {
                 fn $test_name(b: AsciiGen) -> () {
                     let (exp, bytes) = (b.expected(), b.as_bytes());
@@ -700,14 +701,14 @@ pub mod tests {
                     }
                 }
             }
-        )
+        };
     }
 
     test_quickcheck_ascii!(test_quickcheck_va, VA);
     test_quickcheck_ascii!(test_quickcheck_fa, FA);
 
     macro_rules! test_quickcheck_unicode {
-        ($test_name:ident, $ty:ident) => (
+        ($test_name:ident, $ty:ident) => {
             quickcheck! {
                 fn $test_name(b: UnicodeGen) -> () {
                     let (exp, bytes) = (b.expected(), b.as_bytes());
@@ -718,7 +719,7 @@ pub mod tests {
                     }
                 }
             }
-        )
+        };
     }
 
     test_quickcheck_unicode!(test_quickcheck_vu, VU);
