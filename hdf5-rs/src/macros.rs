@@ -84,6 +84,7 @@ macro_rules! assert_err_re {
 #[macro_export]
 macro_rules! h5lock {
     ($expr:expr) => {{
+        #[cfg_attr(feature = "cargo-clippy", allow(clippy::redundant_closure))]
         #[allow(unused_unsafe)]
         unsafe {
             $crate::sync::sync(|| $expr)
