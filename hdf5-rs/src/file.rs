@@ -16,7 +16,6 @@ use crate::internal_prelude::*;
 /// Represents the HDF5 file object.
 pub struct File {
     handle: Handle,
-    fcpl: PropertyList,
 }
 
 #[doc(hidden)]
@@ -31,10 +30,7 @@ impl FromID for File {
     fn from_id(id: hid_t) -> Result<File> {
         h5lock!({
             match get_id_type(id) {
-                H5I_FILE => Ok(File {
-                    handle: Handle::new(id)?,
-                    fcpl: PropertyList::from_id(h5try!(H5Fget_create_plist(id)))?,
-                }),
+                H5I_FILE => Ok(File { handle: Handle::new(id)? }),
                 _ => Err(From::from(format!("Invalid file id: {}", id))),
             }
         })
@@ -101,11 +97,13 @@ impl File {
 
     /// Returns the userblock size in bytes (or 0 if the file handle is invalid).
     pub fn userblock(&self) -> u64 {
-        unsafe {
-            let userblock: *mut hsize_t = &mut 0;
-            h5lock!(H5Pget_userblock(self.fcpl.id(), userblock));
-            *userblock as _
-        }
+        h5call!(H5Fget_create_plist(self.id()))
+            .map(|fcpl_id| {
+                let userblock: *mut hsize_t = &mut 0;
+                h5lock!(H5Pget_userblock(fcpl_id, userblock));
+                unsafe { *userblock as _ }
+            })
+            .unwrap_or(0)
     }
 
     /// Flushes the file to the storage medium.
