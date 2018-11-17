@@ -2,8 +2,6 @@
 
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::unreadable_literal))]
 
-#[macro_use]
-extern crate cfg_if;
 extern crate libc;
 extern crate libhdf5_lib as lib;
 
