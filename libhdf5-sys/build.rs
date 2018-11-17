@@ -1,5 +1,3 @@
-extern crate libhdf5_lib as lib;
-
 fn main() {
-    lib::dump_build_flags();
+    libhdf5_lib::dump_build_flags();
 }

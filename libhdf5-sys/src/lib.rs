@@ -2,15 +2,14 @@
 
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::unreadable_literal))]
 
-extern crate libc;
-extern crate libhdf5_lib as lib;
-
 macro_rules! extern_static {
     ($dest:ident, $src:ident) => (
         extern { static $src: id_t; }
         pub static $dest: &'static id_t = unsafe { &$src };
     )
 }
+
+extern crate libhdf5_lib;
 
 pub mod h5;
 pub mod h5a;

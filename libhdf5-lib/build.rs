@@ -1,5 +1,3 @@
-extern crate pkg_config;
-
 use std::env;
 use std::fs;
 use std::path::PathBuf;
