@@ -75,15 +75,15 @@ impl Dataset {
 
     /// Returns whether this dataset is resizable along some axis.
     pub fn is_resizable(&self) -> bool {
-        h5lock!(self.dataspace().map(|s| s.resizable()).unwrap_or(false))
+        h5lock!(self.dataspace().ok().map_or(false, |s| s.resizable()))
     }
 
     /// Returns whether this dataset has a chunked layout.
     pub fn is_chunked(&self) -> bool {
         h5lock!({
             self.dcpl_id()
-                .map(|dcpl_id| H5Pget_layout(dcpl_id) == H5D_layout_t::H5D_CHUNKED)
-                .unwrap_or(false)
+                .ok()
+                .map_or(false, |dcpl_id| H5Pget_layout(dcpl_id) == H5D_layout_t::H5D_CHUNKED)
         })
     }
 
@@ -95,21 +95,19 @@ impl Dataset {
     /// Returns the chunk shape if the dataset is chunked.
     pub fn chunks(&self) -> Option<Vec<Ix>> {
         h5lock!({
-            self.dcpl_id()
-                .map(|dcpl_id| {
-                    if self.is_chunked() {
-                        Some({
-                            let ndim = self.ndim();
-                            let mut dims: Vec<hsize_t> = Vec::with_capacity(ndim);
-                            dims.set_len(ndim);
-                            H5Pget_chunk(dcpl_id, ndim as _, dims.as_mut_ptr());
-                            dims.iter().map(|&x| x as _).collect()
-                        })
-                    } else {
-                        None
-                    }
-                })
-                .unwrap_or(None)
+            self.dcpl_id().ok().map_or(None, |dcpl_id| {
+                if self.is_chunked() {
+                    Some({
+                        let ndim = self.ndim();
+                        let mut dims: Vec<hsize_t> = Vec::with_capacity(ndim);
+                        dims.set_len(ndim);
+                        H5Pget_chunk(dcpl_id, ndim as _, dims.as_mut_ptr());
+                        dims.iter().map(|&x| x as _).collect()
+                    })
+                } else {
+                    None
+                }
+            })
         })
     }
 
@@ -125,13 +123,11 @@ impl Dataset {
     /// Returns `true` if object modification time is tracked by the dataset.
     pub fn tracks_times(&self) -> bool {
         h5lock!({
-            self.dcpl_id()
-                .map(|dcpl_id| {
-                    let track_times: *mut hbool_t = &mut 0;
-                    h5lock!(H5Pget_obj_track_times(dcpl_id, track_times));
-                    *track_times == 1
-                })
-                .unwrap_or(false)
+            self.dcpl_id().ok().map_or(false, |dcpl_id| {
+                let track_times: *mut hbool_t = &mut 0;
+                h5lock!(H5Pget_obj_track_times(dcpl_id, track_times));
+                *track_times == 1
+            })
         })
     }
 
