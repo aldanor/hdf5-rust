@@ -1,7 +1,7 @@
-pub use self::H5E_type_t::*;
 pub use self::H5E_direction_t::*;
+pub use self::H5E_type_t::*;
 
-use libc::{c_uint, c_void, c_char, size_t, ssize_t, FILE};
+use libc::{c_char, c_uint, c_void, size_t, ssize_t, FILE};
 
 use crate::h5::herr_t;
 use crate::h5i::hid_t;
@@ -28,7 +28,9 @@ pub struct H5E_error2_t {
 }
 
 impl Default for H5E_error2_t {
-    fn default() -> H5E_error2_t { unsafe { ::std::mem::zeroed() } }
+    fn default() -> H5E_error2_t {
+        unsafe { ::std::mem::zeroed() }
+    }
 }
 
 #[repr(C)]
@@ -38,13 +40,15 @@ pub enum H5E_direction_t {
     H5E_WALK_DOWNWARD = 1,
 }
 
-pub type H5E_walk2_t = Option<extern fn (n: c_uint, err_desc: *const H5E_error2_t, client_data:
-                                         *mut c_void) -> herr_t>;
-pub type H5E_auto2_t = Option<extern fn (estack: hid_t, client_data: *mut c_void) -> herr_t>;
+pub type H5E_walk2_t = Option<
+    extern "C" fn(n: c_uint, err_desc: *const H5E_error2_t, client_data: *mut c_void) -> herr_t,
+>;
+pub type H5E_auto2_t = Option<extern "C" fn(estack: hid_t, client_data: *mut c_void) -> herr_t>;
 
-extern {
-    pub fn H5Eregister_class(cls_name: *const c_char, lib_name: *const c_char, version: *const
-                             c_char) -> hid_t;
+extern "C" {
+    pub fn H5Eregister_class(
+        cls_name: *const c_char, lib_name: *const c_char, version: *const c_char,
+    ) -> hid_t;
     pub fn H5Eunregister_class(class_id: hid_t) -> herr_t;
     pub fn H5Eclose_msg(err_id: hid_t) -> herr_t;
     pub fn H5Ecreate_msg(cls: hid_t, msg_type: H5E_type_t, msg: *const c_char) -> hid_t;
@@ -53,19 +57,24 @@ extern {
     pub fn H5Eclose_stack(stack_id: hid_t) -> herr_t;
     pub fn H5Eget_class_name(class_id: hid_t, name: *mut c_char, size: size_t) -> ssize_t;
     pub fn H5Eset_current_stack(err_stack_id: hid_t) -> herr_t;
-    pub fn H5Epush2(err_stack: hid_t, file: *const c_char, func: *const c_char, line: c_uint,
-                    cls_id: hid_t, maj_id: hid_t, min_id: hid_t, msg: *const c_char, ...) -> herr_t;
+    pub fn H5Epush2(
+        err_stack: hid_t, file: *const c_char, func: *const c_char, line: c_uint, cls_id: hid_t,
+        maj_id: hid_t, min_id: hid_t, msg: *const c_char, ...
+    ) -> herr_t;
     pub fn H5Epop(err_stack: hid_t, count: size_t) -> herr_t;
     pub fn H5Eprint2(err_stack: hid_t, stream: *mut FILE) -> herr_t;
-    pub fn H5Ewalk2(err_stack: hid_t, direction: H5E_direction_t, func: H5E_walk2_t, client_data:
-                    *mut c_void) -> herr_t;
-    pub fn H5Eget_auto2(estack_id: hid_t, func: *mut H5E_auto2_t, client_data: *mut *mut c_void) ->
-                        herr_t;
+    pub fn H5Ewalk2(
+        err_stack: hid_t, direction: H5E_direction_t, func: H5E_walk2_t, client_data: *mut c_void,
+    ) -> herr_t;
+    pub fn H5Eget_auto2(
+        estack_id: hid_t, func: *mut H5E_auto2_t, client_data: *mut *mut c_void,
+    ) -> herr_t;
     pub fn H5Eset_auto2(estack_id: hid_t, func: H5E_auto2_t, client_data: *mut c_void) -> herr_t;
     pub fn H5Eclear2(err_stack: hid_t) -> herr_t;
     pub fn H5Eauto_is_v2(err_stack: hid_t, is_stack: *mut c_uint) -> herr_t;
-    pub fn H5Eget_msg(msg_id: hid_t, _type: *mut H5E_type_t, msg: *mut c_char, size: size_t) ->
-                      ssize_t;
+    pub fn H5Eget_msg(
+        msg_id: hid_t, _type: *mut H5E_type_t, msg: *mut c_char, size: size_t,
+    ) -> ssize_t;
     pub fn H5Eget_num(error_stack_id: hid_t) -> ssize_t;
 }
 

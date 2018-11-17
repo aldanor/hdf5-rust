@@ -1,21 +1,21 @@
-pub use self::H5Z_SO_scale_type_t::*;
 pub use self::H5Z_EDC_t::*;
+pub use self::H5Z_SO_scale_type_t::*;
 pub use self::H5Z_cb_return_t::*;
 
-use libc::{c_int, c_uint, c_void, c_char, size_t};
+use libc::{c_char, c_int, c_uint, c_void, size_t};
 
 use crate::h5::{herr_t, htri_t};
 use crate::h5i::hid_t;
 
-pub const H5Z_FILTER_ERROR:       hid_t = -1;
-pub const H5Z_FILTER_NONE:        hid_t = 0;
-pub const H5Z_FILTER_DEFLATE:     hid_t = 1;
-pub const H5Z_FILTER_SHUFFLE:     hid_t = 2;
-pub const H5Z_FILTER_FLETCHER32:  hid_t = 3;
-pub const H5Z_FILTER_SZIP:        hid_t = 4;
-pub const H5Z_FILTER_NBIT:        hid_t = 5;
+pub const H5Z_FILTER_ERROR: hid_t = -1;
+pub const H5Z_FILTER_NONE: hid_t = 0;
+pub const H5Z_FILTER_DEFLATE: hid_t = 1;
+pub const H5Z_FILTER_SHUFFLE: hid_t = 2;
+pub const H5Z_FILTER_FLETCHER32: hid_t = 3;
+pub const H5Z_FILTER_SZIP: hid_t = 4;
+pub const H5Z_FILTER_NBIT: hid_t = 5;
 pub const H5Z_FILTER_SCALEOFFSET: hid_t = 6;
-pub const H5Z_FILTER_RESERVED:    hid_t = 256;
+pub const H5Z_FILTER_RESERVED: hid_t = 256;
 
 pub const H5Z_FILTER_MAX: c_uint = 65535;
 
@@ -23,29 +23,29 @@ pub const H5Z_FILTER_ALL: c_uint = 0;
 
 pub const H5Z_MAX_NFILTERS: c_uint = 32;
 
-pub const H5Z_FLAG_DEFMASK:   c_uint = 0x00ff;
+pub const H5Z_FLAG_DEFMASK: c_uint = 0x00ff;
 pub const H5Z_FLAG_MANDATORY: c_uint = 0x0000;
-pub const H5Z_FLAG_OPTIONAL:  c_uint = 0x0001;
+pub const H5Z_FLAG_OPTIONAL: c_uint = 0x0001;
 
-pub const H5Z_FLAG_INVMASK:   c_uint = 0xff00;
-pub const H5Z_FLAG_REVERSE:   c_uint = 0x0100;
-pub const H5Z_FLAG_SKIP_EDC:  c_uint = 0x0200;
+pub const H5Z_FLAG_INVMASK: c_uint = 0xff00;
+pub const H5Z_FLAG_REVERSE: c_uint = 0x0100;
+pub const H5Z_FLAG_SKIP_EDC: c_uint = 0x0200;
 
 pub const H5_SZIP_ALLOW_K13_OPTION_MASK: c_uint = 1;
-pub const H5_SZIP_CHIP_OPTION_MASK:      c_uint = 2;
-pub const H5_SZIP_EC_OPTION_MASK:        c_uint = 4;
-pub const H5_SZIP_NN_OPTION_MASK:        c_uint = 32;
-pub const H5_SZIP_MAX_PIXELS_PER_BLOCK:  c_uint = 32;
+pub const H5_SZIP_CHIP_OPTION_MASK: c_uint = 2;
+pub const H5_SZIP_EC_OPTION_MASK: c_uint = 4;
+pub const H5_SZIP_NN_OPTION_MASK: c_uint = 32;
+pub const H5_SZIP_MAX_PIXELS_PER_BLOCK: c_uint = 32;
 
-pub const H5Z_SHUFFLE_USER_NPARMS:  c_uint = 0;
+pub const H5Z_SHUFFLE_USER_NPARMS: c_uint = 0;
 pub const H5Z_SHUFFLE_TOTAL_NPARMS: c_uint = 1;
 
-pub const H5Z_SZIP_USER_NPARMS:  c_uint = 2;
+pub const H5Z_SZIP_USER_NPARMS: c_uint = 2;
 pub const H5Z_SZIP_TOTAL_NPARMS: c_uint = 4;
-pub const H5Z_SZIP_PARM_MASK:    c_uint = 0;
-pub const H5Z_SZIP_PARM_PPB:     c_uint = 1;
-pub const H5Z_SZIP_PARM_BPP:     c_uint = 2;
-pub const H5Z_SZIP_PARM_PPS:     c_uint = 3;
+pub const H5Z_SZIP_PARM_MASK: c_uint = 0;
+pub const H5Z_SZIP_PARM_PPB: c_uint = 1;
+pub const H5Z_SZIP_PARM_BPP: c_uint = 2;
+pub const H5Z_SZIP_PARM_PPS: c_uint = 3;
 
 pub const H5Z_NBIT_USER_NPARMS: c_uint = 0;
 
@@ -65,29 +65,31 @@ pub type H5Z_filter_t = hid_t;
 pub enum H5Z_SO_scale_type_t {
     H5Z_SO_FLOAT_DSCALE = 0,
     H5Z_SO_FLOAT_ESCALE = 1,
-    H5Z_SO_INT          = 2,
+    H5Z_SO_INT = 2,
 }
 
 #[repr(C)]
 #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
 pub enum H5Z_EDC_t {
-    H5Z_ERROR_EDC   = -1,
+    H5Z_ERROR_EDC = -1,
     H5Z_DISABLE_EDC = 0,
-    H5Z_ENABLE_EDC  = 1,
-    H5Z_NO_EDC      = 2,
+    H5Z_ENABLE_EDC = 1,
+    H5Z_NO_EDC = 2,
 }
 
 #[repr(C)]
 #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
 pub enum H5Z_cb_return_t {
     H5Z_CB_ERROR = -1,
-    H5Z_CB_FAIL  = 0,
-    H5Z_CB_CONT  = 1,
-    H5Z_CB_NO    = 2,
+    H5Z_CB_FAIL = 0,
+    H5Z_CB_CONT = 1,
+    H5Z_CB_NO = 2,
 }
 
-pub type H5Z_filter_func_t = Option<extern fn (filter: H5Z_filter_t, buf: *mut c_void, buf_size:
-                                               size_t, op_data: *mut c_void) -> H5Z_cb_return_t>;
+pub type H5Z_filter_func_t = Option<
+    extern "C" fn(filter: H5Z_filter_t, buf: *mut c_void, buf_size: size_t, op_data: *mut c_void)
+        -> H5Z_cb_return_t,
+>;
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -97,16 +99,25 @@ pub struct H5Z_cb_t {
 }
 
 impl Default for H5Z_cb_t {
-    fn default() -> H5Z_cb_t { unsafe { ::std::mem::zeroed() } }
+    fn default() -> H5Z_cb_t {
+        unsafe { ::std::mem::zeroed() }
+    }
 }
 
-pub type H5Z_can_apply_func_t = Option<extern fn (dcpl_id: hid_t, type_id: hid_t, space_id: hid_t)
-                                                  -> htri_t>;
-pub type H5Z_set_local_func_t = Option<extern fn (dcpl_id: hid_t, type_id: hid_t, space_id: hid_t)
-                                                  -> herr_t>;
-pub type H5Z_func_t = Option<extern fn (flags: c_uint, cd_nelmts: size_t, cd_values: *const c_uint,
-                                        nbytes: size_t, buf_size: *mut size_t, buf: *mut *mut
-                                        c_void) -> size_t>;
+pub type H5Z_can_apply_func_t =
+    Option<extern "C" fn(dcpl_id: hid_t, type_id: hid_t, space_id: hid_t) -> htri_t>;
+pub type H5Z_set_local_func_t =
+    Option<extern "C" fn(dcpl_id: hid_t, type_id: hid_t, space_id: hid_t) -> herr_t>;
+pub type H5Z_func_t = Option<
+    extern "C" fn(
+        flags: c_uint,
+        cd_nelmts: size_t,
+        cd_values: *const c_uint,
+        nbytes: size_t,
+        buf_size: *mut size_t,
+        buf: *mut *mut c_void,
+    ) -> size_t,
+>;
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -122,10 +133,12 @@ pub struct H5Z_class2_t {
 }
 
 impl Default for H5Z_class2_t {
-    fn default() -> H5Z_class2_t { unsafe { ::std::mem::zeroed() } }
+    fn default() -> H5Z_class2_t {
+        unsafe { ::std::mem::zeroed() }
+    }
 }
 
-extern {
+extern "C" {
     pub fn H5Zregister(cls: *const c_void) -> herr_t;
     pub fn H5Zunregister(id: H5Z_filter_t) -> herr_t;
     pub fn H5Zfilter_avail(id: H5Z_filter_t) -> htri_t;

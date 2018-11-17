@@ -1,9 +1,9 @@
 use std::os::raw::{c_int, c_uint};
 
-extern {
+extern "C" {
     pub fn H5open() -> c_int;
-    pub fn H5get_libversion(majnum: *mut c_uint, minnum: *mut c_uint,
-                            relnum: *mut c_uint) -> c_int;
+    pub fn H5get_libversion(majnum: *mut c_uint, minnum: *mut c_uint, relnum: *mut c_uint)
+        -> c_int;
 }
 
 pub fn hdf5_version() -> Result<(u8, u8, u8), &'static str> {

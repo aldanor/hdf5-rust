@@ -13,11 +13,21 @@ const IS_WINDOWS: bool = true;
 const IS_WINDOWS: bool = false;
 
 macro_rules! ok_or_continue {
-    ($r:expr) => ( match $r { Err(_) => continue, Ok(ok) => ok } )
+    ($r:expr) => {
+        match $r {
+            Err(_) => continue,
+            Ok(ok) => ok,
+        }
+    };
 }
 
 macro_rules! some_or_continue {
-    ($r:expr) => ( match $r { None => continue, Some(some) => some } )
+    ($r:expr) => {
+        match $r {
+            None => continue,
+            Some(some) => some,
+        }
+    };
 }
 
 fn libdir_from_path() -> Option<String> {
@@ -55,7 +65,6 @@ fn libdir_from_path() -> Option<String> {
     }
     None
 }
-
 
 fn find_hdf5_libs() -> (Vec<String>, Vec<String>) {
     let (mut libs, mut dirs) = (vec![], vec![]);

@@ -1,12 +1,13 @@
 #![allow(non_camel_case_types, non_snake_case, dead_code)]
-
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::unreadable_literal))]
 
 macro_rules! extern_static {
-    ($dest:ident, $src:ident) => (
-        extern { static $src: id_t; }
+    ($dest:ident, $src:ident) => {
+        extern "C" {
+            static $src: id_t;
+        }
         pub static $dest: &'static id_t = unsafe { &$src };
-    )
+    };
 }
 
 extern crate libhdf5_lib;

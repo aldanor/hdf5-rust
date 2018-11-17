@@ -1,13 +1,13 @@
-use libc::{c_int, c_char, c_long, c_double, size_t};
+use libc::{c_char, c_double, c_int, c_long, size_t};
 
 use crate::h5::hbool_t;
-use crate::h5c::{H5C_cache_incr_mode, H5C_cache_decr_mode, H5C_cache_flash_incr_mode};
+use crate::h5c::{H5C_cache_decr_mode, H5C_cache_flash_incr_mode, H5C_cache_incr_mode};
 
 pub const H5AC__CURR_CACHE_CONFIG_VERSION: c_int = 1;
-pub const H5AC__MAX_TRACE_FILE_NAME_LEN:   c_int = 1024;
+pub const H5AC__MAX_TRACE_FILE_NAME_LEN: c_int = 1024;
 
 pub const H5AC_METADATA_WRITE_STRATEGY__PROCESS_0_ONLY: c_int = 0;
-pub const H5AC_METADATA_WRITE_STRATEGY__DISTRIBUTED:    c_int = 1;
+pub const H5AC_METADATA_WRITE_STRATEGY__DISTRIBUTED: c_int = 1;
 
 #[repr(C)]
 #[derive(Copy)]
@@ -45,9 +45,13 @@ pub struct H5AC_cache_config_t {
 }
 
 impl Default for H5AC_cache_config_t {
-    fn default() -> H5AC_cache_config_t { unsafe { ::std::mem::zeroed() } }
+    fn default() -> H5AC_cache_config_t {
+        unsafe { ::std::mem::zeroed() }
+    }
 }
 
 impl Clone for H5AC_cache_config_t {
-    fn clone(&self) -> H5AC_cache_config_t { *self }
+    fn clone(&self) -> H5AC_cache_config_t {
+        *self
+    }
 }
