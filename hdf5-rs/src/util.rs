@@ -1,19 +1,17 @@
 use std::borrow::Borrow;
+use std::ffi::{CStr, CString};
 use std::mem;
 use std::ptr;
-use std::ffi::{CStr, CString};
 
 use libc;
 use num_integer::Integer;
-use num_traits::{NumCast, cast};
+use num_traits::{cast, NumCast};
 
 use crate::internal_prelude::*;
 
 /// Convert a zero-terminated string (`const char *`) into a `String`.
 pub fn string_from_cstr(string: *const c_char) -> String {
-    unsafe {
-        String::from_utf8_unchecked(CStr::from_ptr(string).to_bytes().to_vec())
-    }
+    unsafe { String::from_utf8_unchecked(CStr::from_ptr(string).to_bytes().to_vec()) }
 }
 
 /// Convert a `String` or a `&str` into a zero-terminated string (`const char *`).
@@ -24,7 +22,10 @@ pub fn to_cstring<S: Borrow<str>>(string: S) -> Result<CString> {
 
 #[doc(hidden)]
 pub fn get_h5_str<T, F>(func: F) -> Result<String>
-where F: Fn(*mut c_char, size_t) -> T, T: Integer + NumCast {
+where
+    F: Fn(*mut c_char, size_t) -> T,
+    T: Integer + NumCast,
+{
     unsafe {
         let len: isize = 1 + cast::<T, isize>(func(ptr::null_mut(), 0)).unwrap();
         ensure!(len > 0, "negative string length in get_h5_str()");
@@ -47,7 +48,7 @@ mod tests {
 
     use crate::globals::H5E_CANTOPENOBJ;
 
-    use super::{string_from_cstr, to_cstring, get_h5_str};
+    use super::{get_h5_str, string_from_cstr, to_cstring};
 
     #[test]
     pub fn test_string_cstr() {
@@ -62,9 +63,9 @@ mod tests {
     #[test]
     pub fn test_get_h5_str() {
         let s = h5lock!({
-            get_h5_str(|msg, size| {
-                H5Eget_msg(*H5E_CANTOPENOBJ, ptr::null_mut(), msg, size)
-            }).ok().unwrap()
+            get_h5_str(|msg, size| H5Eget_msg(*H5E_CANTOPENOBJ, ptr::null_mut(), msg, size))
+                .ok()
+                .unwrap()
         });
         assert_eq!(s, "Can't open object");
     }

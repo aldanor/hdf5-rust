@@ -2,16 +2,16 @@ use std::fmt;
 use std::path::Path;
 use std::process::Command;
 
-use ffi::h5p::{H5Pcreate, H5Pset_userblock, H5Pget_userblock};
 use ffi::h5f::{
-    H5F_ACC_RDONLY, H5F_ACC_RDWR, H5F_ACC_EXCL, H5F_ACC_TRUNC, H5F_SCOPE_LOCAL,
-    H5F_OBJ_FILE, H5F_OBJ_ALL, H5Fopen, H5Fcreate, H5Fget_filesize, H5Fget_freespace,
-    H5Fflush, H5Fget_obj_ids, H5Fget_create_plist, H5Fget_intent, H5Fget_obj_count, H5Fclose
+    H5Fclose, H5Fcreate, H5Fflush, H5Fget_create_plist, H5Fget_filesize, H5Fget_freespace,
+    H5Fget_intent, H5Fget_obj_count, H5Fget_obj_ids, H5Fopen, H5F_ACC_EXCL, H5F_ACC_RDONLY,
+    H5F_ACC_RDWR, H5F_ACC_TRUNC, H5F_OBJ_ALL, H5F_OBJ_FILE, H5F_SCOPE_LOCAL,
 };
-use ffi::h5fd::{H5Pset_fapl_sec2, H5Pset_fapl_stdio, H5Pset_fapl_core};
+use ffi::h5fd::{H5Pset_fapl_core, H5Pset_fapl_sec2, H5Pset_fapl_stdio};
+use ffi::h5p::{H5Pcreate, H5Pget_userblock, H5Pset_userblock};
 
+use crate::globals::{H5P_FILE_ACCESS, H5P_FILE_CREATE};
 use crate::internal_prelude::*;
-use crate::globals::{H5P_FILE_CREATE, H5P_FILE_ACCESS};
 
 /// Represents the HDF5 file object.
 pub struct File {
@@ -34,7 +34,7 @@ impl FromID for File {
                 H5I_FILE => Ok(File {
                     handle: Handle::new(id)?,
                     fcpl: PropertyList::from_id(h5try!(H5Fget_create_plist(id)))?,
-                 }),
+                }),
                 _ => Err(From::from(format!("Invalid file id: {}", id))),
             }
         })
@@ -66,7 +66,11 @@ impl File {
         unsafe {
             let size: *mut hsize_t = &mut 0;
             h5lock!(H5Fget_filesize(self.id(), size));
-            if *size > 0 { *size as _ } else { 0 }
+            if *size > 0 {
+                *size as _
+            } else {
+                0
+            }
         }
     }
 
@@ -87,8 +91,11 @@ impl File {
     /// Returns the output of the `h5dump` tool. Note that this wouldn't work with core driver.
     pub fn dump(&self) -> Option<String> {
         self.flush().ok().and(
-            Command::new("h5dump").arg(self.filename()).output().ok()
-                                  .map(|out| String::from_utf8_lossy(&out.stdout).to_string())
+            Command::new("h5dump")
+                .arg(self.filename())
+                .output()
+                .ok()
+                .map(|out| String::from_utf8_lossy(&out.stdout).to_string()),
         )
     }
 
@@ -112,7 +119,9 @@ impl File {
             let count = h5call!(H5Fget_obj_count(self.id(), types)).unwrap_or(0) as size_t;
             if count > 0 {
                 let mut ids: Vec<hid_t> = Vec::with_capacity(count as _);
-                unsafe { ids.set_len(count as _); }
+                unsafe {
+                    ids.set_len(count as _);
+                }
                 if h5call!(H5Fget_obj_ids(self.id(), types, count, ids.as_mut_ptr())).is_ok() {
                     ids.retain(|id| *id != self.id());
                     return ids;
@@ -143,7 +152,9 @@ impl File {
                     }
                 }
             }
-            unsafe { H5Fclose(self.id()); }
+            unsafe {
+                H5Fclose(self.id());
+            }
             while self.is_valid() {
                 self.handle.decref();
             }
@@ -165,7 +176,7 @@ impl fmt::Display for File {
         }
         let basename = match Path::new(&self.filename()).file_name() {
             Some(s) => s.to_string_lossy().into_owned(),
-            None    => "".to_owned(),
+            None => "".to_owned(),
         };
         let mode = if self.is_read_only() { "read-only" } else { "read/write" };
         format!("<HDF5 file: \"{}\" ({})>", basename, mode).fmt(f)
@@ -198,35 +209,40 @@ impl FileBuilder {
     }
 
     pub fn driver(&mut self, driver: &str) -> &mut FileBuilder {
-        self.driver = driver.into(); self
+        self.driver = driver.into();
+        self
     }
 
     pub fn mode(&mut self, mode: &str) -> &mut FileBuilder {
-        self.mode = mode.into(); self
+        self.mode = mode.into();
+        self
     }
 
     pub fn userblock(&mut self, userblock: u64) -> &mut FileBuilder {
-        self.userblock = userblock; self
+        self.userblock = userblock;
+        self
     }
 
     pub fn filebacked(&mut self, filebacked: bool) -> &mut FileBuilder {
-        self.filebacked = filebacked; self
+        self.filebacked = filebacked;
+        self
     }
 
     #[allow(dead_code)]
     pub fn increment(&mut self, increment: u32) -> &mut FileBuilder {
-        self.increment = increment; self
+        self.increment = increment;
+        self
     }
 
     fn make_fapl(&self) -> Result<PropertyList> {
         h5lock!({
             let fapl = PropertyList::from_id(h5try!(H5Pcreate(*H5P_FILE_ACCESS)))?;
             match self.driver.as_ref() {
-                "sec2"  => h5try!(H5Pset_fapl_sec2(fapl.id())),
+                "sec2" => h5try!(H5Pset_fapl_sec2(fapl.id())),
                 "stdio" => h5try!(H5Pset_fapl_stdio(fapl.id())),
-                "core"  => h5try!(H5Pset_fapl_core(
-                               fapl.id(), self.increment as _, self.filebacked as _
-                           )),
+                "core" => {
+                    h5try!(H5Pset_fapl_core(fapl.id(), self.increment as _, self.filebacked as _))
+                }
                 _ => fail!(format!("Invalid file driver: {}", self.driver)),
             };
             Ok(fapl)
@@ -243,8 +259,8 @@ impl FileBuilder {
                 Some(filename) => {
                     let filename = to_cstring(filename)?;
                     File::from_id(h5try!(H5Fopen(filename.as_ptr(), flags, fapl.id())))
-                },
-                None => fail!("Invalid UTF-8 in file name: {:?}", filename)
+                }
+                None => fail!("Invalid UTF-8 in file name: {:?}", filename),
             }
         })
     }
@@ -260,22 +276,22 @@ impl FileBuilder {
                 Some(filename) => {
                     let filename = to_cstring(filename)?;
                     File::from_id(h5try!(H5Fcreate(filename.as_ptr(), flags, fcpl.id(), fapl.id())))
-                },
-                None => fail!("Invalid UTF-8 in file name: {:?}", filename)
+                }
+                None => fail!("Invalid UTF-8 in file name: {:?}", filename),
             }
         })
     }
 
     pub fn open<P: AsRef<Path>>(&self, filename: P) -> Result<File> {
         match self.mode.as_ref() {
-            "r"        => self.open_file(&filename, false),
-            "r+"       => self.open_file(&filename, true),
-            "w"        => self.create_file(&filename, false),
+            "r" => self.open_file(&filename, false),
+            "r+" => self.open_file(&filename, true),
+            "w" => self.create_file(&filename, false),
             "w-" | "x" => self.create_file(&filename, true),
-            "a"        => match self.open_file(&filename, true) {
-                            Ok(file) => Ok(file),
-                            _ => self.create_file(&filename, true),
-                          },
+            "a" => match self.open_file(&filename, true) {
+                Ok(file) => Ok(file),
+                _ => self.create_file(&filename, true),
+            },
             _ => fail!("Invalid file access mode, expected r|r+|w|w-|x|a"),
         }
     }
@@ -283,8 +299,8 @@ impl FileBuilder {
 
 #[cfg(test)]
 pub mod tests {
-    use crate::internal_prelude::*;
     use crate::hdf5_version;
+    use crate::internal_prelude::*;
     use std::fs;
     use std::io::{Read, Write};
 
@@ -363,8 +379,10 @@ pub mod tests {
             File::open(&path, "w").unwrap().create_group("foo").unwrap();
             let file = File::open(&path, "r").unwrap();
             file.group("foo").unwrap();
-            assert_err!(file.create_group("bar"),
-                "unable to create group: no write intent on file");
+            assert_err!(
+                file.create_group("bar"),
+                "unable to create group: no write intent on file"
+            );
             assert_err!(File::open("/foo/bar/baz", "r"), "unable to open file");
         });
 
@@ -405,20 +423,30 @@ pub mod tests {
             assert_eq!(file.userblock(), 0);
         });
         with_tmp_path(|path| {
-            assert_err!(FileBuilder::new().userblock(512).mode("r").open(&path),
-                "Cannot specify userblock when opening a file");
-            assert_err!(FileBuilder::new().userblock(512).mode("r+").open(&path),
-                "Cannot specify userblock when opening a file");
-            assert_err!(FileBuilder::new().userblock(1).mode("w").open(&path),
-                "userblock size is non-zero and less than 512");
+            assert_err!(
+                FileBuilder::new().userblock(512).mode("r").open(&path),
+                "Cannot specify userblock when opening a file"
+            );
+            assert_err!(
+                FileBuilder::new().userblock(512).mode("r+").open(&path),
+                "Cannot specify userblock when opening a file"
+            );
+            assert_err!(
+                FileBuilder::new().userblock(1).mode("w").open(&path),
+                "userblock size is non-zero and less than 512"
+            );
             FileBuilder::new().userblock(512).mode("w").open(&path).unwrap();
             assert_eq!(File::open(&path, "r").unwrap().userblock(), 512);
 
             // writing to userblock doesn't corrupt the file
             File::open(&path, "r+").unwrap().create_group("foo").unwrap();
             {
-                let mut file = fs::OpenOptions::new().read(true).write(true)
-                                                     .create(false).open(&path).unwrap();
+                let mut file = fs::OpenOptions::new()
+                    .read(true)
+                    .write(true)
+                    .create(false)
+                    .open(&path)
+                    .unwrap();
                 for i in 0usize..512usize {
                     file.write_all(&[(i % 256) as u8]).unwrap();
                 }
@@ -471,22 +499,24 @@ pub mod tests {
     pub fn test_core_fd_non_filebacked() {
         silence_errors();
         with_tmp_path(|path| {
-            let file = FileBuilder::new().driver("core").filebacked(false).mode("w")
-                                         .open(&path).unwrap();
+            let file =
+                FileBuilder::new().driver("core").filebacked(false).mode("w").open(&path).unwrap();
             file.create_group("x").unwrap();
             assert!(file.is_valid());
             file.close();
             assert!(fs::metadata(&path).is_err());
-            assert_err!(FileBuilder::new().driver("core").mode("r").open(&path),
-                "unable to open file");
+            assert_err!(
+                FileBuilder::new().driver("core").mode("r").open(&path),
+                "unable to open file"
+            );
         })
     }
 
     #[test]
     pub fn test_core_fd_filebacked() {
         with_tmp_path(|path| {
-            let file = FileBuilder::new().driver("core").filebacked(true).mode("w")
-                                         .open(&path).unwrap();
+            let file =
+                FileBuilder::new().driver("core").filebacked(true).mode("w").open(&path).unwrap();
             assert!(file.is_valid());
             file.create_group("bar").unwrap();
             file.close();
@@ -506,20 +536,28 @@ pub mod tests {
     #[test]
     pub fn test_sec2_fd() {
         with_tmp_path(|path| {
-            FileBuilder::new().driver("sec2").mode("w").open(&path).unwrap()
-                              .create_group("foo").unwrap();
-            FileBuilder::new().driver("sec2").mode("r").open(&path).unwrap()
-                              .group("foo").unwrap();
+            FileBuilder::new()
+                .driver("sec2")
+                .mode("w")
+                .open(&path)
+                .unwrap()
+                .create_group("foo")
+                .unwrap();
+            FileBuilder::new().driver("sec2").mode("r").open(&path).unwrap().group("foo").unwrap();
         })
     }
 
     #[test]
     pub fn test_stdio_fd() {
         with_tmp_path(|path| {
-            FileBuilder::new().driver("stdio").mode("w").open(&path).unwrap()
-                              .create_group("qwe").unwrap();
-            FileBuilder::new().driver("stdio").mode("r").open(&path).unwrap()
-                              .group("qwe").unwrap();
+            FileBuilder::new()
+                .driver("stdio")
+                .mode("w")
+                .open(&path)
+                .unwrap()
+                .create_group("qwe")
+                .unwrap();
+            FileBuilder::new().driver("stdio").mode("r").open(&path).unwrap().group("qwe").unwrap();
         })
     }
 

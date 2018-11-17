@@ -8,20 +8,20 @@ mod export {
         container::Container,
         dataset::Dataset,
         datatype::Datatype,
-        error::{Result, Error},
+        error::{Error, Result},
         file::File,
         filters::Filters,
         group::Group,
         location::Location,
         object::Object,
-        space::{Dimension, Ix, Dataspace},
+        space::{Dataspace, Dimension, Ix},
     };
 }
 
 pub use crate::export::*;
 
-pub use hdf5_types::{self as types, H5Type};
 pub use hdf5_derive::H5Type;
+pub use hdf5_types::{self as types, H5Type};
 
 #[macro_use]
 mod macros;
@@ -56,16 +56,16 @@ pub mod prelude {
     //! This module provides reexports of such traits as `Object`, `Location` and `Container`
     //! and does not expose any structures or functions.
 
-    pub use super::{Object, Location, Container, Dimension, H5Type};
+    pub use super::{Container, Dimension, H5Type, Location, Object};
 }
 
 mod internal_prelude {
-    pub use libc::{c_int, c_uint, c_void, c_char, size_t};
+    pub use libc::{c_char, c_int, c_uint, c_void, size_t};
 
-    pub use ffi::h5::{hsize_t, hbool_t, haddr_t, herr_t};
-    pub use ffi::h5i::{H5I_INVALID_HID, hid_t};
-    pub use ffi::h5p::H5P_DEFAULT;
+    pub use ffi::h5::{haddr_t, hbool_t, herr_t, hsize_t};
     pub use ffi::h5i::H5I_type_t::*;
+    pub use ffi::h5i::{hid_t, H5I_INVALID_HID};
+    pub use ffi::h5p::H5P_DEFAULT;
 
     pub use crate::export::*;
     pub use crate::types::H5Type;
@@ -73,12 +73,12 @@ mod internal_prelude {
     pub use crate::dataset::DatasetBuilder;
     pub use crate::error::silence_errors;
     pub use crate::file::FileBuilder;
-    pub use crate::handle::{Handle, ID, FromID, get_id_type};
+    pub use crate::handle::{get_id_type, FromID, Handle, ID};
     pub use crate::plist::PropertyList;
-    pub use crate::util::{to_cstring, string_from_cstr, get_h5_str};
+    pub use crate::util::{get_h5_str, string_from_cstr, to_cstring};
 
     #[cfg(test)]
-    pub use crate::test::{with_tmp_file, with_tmp_dir, with_tmp_path};
+    pub use crate::test::{with_tmp_dir, with_tmp_file, with_tmp_path};
 }
 
 #[cfg(test)]

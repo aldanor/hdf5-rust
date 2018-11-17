@@ -9,14 +9,12 @@ macro_rules! fail {
 }
 
 macro_rules! try_ref_clone {
-    ($expr:expr) => (
+    ($expr:expr) => {
         match $expr {
             Ok(ref val) => val,
-            Err(ref err) => {
-                return Err(From::from(err.clone()))
-            }
+            Err(ref err) => return Err(From::from(err.clone())),
         }
-    )
+    };
 }
 
 macro_rules! ensure {
@@ -36,33 +34,35 @@ macro_rules! ensure {
 #[cfg(test)]
 #[allow(unused_macros)]
 macro_rules! assert_err {
-    ($expr:expr, $err:expr) => (
+    ($expr:expr, $err:expr) => {
         match $expr {
             Ok(_) => {
                 panic!("assertion failed: not an error in `{}`", stringify!($expr));
-            },
+            }
             Err(ref value) => {
                 let desc = value.description().to_string();
                 if !desc.contains($err) {
                     panic!(
                         "assertion failed: error message `{}` doesn't contain `{}` in `{}`",
-                        desc, $err, stringify!($expr)
+                        desc,
+                        $err,
+                        stringify!($expr)
                     );
                 }
             }
         }
-    );
+    };
 }
 
 /// Panics if `$expr` is not an Err(err) with err.description() matching regexp `$err`.
 #[cfg(test)]
 #[allow(unused_macros)]
 macro_rules! assert_err_re {
-    ($expr:expr, $err:expr) => (
+    ($expr:expr, $err:expr) => {
         match $expr {
             Ok(_) => {
                 panic!("assertion failed: not an error in `{}`", stringify!($expr));
-            },
+            }
             Err(ref value) => {
                 use regex::Regex;
                 let re = Regex::new($err).unwrap();
@@ -70,40 +70,42 @@ macro_rules! assert_err_re {
                 if !re.is_match(desc.as_ref()) {
                     panic!(
                         "assertion failed: error message `{}` doesn't match `{}` in `{}`",
-                        desc, re, stringify!($expr)
+                        desc,
+                        re,
+                        stringify!($expr)
                     );
                 }
             }
         }
-    );
+    };
 }
 
 /// Run a potentially unsafe expression in a closure synchronized by a global reentrant mutex.
 #[macro_export]
 macro_rules! h5lock {
-    ($expr:expr) => ({
+    ($expr:expr) => {{
         #[allow(unused_unsafe)]
         unsafe {
-            $crate::sync::sync(|| { $expr })
+            $crate::sync::sync(|| $expr)
         }
-    })
+    }};
 }
 
 /// Convert result of HDF5 call to Result; execution is guarded by a global reentrant mutex.
 #[macro_export]
 macro_rules! h5call {
-    ($expr:expr) => (
+    ($expr:expr) => {
         h5lock!($crate::error::h5check($expr))
-    )
+    };
 }
 
 /// `h5try!(..)` is equivalent to try!(h5call!(..)).
 #[macro_export]
 macro_rules! h5try {
-    ($expr:expr) => (match h5call!($expr) {
-        Ok(value) => value,
-        Err(err)  => {
-            return Err(From::from(err))
-        },
-    })
+    ($expr:expr) => {
+        match h5call!($expr) {
+            Ok(value) => value,
+            Err(err) => return Err(From::from(err)),
+        }
+    };
 }

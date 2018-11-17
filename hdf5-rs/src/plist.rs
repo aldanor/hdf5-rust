@@ -61,8 +61,8 @@ impl PartialEq for PropertyList {
 pub mod tests {
     use ffi::h5p::H5Pcreate;
 
-    use crate::internal_prelude::*;
     use crate::globals::{H5P_FILE_ACCESS, H5P_FILE_CREATE};
+    use crate::internal_prelude::*;
 
     use super::PropertyList;
 

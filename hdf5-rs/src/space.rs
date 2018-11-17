@@ -3,8 +3,7 @@ use std::ptr;
 use std::slice;
 
 use ffi::h5s::{
-    H5S_UNLIMITED, H5Sget_simple_extent_dims, H5Sget_simple_extent_ndims, H5Scopy,
-    H5Screate_simple,
+    H5Scopy, H5Screate_simple, H5Sget_simple_extent_dims, H5Sget_simple_extent_ndims, H5S_UNLIMITED,
 };
 
 use crate::internal_prelude::*;
@@ -19,18 +18,30 @@ pub trait Dimension: Clone {
 
     fn size(&self) -> Ix {
         let dims = self.dims();
-        if dims.is_empty() { 1 } else { dims.iter().product() }
+        if dims.is_empty() {
+            1
+        } else {
+            dims.iter().product()
+        }
     }
 }
 
 impl<'a, T: Dimension> Dimension for &'a T {
-    fn ndim(&self) -> usize { Dimension::ndim(*self) }
-    fn dims(&self) -> Vec<Ix> { Dimension::dims(*self) }
+    fn ndim(&self) -> usize {
+        Dimension::ndim(*self)
+    }
+    fn dims(&self) -> Vec<Ix> {
+        Dimension::dims(*self)
+    }
 }
 
 impl Dimension for Vec<Ix> {
-    fn ndim(&self) -> usize { self.len() }
-    fn dims(&self) -> Vec<Ix> { self.clone() }
+    fn ndim(&self) -> usize {
+        self.len()
+    }
+    fn dims(&self) -> Vec<Ix> {
+        self.clone()
+    }
 }
 
 macro_rules! count_ty {
@@ -68,8 +79,12 @@ macro_rules! impl_tuple {
 impl_tuple! { Ix, Ix, Ix, Ix, Ix, Ix, Ix, Ix, Ix, Ix, Ix, Ix, }
 
 impl Dimension for Ix {
-    fn ndim(&self) -> usize { 1 }
-    fn dims(&self) -> Vec<Ix> { vec![*self] }
+    fn ndim(&self) -> usize {
+        1
+    }
+    fn dims(&self) -> Vec<Ix> {
+        vec![*self]
+    }
 }
 
 /// Represents the HDF5 dataspace object.
@@ -86,19 +101,19 @@ impl Dataspace {
             dims.push(*dim as _);
             max_dims.push(if resizable { H5S_UNLIMITED } else { *dim as _ });
         }
-        Dataspace::from_id(h5try!(H5Screate_simple(
-            rank as _, dims.as_ptr(), max_dims.as_ptr()
-        )))
+        Dataspace::from_id(h5try!(H5Screate_simple(rank as _, dims.as_ptr(), max_dims.as_ptr())))
     }
 
-   pub fn maxdims(&self) -> Vec<Ix> {
+    pub fn maxdims(&self) -> Vec<Ix> {
         let ndim = self.ndim();
         if ndim > 0 {
             let mut maxdims: Vec<hsize_t> = Vec::with_capacity(ndim);
-            unsafe { maxdims.set_len(ndim); }
-            if h5call!(H5Sget_simple_extent_dims(
-                self.id(), ptr::null_mut(), maxdims.as_mut_ptr()
-            )).is_ok() {
+            unsafe {
+                maxdims.set_len(ndim);
+            }
+            if h5call!(H5Sget_simple_extent_dims(self.id(), ptr::null_mut(), maxdims.as_mut_ptr()))
+                .is_ok()
+            {
                 return maxdims.iter().cloned().map(|x| x as _).collect();
             }
         }
@@ -119,10 +134,12 @@ impl Dimension for Dataspace {
         let ndim = self.ndim();
         if ndim > 0 {
             let mut dims: Vec<hsize_t> = Vec::with_capacity(ndim);
-            unsafe { dims.set_len(ndim); }
-            if h5call!(H5Sget_simple_extent_dims(
-                self.id(), dims.as_mut_ptr(), ptr::null_mut()
-            )).is_ok() {
+            unsafe {
+                dims.set_len(ndim);
+            }
+            if h5call!(H5Sget_simple_extent_dims(self.id(), dims.as_mut_ptr(), ptr::null_mut()))
+                .is_ok()
+            {
                 return dims.iter().cloned().map(|x| x as _).collect();
             }
         }
@@ -189,7 +206,9 @@ pub mod tests {
 
     #[test]
     pub fn test_dimension() {
-        fn f<D: Dimension>(d: D) -> (usize, Vec<Ix>, Ix) { (d.ndim(), d.dims(), d.size()) }
+        fn f<D: Dimension>(d: D) -> (usize, Vec<Ix>, Ix) {
+            (d.ndim(), d.dims(), d.size())
+        }
 
         assert_eq!(f(()), (0, vec![], 1));
         assert_eq!(f(&()), (0, vec![], 1));
@@ -205,25 +224,27 @@ pub mod tests {
 
     #[test]
     pub fn test_debug_display() {
-        assert_eq!(format!("{}", Dataspace::new((), true).unwrap()),
-            "<HDF5 dataspace: ()>");
-        assert_eq!(format!("{:?}", Dataspace::new((), true).unwrap()),
-            "<HDF5 dataspace: ()>");
-        assert_eq!(format!("{}", Dataspace::new(3, true).unwrap()),
-            "<HDF5 dataspace: (3,)>");
-        assert_eq!(format!("{:?}", Dataspace::new(3, true).unwrap()),
-            "<HDF5 dataspace: (3,)>");
-        assert_eq!(format!("{}", Dataspace::new((1, 2), true).unwrap()),
-            "<HDF5 dataspace: (1, 2)>");
-        assert_eq!(format!("{:?}", Dataspace::new((1, 2), true).unwrap()),
-            "<HDF5 dataspace: (1, 2)>");
+        assert_eq!(format!("{}", Dataspace::new((), true).unwrap()), "<HDF5 dataspace: ()>");
+        assert_eq!(format!("{:?}", Dataspace::new((), true).unwrap()), "<HDF5 dataspace: ()>");
+        assert_eq!(format!("{}", Dataspace::new(3, true).unwrap()), "<HDF5 dataspace: (3,)>");
+        assert_eq!(format!("{:?}", Dataspace::new(3, true).unwrap()), "<HDF5 dataspace: (3,)>");
+        assert_eq!(
+            format!("{}", Dataspace::new((1, 2), true).unwrap()),
+            "<HDF5 dataspace: (1, 2)>"
+        );
+        assert_eq!(
+            format!("{:?}", Dataspace::new((1, 2), true).unwrap()),
+            "<HDF5 dataspace: (1, 2)>"
+        );
     }
 
     #[test]
     pub fn test_dataspace() {
         silence_errors();
-        assert_err!(Dataspace::new(H5S_UNLIMITED as Ix, true),
-            "current dimension must have a specific size");
+        assert_err!(
+            Dataspace::new(H5S_UNLIMITED as Ix, true),
+            "current dimension must have a specific size"
+        );
 
         let d = Dataspace::new((5, 6), true).unwrap();
         assert_eq!((d.ndim(), d.dims(), d.size()), (2, vec![5, 6], 30));
@@ -239,8 +260,10 @@ pub mod tests {
 
         assert_eq!(Dataspace::new((5, 6), false).unwrap().maxdims(), vec![5, 6]);
         assert_eq!(Dataspace::new((5, 6), false).unwrap().resizable(), false);
-        assert_eq!(Dataspace::new((5, 6), true).unwrap().maxdims(),
-            vec![H5S_UNLIMITED as _, H5S_UNLIMITED as _]);
+        assert_eq!(
+            Dataspace::new((5, 6), true).unwrap().maxdims(),
+            vec![H5S_UNLIMITED as _, H5S_UNLIMITED as _]
+        );
         assert_eq!(Dataspace::new((5, 6), true).unwrap().resizable(), true);
     }
 }

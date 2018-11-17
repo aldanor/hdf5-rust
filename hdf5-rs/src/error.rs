@@ -1,13 +1,13 @@
-use std::ptr;
 use std::fmt;
 use std::ops::Index;
+use std::ptr;
 
 use num_integer::Integer;
-use num_traits::{Zero, Bounded};
+use num_traits::{Bounded, Zero};
 
 use ffi::h5e::{
-    H5Ewalk2, H5Eget_msg, H5E_error2_t, H5Eset_auto2, H5Eget_current_stack,
-    H5Eclose_stack, H5E_WALK_DOWNWARD, H5E_DEFAULT
+    H5E_error2_t, H5Eclose_stack, H5Eget_current_stack, H5Eget_msg, H5Eset_auto2, H5Ewalk2,
+    H5E_DEFAULT, H5E_WALK_DOWNWARD,
 };
 
 use crate::internal_prelude::*;
@@ -41,9 +41,10 @@ impl ErrorFrame {
     }
 
     pub fn detail(&self) -> Option<String> {
-        Some(format!(
-            "Error in {}(): {} [{}: {}]", self.func, self.desc, self.major, self.minor
-        ).clone())
+        Some(
+            format!("Error in {}(): {} [{}: {}]", self.func, self.desc, self.major, self.minor)
+                .clone(),
+        )
     }
 }
 
@@ -79,7 +80,9 @@ impl ErrorStack {
             err: Option<Error>,
         }
 
-        extern fn callback(_: c_uint, err_desc: *const H5E_error2_t, data: *mut c_void) -> herr_t {
+        extern "C" fn callback(
+            _: c_uint, err_desc: *const H5E_error2_t, data: *mut c_void,
+        ) -> herr_t {
             unsafe {
                 let data = &mut *(data as *mut CallbackData);
                 if data.err.is_some() {
@@ -87,17 +90,19 @@ impl ErrorStack {
                 }
                 let closure = |e: H5E_error2_t| -> Result<ErrorFrame> {
                     let (desc, func) = (string_from_cstr(e.desc), string_from_cstr(e.func_name));
-                    let major = get_h5_str(|m, s| {
-                        H5Eget_msg(e.maj_num, ptr::null_mut(), m, s)
-                    })?;
-                    let minor = get_h5_str(|m, s| {
-                        H5Eget_msg(e.min_num, ptr::null_mut(), m, s)
-                    })?;
+                    let major = get_h5_str(|m, s| H5Eget_msg(e.maj_num, ptr::null_mut(), m, s))?;
+                    let minor = get_h5_str(|m, s| H5Eget_msg(e.min_num, ptr::null_mut(), m, s))?;
                     Ok(ErrorFrame::new(&desc, &func, &major, &minor))
                 };
                 match closure(*err_desc) {
-                    Ok(frame) => { data.stack.push(frame); 0 },
-                    Err(err)  => { data.err = Some(err); 0 }
+                    Ok(frame) => {
+                        data.stack.push(frame);
+                        0
+                    }
+                    Err(err) => {
+                        data.err = Some(err);
+                        0
+                    }
                 }
             }
         }
@@ -115,8 +120,8 @@ impl ErrorStack {
 
         match (data.err, data.stack.is_empty()) {
             (Some(err), _) => Err(err),
-            (None, false)  => Ok(Some(data.stack)),
-            (None, true)   => Ok(None),
+            (None, false) => Ok(Some(data.stack)),
+            (None, true) => Ok(None),
         }
     }
 
@@ -135,9 +140,8 @@ impl ErrorStack {
             if self.len() == 1 {
                 self.description = Some(top_desc);
             } else {
-                self.description = Some(format!(
-                    "{}: {}", top_desc, self.frames[self.len() - 1].desc()
-                ));
+                self.description =
+                    Some(format!("{}: {}", top_desc, self.frames[self.len() - 1].desc()));
             }
         }
     }
@@ -156,8 +160,8 @@ impl ErrorStack {
 
     pub fn description(&self) -> &str {
         match self.description {
-            None           => "unknown library error",
-            Some(ref desc) => desc.as_ref(), //frame.description(),
+            None => "unknown library error",
+            Some(ref desc) => desc.as_ref(),
         }
     }
 
@@ -182,9 +186,9 @@ pub type Result<T> = ::std::result::Result<T, Error>;
 impl Error {
     pub fn query() -> Option<Error> {
         match ErrorStack::query() {
-            Err(err)        => Some(err),
+            Err(err) => Some(err),
             Ok(Some(stack)) => Some(Error::HDF5(stack)),
-            Ok(None)        => None,
+            Ok(None) => None,
         }
     }
 
@@ -196,7 +200,10 @@ impl Error {
     }
 }
 
-impl<S> From<S> for Error where S: Into<String> {
+impl<S> From<S> for Error
+where
+    S: Into<String>,
+{
     fn from(desc: S) -> Error {
         Error::Internal(desc.into())
     }
@@ -223,13 +230,12 @@ impl ::std::error::Error for Error {
     }
 }
 
-pub fn h5check<T>(value: T) -> Result<T> where T: Integer + Zero + Bounded,
+pub fn h5check<T>(value: T) -> Result<T>
+where
+    T: Integer + Zero + Bounded,
 {
-    let maybe_error = if T::min_value() < T::zero() {
-        value < T::zero()
-    } else {
-        value == T::zero()
-    };
+    let maybe_error =
+        if T::min_value() < T::zero() { value < T::zero() } else { value == T::zero() };
 
     if maybe_error {
         Error::query().map_or_else(|| Ok(value), |err| Err(err))
@@ -240,10 +246,10 @@ pub fn h5check<T>(value: T) -> Result<T> where T: Integer + Zero + Bounded,
 
 #[cfg(test)]
 pub mod tests {
-    use ffi::h5p::{H5Pcreate, H5Pclose};
+    use ffi::h5p::{H5Pclose, H5Pcreate};
 
-    use crate::internal_prelude::*;
     use crate::globals::H5P_ROOT;
+    use crate::internal_prelude::*;
 
     use super::ErrorStack;
 
@@ -266,21 +272,27 @@ pub mod tests {
         });
         let stack = result_error.ok().unwrap().unwrap();
         assert_eq!(stack.description(), "H5Pclose(): can't close: can't locate ID");
-        assert_eq!(&stack.detail().unwrap(),
-            "Error in H5Pclose(): can't close [Property lists: Unable to free object]");
+        assert_eq!(
+            &stack.detail().unwrap(),
+            "Error in H5Pclose(): can't close [Property lists: Unable to free object]"
+        );
 
         assert!(stack.len() >= 2 && stack.len() <= 3); // depending on HDF5 version
         assert!(!stack.is_empty());
 
         assert_eq!(stack[0].description(), "H5Pclose(): can't close");
-        assert_eq!(&stack[0].detail().unwrap(),
+        assert_eq!(
+            &stack[0].detail().unwrap(),
             "Error in H5Pclose(): can't close \
-            [Property lists: Unable to free object]");
+             [Property lists: Unable to free object]"
+        );
 
         assert_eq!(stack[stack.len() - 1].description(), "H5I_dec_ref(): can't locate ID");
-        assert_eq!(&stack[stack.len() - 1].detail().unwrap(),
+        assert_eq!(
+            &stack[stack.len() - 1].detail().unwrap(),
             "Error in H5I_dec_ref(): can't locate ID \
-            [Object atom: Unable to find atom information (already closed?)]");
+             [Object atom: Unable to find atom information (already closed?)]"
+        );
 
         let empty_stack = ErrorStack::new();
         assert!(empty_stack.is_empty());

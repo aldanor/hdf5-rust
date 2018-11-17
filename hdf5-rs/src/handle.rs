@@ -1,9 +1,9 @@
-use std::sync::{Arc, Mutex, RwLock};
 use std::collections::HashMap;
+use std::sync::{Arc, Mutex, RwLock};
 
 use lazy_static::lazy_static;
 
-use ffi::h5i::{H5I_type_t, H5Iget_type, H5Iis_valid, H5Iinc_ref, H5Idec_ref};
+use ffi::h5i::{H5I_type_t, H5Idec_ref, H5Iget_type, H5Iinc_ref, H5Iis_valid};
 
 use crate::internal_prelude::*;
 
@@ -11,7 +11,11 @@ pub fn get_id_type(id: hid_t) -> H5I_type_t {
     h5lock!({
         let tp = h5lock!(H5Iget_type(id));
         let valid = id > 0 && tp > H5I_BADID && tp < H5I_NTYPES;
-        if valid { tp } else { H5I_BADID }
+        if valid {
+            tp
+        } else {
+            H5I_BADID
+        }
     })
 }
 
@@ -23,9 +27,7 @@ pub fn is_valid_id(id: hid_t) -> bool {
 }
 
 pub fn is_valid_user_id(id: hid_t) -> bool {
-    h5lock!({
-        H5Iis_valid(id) == 1
-    })
+    h5lock!({ H5Iis_valid(id) == 1 })
 }
 
 pub trait ID: Sized {
@@ -73,7 +75,7 @@ impl Handle {
         }
         h5lock!({
             if is_valid_user_id(id) {
-                Ok(Handle{ id: REGISTRY.new_handle(id) })
+                Ok(Handle { id: REGISTRY.new_handle(id) })
             } else {
                 Err(From::from(format!("Invalid handle id: {}", id)))
             }

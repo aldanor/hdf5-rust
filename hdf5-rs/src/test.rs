@@ -11,9 +11,7 @@ pub fn with_tmp_dir<F: Fn(PathBuf)>(func: F) {
 }
 
 pub fn with_tmp_path<F: Fn(PathBuf)>(func: F) {
-    with_tmp_dir(|dir| {
-        func(dir.join("foo.h5"))
-    })
+    with_tmp_dir(|dir| func(dir.join("foo.h5")))
 }
 
 pub fn with_tmp_file<F: Fn(File)>(func: F) {

@@ -1,12 +1,12 @@
 use std::default::Default;
 
 use ffi::h5d::H5Dopen2;
-use ffi::h5g::{H5G_info_t, H5Gget_info, H5Gcreate2, H5Gopen2};
-use ffi::h5l::{H5Lmove, H5Lcreate_soft, H5Lcreate_hard, H5Ldelete, H5L_SAME_LOC};
+use ffi::h5g::{H5G_info_t, H5Gcreate2, H5Gget_info, H5Gopen2};
+use ffi::h5l::{H5Lcreate_hard, H5Lcreate_soft, H5Ldelete, H5Lmove, H5L_SAME_LOC};
 use ffi::h5p::{H5Pcreate, H5Pset_create_intermediate_group};
 
-use crate::internal_prelude::*;
 use crate::globals::H5P_LINK_CREATE;
+use crate::internal_prelude::*;
 
 fn group_info(id: hid_t) -> Result<H5G_info_t> {
     let info: *mut H5G_info_t = &mut H5G_info_t::default();
@@ -38,7 +38,11 @@ pub trait Container: Location {
             let lcpl = make_lcpl()?;
             let name = to_cstring(name)?;
             Group::from_id(h5try!(H5Gcreate2(
-                self.id(), name.as_ptr(), lcpl.id(), H5P_DEFAULT, H5P_DEFAULT
+                self.id(),
+                name.as_ptr(),
+                lcpl.id(),
+                H5P_DEFAULT,
+                H5P_DEFAULT
             )))
         })
     }
@@ -46,8 +50,7 @@ pub trait Container: Location {
     /// Opens an existing group in a file or group.
     fn group(&self, name: &str) -> Result<Group> {
         let name = to_cstring(name)?;
-        Group::from_id(h5try!(H5Gopen2(
-            self.id(), name.as_ptr(), H5P_DEFAULT)))
+        Group::from_id(h5try!(H5Gopen2(self.id(), name.as_ptr(), H5P_DEFAULT)))
     }
 
     /// Creates a soft link. Note: `src` and `dst` are relative to the current object.
@@ -56,9 +59,8 @@ pub trait Container: Location {
             let lcpl = make_lcpl()?;
             let src = to_cstring(src)?;
             let dst = to_cstring(dst)?;
-            h5call!(H5Lcreate_soft(
-                src.as_ptr(), self.id(), dst.as_ptr(), lcpl.id(), H5P_DEFAULT
-            )).and(Ok(()))
+            h5call!(H5Lcreate_soft(src.as_ptr(), self.id(), dst.as_ptr(), lcpl.id(), H5P_DEFAULT))
+                .and(Ok(()))
         })
     }
 
@@ -67,8 +69,14 @@ pub trait Container: Location {
         let src = to_cstring(src)?;
         let dst = to_cstring(dst)?;
         h5call!(H5Lcreate_hard(
-            self.id(), src.as_ptr(), H5L_SAME_LOC, dst.as_ptr(), H5P_DEFAULT, H5P_DEFAULT
-        )).and(Ok(()))
+            self.id(),
+            src.as_ptr(),
+            H5L_SAME_LOC,
+            dst.as_ptr(),
+            H5P_DEFAULT,
+            H5P_DEFAULT
+        ))
+        .and(Ok(()))
     }
 
     /// Relinks an object. Note: `name` and `path` are relative to the current object.
@@ -76,16 +84,20 @@ pub trait Container: Location {
         let name = to_cstring(name)?;
         let path = to_cstring(path)?;
         h5call!(H5Lmove(
-            self.id(), name.as_ptr(), H5L_SAME_LOC, path.as_ptr(), H5P_DEFAULT, H5P_DEFAULT
-        )).and(Ok(()))
+            self.id(),
+            name.as_ptr(),
+            H5L_SAME_LOC,
+            path.as_ptr(),
+            H5P_DEFAULT,
+            H5P_DEFAULT
+        ))
+        .and(Ok(()))
     }
 
     /// Removes a link to an object from this file or group.
     fn unlink(&self, name: &str) -> Result<()> {
         let name = to_cstring(name)?;
-        h5call!(H5Ldelete(
-            self.id(), name.as_ptr(), H5P_DEFAULT
-        )).and(Ok(()))
+        h5call!(H5Ldelete(self.id(), name.as_ptr(), H5P_DEFAULT)).and(Ok(()))
     }
 
     /// Instantiates a new dataset builder.
@@ -96,8 +108,7 @@ pub trait Container: Location {
     /// Opens an existing dataset in the file or group.
     fn dataset(&self, name: &str) -> Result<Dataset> {
         let name = to_cstring(name)?;
-        Dataset::from_id(h5try!(H5Dopen2(
-            self.id(), name.as_ptr(), H5P_DEFAULT)))
+        Dataset::from_id(h5try!(H5Dopen2(self.id(), name.as_ptr(), H5P_DEFAULT)))
     }
 }
 
@@ -150,10 +161,14 @@ mod tests {
             file.link_hard("/foo/test", "/foo/hard").unwrap();
             file.group("foo/test/inner").unwrap();
             file.group("/foo/hard/inner").unwrap();
-            assert_err!(file.link_hard("foo/test", "/foo/test/inner"),
-                "unable to create link: name already exists");
-            assert_err_re!(file.link_hard("foo/bar", "/foo/baz"),
-                "unable to create link: object.+doesn't exist");
+            assert_err!(
+                file.link_hard("foo/test", "/foo/test/inner"),
+                "unable to create link: name already exists"
+            );
+            assert_err_re!(
+                file.link_hard("foo/bar", "/foo/baz"),
+                "unable to create link: object.+doesn't exist"
+            );
             file.relink("/foo/hard", "/foo/hard2").unwrap();
             file.group("/foo/hard2/inner").unwrap();
             file.relink("/foo/test", "/foo/baz").unwrap();
@@ -194,15 +209,15 @@ mod tests {
         with_tmp_file(|file| {
             file.create_group("test").unwrap();
             file.group("test").unwrap();
-            assert_err!(file.relink("test", "foo/test"),
-                "unable to move link: component not found");
+            assert_err!(
+                file.relink("test", "foo/test"),
+                "unable to move link: component not found"
+            );
             file.create_group("foo").unwrap();
-            assert_err!(file.relink("bar", "/baz"),
-                "unable to move link: name doesn't exist");
+            assert_err!(file.relink("bar", "/baz"), "unable to move link: name doesn't exist");
             file.relink("test", "/foo/test").unwrap();
             file.group("/foo/test").unwrap();
-            assert_err_re!(file.group("test"),
-                "unable to open group: object.+doesn't exist");
+            assert_err_re!(file.group("test"), "unable to open group: object.+doesn't exist");
         })
     }
 
