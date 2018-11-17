@@ -232,10 +232,7 @@ pub fn h5check<T>(value: T) -> Result<T> where T: Integer + Zero + Bounded,
     };
 
     if maybe_error {
-        match Error::query() {
-            None       => Ok(value),
-            Some(err)  => Err(err),
-        }
+        Error::query().map_or_else(|| Ok(value), |err| Err(err))
     } else {
         Ok(value)
     }
