@@ -182,19 +182,13 @@ impl fmt::Debug for Dataspace {
 impl fmt::Display for Dataspace {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if !self.is_valid() {
-            return "<HDF5 dataspace: invalid id>".fmt(f);
+            f.write_str("<HDF5 dataspace: invalid id>")
+        } else if self.ndim() == 1 {
+            write!(f, "<HDF5 dataspace: ({},)>", self.dims()[0])
+        } else {
+            let dims = self.dims().iter().map(|d| d.to_string()).collect::<Vec<_>>().join(", ");
+            write!(f, "<HDF5 dataspace: ({})>", dims)
         }
-        let mut dims = String::new();
-        for (i, dim) in self.dims().iter().enumerate() {
-            if i > 0 {
-                dims.push_str(", ");
-            }
-            dims.push_str(&format!("{}", dim));
-        }
-        if self.ndim() == 1 {
-            dims.push_str(",");
-        }
-        format!("<HDF5 dataspace: ({})>", dims).fmt(f)
     }
 }
 

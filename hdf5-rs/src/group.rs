@@ -16,14 +16,15 @@ impl fmt::Debug for Group {
 impl fmt::Display for Group {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if !self.is_valid() {
-            return "<HDF5 group: invalid id>".fmt(f);
+            f.write_str("<HDF5 group: invalid id>")
+        } else {
+            let members = match self.len() {
+                0 => "empty".to_owned(),
+                1 => "1 member".to_owned(),
+                x => format!("{} members", x),
+            };
+            write!(f, "<HDF5 group: \"{}\" ({})>", self.name(), members)
         }
-        let members = match self.len() {
-            0 => "empty".to_owned(),
-            1 => "1 member".to_owned(),
-            x => format!("{} members", x),
-        };
-        format!("<HDF5 group: \"{}\" ({})>", self.name(), members).fmt(f)
     }
 }
 

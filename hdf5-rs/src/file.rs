@@ -172,14 +172,15 @@ impl fmt::Debug for File {
 impl fmt::Display for File {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if !self.is_valid() {
-            return "<HDF5 file: invalid id>".fmt(f);
+            f.write_str("<HDF5 file: invalid id>")
+        } else {
+            let basename = match Path::new(&self.filename()).file_name() {
+                Some(s) => s.to_string_lossy().into_owned(),
+                None => "".to_owned(),
+            };
+            let mode = if self.is_read_only() { "read-only" } else { "read/write" };
+            write!(f, "<HDF5 file: \"{}\" ({})>", basename, mode)
         }
-        let basename = match Path::new(&self.filename()).file_name() {
-            Some(s) => s.to_string_lossy().into_owned(),
-            None => "".to_owned(),
-        };
-        let mode = if self.is_read_only() { "read-only" } else { "read/write" };
-        format!("<HDF5 file: \"{}\" ({})>", basename, mode).fmt(f)
     }
 }
 

@@ -210,17 +210,17 @@ where
 }
 
 impl fmt::Debug for Error {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> ::std::result::Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Error::Internal(ref desc) => desc.fmt(formatter),
-            Error::HDF5(ref stack) => stack.description().fmt(formatter),
+            Error::Internal(ref desc) => f.write_str(desc),
+            Error::HDF5(ref stack) => f.write_str(stack.description()),
         }
     }
 }
 
 impl fmt::Display for Error {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> ::std::result::Result<(), fmt::Error> {
-        self.description().fmt(formatter)
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str(self.description())
     }
 }
 

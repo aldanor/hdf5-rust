@@ -18,9 +18,9 @@ impl fmt::Debug for PropertyList {
 impl fmt::Display for PropertyList {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if !self.is_valid() {
-            "<HDF5 property list: invalid id>".fmt(f)
+            f.write_str("<HDF5 property list: invalid id>")
         } else {
-            "<HDF5 property list>".fmt(f)
+            f.write_str("<HDF5 property list>") // TODO: more details
         }
     }
 }
