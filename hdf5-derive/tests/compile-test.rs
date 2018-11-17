@@ -3,29 +3,25 @@ use std::fs::{read_dir, remove_file};
 // Workaround for https://github.com/laumann/compiletest-rs/issues/114
 fn clean_rlibs(config: &compiletest_rs::Config) {
     if config.target_rustcflags.is_some() {
-        for directory in config.target_rustcflags
-            .as_ref()
-            .unwrap()
-            .split_whitespace()
-            {
-                if let Ok(mut entries) = read_dir(directory) {
-                    while let Some(Ok(entry)) = entries.next() {
-                        let f = entry.file_name().clone().into_string().unwrap();
-                        if f.ends_with(".rmeta") {
-                            let prefix = &f[..f.len() - 5];
-                            let _ = remove_file(entry.path());
-                            if let Ok(mut entries) = read_dir(directory) {
-                                while let Some(Ok(entry)) = entries.next() {
-                                    let f = entry.file_name().clone().into_string().unwrap();
-                                    if f.starts_with(prefix) && !f.ends_with(".rmeta") {
-                                        let _ = remove_file(entry.path());
-                                    }
+        for directory in config.target_rustcflags.as_ref().unwrap().split_whitespace() {
+            if let Ok(mut entries) = read_dir(directory) {
+                while let Some(Ok(entry)) = entries.next() {
+                    let f = entry.file_name().clone().into_string().unwrap();
+                    if f.ends_with(".rmeta") {
+                        let prefix = &f[..f.len() - 5];
+                        let _ = remove_file(entry.path());
+                        if let Ok(mut entries) = read_dir(directory) {
+                            while let Some(Ok(entry)) = entries.next() {
+                                let f = entry.file_name().clone().into_string().unwrap();
+                                if f.starts_with(prefix) && !f.ends_with(".rmeta") {
+                                    let _ = remove_file(entry.path());
                                 }
                             }
                         }
                     }
                 }
             }
+        }
     }
 }
 

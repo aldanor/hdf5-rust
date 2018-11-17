@@ -33,91 +33,63 @@ struct T(i64, pub u64);
 
 #[test]
 fn test_compound_simple() {
-    assert_eq!(A::type_descriptor(),
-               TD::Compound(CompoundType {
-                   fields: vec![
-                       CompoundField {
-                           name: "a".into(),
-                           ty: TD::Integer(IntSize::U8),
-                           offset: 0,
-                       },
-                       CompoundField {
-                           name: "b".into(),
-                           ty: TD::Unsigned(IntSize::U8),
-                           offset: 8,
-                       }],
-                   size: 16,
-               }));
+    assert_eq!(
+        A::type_descriptor(),
+        TD::Compound(CompoundType {
+            fields: vec![
+                CompoundField { name: "a".into(), ty: TD::Integer(IntSize::U8), offset: 0 },
+                CompoundField { name: "b".into(), ty: TD::Unsigned(IntSize::U8), offset: 8 }
+            ],
+            size: 16,
+        })
+    );
     assert_eq!(A::type_descriptor().size(), 16);
 }
 
 #[test]
 fn test_compound_complex() {
-    assert_eq!(B::type_descriptor(),
-               TD::Compound(CompoundType {
-                   fields: vec![
-                       CompoundField {
-                           name: "a".into(),
-                           ty: TD::FixedArray(Box::new(A::type_descriptor()), 4),
-                           offset: 0,
-                       },
-                       CompoundField {
-                           name: "b".into(),
-                           ty: TD::FixedAscii(8),
-                           offset: 64,
-                       },
-                       CompoundField {
-                           name: "c".into(),
-                           ty: TD::VarLenArray(Box::new(TD::Float(FloatSize::U8))),
-                           offset: 72,
-                       },
-                       CompoundField {
-                           name: "d".into(),
-                           ty: TD::Boolean,
-                           offset: 88,
-                       },
-                       CompoundField {
-                           name: "e".into(),
-                           ty: TD::FixedUnicode(7),
-                           offset: 89,
-                       },
-                       CompoundField {
-                           name: "f".into(),
-                           ty: TD::VarLenAscii,
-                           offset: 96,
-                       },
-                       CompoundField {
-                           name: "g".into(),
-                           ty: TD::VarLenUnicode,
-                           offset: 104,
-                       }],
-                   size: 112,
-               }));
+    assert_eq!(
+        B::type_descriptor(),
+        TD::Compound(CompoundType {
+            fields: vec![
+                CompoundField {
+                    name: "a".into(),
+                    ty: TD::FixedArray(Box::new(A::type_descriptor()), 4),
+                    offset: 0,
+                },
+                CompoundField { name: "b".into(), ty: TD::FixedAscii(8), offset: 64 },
+                CompoundField {
+                    name: "c".into(),
+                    ty: TD::VarLenArray(Box::new(TD::Float(FloatSize::U8))),
+                    offset: 72,
+                },
+                CompoundField { name: "d".into(), ty: TD::Boolean, offset: 88 },
+                CompoundField { name: "e".into(), ty: TD::FixedUnicode(7), offset: 89 },
+                CompoundField { name: "f".into(), ty: TD::VarLenAscii, offset: 96 },
+                CompoundField { name: "g".into(), ty: TD::VarLenUnicode, offset: 104 }
+            ],
+            size: 112,
+        })
+    );
     assert_eq!(B::type_descriptor().size(), 112);
 }
 
 #[test]
 fn test_compound_tuple() {
-    assert_eq!(T::type_descriptor(),
-               TD::Compound(CompoundType {
-                   fields: vec![
-                       CompoundField {
-                           name: "0".into(),
-                           ty: TD::Integer(IntSize::U8),
-                           offset: 0,
-                       },
-                       CompoundField {
-                           name: "1".into(),
-                           ty: TD::Unsigned(IntSize::U8),
-                           offset: 8,
-                       }],
-                   size: 16,
-               }));
+    assert_eq!(
+        T::type_descriptor(),
+        TD::Compound(CompoundType {
+            fields: vec![
+                CompoundField { name: "0".into(), ty: TD::Integer(IntSize::U8), offset: 0 },
+                CompoundField { name: "1".into(), ty: TD::Unsigned(IntSize::U8), offset: 8 }
+            ],
+            size: 16,
+        })
+    );
     assert_eq!(T::type_descriptor().size(), 16);
 }
 
-#[derive(H5Type)]
-#[derive(Clone, Copy)]
+#[derive(H5Type, Clone, Copy)]
 #[repr(i16)]
 #[allow(dead_code)]
 enum E1 {
@@ -127,23 +99,30 @@ enum E1 {
 
 #[test]
 fn test_enum_simple() {
-    assert_eq!(E1::type_descriptor(),
-               TD::Enum(EnumType {
-                   size: IntSize::U2,
-                   signed: true,
-                   members: vec![
-                       EnumMember { name: "X".into(), value: -2i16 as _ },
-                       EnumMember { name: "Y".into(), value: 3u64 },
-                   ]
-               }));
+    assert_eq!(
+        E1::type_descriptor(),
+        TD::Enum(EnumType {
+            size: IntSize::U2,
+            signed: true,
+            members: vec![
+                EnumMember { name: "X".into(), value: -2i16 as _ },
+                EnumMember { name: "Y".into(), value: 3u64 },
+            ]
+        })
+    );
     assert_eq!(E1::type_descriptor().size(), 2);
 }
 
 #[test]
 fn test_enum_base_type() {
     macro_rules! check_base_type {
-        ($ty:ident, $signed:expr, $size:expr) => ({
-            #[repr($ty)] #[allow(dead_code)] #[derive(H5Type)] enum E { X = 42 }
+        ($ty:ident, $signed:expr, $size:expr) => {{
+            #[repr($ty)]
+            #[allow(dead_code)]
+            #[derive(H5Type)]
+            enum E {
+                X = 42,
+            }
             let td = E::type_descriptor();
             assert_eq!(td.size(), mem::size_of::<$ty>());
             assert_eq!(td.size(), mem::size_of::<E>());
@@ -154,10 +133,10 @@ fn test_enum_base_type() {
                     assert_eq!(e.members.len(), 1);
                     assert_eq!(e.members[0].name, "X");
                     assert_eq!(e.members[0].value as $ty, 42);
-                },
+                }
                 _ => panic!(),
             }
-        })
+        }};
     }
 
     check_base_type!(u8, false, 1);
