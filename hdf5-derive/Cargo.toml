@@ -8,13 +8,10 @@ edition = "2018"
 proc-macro = true
 
 [dependencies]
-hdf5-types = { path = "../hdf5-types", version = "0.2.0" }
-quote = "0.6"
 proc-macro2 = "0.4"
-
-[dependencies.syn]
-version = "0.15"
-features = ["derive", "extra-traits"]
+quote = "0.6"
+syn = { version = "0.15", features = ["derive", "extra-traits"]}
+hdf5-types = { path = "../hdf5-types", version = "0.2.0" }
 
 [dev-dependencies]
 compiletest_rs = "0.3"

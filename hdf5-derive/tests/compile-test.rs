@@ -1,12 +1,12 @@
-use std::path::PathBuf;
-
 fn run_mode(mode: &'static str) {
     let mut config = compiletest_rs::Config::default();
-    let cfg_mode = mode.parse().ok().expect("Invalid mode");
+    let cfg_mode = mode.parse().expect("Invalid mode");
 
-    config.target_rustcflags = Some("-Ltarget/debug/ -Ltarget/debug/deps/".to_owned());
     config.mode = cfg_mode;
-    config.src_base = PathBuf::from(format!("tests/{}", mode));
+    config.src_base = format!("tests/{}", mode).into();
+    config.verbose = true;
+    config.link_deps();
+    config.clean_rmeta();
 
     compiletest_rs::run_tests(&config);
 }
