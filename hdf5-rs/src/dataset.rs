@@ -27,7 +27,6 @@ pub enum Chunk {
 /// Represents the HDF5 dataset object.
 pub struct Dataset {
     handle: Handle,
-    filters: Filters,
 }
 
 #[doc(hidden)]
@@ -42,13 +41,8 @@ impl FromID for Dataset {
     fn from_id(id: hid_t) -> Result<Dataset> {
         h5lock!({
             match get_id_type(id) {
-                H5I_DATASET => {
-                    let handle = Handle::new(id)?;
-                    let dcpl = PropertyList::from_id(h5try!(H5Dget_create_plist(id)))?;
-                    let filters = Filters::from_dcpl(&dcpl)?;
-                    Ok(Dataset { handle, filters })
-                }
-                _ => Err(From::from(format!("Invalid property list id: {}", id))),
+                H5I_DATASET => Ok(Dataset { handle: Handle::new(id)? }),
+                _ => Err(From::from(format!("Invalid dataset id: {}", id))),
             }
         })
     }
@@ -129,7 +123,11 @@ impl Dataset {
 
     /// Returns the filters used to create the dataset.
     pub fn filters(&self) -> Filters {
-        self.filters.clone()
+        h5lock!({
+            let dcpl = PropertyList::from_id(H5Dget_create_plist(self.id()))?;
+            Ok(Filters::from_dcpl(&dcpl)?)
+        })
+        .unwrap_or_else(|_: crate::error::Error| Filters::default())
     }
 
     /// Returns `true` if object modification time is tracked by the dataset.
