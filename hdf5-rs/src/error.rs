@@ -238,7 +238,7 @@ where
         if T::min_value() < T::zero() { value < T::zero() } else { value == T::zero() };
 
     if maybe_error {
-        Error::query().map_or_else(|| Ok(value), |err| Err(err))
+        Error::query().map_or_else(|| Ok(value), Err)
     } else {
         Ok(value)
     }
