@@ -29,8 +29,24 @@ def_object_class!(
     &Container::repr
 );
 
+pub enum ContainerType<'a> {
+    File(&'a File),
+    Group(&'a Group),
+}
+
 /// A trait for HDF5 objects that can contain other objects (file, group).
 impl Container {
+    pub fn which(&self) -> Result<ContainerType> {
+        let id_type = self.id_type();
+        unsafe {
+            match id_type {
+                H5I_GROUP => Ok(ContainerType::Group(self.transmute::<Group>())),
+                H5I_FILE => Ok(ContainerType::File(self.transmute::<File>())),
+                _ => Err(From::from(format!("unexpected container type: {:?}", id_type))),
+            }
+        }
+    }
+
     /// Returns the number of objects in the container (or 0 if the container is invalid).
     pub fn len(&self) -> u64 {
         group_info(self.id()).map(|info| info.nlinks).unwrap_or(0)
