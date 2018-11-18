@@ -32,6 +32,7 @@ mod datatype;
 mod error;
 mod file;
 mod filters;
+mod globals;
 mod group;
 mod handle;
 mod location;
@@ -40,9 +41,6 @@ mod plist;
 mod space;
 mod sync;
 mod util;
-
-#[allow(dead_code)]
-mod globals;
 
 pub mod prelude {
     //! The HDF5 prelude module.
@@ -69,15 +67,16 @@ mod internal_prelude {
         h5p::H5P_DEFAULT,
     };
 
-    pub use crate::export::*;
-    pub use crate::types::H5Type;
-
-    pub use crate::dataset::DatasetBuilder;
-    pub use crate::error::silence_errors;
-    pub use crate::file::FileBuilder;
-    pub use crate::handle::{get_id_type, FromID, Handle, ID};
-    pub use crate::plist::PropertyList;
-    pub use crate::util::{get_h5_str, string_from_cstr, to_cstring};
+    pub use crate::{
+        dataset::DatasetBuilder,
+        error::silence_errors,
+        export::*,
+        file::FileBuilder,
+        handle::{get_id_type, FromID, Handle, ID},
+        plist::PropertyList,
+        types::H5Type,
+        util::{get_h5_str, string_from_cstr, to_cstring},
+    };
 
     #[cfg(test)]
     pub use crate::test::{with_tmp_dir, with_tmp_file, with_tmp_path};

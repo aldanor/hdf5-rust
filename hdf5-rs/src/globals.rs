@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use std::mem;
 
 use lazy_static::lazy_static;
