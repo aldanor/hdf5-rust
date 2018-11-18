@@ -97,7 +97,7 @@ impl Dataset {
     /// Returns the chunk shape if the dataset is chunked.
     pub fn chunks(&self) -> Option<Vec<Ix>> {
         h5lock!({
-            self.dcpl_id().ok().map_or(None, |dcpl_id| {
+            self.dcpl_id().ok().and_then(|dcpl_id| {
                 if self.is_chunked() {
                     Some({
                         let ndim = self.ndim();
