@@ -1,11 +1,11 @@
 use std::fmt;
 
+use libhdf5_sys::h5i::H5I_type_t;
+
 use crate::internal_prelude::*;
 
 /// Represents the HDF5 group object.
-pub struct Group {
-    handle: Handle,
-}
+define_object_type!(Group: Container, "group", |id_type| id_type == H5I_type_t::H5I_GROUP);
 
 impl fmt::Debug for Group {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -27,29 +27,6 @@ impl fmt::Display for Group {
         }
     }
 }
-
-#[doc(hidden)]
-impl ID for Group {
-    fn id(&self) -> hid_t {
-        self.handle.id()
-    }
-}
-
-#[doc(hidden)]
-impl FromID for Group {
-    fn from_id(id: hid_t) -> Result<Group> {
-        match get_id_type(id) {
-            H5I_GROUP => Ok(Group { handle: Handle::new(id)? }),
-            _ => Err(From::from(format!("Invalid group id: {}", id))),
-        }
-    }
-}
-
-impl Object for Group {}
-
-impl Location for Group {}
-
-impl Container for Group {}
 
 #[cfg(test)]
 pub mod tests {

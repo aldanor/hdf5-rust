@@ -3,12 +3,15 @@ use std::fmt;
 use hdf5_types::{
     CompoundField, CompoundType, EnumMember, EnumType, FloatSize, H5Type, IntSize, TypeDescriptor,
 };
-use libhdf5_sys::h5t::{
-    H5T_class_t, H5T_cset_t, H5T_str_t, H5Tarray_create2, H5Tcopy, H5Tcreate, H5Tenum_create,
-    H5Tenum_insert, H5Tequal, H5Tget_array_dims2, H5Tget_array_ndims, H5Tget_class, H5Tget_cset,
-    H5Tget_member_name, H5Tget_member_offset, H5Tget_member_type, H5Tget_member_value,
-    H5Tget_nmembers, H5Tget_sign, H5Tget_size, H5Tget_super, H5Tinsert, H5Tis_variable_str,
-    H5Tset_cset, H5Tset_size, H5Tset_strpad, H5Tvlen_create, H5T_VARIABLE,
+use libhdf5_sys::{
+    h5i::H5I_DATATYPE,
+    h5t::{
+        H5T_class_t, H5T_cset_t, H5T_str_t, H5Tarray_create2, H5Tcopy, H5Tcreate, H5Tenum_create,
+        H5Tenum_insert, H5Tequal, H5Tget_array_dims2, H5Tget_array_ndims, H5Tget_class,
+        H5Tget_cset, H5Tget_member_name, H5Tget_member_offset, H5Tget_member_type,
+        H5Tget_member_value, H5Tget_nmembers, H5Tget_sign, H5Tget_size, H5Tget_super, H5Tinsert,
+        H5Tis_variable_str, H5Tset_cset, H5Tset_size, H5Tset_strpad, H5Tvlen_create, H5T_VARIABLE,
+    },
 };
 
 use crate::globals::{H5T_C_S1, H5T_NATIVE_INT8};
@@ -40,28 +43,8 @@ macro_rules! be_le {
     };
 }
 
-pub struct Datatype {
-    handle: Handle,
-}
-
-#[doc(hidden)]
-impl ID for Datatype {
-    fn id(&self) -> hid_t {
-        self.handle.id()
-    }
-}
-
-#[doc(hidden)]
-impl FromID for Datatype {
-    fn from_id(id: hid_t) -> Result<Datatype> {
-        h5lock!(match get_id_type(id) {
-            H5I_DATATYPE => Ok(Datatype { handle: Handle::new(id)? }),
-            _ => Err(From::from(format!("Invalid datatype id: {}", id))),
-        })
-    }
-}
-
-impl Object for Datatype {}
+/// Represents the HDF5 datatype object.
+define_object_type!(Datatype: Object, "datatype", |id_type| id_type == H5I_DATATYPE);
 
 impl fmt::Debug for Datatype {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

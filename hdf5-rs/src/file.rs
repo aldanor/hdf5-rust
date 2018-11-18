@@ -9,6 +9,7 @@ use libhdf5_sys::{
         H5F_ACC_RDWR, H5F_ACC_TRUNC, H5F_OBJ_ALL, H5F_OBJ_FILE, H5F_SCOPE_LOCAL,
     },
     h5fd::{H5Pset_fapl_core, H5Pset_fapl_sec2, H5Pset_fapl_stdio},
+    h5i::H5I_FILE,
     h5p::{H5Pcreate, H5Pget_userblock, H5Pset_userblock},
 };
 
@@ -16,34 +17,7 @@ use crate::globals::{H5P_FILE_ACCESS, H5P_FILE_CREATE};
 use crate::internal_prelude::*;
 
 /// Represents the HDF5 file object.
-pub struct File {
-    handle: Handle,
-}
-
-#[doc(hidden)]
-impl ID for File {
-    fn id(&self) -> hid_t {
-        self.handle.id()
-    }
-}
-
-#[doc(hidden)]
-impl FromID for File {
-    fn from_id(id: hid_t) -> Result<File> {
-        h5lock!({
-            match get_id_type(id) {
-                H5I_FILE => Ok(File { handle: Handle::new(id)? }),
-                _ => Err(From::from(format!("Invalid file id: {}", id))),
-            }
-        })
-    }
-}
-
-impl Object for File {}
-
-impl Location for File {}
-
-impl Container for File {}
+define_object_type!(File: Container, "file", |id_type| id_type == H5I_FILE);
 
 impl File {
     /// Create a new file object.
@@ -110,6 +84,7 @@ impl File {
 
     /// Flushes the file to the storage medium.
     pub fn flush(&self) -> Result<()> {
+        // TODO: &mut self?
         h5call!(H5Fflush(self.id(), H5F_SCOPE_LOCAL)).and(Ok(()))
     }
 
@@ -133,21 +108,22 @@ impl File {
 
     /// Closes the file and invalidates all open handles for contained objects.
     pub fn close(&self) {
+        // TODO: self instead of &self?
         h5lock!({
             let file_ids = self.get_obj_ids(H5F_OBJ_FILE);
             let object_ids = self.get_obj_ids(H5F_OBJ_ALL & !H5F_OBJ_FILE);
             for file_id in &file_ids {
-                let handle = Handle::from_id(*file_id);
+                let handle = Handle::new(*file_id);
                 if let Ok(handle) = handle {
-                    while handle.is_valid() {
+                    while handle.is_valid_user_id() {
                         handle.decref();
                     }
                 }
             }
             for object_id in &object_ids {
-                let handle = Handle::from_id(*object_id);
+                let handle = Handle::new(*object_id);
                 if let Ok(handle) = handle {
-                    while handle.is_valid() {
+                    while handle.is_valid_user_id() {
                         handle.decref();
                     }
                 }

@@ -2,47 +2,58 @@ use std::ptr;
 
 use libhdf5_sys::{
     h5f::H5Fget_name,
-    h5i::{H5Iget_file_id, H5Iget_name},
+    h5i::{H5I_type_t, H5Iget_file_id, H5Iget_name},
     h5o::{H5Oget_comment, H5Oset_comment},
 };
 
 use crate::internal_prelude::*;
 
-/// A trait for HDF5 objects that can have a named location (file, group, dataset).
-pub trait Location: Object {
+/// Named location (file, group, dataset, named datatype).
+define_object_type!(Location: Object, "location", |id_type| [
+    H5I_type_t::H5I_FILE,
+    H5I_type_t::H5I_GROUP,
+    H5I_type_t::H5I_DATATYPE,
+    H5I_type_t::H5I_DATASET,
+    H5I_type_t::H5I_ATTR,
+]
+.contains(&id_type));
+
+impl Location {
     /// Returns the name of the object within the file, or empty string if the object doesn't
     /// have a name (e.g., an anonymous dataset).
-    fn name(&self) -> String {
+    pub fn name(&self) -> String {
         // TODO: should this return Result<String> or an empty string if it fails?
         h5lock!(get_h5_str(|m, s| H5Iget_name(self.id(), m, s)).unwrap_or_else(|_| "".to_string()))
     }
 
     /// Returns the name of the file containing the named object (or the file itself).
-    fn filename(&self) -> String {
+    pub fn filename(&self) -> String {
         // TODO: should this return Result<String> or an empty string if it fails?
         h5lock!(get_h5_str(|m, s| H5Fget_name(self.id(), m, s)).unwrap_or_else(|_| "".to_string()))
     }
 
     /// Returns a handle to the file containing the named object (or the file itself).
-    fn file(&self) -> Result<File> {
+    pub fn file(&self) -> Result<File> {
         File::from_id(h5try!(H5Iget_file_id(self.id())))
     }
 
     /// Returns the commment attached to the named object, if any.
-    fn comment(&self) -> Option<String> {
+    pub fn comment(&self) -> Option<String> {
         // TODO: should this return Result<Option<String>> or fail silently?
         let comment = h5lock!(get_h5_str(|m, s| H5Oget_comment(self.id(), m, s)).ok());
         comment.and_then(|c| if c.is_empty() { None } else { Some(c) })
     }
 
     /// Set or the commment attached to the named object.
-    fn set_comment(&self, comment: &str) -> Result<()> {
+    pub fn set_comment(&self, comment: &str) -> Result<()> {
+        // TODO: &mut self?
         let comment = to_cstring(comment)?;
         h5call!(H5Oset_comment(self.id(), comment.as_ptr())).and(Ok(()))
     }
 
     /// Clear the commment attached to the named object.
-    fn clear_comment(&self) -> Result<()> {
+    pub fn clear_comment(&self) -> Result<()> {
+        // TODO: &mut self?
         h5call!(H5Oset_comment(self.id(), ptr::null_mut())).and(Ok(()))
     }
 }

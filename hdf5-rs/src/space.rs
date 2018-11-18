@@ -2,8 +2,12 @@ use std::fmt;
 use std::ptr;
 use std::slice;
 
-use libhdf5_sys::h5s::{
-    H5Scopy, H5Screate_simple, H5Sget_simple_extent_dims, H5Sget_simple_extent_ndims, H5S_UNLIMITED,
+use libhdf5_sys::{
+    h5i::H5I_DATASPACE,
+    h5s::{
+        H5Scopy, H5Screate_simple, H5Sget_simple_extent_dims, H5Sget_simple_extent_ndims,
+        H5S_UNLIMITED,
+    },
 };
 
 use crate::internal_prelude::*;
@@ -87,10 +91,8 @@ impl Dimension for Ix {
     }
 }
 
-/// Represents the HDF5 dataspace object.
-pub struct Dataspace {
-    handle: Handle,
-}
+/// Represents the HDF5 datatype object.
+define_object_type!(Dataspace: Object, "dataspace", |id_type| id_type == H5I_DATASPACE);
 
 impl Dataspace {
     pub fn new<D: Dimension>(d: D, resizable: bool) -> Result<Dataspace> {
@@ -146,25 +148,6 @@ impl Dimension for Dataspace {
         vec![]
     }
 }
-
-#[doc(hidden)]
-impl ID for Dataspace {
-    fn id(&self) -> hid_t {
-        self.handle.id()
-    }
-}
-
-#[doc(hidden)]
-impl FromID for Dataspace {
-    fn from_id(id: hid_t) -> Result<Dataspace> {
-        match get_id_type(id) {
-            H5I_DATASPACE => Ok(Dataspace { handle: Handle::new(id)? }),
-            _ => Err(From::from(format!("Invalid dataspace id: {}", id))),
-        }
-    }
-}
-
-impl Object for Dataspace {}
 
 impl Clone for Dataspace {
     fn clone(&self) -> Dataspace {

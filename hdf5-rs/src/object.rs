@@ -3,10 +3,16 @@ use libhdf5_sys::h5i::{H5I_type_t, H5Iget_ref};
 use crate::handle::is_valid_user_id;
 use crate::internal_prelude::*;
 
-/// A trait for all HDF5 objects that can be referenced through an identifier.
-pub trait Object: ID {
+/// Any HDF5 object that can be referenced through an identifier.
+define_object_type!(Object, "object", |_| true);
+
+impl Object {
+    pub(crate) fn id(&self) -> hid_t {
+        self.handle.id()
+    }
+
     /// Returns reference count if the handle is valid and 0 otherwise.
-    fn refcount(&self) -> u32 {
+    pub fn refcount(&self) -> u32 {
         if self.is_valid() {
             h5call!(H5Iget_ref(self.id())).unwrap_or(0) as _
         } else {
@@ -16,27 +22,25 @@ pub trait Object: ID {
 
     /// Returns `true` if the object has a valid unlocked identifier (`false` for pre-defined
     /// locked identifiers like property list classes).
-    fn is_valid(&self) -> bool {
+    pub fn is_valid(&self) -> bool {
         is_valid_user_id(self.id())
     }
 
     /// Returns type of the object.
-    fn id_type(&self) -> H5I_type_t {
+    pub fn id_type(&self) -> H5I_type_t {
         get_id_type(self.id())
     }
 }
 
 #[cfg(test)]
 pub mod tests {
-    use libhdf5_sys::h5p::H5Pcreate;
+    use libhdf5_sys::{h5i::H5I_type_t, h5p::H5Pcreate};
 
     use crate::globals::H5P_FILE_ACCESS;
     use crate::handle::{is_valid_id, is_valid_user_id};
     use crate::internal_prelude::*;
 
-    struct TestObject {
-        handle: Handle,
-    }
+    define_object_type!(TestObject: Object, "test object", |_| true);
 
     impl TestObject {
         fn incref(&self) {
@@ -47,20 +51,6 @@ pub mod tests {
             self.handle.decref()
         }
     }
-
-    impl ID for TestObject {
-        fn id(&self) -> hid_t {
-            self.handle.id()
-        }
-    }
-
-    impl FromID for TestObject {
-        fn from_id(id: hid_t) -> Result<TestObject> {
-            Ok(TestObject { handle: Handle::new(id)? })
-        }
-    }
-
-    impl Object for TestObject {}
 
     #[test]
     pub fn test_not_a_valid_user_id() {
@@ -75,6 +65,7 @@ pub mod tests {
         assert!(obj.is_valid());
         assert!(is_valid_id(obj.id()));
         assert!(is_valid_user_id(obj.id()));
+        assert_eq!(obj.id_type(), H5I_type_t::H5I_GENPROP_LST);
 
         assert_eq!(obj.refcount(), 1);
         obj.incref();

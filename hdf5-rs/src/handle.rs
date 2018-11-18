@@ -30,12 +30,22 @@ pub fn is_valid_user_id(id: hid_t) -> bool {
     h5lock!({ H5Iis_valid(id) == 1 })
 }
 
-pub trait ID: Sized {
-    fn id(&self) -> hid_t;
-}
-
 pub trait FromID: Sized {
-    fn from_id(id: hid_t) -> Result<Self>;
+    fn object_type_name() -> &'static str;
+
+    fn is_valid_id_type(id_type: H5I_type_t) -> bool;
+
+    fn from_handle(handle: Handle) -> Self;
+
+    fn from_id(id: hid_t) -> Result<Self> {
+        h5lock!({
+            if Self::is_valid_id_type(get_id_type(id)) {
+                Ok(Self::from_handle(Handle::new(id)?))
+            } else {
+                Err(From::from(format!("Invalid {} id: {}", Self::object_type_name(), id)))
+            }
+        })
+    }
 }
 
 struct Registry {
@@ -102,14 +112,24 @@ impl Handle {
 
     pub fn decref(&self) {
         h5lock!({
-            if is_valid_user_id(self.id()) {
+            if self.is_valid_id() {
                 H5Idec_ref(self.id());
             }
             // must invalidate all linked IDs because the library reuses them internally
-            if !is_valid_user_id(self.id()) && !is_valid_id(self.id()) {
+            if !self.is_valid_user_id() && !self.is_valid_id() {
                 self.invalidate();
             }
         })
+    }
+
+    /// Returns `true` if the object has a valid unlocked identifier (`false` for pre-defined
+    /// locked identifiers like property list classes).
+    pub fn is_valid_user_id(&self) -> bool {
+        is_valid_user_id(self.id())
+    }
+
+    pub fn is_valid_id(&self) -> bool {
+        is_valid_id(self.id())
     }
 }
 
@@ -117,7 +137,7 @@ impl Clone for Handle {
     fn clone(&self) -> Handle {
         h5lock!({
             self.incref();
-            Handle::from_id(self.id()).unwrap_or_else(|_| Handle::invalid())
+            Handle::new(self.id()).unwrap_or_else(|_| Handle::invalid())
         })
     }
 }
@@ -127,17 +147,3 @@ impl Drop for Handle {
         h5lock!(self.decref());
     }
 }
-
-impl ID for Handle {
-    fn id(&self) -> hid_t {
-        self.id()
-    }
-}
-
-impl FromID for Handle {
-    fn from_id(id: hid_t) -> Result<Handle> {
-        Handle::new(id)
-    }
-}
-
-impl Object for Handle {}

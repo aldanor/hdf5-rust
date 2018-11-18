@@ -72,7 +72,7 @@ mod internal_prelude {
         error::silence_errors,
         export::*,
         file::FileBuilder,
-        handle::{get_id_type, FromID, Handle, ID},
+        handle::{get_id_type, FromID, Handle},
         plist::PropertyList,
         types::H5Type,
         util::{get_h5_str, string_from_cstr, to_cstring},

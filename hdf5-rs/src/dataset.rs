@@ -8,6 +8,7 @@ use libhdf5_sys::{
         H5D_fill_value_t, H5D_layout_t, H5Dcreate2, H5Dcreate_anon, H5Dget_create_plist,
         H5Dget_offset, H5Dget_space, H5Dget_storage_size, H5Dget_type, H5D_FILL_TIME_ALLOC,
     },
+    h5i::H5I_DATASET,
     h5p::{
         H5Pcreate, H5Pfill_value_defined, H5Pget_chunk, H5Pget_fill_value, H5Pget_layout,
         H5Pget_obj_track_times, H5Pset_chunk, H5Pset_create_intermediate_group, H5Pset_fill_time,
@@ -27,32 +28,7 @@ pub enum Chunk {
 }
 
 /// Represents the HDF5 dataset object.
-pub struct Dataset {
-    handle: Handle,
-}
-
-#[doc(hidden)]
-impl ID for Dataset {
-    fn id(&self) -> hid_t {
-        self.handle.id()
-    }
-}
-
-#[doc(hidden)]
-impl FromID for Dataset {
-    fn from_id(id: hid_t) -> Result<Dataset> {
-        h5lock!({
-            match get_id_type(id) {
-                H5I_DATASET => Ok(Dataset { handle: Handle::new(id)? }),
-                _ => Err(From::from(format!("Invalid dataset id: {}", id))),
-            }
-        })
-    }
-}
-
-impl Object for Dataset {}
-
-impl Location for Dataset {}
+define_object_type!(Dataset: Location, "dataset", |id_type| id_type == H5I_DATASET);
 
 impl Dataset {
     /// Returns the shape of the dataset.
@@ -201,7 +177,7 @@ pub struct DatasetBuilder<T> {
 
 impl<T: H5Type> DatasetBuilder<T> {
     /// Create a new dataset builder and bind it to the parent container.
-    pub fn new<C: Container>(parent: &C) -> DatasetBuilder<T> {
+    pub fn new(parent: &Container) -> DatasetBuilder<T> {
         h5lock!({
             // Store the reference to the parent handle and try to increase its reference count.
             let handle = Handle::new(parent.id());

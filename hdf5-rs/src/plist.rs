@@ -7,9 +7,7 @@ use libhdf5_sys::{
 
 use crate::internal_prelude::*;
 
-pub struct PropertyList {
-    handle: Handle,
-}
+define_object_type!(PropertyList: Object, "property list", |id_type| id_type == H5I_GENPROP_LST);
 
 impl fmt::Debug for PropertyList {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -26,25 +24,6 @@ impl fmt::Display for PropertyList {
         }
     }
 }
-
-#[doc(hidden)]
-impl ID for PropertyList {
-    fn id(&self) -> hid_t {
-        self.handle.id()
-    }
-}
-
-#[doc(hidden)]
-impl FromID for PropertyList {
-    fn from_id(id: hid_t) -> Result<PropertyList> {
-        match get_id_type(id) {
-            H5I_GENPROP_LST => Ok(PropertyList { handle: Handle::new(id)? }),
-            _ => Err(From::from(format!("Invalid property list id: {}", id))),
-        }
-    }
-}
-
-impl Object for PropertyList {}
 
 impl Clone for PropertyList {
     fn clone(&self) -> PropertyList {
