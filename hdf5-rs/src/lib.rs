@@ -25,6 +25,8 @@ pub use hdf5_types::{self as types, H5Type};
 
 #[macro_use]
 mod macros;
+#[macro_use]
+mod class;
 
 mod container;
 mod dataset;
@@ -62,17 +64,18 @@ mod internal_prelude {
 
     pub use libhdf5_sys::{
         h5::{haddr_t, hbool_t, herr_t, hsize_t},
-        h5i::H5I_type_t::*,
+        h5i::H5I_type_t::{self, *},
         h5i::{hid_t, H5I_INVALID_HID},
         h5p::H5P_DEFAULT,
     };
 
     pub use crate::{
+        class::ObjectClass,
         dataset::DatasetBuilder,
         error::silence_errors,
         export::*,
         file::FileBuilder,
-        handle::{get_id_type, FromID, Handle},
+        handle::{get_id_type, is_valid_user_id, Handle},
         plist::PropertyList,
         types::H5Type,
         util::{get_h5_str, string_from_cstr, to_cstring},

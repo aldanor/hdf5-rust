@@ -8,7 +8,6 @@ use libhdf5_sys::{
         H5D_fill_value_t, H5D_layout_t, H5Dcreate2, H5Dcreate_anon, H5Dget_create_plist,
         H5Dget_offset, H5Dget_space, H5Dget_storage_size, H5Dget_type, H5D_FILL_TIME_ALLOC,
     },
-    h5i::H5I_DATASET,
     h5p::{
         H5Pcreate, H5Pfill_value_defined, H5Pget_chunk, H5Pget_fill_value, H5Pget_layout,
         H5Pget_obj_track_times, H5Pset_chunk, H5Pset_create_intermediate_group, H5Pset_fill_time,
@@ -19,6 +18,9 @@ use libhdf5_sys::{
 use crate::globals::H5P_LINK_CREATE;
 use crate::internal_prelude::*;
 
+/// Represents the HDF5 dataset object.
+def_object_class!(Dataset: Location, "dataset", H5I_DATASET, |_| None);
+
 #[derive(Clone, Debug)]
 pub enum Chunk {
     None,
@@ -26,9 +28,6 @@ pub enum Chunk {
     Infer,
     Manual(Vec<Ix>),
 }
-
-/// Represents the HDF5 dataset object.
-define_object_type!(Dataset: Location, "dataset", |id_type| id_type == H5I_DATASET);
 
 impl Dataset {
     /// Returns the shape of the dataset.

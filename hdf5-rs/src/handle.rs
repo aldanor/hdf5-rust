@@ -30,24 +30,6 @@ pub fn is_valid_user_id(id: hid_t) -> bool {
     h5lock!({ H5Iis_valid(id) == 1 })
 }
 
-pub trait FromID: Sized {
-    fn object_type_name() -> &'static str;
-
-    fn is_valid_id_type(id_type: H5I_type_t) -> bool;
-
-    fn from_handle(handle: Handle) -> Self;
-
-    fn from_id(id: hid_t) -> Result<Self> {
-        h5lock!({
-            if Self::is_valid_id_type(get_id_type(id)) {
-                Ok(Self::from_handle(Handle::new(id)?))
-            } else {
-                Err(From::from(format!("Invalid {} id: {}", Self::object_type_name(), id)))
-            }
-        })
-    }
-}
-
 struct Registry {
     registry: Mutex<HashMap<hid_t, Arc<RwLock<hid_t>>>>,
 }

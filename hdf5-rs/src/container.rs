@@ -3,7 +3,6 @@ use std::default::Default;
 use libhdf5_sys::{
     h5d::H5Dopen2,
     h5g::{H5G_info_t, H5Gcreate2, H5Gget_info, H5Gopen2},
-    h5i::{H5I_FILE, H5I_GROUP},
     h5l::{H5Lcreate_hard, H5Lcreate_soft, H5Ldelete, H5Lmove, H5L_SAME_LOC},
     h5p::{H5Pcreate, H5Pset_create_intermediate_group},
 };
@@ -23,8 +22,12 @@ fn make_lcpl() -> Result<PropertyList> {
     })
 }
 
-define_object_type!(Container: Location, "container", |id_type| id_type == H5I_FILE
-    || id_type == H5I_GROUP);
+def_object_class!(
+    Container: Location,
+    "container",
+    &[H5I_FILE, H5I_GROUP] as &[_],
+    &Container::repr
+);
 
 /// A trait for HDF5 objects that can contain other objects (file, group).
 impl Container {
@@ -120,6 +123,10 @@ impl Container {
     pub fn dataset(&self, name: &str) -> Result<Dataset> {
         let name = to_cstring(name)?;
         Dataset::from_id(h5try!(H5Dopen2(self.id(), name.as_ptr(), H5P_DEFAULT)))
+    }
+
+    fn repr(&self) -> String {
+        format!("\"{}\"", self.name())
     }
 }
 

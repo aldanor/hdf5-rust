@@ -1,16 +1,14 @@
-use std::fmt;
 use std::ptr;
 use std::slice;
 
-use libhdf5_sys::{
-    h5i::H5I_DATASPACE,
-    h5s::{
-        H5Scopy, H5Screate_simple, H5Sget_simple_extent_dims, H5Sget_simple_extent_ndims,
-        H5S_UNLIMITED,
-    },
+use libhdf5_sys::h5s::{
+    H5Scopy, H5Screate_simple, H5Sget_simple_extent_dims, H5Sget_simple_extent_ndims, H5S_UNLIMITED,
 };
 
 use crate::internal_prelude::*;
+
+/// Represents the HDF5 datatype object.
+def_object_class!(Dataspace: Object, "dataspace", H5I_DATASPACE, &Dataspace::repr);
 
 /// A scalar integer type used by `Dimension` trait for indexing.
 pub type Ix = usize;
@@ -91,9 +89,6 @@ impl Dimension for Ix {
     }
 }
 
-/// Represents the HDF5 datatype object.
-define_object_type!(Dataspace: Object, "dataspace", |id_type| id_type == H5I_DATASPACE);
-
 impl Dataspace {
     pub fn new<D: Dimension>(d: D, resizable: bool) -> Result<Dataspace> {
         let rank = d.ndim();
@@ -124,6 +119,15 @@ impl Dataspace {
 
     pub fn resizable(&self) -> bool {
         self.maxdims().iter().any(|&x| x == H5S_UNLIMITED as _)
+    }
+
+    fn repr(&self) -> String {
+        if self.ndim() == 1 {
+            format!("({},)", self.dims()[0])
+        } else {
+            let dims = self.dims().iter().map(|d| d.to_string()).collect::<Vec<_>>().join(", ");
+            format!("({})", dims)
+        }
     }
 }
 
@@ -156,25 +160,6 @@ impl Clone for Dataspace {
     }
 }
 
-impl fmt::Debug for Dataspace {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::Display::fmt(self, f)
-    }
-}
-
-impl fmt::Display for Dataspace {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if !self.is_valid() {
-            f.write_str("<HDF5 dataspace: invalid id>")
-        } else if self.ndim() == 1 {
-            write!(f, "<HDF5 dataspace: ({},)>", self.dims()[0])
-        } else {
-            let dims = self.dims().iter().map(|d| d.to_string()).collect::<Vec<_>>().join(", ");
-            write!(f, "<HDF5 dataspace: ({})>", dims)
-        }
-    }
-}
-
 #[cfg(test)]
 pub mod tests {
     use libhdf5_sys::h5s::H5S_UNLIMITED;
@@ -200,15 +185,9 @@ pub mod tests {
     }
 
     #[test]
-    pub fn test_debug_display() {
-        assert_eq!(format!("{}", Dataspace::new((), true).unwrap()), "<HDF5 dataspace: ()>");
+    pub fn test_debug() {
         assert_eq!(format!("{:?}", Dataspace::new((), true).unwrap()), "<HDF5 dataspace: ()>");
-        assert_eq!(format!("{}", Dataspace::new(3, true).unwrap()), "<HDF5 dataspace: (3,)>");
         assert_eq!(format!("{:?}", Dataspace::new(3, true).unwrap()), "<HDF5 dataspace: (3,)>");
-        assert_eq!(
-            format!("{}", Dataspace::new((1, 2), true).unwrap()),
-            "<HDF5 dataspace: (1, 2)>"
-        );
         assert_eq!(
             format!("{:?}", Dataspace::new((1, 2), true).unwrap()),
             "<HDF5 dataspace: (1, 2)>"

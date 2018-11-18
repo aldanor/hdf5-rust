@@ -1,5 +1,3 @@
-use std::fmt;
-
 use libhdf5_sys::{
     h5i::H5I_GENPROP_LST,
     h5p::{H5Pcopy, H5Pequal},
@@ -7,23 +5,7 @@ use libhdf5_sys::{
 
 use crate::internal_prelude::*;
 
-define_object_type!(PropertyList: Object, "property list", |id_type| id_type == H5I_GENPROP_LST);
-
-impl fmt::Debug for PropertyList {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::Display::fmt(self, f)
-    }
-}
-
-impl fmt::Display for PropertyList {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if !self.is_valid() {
-            f.write_str("<HDF5 property list: invalid id>")
-        } else {
-            f.write_str("<HDF5 property list>") // TODO: more details
-        }
-    }
-}
+def_object_class!(PropertyList: Object, "property list", H5I_GENPROP_LST, |_| None);
 
 impl Clone for PropertyList {
     fn clone(&self) -> PropertyList {

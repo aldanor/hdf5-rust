@@ -2,21 +2,19 @@ use std::ptr;
 
 use libhdf5_sys::{
     h5f::H5Fget_name,
-    h5i::{H5I_type_t, H5Iget_file_id, H5Iget_name},
+    h5i::{H5Iget_file_id, H5Iget_name},
     h5o::{H5Oget_comment, H5Oset_comment},
 };
 
 use crate::internal_prelude::*;
 
 /// Named location (file, group, dataset, named datatype).
-define_object_type!(Location: Object, "location", |id_type| [
-    H5I_type_t::H5I_FILE,
-    H5I_type_t::H5I_GROUP,
-    H5I_type_t::H5I_DATATYPE,
-    H5I_type_t::H5I_DATASET,
-    H5I_type_t::H5I_ATTR,
-]
-.contains(&id_type));
+def_object_class!(
+    Location: Object,
+    "location",
+    &[H5I_FILE, H5I_GROUP, H5I_DATATYPE, H5I_DATASET, H5I_ATTR] as &[_],
+    &Location::repr
+);
 
 impl Location {
     /// Returns the name of the object within the file, or empty string if the object doesn't
@@ -55,6 +53,10 @@ impl Location {
     pub fn clear_comment(&self) -> Result<()> {
         // TODO: &mut self?
         h5call!(H5Oset_comment(self.id(), ptr::null_mut())).and(Ok(()))
+    }
+
+    fn repr(&self) -> String {
+        format!("\"{}\"", self.name())
     }
 }
 

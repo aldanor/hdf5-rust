@@ -4,7 +4,7 @@ use crate::handle::is_valid_user_id;
 use crate::internal_prelude::*;
 
 /// Any HDF5 object that can be referenced through an identifier.
-define_object_type!(Object, "object", |_| true);
+def_object_class!(Object, "object", None, |_| None);
 
 impl Object {
     pub(crate) fn id(&self) -> hid_t {
@@ -40,7 +40,7 @@ pub mod tests {
     use crate::handle::{is_valid_id, is_valid_user_id};
     use crate::internal_prelude::*;
 
-    define_object_type!(TestObject: Object, "test object", |_| true);
+    def_object_class!(TestObject: Object, "test object", None, |_| None);
 
     impl TestObject {
         fn incref(&self) {
