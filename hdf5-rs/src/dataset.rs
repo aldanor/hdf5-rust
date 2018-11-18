@@ -2,15 +2,17 @@ use std::mem;
 
 use num_integer::div_floor;
 
-use ffi::h5::HADDR_UNDEF;
-use ffi::h5d::{
-    H5D_fill_value_t, H5D_layout_t, H5Dcreate2, H5Dcreate_anon, H5Dget_create_plist, H5Dget_offset,
-    H5Dget_space, H5Dget_storage_size, H5Dget_type, H5D_FILL_TIME_ALLOC,
-};
-use ffi::h5p::{
-    H5Pcreate, H5Pfill_value_defined, H5Pget_chunk, H5Pget_fill_value, H5Pget_layout,
-    H5Pget_obj_track_times, H5Pset_chunk, H5Pset_create_intermediate_group, H5Pset_fill_time,
-    H5Pset_fill_value, H5Pset_obj_track_times,
+use libhdf5_sys::{
+    h5::HADDR_UNDEF,
+    h5d::{
+        H5D_fill_value_t, H5D_layout_t, H5Dcreate2, H5Dcreate_anon, H5Dget_create_plist,
+        H5Dget_offset, H5Dget_space, H5Dget_storage_size, H5Dget_type, H5D_FILL_TIME_ALLOC,
+    },
+    h5p::{
+        H5Pcreate, H5Pfill_value_defined, H5Pget_chunk, H5Pget_fill_value, H5Pget_layout,
+        H5Pget_obj_track_times, H5Pset_chunk, H5Pset_create_intermediate_group, H5Pset_fill_time,
+        H5Pset_fill_value, H5Pset_obj_track_times,
+    },
 };
 
 use crate::globals::H5P_LINK_CREATE;
@@ -453,8 +455,7 @@ pub mod tests {
     use std::fs;
     use std::io::Read;
 
-    use ffi::h5d::H5Dwrite;
-    use ffi::h5s::H5S_ALL;
+    use libhdf5_sys::{h5d::H5Dwrite, h5s::H5S_ALL};
 
     use crate::filters::{gzip_available, szip_available};
     use crate::internal_prelude::*;

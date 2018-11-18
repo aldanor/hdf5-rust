@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex, RwLock};
 
 use lazy_static::lazy_static;
 
-use ffi::h5i::{H5I_type_t, H5Idec_ref, H5Iget_type, H5Iinc_ref, H5Iis_valid};
+use libhdf5_sys::h5i::{H5I_type_t, H5Idec_ref, H5Iget_type, H5Iinc_ref, H5Iis_valid};
 
 use crate::internal_prelude::*;
 

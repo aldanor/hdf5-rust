@@ -1,9 +1,11 @@
 use std::default::Default;
 
-use ffi::h5d::H5Dopen2;
-use ffi::h5g::{H5G_info_t, H5Gcreate2, H5Gget_info, H5Gopen2};
-use ffi::h5l::{H5Lcreate_hard, H5Lcreate_soft, H5Ldelete, H5Lmove, H5L_SAME_LOC};
-use ffi::h5p::{H5Pcreate, H5Pset_create_intermediate_group};
+use libhdf5_sys::{
+    h5d::H5Dopen2,
+    h5g::{H5G_info_t, H5Gcreate2, H5Gget_info, H5Gopen2},
+    h5l::{H5Lcreate_hard, H5Lcreate_soft, H5Ldelete, H5Lmove, H5L_SAME_LOC},
+    h5p::{H5Pcreate, H5Pset_create_intermediate_group},
+};
 
 use crate::globals::H5P_LINK_CREATE;
 use crate::internal_prelude::*;

@@ -5,7 +5,7 @@ use std::ptr;
 use num_integer::Integer;
 use num_traits::{Bounded, Zero};
 
-use ffi::h5e::{
+use libhdf5_sys::h5e::{
     H5E_error2_t, H5Eclose_stack, H5Eget_current_stack, H5Eget_msg, H5Eset_auto2, H5Ewalk2,
     H5E_DEFAULT, H5E_WALK_DOWNWARD,
 };
@@ -246,7 +246,7 @@ where
 
 #[cfg(test)]
 pub mod tests {
-    use ffi::h5p::{H5Pclose, H5Pcreate};
+    use libhdf5_sys::h5p::{H5Pclose, H5Pcreate};
 
     use crate::globals::H5P_ROOT;
     use crate::internal_prelude::*;

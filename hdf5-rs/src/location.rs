@@ -1,8 +1,10 @@
 use std::ptr;
 
-use ffi::h5f::H5Fget_name;
-use ffi::h5i::{H5Iget_file_id, H5Iget_name};
-use ffi::h5o::{H5Oget_comment, H5Oset_comment};
+use libhdf5_sys::{
+    h5f::H5Fget_name,
+    h5i::{H5Iget_file_id, H5Iget_name},
+    h5o::{H5Oget_comment, H5Oset_comment},
+};
 
 use crate::internal_prelude::*;
 

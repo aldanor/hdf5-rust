@@ -62,10 +62,12 @@ pub mod prelude {
 mod internal_prelude {
     pub use libc::{c_char, c_int, c_uint, c_void, size_t};
 
-    pub use ffi::h5::{haddr_t, hbool_t, herr_t, hsize_t};
-    pub use ffi::h5i::H5I_type_t::*;
-    pub use ffi::h5i::{hid_t, H5I_INVALID_HID};
-    pub use ffi::h5p::H5P_DEFAULT;
+    pub use libhdf5_sys::{
+        h5::{haddr_t, hbool_t, herr_t, hsize_t},
+        h5i::H5I_type_t::*,
+        h5i::{hid_t, H5I_INVALID_HID},
+        h5p::H5P_DEFAULT,
+    };
 
     pub use crate::export::*;
     pub use crate::types::H5Type;

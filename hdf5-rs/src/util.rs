@@ -44,7 +44,7 @@ where
 mod tests {
     use std::ptr;
 
-    use ffi::h5e::H5Eget_msg;
+    use libhdf5_sys::h5e::H5Eget_msg;
 
     use crate::globals::H5E_CANTOPENOBJ;
 

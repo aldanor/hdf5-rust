@@ -1,14 +1,14 @@
 use std::fmt;
 
-use ffi::h5t::{
+use hdf5_types::{
+    CompoundField, CompoundType, EnumMember, EnumType, FloatSize, H5Type, IntSize, TypeDescriptor,
+};
+use libhdf5_sys::h5t::{
     H5T_class_t, H5T_cset_t, H5T_str_t, H5Tarray_create2, H5Tcopy, H5Tcreate, H5Tenum_create,
     H5Tenum_insert, H5Tequal, H5Tget_array_dims2, H5Tget_array_ndims, H5Tget_class, H5Tget_cset,
     H5Tget_member_name, H5Tget_member_offset, H5Tget_member_type, H5Tget_member_value,
     H5Tget_nmembers, H5Tget_sign, H5Tget_size, H5Tget_super, H5Tinsert, H5Tis_variable_str,
     H5Tset_cset, H5Tset_size, H5Tset_strpad, H5Tvlen_create, H5T_VARIABLE,
-};
-use hdf5_types::{
-    CompoundField, CompoundType, EnumMember, EnumType, FloatSize, H5Type, IntSize, TypeDescriptor,
 };
 
 use crate::globals::{H5T_C_S1, H5T_NATIVE_INT8};
@@ -92,9 +92,8 @@ impl Datatype {
     }
 
     pub fn to_descriptor(&self) -> Result<TypeDescriptor> {
-        use ffi::h5t::H5T_class_t::*;
-        use ffi::h5t::H5T_sign_t::*;
         use hdf5_types::TypeDescriptor as TD;
+        use libhdf5_sys::h5t::{H5T_class_t::*, H5T_sign_t::*};
 
         h5lock!({
             let id = self.id();

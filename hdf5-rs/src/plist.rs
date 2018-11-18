@@ -1,7 +1,9 @@
 use std::fmt;
 
-use ffi::h5i::H5I_GENPROP_LST;
-use ffi::h5p::{H5Pcopy, H5Pequal};
+use libhdf5_sys::{
+    h5i::H5I_GENPROP_LST,
+    h5p::{H5Pcopy, H5Pequal},
+};
 
 use crate::internal_prelude::*;
 
@@ -59,7 +61,7 @@ impl PartialEq for PropertyList {
 
 #[cfg(test)]
 pub mod tests {
-    use ffi::h5p::H5Pcreate;
+    use libhdf5_sys::h5p::H5Pcreate;
 
     use crate::globals::{H5P_FILE_ACCESS, H5P_FILE_CREATE};
     use crate::internal_prelude::*;

@@ -1,4 +1,4 @@
-use ffi::h5i::{H5I_type_t, H5Iget_ref};
+use libhdf5_sys::h5i::{H5I_type_t, H5Iget_ref};
 
 use crate::handle::is_valid_user_id;
 use crate::internal_prelude::*;
@@ -28,7 +28,7 @@ pub trait Object: ID {
 
 #[cfg(test)]
 pub mod tests {
-    use ffi::h5p::H5Pcreate;
+    use libhdf5_sys::h5p::H5Pcreate;
 
     use crate::globals::H5P_FILE_ACCESS;
     use crate::handle::{is_valid_id, is_valid_user_id};

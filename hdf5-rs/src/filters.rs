@@ -1,15 +1,18 @@
 use crate::globals::H5P_DATASET_CREATE;
 use crate::internal_prelude::*;
-use ffi::h5p::{
-    H5Pcreate, H5Pget_filter2, H5Pget_nfilters, H5Pset_deflate, H5Pset_fletcher32,
-    H5Pset_scaleoffset, H5Pset_shuffle, H5Pset_szip,
-};
-use ffi::h5t::{H5Tget_class, H5T_FLOAT, H5T_INTEGER};
-use ffi::h5z::{
-    H5Z_filter_t, H5Zfilter_avail, H5Zget_filter_info, H5Z_FILTER_CONFIG_DECODE_ENABLED,
-    H5Z_FILTER_CONFIG_ENCODE_ENABLED, H5Z_FILTER_DEFLATE, H5Z_FILTER_FLETCHER32,
-    H5Z_FILTER_SCALEOFFSET, H5Z_FILTER_SHUFFLE, H5Z_FILTER_SZIP, H5Z_SO_FLOAT_DSCALE, H5Z_SO_INT,
-    H5_SZIP_EC_OPTION_MASK, H5_SZIP_NN_OPTION_MASK,
+
+use libhdf5_sys::{
+    h5p::{
+        H5Pcreate, H5Pget_filter2, H5Pget_nfilters, H5Pset_deflate, H5Pset_fletcher32,
+        H5Pset_scaleoffset, H5Pset_shuffle, H5Pset_szip,
+    },
+    h5t::{H5Tget_class, H5T_FLOAT, H5T_INTEGER},
+    h5z::{
+        H5Z_filter_t, H5Zfilter_avail, H5Zget_filter_info, H5Z_FILTER_CONFIG_DECODE_ENABLED,
+        H5Z_FILTER_CONFIG_ENCODE_ENABLED, H5Z_FILTER_DEFLATE, H5Z_FILTER_FLETCHER32,
+        H5Z_FILTER_SCALEOFFSET, H5Z_FILTER_SHUFFLE, H5Z_FILTER_SZIP, H5Z_SO_FLOAT_DSCALE,
+        H5Z_SO_INT, H5_SZIP_EC_OPTION_MASK, H5_SZIP_NN_OPTION_MASK,
+    },
 };
 
 /// Returns `true` if gzip filter is available.
