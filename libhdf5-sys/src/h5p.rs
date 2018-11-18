@@ -82,7 +82,7 @@ pub use self::globals::*;
 
 #[cfg(all(not(hdf5_1_8_14), not(target_env = "msvc")))]
 mod globals {
-    pub use h5i::hid_t as id_t;
+    pub use crate::h5i::hid_t as id_t;
 
     // Property list classes
     extern_static!(H5P_CLS_ROOT, H5P_CLS_ROOT_g);
