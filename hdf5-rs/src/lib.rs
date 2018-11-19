@@ -5,12 +5,10 @@
 
 mod export {
     pub use crate::{
+        dim::{Dimension, Ix},
         error::{Error, Result},
         filters::Filters,
-        hl::{
-            Dataset, Dataspace, Datatype, Dimension, File, Group, Ix, Location, Object,
-            PropertyList,
-        },
+        hl::{Dataset, Dataspace, Datatype, File, Group, Location, Object, PropertyList},
     };
 
     pub use hdf5_derive::H5Type;
@@ -24,6 +22,7 @@ mod macros;
 #[macro_use]
 mod class;
 
+mod dim;
 mod error;
 mod filters;
 mod globals;

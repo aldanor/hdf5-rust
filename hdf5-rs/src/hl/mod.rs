@@ -15,5 +15,5 @@ pub use self::{
     location::Location,
     object::Object,
     plist::PropertyList,
-    space::{Dataspace, Dimension, Ix},
+    space::Dataspace,
 };
