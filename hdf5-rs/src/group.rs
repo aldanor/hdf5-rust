@@ -81,7 +81,7 @@ impl Group {
             H5P_DEFAULT,
             H5P_DEFAULT
         ))
-            .and(Ok(()))
+        .and(Ok(()))
     }
 
     /// Relinks an object. Note: `name` and `path` are relative to the current object.
@@ -97,7 +97,7 @@ impl Group {
             H5P_DEFAULT,
             H5P_DEFAULT
         ))
-            .and(Ok(()))
+        .and(Ok(()))
     }
 
     /// Removes a link to an object from this file or group.
