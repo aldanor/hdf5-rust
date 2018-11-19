@@ -101,7 +101,6 @@ macro_rules! h5call {
 }
 
 /// `h5try!(..)` is equivalent to try!(h5call!(..)).
-#[macro_export]
 macro_rules! h5try {
     ($expr:expr) => {
         match h5call!($expr) {
