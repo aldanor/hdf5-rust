@@ -42,21 +42,6 @@ mod space;
 mod sync;
 mod util;
 
-pub mod prelude {
-    //! The HDF5 prelude module.
-    //!
-    //! The purpose of this module is to provide reexports of many core `hdf5` traits so that
-    //! they can be then glob-imported all at once:
-    //!
-    //! ```ignore
-    //! use h5::prelude::*;
-    //! ```
-    //! This module provides reexports of such traits as `Object`, `Location` and `Container`
-    //! and does not expose any structures or functions.
-
-    pub use super::{Container, Dimension, H5Type, Location, Object};
-}
-
 mod internal_prelude {
     pub use libc::{c_char, c_int, c_uint, c_void, size_t};
 
