@@ -1,7 +1,4 @@
-use libhdf5_sys::{
-    h5i::H5I_GENPROP_LST,
-    h5p::{H5Pcopy, H5Pequal},
-};
+use libhdf5_sys::h5p::{H5Pcopy, H5Pequal};
 
 use crate::internal_prelude::*;
 

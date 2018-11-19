@@ -1,6 +1,5 @@
-use libhdf5_sys::h5i::{H5I_type_t, H5Iget_ref};
+use libhdf5_sys::h5i::H5Iget_ref;
 
-use crate::handle::is_valid_user_id;
 use crate::internal_prelude::*;
 
 /// Any HDF5 object that can be referenced through an identifier.
