@@ -15,7 +15,7 @@ use crate::globals::{H5P_FILE_ACCESS, H5P_FILE_CREATE};
 use crate::internal_prelude::*;
 
 /// Represents the HDF5 file object.
-def_object_class!(File: Container, "file", H5I_FILE, &File::repr);
+def_object_class!(File: Group, "file", H5I_FILE, &File::repr);
 
 impl File {
     /// Create a new file object.

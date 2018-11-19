@@ -176,7 +176,7 @@ pub struct DatasetBuilder<T> {
 
 impl<T: H5Type> DatasetBuilder<T> {
     /// Create a new dataset builder and bind it to the parent container.
-    pub fn new(parent: &Container) -> DatasetBuilder<T> {
+    pub fn new(parent: &Group) -> DatasetBuilder<T> {
         h5lock!({
             // Store the reference to the parent handle and try to increase its reference count.
             let handle = Handle::new(parent.id());

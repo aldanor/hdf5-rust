@@ -5,7 +5,6 @@
 
 mod export {
     pub use crate::{
-        container::Container,
         dataset::Dataset,
         datatype::Datatype,
         error::{Error, Result},
@@ -28,7 +27,6 @@ mod macros;
 #[macro_use]
 mod class;
 
-mod container;
 mod dataset;
 mod datatype;
 mod error;
