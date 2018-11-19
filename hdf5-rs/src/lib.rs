@@ -5,42 +5,33 @@
 
 mod export {
     pub use crate::{
-        dataset::Dataset,
-        datatype::Datatype,
         error::{Error, Result},
-        file::File,
         filters::Filters,
-        group::Group,
-        location::Location,
-        object::Object,
-        space::{Dataspace, Dimension, Ix},
+        hl::{
+            Dataset, Dataspace, Datatype, Dimension, File, Group, Ix, Location, Object,
+            PropertyList,
+        },
     };
+
+    pub use hdf5_derive::H5Type;
+    pub use hdf5_types::{self as types, H5Type};
 }
 
 pub use crate::export::*;
-
-pub use hdf5_derive::H5Type;
-pub use hdf5_types::{self as types, H5Type};
 
 #[macro_use]
 mod macros;
 #[macro_use]
 mod class;
 
-mod dataset;
-mod datatype;
 mod error;
-mod file;
 mod filters;
 mod globals;
-mod group;
 mod handle;
-mod location;
-mod object;
-mod plist;
-mod space;
 mod sync;
 mod util;
+
+mod hl;
 
 mod internal_prelude {
     pub use libc::{c_char, c_int, c_uint, c_void, size_t};
@@ -54,13 +45,10 @@ mod internal_prelude {
 
     pub use crate::{
         class::ObjectClass,
-        dataset::DatasetBuilder,
         error::silence_errors,
         export::*,
-        file::FileBuilder,
         handle::{get_id_type, is_valid_user_id, Handle},
-        plist::PropertyList,
-        types::H5Type,
+        hl::*,
         util::{get_h5_str, string_from_cstr, to_cstring},
     };
 
