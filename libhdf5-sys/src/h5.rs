@@ -37,7 +37,7 @@ pub const HADDR_UNDEF: haddr_t = !0;
 pub const HADDR_MAX: haddr_t = HADDR_UNDEF - 1;
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct H5_ih_info_t {
     pub index_size: hsize_t,
     pub heap_size: hsize_t,

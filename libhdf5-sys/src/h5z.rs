@@ -92,7 +92,7 @@ pub type H5Z_filter_func_t = Option<
 >;
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct H5Z_cb_t {
     pub func: H5Z_filter_func_t,
     pub op_data: *mut c_void,
@@ -120,7 +120,7 @@ pub type H5Z_func_t = Option<
 >;
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct H5Z_class2_t {
     pub version: c_int,
     pub id: H5Z_filter_t,

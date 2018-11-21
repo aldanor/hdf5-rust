@@ -32,7 +32,7 @@ pub enum H5G_storage_type_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct H5G_info_t {
     pub storage_type: H5G_storage_type_t,
     pub nlinks: hsize_t,

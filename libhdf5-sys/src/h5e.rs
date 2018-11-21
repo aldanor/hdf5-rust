@@ -19,7 +19,7 @@ pub enum H5E_type_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct H5E_error2_t {
     pub cls_id: hid_t,
     pub maj_num: hid_t,

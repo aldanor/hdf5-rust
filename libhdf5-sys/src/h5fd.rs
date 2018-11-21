@@ -68,7 +68,7 @@ pub const H5FD_FEAT_ALLOW_FILE_IMAGE: c_uint = 0x00000400;
 pub const H5FD_FEAT_CAN_USE_FILE_IMAGE_CALLBACKS: c_uint = 0x00000800;
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct H5FD_class_t {
     pub name: *const c_char,
     pub maxaddr: haddr_t,
@@ -153,7 +153,7 @@ impl Default for H5FD_class_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct H5FD_free_t {
     pub addr: haddr_t,
     pub size: hsize_t,
@@ -167,7 +167,7 @@ impl Default for H5FD_free_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct H5FD_t {
     pub driver_id: hid_t,
     pub cls: *const H5FD_class_t,
@@ -200,7 +200,7 @@ pub enum H5FD_file_image_op_t {
 
 #[cfg(hdf5_1_8_9)]
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct H5FD_file_image_callbacks_t {
     pub image_malloc: Option<
         extern "C" fn(size: size_t, file_image_op: H5FD_file_image_op_t, udata: *mut c_void)

@@ -26,7 +26,7 @@ pub const H5L_TYPE_BUILTIN_MAX: H5L_type_t = H5L_TYPE_SOFT;
 pub const H5L_TYPE_UD_MIN: H5L_type_t = H5L_TYPE_EXTERNAL;
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct H5L_info_t {
     pub _type: H5L_type_t,
     pub corder_valid: hbool_t,
@@ -42,7 +42,7 @@ impl Default for H5L_info_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct __H5L_info_t__u {
     pub _bindgen_data_: [u64; 1usize],
 }
@@ -115,7 +115,7 @@ pub type H5L_query_func_t = Option<
 >;
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct H5L_class_t {
     pub version: c_int,
     pub id: H5L_type_t,

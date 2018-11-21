@@ -49,7 +49,7 @@ pub enum H5F_close_degree_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct H5F_info_t {
     pub super_ext_size: hsize_t,
     pub sohm: H5F_info_t__sohm,
@@ -62,7 +62,7 @@ impl Default for H5F_info_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct H5F_info_t__sohm {
     pub hdr_size: hsize_t,
     pub msgs_info: H5_ih_info_t,

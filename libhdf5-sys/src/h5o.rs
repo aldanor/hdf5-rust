@@ -56,7 +56,7 @@ pub enum H5O_type_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct H5O_hdr_info_t {
     pub version: c_uint,
     pub nmesgs: c_uint,
@@ -73,7 +73,7 @@ impl Default for H5O_hdr_info_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct __H5O_hdr_info_t__space {
     pub total: hsize_t,
     pub meta: hsize_t,
@@ -88,7 +88,7 @@ impl Default for __H5O_hdr_info_t__space {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct __H5O_hdr_info_t__mesg {
     pub present: uint64_t,
     pub shared: uint64_t,
@@ -101,7 +101,7 @@ impl Default for __H5O_hdr_info_t__mesg {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct H5O_info_t {
     pub fileno: c_ulong,
     pub addr: haddr_t,
@@ -123,7 +123,7 @@ impl Default for H5O_info_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct __H5O_info_t__meta_size {
     pub obj: H5_ih_info_t,
     pub attr: H5_ih_info_t,

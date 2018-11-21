@@ -151,7 +151,7 @@ pub enum H5T_bkg_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct H5T_cdata_t {
     pub command: H5T_cmd_t,
     pub need_bkg: H5T_bkg_t,
@@ -202,7 +202,7 @@ pub enum H5T_conv_ret_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct hvl_t {
     pub len: size_t,
     pub p: *mut c_void,
