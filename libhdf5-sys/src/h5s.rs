@@ -91,3 +91,12 @@ extern "C" {
     pub fn H5Sget_select_bounds(spaceid: hid_t, start: *mut hsize_t, end: *mut hsize_t) -> herr_t;
     pub fn H5Sget_select_type(spaceid: hid_t) -> H5S_sel_type;
 }
+
+#[cfg(hdf5_1_10_0)]
+extern "C" {
+    pub fn H5Sis_regular_hyperslab(spaceid: hid_t) -> htri_t;
+    pub fn H5Sget_regular_hyperslab(
+        spaceid: hid_t, start: *mut hsize_t, stride: *mut hsize_t, count: *mut hsize_t,
+        block: *mut hsize_t,
+    ) -> htri_t;
+}

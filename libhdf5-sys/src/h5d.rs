@@ -19,6 +19,7 @@ pub const H5D_XFER_DIRECT_CHUNK_WRITE_FILTERS_NAME: &str = "direct_chunk_filters
 pub const H5D_XFER_DIRECT_CHUNK_WRITE_OFFSET_NAME: &str = "direct_chunk_offset";
 pub const H5D_XFER_DIRECT_CHUNK_WRITE_DATASIZE_NAME: &str = "direct_chunk_datasize";
 
+#[cfg(not(hdf5_1_10_0))]
 #[repr(C)]
 #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
 pub enum H5D_layout_t {
@@ -146,3 +147,44 @@ extern "C" {
         dst_buf: *mut c_void, op: H5D_gather_func_t, op_data: *mut c_void,
     ) -> herr_t;
 }
+
+#[cfg(hdf5_1_10_0)]
+mod hdf5_1_10_0 {
+    use super::*;
+
+    #[repr(C)]
+    #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+    pub enum H5D_layout_t {
+        H5D_LAYOUT_ERROR = -1,
+        H5D_COMPACT = 0,
+        H5D_CONTIGUOUS = 1,
+        H5D_CHUNKED = 2,
+        H5D_VIRTUAL = 3,
+        H5D_NLAYOUTS = 4,
+    }
+
+    #[repr(C)]
+    #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+    pub enum H5D_vds_view_t {
+        H5D_VDS_ERROR = -1,
+        H5D_VDS_FIRST_MISSING = 0,
+        H5D_VDS_LAST_AVAILABLE = 1,
+    }
+
+    pub const H5D_CHUNK_DONT_FILTER_PARTIAL_CHUNKS: c_uint = 1;
+
+    pub type H5D_append_cb_t = Option<
+        unsafe extern "C" fn(dataset_id: hid_t, cur_dims: *mut hsize_t, op_data: *mut c_void)
+            -> herr_t,
+    >;
+
+    extern "C" {
+        pub fn H5Dflush(dset_id: hid_t) -> herr_t;
+        pub fn H5Drefresh(dset_id: hid_t) -> herr_t;
+        pub fn H5Dformat_convert(dset_id: hid_t) -> herr_t;
+        pub fn H5Dget_chunk_index_type(did: hid_t, idx_type: *mut H5D_chunk_index_t) -> herr_t;
+    }
+}
+
+#[cfg(hdf5_1_10_0)]
+pub use self::hdf5_1_10_0::*;

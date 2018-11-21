@@ -63,3 +63,9 @@ extern "C" {
     ) -> herr_t;
     pub fn H5Gclose(group_id: hid_t) -> herr_t;
 }
+
+#[cfg(hdf5_1_10_0)]
+extern "C" {
+    pub fn H5Gflush(group_id: hid_t) -> herr_t;
+    pub fn H5Grefresh(group_id: hid_t) -> herr_t;
+}

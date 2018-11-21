@@ -295,3 +295,9 @@ extern "C" {
     pub fn H5FD_stdio_term();
     pub fn H5Pset_fapl_stdio(fapl_id: hid_t) -> herr_t;
 }
+
+#[cfg(hdf5_1_10_0)]
+extern "C" {
+    pub fn H5FDlock(file: *mut H5FD_t, rw: hbool_t) -> herr_t;
+    pub fn H5FDunlock(file: *mut H5FD_t) -> herr_t;
+}

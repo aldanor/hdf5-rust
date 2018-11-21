@@ -18,12 +18,16 @@ pub enum H5R_type_t {
 pub type hobj_ref_t = haddr_t;
 pub type hdset_reg_ref_t = [c_uchar; 12usize];
 
+#[cfg(not(hdf5_1_10_0))]
+extern "C" {
+    pub fn H5Rdereference(dataset: hid_t, ref_type: H5R_type_t, _ref: *const c_void) -> hid_t;
+}
+
 extern "C" {
     pub fn H5Rcreate(
         _ref: *mut c_void, loc_id: hid_t, name: *const c_char, ref_type: H5R_type_t,
         space_id: hid_t,
     ) -> herr_t;
-    pub fn H5Rdereference(dataset: hid_t, ref_type: H5R_type_t, _ref: *const c_void) -> hid_t;
     pub fn H5Rget_region(dataset: hid_t, ref_type: H5R_type_t, _ref: *const c_void) -> hid_t;
     pub fn H5Rget_obj_type2(
         id: hid_t, ref_type: H5R_type_t, _ref: *const c_void, obj_type: *mut H5O_type_t,
@@ -32,3 +36,14 @@ extern "C" {
         loc_id: hid_t, ref_type: H5R_type_t, _ref: *const c_void, name: *mut c_char, size: size_t,
     ) -> ssize_t;
 }
+
+#[cfg(hdf5_1_10_0)]
+extern "C" {
+    pub fn H5Rdereference1(obj_id: hid_t, ref_type: H5R_type_t, ref_: *const c_void) -> hid_t;
+    pub fn H5Rdereference2(
+        obj_id: hid_t, oapl_id: hid_t, ref_type: H5R_type_t, ref_: *const c_void,
+    ) -> hid_t;
+}
+
+#[cfg(hdf5_1_10_0)]
+pub use self::H5Rdereference1 as H5Rdereference;

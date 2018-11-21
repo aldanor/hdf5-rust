@@ -522,3 +522,66 @@ extern "C" {
     pub fn H5Pset_efile_prefix(dapl_id: hid_t, prefix: *const c_char) -> herr_t;
     pub fn H5Pget_efile_prefix(dapl_id: hid_t, prefix: *const c_char, size: size_t) -> ssize_t;
 }
+
+#[cfg(hdf5_1_10_0)]
+use crate::{
+    h5d::{H5D_append_cb_t, H5D_vds_view_t},
+    h5f::{H5F_file_space_type_t, H5F_flush_cb_t},
+};
+
+#[cfg(hdf5_1_10_0)]
+extern "C" {
+    pub fn H5Pset_append_flush(
+        plist_id: hid_t, ndims: c_uint, boundary: *const hsize_t, func: H5D_append_cb_t,
+        udata: *mut c_void,
+    ) -> herr_t;
+    pub fn H5Pget_append_flush(
+        plist_id: hid_t, dims: c_uint, boundary: *mut hsize_t, func: *mut H5D_append_cb_t,
+        udata: *mut *mut c_void,
+    ) -> herr_t;
+    pub fn H5Pset_object_flush_cb(
+        plist_id: hid_t, func: H5F_flush_cb_t, udata: *mut c_void,
+    ) -> herr_t;
+    pub fn H5Pget_object_flush_cb(
+        plist_id: hid_t, func: *mut H5F_flush_cb_t, udata: *mut *mut c_void,
+    ) -> herr_t;
+    pub fn H5Pget_metadata_read_attempts(plist_id: hid_t, attempts: *mut c_uint) -> herr_t;
+    pub fn H5Pset_metadata_read_attempts(plist_id: hid_t, attempts: c_uint) -> herr_t;
+    pub fn H5Pset_mdc_log_options(
+        plist_id: hid_t, is_enabled: hbool_t, location: *const c_char, start_on_access: hbool_t,
+    ) -> herr_t;
+    pub fn H5Pget_mdc_log_options(
+        plist_id: hid_t, is_enabled: *mut hbool_t, location: *mut c_char,
+        location_size: *mut size_t, start_on_access: *mut hbool_t,
+    ) -> herr_t;
+    pub fn H5Fget_mdc_logging_status(
+        file_id: hid_t, is_enabled: *mut hbool_t, is_currently_logging: *mut hbool_t,
+    ) -> herr_t;
+    pub fn H5Pset_file_space(
+        plist_id: hid_t, strategy: H5F_file_space_type_t, threshold: hsize_t,
+    ) -> herr_t;
+    pub fn H5Pget_file_space(
+        plist_id: hid_t, strategy: *mut H5F_file_space_type_t, threshold: *mut hsize_t,
+    ) -> herr_t;
+    pub fn H5Pset_virtual(
+        dcpl_id: hid_t, vspace_id: hid_t, src_file_name: *const c_char,
+        src_dset_name: *const c_char, src_space_id: hid_t,
+    ) -> herr_t;
+    pub fn H5Pget_virtual_count(dcpl_id: hid_t, count: *mut size_t) -> herr_t;
+    pub fn H5Pget_virtual_vspace(dcpl_id: hid_t, index: usize) -> hid_t;
+    pub fn H5Pget_virtual_srcspace(dcpl_id: hid_t, index: size_t) -> hid_t;
+    pub fn H5Pget_virtual_dsetname(
+        dcpl_id: hid_t, index: size_t, name: *mut c_char, size: size_t,
+    ) -> ssize_t;
+    pub fn H5Pget_virtual_filename(
+        dcpl_id: hid_t, index: size_t, name: *mut c_char, size: size_t,
+    ) -> ssize_t;
+    pub fn H5Pget_virtual_printf_gap(plist_id: hid_t, gap_size: *mut hsize_t) -> herr_t;
+    pub fn H5Pset_virtual_printf_gap(plist_id: hid_t, gap_size: hsize_t) -> herr_t;
+    pub fn H5Pget_virtual_view(plist_id: hid_t, view: *mut H5D_vds_view_t) -> herr_t;
+    pub fn H5Pset_virtual_view(plist_id: hid_t, view: H5D_vds_view_t) -> herr_t;
+    pub fn H5Pget_chunk_opts(plist_id: hid_t, opts: *mut c_uint) -> herr_t;
+    pub fn H5Pset_chunk_opts(plist_id: hid_t, opts: c_uint) -> herr_t;
+    pub fn H5Pencode(plist_id: hid_t, buf: *mut c_void, nalloc: *mut size_t) -> herr_t;
+    pub fn H5Pdecode(buf: *const c_void) -> hid_t;
+}

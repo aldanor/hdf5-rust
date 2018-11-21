@@ -515,3 +515,9 @@ mod globals {
     extern_static!(H5T_NATIVE_INT_FAST64, __imp_H5T_NATIVE_INT_FAST64_g);
     extern_static!(H5T_NATIVE_UINT_FAST64, __imp_H5T_NATIVE_UINT_FAST64_g);
 }
+
+#[cfg(hdf5_1_10_0)]
+extern "C" {
+    pub fn H5Tflush(type_id: hid_t) -> herr_t;
+    pub fn H5Trefresh(type_id: hid_t) -> herr_t;
+}

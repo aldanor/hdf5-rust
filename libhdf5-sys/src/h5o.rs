@@ -3,7 +3,7 @@ pub use self::H5O_type_t::*;
 
 use libc::{c_char, c_uint, c_ulong, c_void, size_t, ssize_t, time_t, uint32_t, uint64_t};
 
-use crate::h5::{haddr_t, herr_t, hsize_t, H5_ih_info_t, H5_index_t, H5_iter_order_t};
+use crate::h5::{haddr_t, hbool_t, herr_t, hsize_t, H5_ih_info_t, H5_index_t, H5_iter_order_t};
 use crate::h5i::hid_t;
 
 pub const H5O_COPY_SHALLOW_HIERARCHY_FLAG: c_uint = 0x0001;
@@ -203,4 +203,13 @@ use crate::h5::htri_t;
 #[cfg(hdf5_1_8_5)]
 extern "C" {
     pub fn H5Oexists_by_name(loc_id: hid_t, name: *const c_char, lapl_id: hid_t) -> htri_t;
+}
+
+#[cfg(hdf5_1_10_0)]
+extern "C" {
+    pub fn H5Odisable_mdc_flushes(object_id: hid_t) -> herr_t;
+    pub fn H5Oenable_mdc_flushes(object_id: hid_t) -> herr_t;
+    pub fn H5Oare_mdc_flushes_disabled(object_id: hid_t, are_disabled: *mut hbool_t) -> herr_t;
+    pub fn H5Oflush(obj_id: hid_t) -> herr_t;
+    pub fn H5Orefresh(oid: hid_t) -> herr_t;
 }

@@ -5,7 +5,7 @@ pub use self::H5F_scope_t::*;
 
 use libc::{c_char, c_double, c_int, c_uint, c_void, size_t, ssize_t};
 
-use crate::h5::{herr_t, hsize_t, hssize_t, htri_t, H5_ih_info_t};
+use crate::h5::{haddr_t, herr_t, hsize_t, hssize_t, htri_t, H5_ih_info_t};
 use crate::h5ac::H5AC_cache_config_t;
 use crate::h5i::hid_t;
 
@@ -52,7 +52,7 @@ pub enum H5F_close_degree_t {
 #[derive(Copy, Clone)]
 pub struct H5F_info_t {
     pub super_ext_size: hsize_t,
-    pub sohm: __H5F_info_t__sohm,
+    pub sohm: H5F_info_t__sohm,
 }
 
 impl Default for H5F_info_t {
@@ -63,13 +63,13 @@ impl Default for H5F_info_t {
 
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub struct __H5F_info_t__sohm {
+pub struct H5F_info_t__sohm {
     pub hdr_size: hsize_t,
     pub msgs_info: H5_ih_info_t,
 }
 
-impl Default for __H5F_info_t__sohm {
-    fn default() -> __H5F_info_t__sohm {
+impl Default for H5F_info_t__sohm {
+    fn default() -> Self {
         unsafe { ::std::mem::zeroed() }
     }
 }
@@ -96,6 +96,11 @@ pub enum H5F_libver_t {
 }
 
 pub const H5F_LIBVER_18: H5F_libver_t = H5F_LIBVER_LATEST;
+
+#[cfg(not(hdf5_1_10_0))]
+extern "C" {
+    pub fn H5Fget_info(obj_id: hid_t, bh_info: *mut H5F_info_t) -> herr_t;
+}
 
 extern "C" {
     pub fn H5Fis_hdf5(filename: *const c_char) -> htri_t;
@@ -127,7 +132,6 @@ extern "C" {
     ) -> herr_t;
     pub fn H5Freset_mdc_hit_rate_stats(file_id: hid_t) -> herr_t;
     pub fn H5Fget_name(obj_id: hid_t, name: *mut c_char, size: size_t) -> ssize_t;
-    pub fn H5Fget_info(obj_id: hid_t, bh_info: *mut H5F_info_t) -> herr_t;
 }
 
 #[cfg(hdf5_1_8_7)]
@@ -139,3 +143,124 @@ extern "C" {
 extern "C" {
     pub fn H5Fget_file_image(file_id: hid_t, buf_ptr: *mut c_void, buf_len: size_t) -> ssize_t;
 }
+
+#[cfg(hdf5_1_10_0)]
+mod hdf5_1_10_0 {
+    use super::*;
+
+    pub const H5F_ACC_SWMR_WRITE: c_uint = 0x0020;
+    pub const H5F_ACC_SWMR_READ: c_uint = 0x0040;
+
+    #[repr(C)]
+    #[derive(Debug, Copy, Clone)]
+    pub struct H5F_retry_info_t {
+        pub nbins: c_uint,
+        pub retries: [*mut u32; 21usize],
+    }
+
+    #[repr(C)]
+    #[derive(Debug, Copy, Clone)]
+    pub struct H5F_sect_info_t {
+        pub addr: haddr_t,
+        pub size: hsize_t,
+    }
+
+    impl Default for H5F_sect_info_t {
+        fn default() -> Self {
+            unsafe { ::std::mem::zeroed() }
+        }
+    }
+
+    #[repr(C)]
+    #[derive(Debug, Copy, Clone)]
+    pub struct H5F_info2_t {
+        pub super_: H5F_info2_t__super,
+        pub free: H5F_info2_t__free,
+        pub sohm: H5F_info2_t__sohm,
+    }
+
+    impl Default for H5F_info2_t {
+        fn default() -> Self {
+            unsafe { ::std::mem::zeroed() }
+        }
+    }
+
+    #[repr(C)]
+    #[derive(Debug, Copy, Clone)]
+    pub struct H5F_info2_t__super {
+        pub version: c_uint,
+        pub super_size: hsize_t,
+        pub super_ext_size: hsize_t,
+    }
+
+    impl Default for H5F_info2_t__super {
+        fn default() -> Self {
+            unsafe { ::std::mem::zeroed() }
+        }
+    }
+
+    #[repr(C)]
+    #[derive(Debug, Copy, Clone)]
+    pub struct H5F_info2_t__free {
+        pub version: c_uint,
+        pub meta_size: hsize_t,
+        pub tot_space: hsize_t,
+    }
+
+    impl Default for H5F_info2_t__free {
+        fn default() -> Self {
+            unsafe { ::std::mem::zeroed() }
+        }
+    }
+
+    #[repr(C)]
+    #[derive(Debug, Copy, Clone)]
+    pub struct H5F_info2_t__sohm {
+        pub version: c_uint,
+        pub hdr_size: hsize_t,
+        pub msgs_info: H5_ih_info_t,
+    }
+
+    impl Default for H5F_info2_t__sohm {
+        fn default() -> Self {
+            unsafe { ::std::mem::zeroed() }
+        }
+    }
+
+    pub type H5F_flush_cb_t =
+        Option<unsafe extern "C" fn(object_id: hid_t, udata: *mut c_void) -> herr_t>;
+
+    #[repr(C)]
+    #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+    pub enum H5F_file_space_type_t {
+        H5F_FILE_SPACE_DEFAULT = 0,
+        H5F_FILE_SPACE_ALL_PERSIST = 1,
+        H5F_FILE_SPACE_ALL = 2,
+        H5F_FILE_SPACE_AGGR_VFD = 3,
+        H5F_FILE_SPACE_VFD = 4,
+        H5F_FILE_SPACE_NTYPES = 5,
+    }
+
+    extern "C" {
+        pub fn H5Fstart_swmr_write(file_id: hid_t) -> herr_t;
+        pub fn H5Fget_metadata_read_retry_info(
+            file_id: hid_t, info: *mut H5F_retry_info_t,
+        ) -> herr_t;
+        pub fn H5Fstart_mdc_logging(file_id: hid_t) -> herr_t;
+        pub fn H5Fstop_mdc_logging(file_id: hid_t) -> herr_t;
+        pub fn H5Fget_free_sections(
+            file_id: hid_t, type_: H5F_mem_t, nsects: size_t, sect_info: *mut H5F_sect_info_t,
+        ) -> ssize_t;
+        pub fn H5Fformat_convert(fid: hid_t) -> herr_t;
+        pub fn H5Fget_info1(obj_id: hid_t, finfo: *mut H5F_info1_t) -> herr_t;
+        pub fn H5Fget_info2(obj_id: hid_t, finfo: *mut H5F_info2_t) -> herr_t;
+    }
+
+    pub use super::{
+        H5F_info_t as H5F_info1_t, H5F_info_t__sohm as H5F_info1_t__sohm,
+        H5Fget_info1 as H5Fget_info,
+    };
+}
+
+#[cfg(hdf5_1_10_0)]
+pub use self::hdf5_1_10_0::*;
