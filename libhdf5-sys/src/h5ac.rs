@@ -12,7 +12,7 @@ pub const H5AC_METADATA_WRITE_STRATEGY__PROCESS_0_ONLY: c_int = 0;
 pub const H5AC_METADATA_WRITE_STRATEGY__DISTRIBUTED: c_int = 1;
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub struct H5AC_cache_config_t {
     pub version: c_int,
     pub rpt_fcn_enabled: hbool_t,
@@ -49,11 +49,5 @@ pub struct H5AC_cache_config_t {
 impl Default for H5AC_cache_config_t {
     fn default() -> Self {
         unsafe { mem::zeroed() }
-    }
-}
-
-impl Clone for H5AC_cache_config_t {
-    fn clone(&self) -> H5AC_cache_config_t {
-        *self
     }
 }
