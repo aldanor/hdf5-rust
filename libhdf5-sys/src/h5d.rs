@@ -17,11 +17,6 @@ pub const H5D_CHUNK_CACHE_NBYTES_DEFAULT: size_t = !0;
 
 pub const H5D_CHUNK_CACHE_W0_DEFAULT: c_float = -1.0;
 
-pub const H5D_XFER_DIRECT_CHUNK_WRITE_FLAG_NAME: &str = "direct_chunk_flag";
-pub const H5D_XFER_DIRECT_CHUNK_WRITE_FILTERS_NAME: &str = "direct_chunk_filters";
-pub const H5D_XFER_DIRECT_CHUNK_WRITE_OFFSET_NAME: &str = "direct_chunk_offset";
-pub const H5D_XFER_DIRECT_CHUNK_WRITE_DATASIZE_NAME: &str = "direct_chunk_datasize";
-
 #[cfg(not(hdf5_1_10_0))]
 #[repr(C)]
 #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
@@ -34,7 +29,9 @@ pub enum H5D_layout_t {
 }
 
 pub type H5D_chunk_index_t = c_uint;
+
 pub const H5D_CHUNK_BTREE: H5D_chunk_index_t = 0;
+pub const H5D_CHUNK_IDX_BTREE: H5D_chunk_index_t = H5D_CHUNK_BTREE;
 
 #[repr(C)]
 #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]

@@ -15,6 +15,7 @@ pub enum H5I_type_t {
     H5I_DATASPACE = 4,
     H5I_DATASET = 5,
     H5I_ATTR = 6,
+    #[cfg_attr(hdf5_1_10_2, deprecated(note = "deprecated in HDF5 1.10.2"))]
     H5I_REFERENCE = 7,
     H5I_VFL = 8,
     H5I_GENPROP_CLS = 9,

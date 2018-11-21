@@ -39,6 +39,7 @@ extern "C" {
 
 #[cfg(hdf5_1_10_0)]
 extern "C" {
+    #[deprecated(note = "deprecated in HDF5 1.10.0, use H5Rdereference2()")]
     pub fn H5Rdereference1(obj_id: hid_t, ref_type: H5R_type_t, ref_: *const c_void) -> hid_t;
     pub fn H5Rdereference2(
         obj_id: hid_t, oapl_id: hid_t, ref_type: H5R_type_t, ref_: *const c_void,

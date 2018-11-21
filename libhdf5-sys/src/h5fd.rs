@@ -68,6 +68,8 @@ pub const H5FD_FEAT_DIRTY_SBLK_LOAD: c_uint = 0x00000040;
 pub const H5FD_FEAT_POSIX_COMPAT_HANDLE: c_uint = 0x00000080;
 pub const H5FD_FEAT_ALLOW_FILE_IMAGE: c_uint = 0x00000400;
 pub const H5FD_FEAT_CAN_USE_FILE_IMAGE_CALLBACKS: c_uint = 0x00000800;
+#[cfg(hdf5_1_10_2)]
+pub const H5FD_FEAT_DEFAULT_VFD_COMPATIBLE: c_uint = 0x00008000;
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -302,4 +304,9 @@ extern "C" {
 extern "C" {
     pub fn H5FDlock(file: *mut H5FD_t, rw: hbool_t) -> herr_t;
     pub fn H5FDunlock(file: *mut H5FD_t) -> herr_t;
+}
+
+#[cfg(hdf5_1_10_2)]
+extern "C" {
+    pub fn H5FDdriver_query(driver_id: hid_t, flags: *mut c_ulong) -> herr_t;
 }

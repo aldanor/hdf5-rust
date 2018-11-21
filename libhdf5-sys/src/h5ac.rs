@@ -51,3 +51,26 @@ impl Default for H5AC_cache_config_t {
         unsafe { mem::zeroed() }
     }
 }
+
+#[cfg(hdf5_1_10_1)]
+mod hdf5_1_10_1 {
+    use super::*;
+
+    #[repr(C)]
+    #[derive(Debug, Copy, Clone)]
+    pub struct H5AC_cache_image_config_t {
+        pub version: c_int,
+        pub generate_image: hbool_t,
+        pub save_resize_status: hbool_t,
+        pub entry_ageout: c_int,
+    }
+
+    impl Default for H5AC_cache_image_config_t {
+        fn default() -> Self {
+            unsafe { mem::zeroed() }
+        }
+    }
+}
+
+#[cfg(hdf5_1_10_1)]
+pub use self::hdf5_1_10_1::*;

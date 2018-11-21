@@ -156,13 +156,8 @@ pub enum H5O_mcdt_search_ret_t {
 pub type H5O_mcdt_search_cb_t =
     Option<extern "C" fn(op_data: *mut c_void) -> H5O_mcdt_search_ret_t>;
 
+#[cfg(not(hdf5_1_10_3))]
 extern "C" {
-    pub fn H5Oopen(loc_id: hid_t, name: *const c_char, lapl_id: hid_t) -> hid_t;
-    pub fn H5Oopen_by_addr(loc_id: hid_t, addr: haddr_t) -> hid_t;
-    pub fn H5Oopen_by_idx(
-        loc_id: hid_t, group_name: *const c_char, idx_type: H5_index_t, order: H5_iter_order_t,
-        n: hsize_t, lapl_id: hid_t,
-    ) -> hid_t;
     pub fn H5Oget_info(loc_id: hid_t, oinfo: *mut H5O_info_t) -> herr_t;
     pub fn H5Oget_info_by_name(
         loc_id: hid_t, name: *const c_char, oinfo: *mut H5O_info_t, lapl_id: hid_t,
@@ -171,6 +166,23 @@ extern "C" {
         loc_id: hid_t, group_name: *const c_char, idx_type: H5_index_t, order: H5_iter_order_t,
         n: hsize_t, oinfo: *mut H5O_info_t, lapl_id: hid_t,
     ) -> herr_t;
+    pub fn H5Ovisit(
+        obj_id: hid_t, idx_type: H5_index_t, order: H5_iter_order_t, op: H5O_iterate_t,
+        op_data: *mut c_void,
+    ) -> herr_t;
+    pub fn H5Ovisit_by_name(
+        loc_id: hid_t, obj_name: *const c_char, idx_type: H5_index_t, order: H5_iter_order_t,
+        op: H5O_iterate_t, op_data: *mut c_void, lapl_id: hid_t,
+    ) -> herr_t;
+}
+
+extern "C" {
+    pub fn H5Oopen(loc_id: hid_t, name: *const c_char, lapl_id: hid_t) -> hid_t;
+    pub fn H5Oopen_by_addr(loc_id: hid_t, addr: haddr_t) -> hid_t;
+    pub fn H5Oopen_by_idx(
+        loc_id: hid_t, group_name: *const c_char, idx_type: H5_index_t, order: H5_iter_order_t,
+        n: hsize_t, lapl_id: hid_t,
+    ) -> hid_t;
     pub fn H5Olink(
         obj_id: hid_t, new_loc_id: hid_t, new_name: *const c_char, lcpl_id: hid_t, lapl_id: hid_t,
     ) -> herr_t;
@@ -188,14 +200,6 @@ extern "C" {
     pub fn H5Oget_comment_by_name(
         loc_id: hid_t, name: *const c_char, comment: *mut c_char, bufsize: size_t, lapl_id: hid_t,
     ) -> ssize_t;
-    pub fn H5Ovisit(
-        obj_id: hid_t, idx_type: H5_index_t, order: H5_iter_order_t, op: H5O_iterate_t,
-        op_data: *mut c_void,
-    ) -> herr_t;
-    pub fn H5Ovisit_by_name(
-        loc_id: hid_t, obj_name: *const c_char, idx_type: H5_index_t, order: H5_iter_order_t,
-        op: H5O_iterate_t, op_data: *mut c_void, lapl_id: hid_t,
-    ) -> herr_t;
     pub fn H5Oclose(object_id: hid_t) -> herr_t;
 }
 
@@ -215,3 +219,58 @@ extern "C" {
     pub fn H5Oflush(obj_id: hid_t) -> herr_t;
     pub fn H5Orefresh(oid: hid_t) -> herr_t;
 }
+
+#[cfg(hdf5_1_10_3)]
+mod hdf5_1_10_3 {
+    use super::*;
+
+    extern "C" {
+        pub fn H5Oget_info2(loc_id: hid_t, oinfo: *mut H5O_info_t, fields: c_uint) -> herr_t;
+        pub fn H5Oget_info_by_name2(
+            loc_id: hid_t, name: *const c_char, oinfo: *mut H5O_info_t, fields: c_uint,
+            lapl_id: hid_t,
+        ) -> herr_t;
+        pub fn H5Oget_info_by_idx2(
+            loc_id: hid_t, group_name: *const c_char, idx_type: H5_index_t, order: H5_iter_order_t,
+            n: hsize_t, oinfo: *mut H5O_info_t, fields: c_uint, lapl_id: hid_t,
+        ) -> herr_t;
+        pub fn H5Ovisit2(
+            obj_id: hid_t, idx_type: H5_index_t, order: H5_iter_order_t, op: H5O_iterate_t,
+            op_data: *mut c_void, fields: c_uint,
+        ) -> herr_t;
+        pub fn H5Ovisit_by_name2(
+            loc_id: hid_t, obj_name: *const c_char, idx_type: H5_index_t, order: H5_iter_order_t,
+            op: H5O_iterate_t, op_data: *mut c_void, fields: c_uint, lapl_id: hid_t,
+        ) -> herr_t;
+        #[deprecated(note = "deprecated in HDF5 1.10.3, use H5Oget_info2()")]
+        pub fn H5Oget_info1(loc_id: hid_t, oinfo: *mut H5O_info_t) -> herr_t;
+        #[deprecated(note = "deprecated in HDF5 1.10.3, use H5Oget_info_by_name2()")]
+        pub fn H5Oget_info_by_name1(
+            loc_id: hid_t, name: *const c_char, oinfo: *mut H5O_info_t, lapl_id: hid_t,
+        ) -> herr_t;
+        #[deprecated(note = "deprecated in HDF5 1.10.3, use H5Oget_info_by_idx2()")]
+        pub fn H5Oget_info_by_idx1(
+            loc_id: hid_t, group_name: *const c_char, idx_type: H5_index_t, order: H5_iter_order_t,
+            n: hsize_t, oinfo: *mut H5O_info_t, lapl_id: hid_t,
+        ) -> herr_t;
+        #[deprecated(note = "deprecated in HDF5 1.10.3, use H5Ovisit2()")]
+        pub fn H5Ovisit1(
+            obj_id: hid_t, idx_type: H5_index_t, order: H5_iter_order_t, op: H5O_iterate_t,
+            op_data: *mut c_void,
+        ) -> herr_t;
+        #[deprecated(note = "deprecated in HDF5 1.10.3, use H5Ovisit_by_name2()")]
+        pub fn H5Ovisit_by_name1(
+            loc_id: hid_t, obj_name: *const c_char, idx_type: H5_index_t, order: H5_iter_order_t,
+            op: H5O_iterate_t, op_data: *mut c_void, lapl_id: hid_t,
+        ) -> herr_t;
+    }
+
+    pub use self::{
+        H5Oget_info1 as H5Oget_info, H5Oget_info_by_idx1 as H5Oget_info_by_idx,
+        H5Oget_info_by_name1 as H5Oget_info_by_name, H5Ovisit1 as H5Ovisit,
+        H5Ovisit_by_name1 as H5Ovisit_by_name,
+    };
+}
+
+#[cfg(hdf5_1_10_3)]
+pub use self::hdf5_1_10_3::*;

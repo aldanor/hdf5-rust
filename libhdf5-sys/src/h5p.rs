@@ -15,6 +15,8 @@ use crate::h5z::{H5Z_EDC_t, H5Z_SO_scale_type_t, H5Z_filter_func_t, H5Z_filter_t
 use crate::h5fd::H5FD_file_image_callbacks_t;
 #[cfg(hdf5_1_8_9)]
 use crate::h5o::H5O_mcdt_search_cb_t;
+#[cfg(hdf5_1_10_1)]
+use crate::{h5ac::H5AC_cache_image_config_t, h5f::H5F_fspace_strategy_t};
 
 pub const H5P_CRT_ORDER_TRACKED: c_uint = 0x0001;
 pub const H5P_CRT_ORDER_INDEXED: c_uint = 0x0002;
@@ -276,10 +278,6 @@ extern "C" {
     pub fn H5Premove_filter(plist_id: hid_t, filter: H5Z_filter_t) -> herr_t;
     pub fn H5Pset_deflate(plist_id: hid_t, aggression: c_uint) -> herr_t;
     pub fn H5Pset_fletcher32(plist_id: hid_t) -> herr_t;
-    pub fn H5Pget_version(
-        plist_id: hid_t, boot: *mut c_uint, freelist: *mut c_uint, stab: *mut c_uint,
-        shhdr: *mut c_uint,
-    ) -> herr_t;
     pub fn H5Pset_userblock(plist_id: hid_t, size: hsize_t) -> herr_t;
     pub fn H5Pget_userblock(plist_id: hid_t, size: *mut hsize_t) -> herr_t;
     pub fn H5Pset_sizes(plist_id: hid_t, sizeof_addr: size_t, sizeof_size: size_t) -> herr_t;
@@ -442,6 +440,11 @@ extern "C" {
     ) -> herr_t;
     pub fn H5Pset_copy_object(plist_id: hid_t, crt_intmd: c_uint) -> herr_t;
     pub fn H5Pget_copy_object(plist_id: hid_t, crt_intmd: *mut c_uint) -> herr_t;
+    #[cfg_attr(hdf5_1_10_0, deprecated(note = "deprecated in HDF5 1.10.0, use H5Fget_info2()"))]
+    pub fn H5Pget_version(
+        plist_id: hid_t, boot: *mut c_uint, freelist: *mut c_uint, stab: *mut c_uint,
+        shhdr: *mut c_uint,
+    ) -> herr_t;
 }
 
 #[cfg(hdf5_1_8_7)]
@@ -522,18 +525,12 @@ extern "C" {
     pub fn H5Fget_mdc_logging_status(
         file_id: hid_t, is_enabled: *mut hbool_t, is_currently_logging: *mut hbool_t,
     ) -> herr_t;
-    pub fn H5Pset_file_space(
-        plist_id: hid_t, strategy: H5F_file_space_type_t, threshold: hsize_t,
-    ) -> herr_t;
-    pub fn H5Pget_file_space(
-        plist_id: hid_t, strategy: *mut H5F_file_space_type_t, threshold: *mut hsize_t,
-    ) -> herr_t;
     pub fn H5Pset_virtual(
         dcpl_id: hid_t, vspace_id: hid_t, src_file_name: *const c_char,
         src_dset_name: *const c_char, src_space_id: hid_t,
     ) -> herr_t;
     pub fn H5Pget_virtual_count(dcpl_id: hid_t, count: *mut size_t) -> herr_t;
-    pub fn H5Pget_virtual_vspace(dcpl_id: hid_t, index: usize) -> hid_t;
+    pub fn H5Pget_virtual_vspace(dcpl_id: hid_t, index: size_t) -> hid_t;
     pub fn H5Pget_virtual_srcspace(dcpl_id: hid_t, index: size_t) -> hid_t;
     pub fn H5Pget_virtual_dsetname(
         dcpl_id: hid_t, index: size_t, name: *mut c_char, size: size_t,
@@ -549,4 +546,51 @@ extern "C" {
     pub fn H5Pset_chunk_opts(plist_id: hid_t, opts: c_uint) -> herr_t;
     pub fn H5Pencode(plist_id: hid_t, buf: *mut c_void, nalloc: *mut size_t) -> herr_t;
     pub fn H5Pdecode(buf: *const c_void) -> hid_t;
+    #[cfg_attr(
+        hdf5_1_10_1,
+        deprecated(note = "deprecated in HDF5 1.10.1, use H5Pset_file_space_strategy()")
+    )]
+    pub fn H5Pset_file_space(
+        plist_id: hid_t, strategy: H5F_file_space_type_t, threshold: hsize_t,
+    ) -> herr_t;
+    #[cfg_attr(
+        hdf5_1_10_1,
+        deprecated(note = "deprecated in HDF5 1.10.1, use H5Pget_file_space_strategy()")
+    )]
+    pub fn H5Pget_file_space(
+        plist_id: hid_t, strategy: *mut H5F_file_space_type_t, threshold: *mut hsize_t,
+    ) -> herr_t;
+}
+
+#[cfg(hdf5_1_10_1)]
+extern "C" {
+    pub fn H5Pset_evict_on_close(fapl_id: hid_t, evict_on_close: hbool_t) -> herr_t;
+    pub fn H5Pget_evict_on_close(fapl_id: hid_t, evict_on_close: *mut hbool_t) -> herr_t;
+    pub fn H5Pset_mdc_image_config(
+        plist_id: hid_t, config_ptr: *mut H5AC_cache_image_config_t,
+    ) -> herr_t;
+    pub fn H5Pget_mdc_image_config(
+        plist_id: hid_t, config_ptr: *mut H5AC_cache_image_config_t,
+    ) -> herr_t;
+    pub fn H5Pset_page_buffer_size(
+        plist_id: hid_t, buf_size: size_t, min_meta_per: c_uint, min_raw_per: c_uint,
+    ) -> herr_t;
+    pub fn H5Pget_page_buffer_size(
+        plist_id: hid_t, buf_size: *mut size_t, min_meta_per: *mut c_uint, min_raw_per: *mut c_uint,
+    ) -> herr_t;
+    pub fn H5Pset_file_space_strategy(
+        plist_id: hid_t, strategy: H5F_fspace_strategy_t, persist: hbool_t, threshold: hsize_t,
+    ) -> herr_t;
+    pub fn H5Pget_file_space_strategy(
+        plist_id: hid_t, strategy: *mut H5F_fspace_strategy_t, persist: *mut hbool_t,
+        threshold: *mut hsize_t,
+    ) -> herr_t;
+    pub fn H5Pset_file_space_page_size(plist_id: hid_t, fsp_size: hsize_t) -> herr_t;
+    pub fn H5Pget_file_space_page_size(plist_id: hid_t, fsp_size: *mut hsize_t) -> herr_t;
+}
+
+#[cfg(hdf5_1_10_2)]
+extern "C" {
+    pub fn H5Pset_virtual_prefix(dapl_id: hid_t, prefix: *const c_char) -> herr_t;
+    pub fn H5Pget_virtual_prefix(dapl_id: hid_t, prefix: *mut c_char, size: size_t) -> ssize_t;
 }

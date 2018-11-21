@@ -10,9 +10,6 @@ use crate::h5i::hid_t;
 
 pub const H5E_DEFAULT: hid_t = 0;
 
-pub type H5E_major_t = hid_t;
-pub type H5E_minor_t = hid_t;
-
 #[repr(C)]
 #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
 pub enum H5E_type_t {

@@ -7,9 +7,12 @@ pub use self::H5F_scope_t::*;
 
 use libc::{c_char, c_double, c_int, c_uint, c_void, size_t, ssize_t};
 
-use crate::h5::{haddr_t, herr_t, hsize_t, hssize_t, htri_t, H5_ih_info_t};
+use crate::h5::{haddr_t, hbool_t, herr_t, hsize_t, hssize_t, htri_t, H5_ih_info_t};
 use crate::h5ac::H5AC_cache_config_t;
 use crate::h5i::hid_t;
+
+#[cfg_attr(hdf5_1_10_0, deprecated(note = "deprecated in HDF5 1.10.0"))]
+pub const H5F_ACC_DEBUG: c_uint = 0x0000;
 
 /* these flags call H5check() in the C library */
 pub const H5F_ACC_RDONLY: c_uint = 0x0000;
@@ -50,6 +53,7 @@ pub enum H5F_close_degree_t {
     H5F_CLOSE_STRONG = 3,
 }
 
+#[cfg_attr(hdf5_1_10_0, deprecated(note = "deprecated in HDF5 1.10.0, use H5F_info2_t"))]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct H5F_info_t {
@@ -63,6 +67,7 @@ impl Default for H5F_info_t {
     }
 }
 
+#[cfg_attr(hdf5_1_10_0, deprecated(note = "deprecated in HDF5 1.10.0, use H5F_info2_t"))]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct H5F_info_t__sohm {
@@ -93,11 +98,17 @@ pub enum H5F_mem_t {
 #[repr(C)]
 #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
 pub enum H5F_libver_t {
+    H5F_LIBVER_ERROR = -1,
     H5F_LIBVER_EARLIEST = 0,
-    H5F_LIBVER_LATEST = 1,
+    H5F_LIBVER_V18 = 1,
+    H5F_LIBVER_V110 = 2,
+    H5F_LIBVER_NBOUNDS = 3,
 }
 
-pub const H5F_LIBVER_18: H5F_libver_t = H5F_LIBVER_LATEST;
+#[cfg(not(hdf5_1_10_0))]
+pub const H5F_LIBVER_LATEST: H5F_libver_t = H5F_LIBVER_V18;
+#[cfg(hdf5_1_10_0)]
+pub const H5F_LIBVER_LATEST: H5F_libver_t = H5F_LIBVER_V110;
 
 #[cfg(not(hdf5_1_10_0))]
 extern "C" {
@@ -105,6 +116,11 @@ extern "C" {
 }
 
 extern "C" {
+    #[cfg_attr(
+        hdf5_1_10_2,
+        deprecated(note = "deprecated in HDF5 1.10.2, use H5Fset_libver_bounds()")
+    )]
+    pub fn H5Fset_latest_format(file_id: hid_t, latest_format: hbool_t) -> herr_t;
     pub fn H5Fis_hdf5(filename: *const c_char) -> htri_t;
     pub fn H5Fcreate(
         filename: *const c_char, flags: c_uint, create_plist: hid_t, access_plist: hid_t,
@@ -262,8 +278,9 @@ mod hdf5_1_10_0 {
             file_id: hid_t, type_: H5F_mem_t, nsects: size_t, sect_info: *mut H5F_sect_info_t,
         ) -> ssize_t;
         pub fn H5Fformat_convert(fid: hid_t) -> herr_t;
-        pub fn H5Fget_info1(obj_id: hid_t, finfo: *mut H5F_info1_t) -> herr_t;
         pub fn H5Fget_info2(obj_id: hid_t, finfo: *mut H5F_info2_t) -> herr_t;
+        #[deprecated(note = "deprecated in HDF5 1.10.0, use H5Fget_info2")]
+        pub fn H5Fget_info1(obj_id: hid_t, finfo: *mut H5F_info1_t) -> herr_t;
     }
 
     pub use super::{
@@ -274,3 +291,34 @@ mod hdf5_1_10_0 {
 
 #[cfg(hdf5_1_10_0)]
 pub use self::hdf5_1_10_0::*;
+
+#[cfg(hdf5_1_10_1)]
+mod hdf5_1_10_1 {
+    use super::*;
+
+    #[repr(C)]
+    #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+    pub enum H5F_fspace_strategy_t {
+        H5F_FSPACE_STRATEGY_FSM_AGGR = 0,
+        H5F_FSPACE_STRATEGY_PAGE = 1,
+        H5F_FSPACE_STRATEGY_AGGR = 2,
+        H5F_FSPACE_STRATEGY_NONE = 3,
+        H5F_FSPACE_STRATEGY_NTYPES = 4,
+    }
+
+    pub use self::H5F_fspace_strategy_t::*;
+
+    extern "C" {
+        pub fn H5Fget_mdc_image_info(
+            file_id: hid_t, image_addr: *mut haddr_t, image_size: *mut hsize_t,
+        ) -> herr_t;
+        pub fn H5Freset_page_buffering_stats(file_id: hid_t) -> herr_t;
+        pub fn H5Fget_page_buffering_stats(
+            file_id: hid_t, accesses: *mut c_uint, hits: *mut c_uint, misses: *mut c_uint,
+            evictions: *mut c_uint, bypasses: *mut c_uint,
+        ) -> herr_t;
+    }
+}
+
+#[cfg(hdf5_1_10_1)]
+pub use self::hdf5_1_10_1::*;
