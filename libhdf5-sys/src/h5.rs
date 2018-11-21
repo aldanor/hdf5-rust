@@ -1,3 +1,5 @@
+use std::mem;
+
 pub use self::H5_index_t::*;
 pub use self::H5_iter_order_t::*;
 
@@ -44,8 +46,8 @@ pub struct H5_ih_info_t {
 }
 
 impl Default for H5_ih_info_t {
-    fn default() -> H5_ih_info_t {
-        unsafe { ::std::mem::zeroed() }
+    fn default() -> Self {
+        unsafe { mem::zeroed() }
     }
 }
 

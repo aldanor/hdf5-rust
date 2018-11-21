@@ -1,3 +1,5 @@
+use std::mem;
+
 pub use self::H5G_storage_type_t::*;
 
 use libc::{c_char, c_uint, int64_t};
@@ -41,8 +43,8 @@ pub struct H5G_info_t {
 }
 
 impl Default for H5G_info_t {
-    fn default() -> H5G_info_t {
-        unsafe { ::std::mem::zeroed() }
+    fn default() -> Self {
+        unsafe { mem::zeroed() }
     }
 }
 

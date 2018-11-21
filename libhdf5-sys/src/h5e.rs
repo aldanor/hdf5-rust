@@ -1,3 +1,5 @@
+use std::mem;
+
 pub use self::H5E_direction_t::*;
 pub use self::H5E_type_t::*;
 
@@ -31,8 +33,8 @@ pub struct H5E_error2_t {
 }
 
 impl Default for H5E_error2_t {
-    fn default() -> H5E_error2_t {
-        unsafe { ::std::mem::zeroed() }
+    fn default() -> Self {
+        unsafe { mem::zeroed() }
     }
 }
 

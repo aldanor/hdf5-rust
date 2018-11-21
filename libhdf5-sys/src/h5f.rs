@@ -1,3 +1,5 @@
+use std::mem;
+
 pub use self::H5F_close_degree_t::*;
 pub use self::H5F_libver_t::*;
 pub use self::H5F_mem_t::*;
@@ -56,8 +58,8 @@ pub struct H5F_info_t {
 }
 
 impl Default for H5F_info_t {
-    fn default() -> H5F_info_t {
-        unsafe { ::std::mem::zeroed() }
+    fn default() -> Self {
+        unsafe { mem::zeroed() }
     }
 }
 
@@ -70,7 +72,7 @@ pub struct H5F_info_t__sohm {
 
 impl Default for H5F_info_t__sohm {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { mem::zeroed() }
     }
 }
 
@@ -158,6 +160,12 @@ mod hdf5_1_10_0 {
         pub retries: [*mut u32; 21usize],
     }
 
+    impl Default for H5F_retry_info_t {
+        fn default() -> Self {
+            unsafe { mem::zeroed() }
+        }
+    }
+
     #[repr(C)]
     #[derive(Debug, Copy, Clone)]
     pub struct H5F_sect_info_t {
@@ -167,7 +175,7 @@ mod hdf5_1_10_0 {
 
     impl Default for H5F_sect_info_t {
         fn default() -> Self {
-            unsafe { ::std::mem::zeroed() }
+            unsafe { mem::zeroed() }
         }
     }
 
@@ -181,7 +189,7 @@ mod hdf5_1_10_0 {
 
     impl Default for H5F_info2_t {
         fn default() -> Self {
-            unsafe { ::std::mem::zeroed() }
+            unsafe { mem::zeroed() }
         }
     }
 
@@ -195,7 +203,7 @@ mod hdf5_1_10_0 {
 
     impl Default for H5F_info2_t__super {
         fn default() -> Self {
-            unsafe { ::std::mem::zeroed() }
+            unsafe { mem::zeroed() }
         }
     }
 
@@ -209,7 +217,7 @@ mod hdf5_1_10_0 {
 
     impl Default for H5F_info2_t__free {
         fn default() -> Self {
-            unsafe { ::std::mem::zeroed() }
+            unsafe { mem::zeroed() }
         }
     }
 
@@ -223,7 +231,7 @@ mod hdf5_1_10_0 {
 
     impl Default for H5F_info2_t__sohm {
         fn default() -> Self {
-            unsafe { ::std::mem::zeroed() }
+            unsafe { mem::zeroed() }
         }
     }
 

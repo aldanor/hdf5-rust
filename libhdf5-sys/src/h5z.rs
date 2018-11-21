@@ -1,3 +1,5 @@
+use std::mem;
+
 pub use self::H5Z_EDC_t::*;
 pub use self::H5Z_SO_scale_type_t::*;
 pub use self::H5Z_cb_return_t::*;
@@ -99,8 +101,8 @@ pub struct H5Z_cb_t {
 }
 
 impl Default for H5Z_cb_t {
-    fn default() -> H5Z_cb_t {
-        unsafe { ::std::mem::zeroed() }
+    fn default() -> Self {
+        unsafe { mem::zeroed() }
     }
 }
 
@@ -133,8 +135,8 @@ pub struct H5Z_class2_t {
 }
 
 impl Default for H5Z_class2_t {
-    fn default() -> H5Z_class2_t {
-        unsafe { ::std::mem::zeroed() }
+    fn default() -> Self {
+        unsafe { mem::zeroed() }
     }
 }
 

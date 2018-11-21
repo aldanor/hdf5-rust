@@ -1,3 +1,5 @@
+use std::mem;
+
 pub use self::H5T_bkg_t::*;
 pub use self::H5T_class_t::*;
 pub use self::H5T_cmd_t::*;
@@ -160,8 +162,8 @@ pub struct H5T_cdata_t {
 }
 
 impl Default for H5T_cdata_t {
-    fn default() -> H5T_cdata_t {
-        unsafe { ::std::mem::zeroed() }
+    fn default() -> Self {
+        unsafe { mem::zeroed() }
     }
 }
 
@@ -209,8 +211,8 @@ pub struct hvl_t {
 }
 
 impl Default for hvl_t {
-    fn default() -> hvl_t {
-        unsafe { ::std::mem::zeroed() }
+    fn default() -> Self {
+        unsafe { mem::zeroed() }
     }
 }
 

@@ -1,3 +1,5 @@
+use std::mem;
+
 pub use self::H5L_type_t::*;
 
 use libc::{c_char, c_int, c_uint, c_void, int64_t, size_t, ssize_t, uint32_t};
@@ -36,8 +38,8 @@ pub struct H5L_info_t {
 }
 
 impl Default for H5L_info_t {
-    fn default() -> H5L_info_t {
-        unsafe { ::std::mem::zeroed() }
+    fn default() -> Self {
+        unsafe { mem::zeroed() }
     }
 }
 
@@ -48,8 +50,8 @@ pub struct __H5L_info_t__u {
 }
 
 impl Default for __H5L_info_t__u {
-    fn default() -> __H5L_info_t__u {
-        unsafe { ::std::mem::zeroed() }
+    fn default() -> Self {
+        unsafe { mem::zeroed() }
     }
 }
 
@@ -129,8 +131,8 @@ pub struct H5L_class_t {
 }
 
 impl Default for H5L_class_t {
-    fn default() -> H5L_class_t {
-        unsafe { ::std::mem::zeroed() }
+    fn default() -> Self {
+        unsafe { mem::zeroed() }
     }
 }
 

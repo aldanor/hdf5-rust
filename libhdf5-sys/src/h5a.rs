@@ -1,3 +1,5 @@
+use std::mem;
+
 use libc::{c_char, c_void, size_t, ssize_t};
 
 use crate::h5::{hbool_t, herr_t, hsize_t, htri_t, H5_index_t, H5_iter_order_t};
@@ -15,8 +17,8 @@ pub struct H5A_info_t {
 }
 
 impl Default for H5A_info_t {
-    fn default() -> H5A_info_t {
-        unsafe { ::std::mem::zeroed() }
+    fn default() -> Self {
+        unsafe { mem::zeroed() }
     }
 }
 

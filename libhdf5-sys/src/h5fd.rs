@@ -1,3 +1,5 @@
+use std::mem;
+
 pub use self::H5FD_file_image_op_t::*;
 pub use super::h5f::H5F_mem_t::*;
 
@@ -147,8 +149,8 @@ pub struct H5FD_class_t {
 }
 
 impl Default for H5FD_class_t {
-    fn default() -> H5FD_class_t {
-        unsafe { ::std::mem::zeroed() }
+    fn default() -> Self {
+        unsafe { mem::zeroed() }
     }
 }
 
@@ -161,8 +163,8 @@ pub struct H5FD_free_t {
 }
 
 impl Default for H5FD_free_t {
-    fn default() -> H5FD_free_t {
-        unsafe { ::std::mem::zeroed() }
+    fn default() -> Self {
+        unsafe { mem::zeroed() }
     }
 }
 
@@ -180,8 +182,8 @@ pub struct H5FD_t {
 }
 
 impl Default for H5FD_t {
-    fn default() -> H5FD_t {
-        unsafe { ::std::mem::zeroed() }
+    fn default() -> Self {
+        unsafe { mem::zeroed() }
     }
 }
 
@@ -234,8 +236,8 @@ pub struct H5FD_file_image_callbacks_t {
 
 #[cfg(hdf5_1_8_9)]
 impl Default for H5FD_file_image_callbacks_t {
-    fn default() -> H5FD_file_image_callbacks_t {
-        unsafe { ::std::mem::zeroed() }
+    fn default() -> Self {
+        unsafe { mem::zeroed() }
     }
 }
 

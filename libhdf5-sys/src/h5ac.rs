@@ -1,3 +1,5 @@
+use std::mem;
+
 use libc::{c_char, c_double, c_int, c_long, size_t};
 
 use crate::h5::hbool_t;
@@ -45,8 +47,8 @@ pub struct H5AC_cache_config_t {
 }
 
 impl Default for H5AC_cache_config_t {
-    fn default() -> H5AC_cache_config_t {
-        unsafe { ::std::mem::zeroed() }
+    fn default() -> Self {
+        unsafe { mem::zeroed() }
     }
 }
 
