@@ -245,7 +245,7 @@ pub type H5T_conv_except_func_t = Option<
 >;
 
 extern "C" {
-    pub fn H5Tcreate(_type: H5T_class_t, size: size_t) -> hid_t;
+    pub fn H5Tcreate(type_: H5T_class_t, size: size_t) -> hid_t;
     pub fn H5Tcopy(type_id: hid_t) -> hid_t;
     pub fn H5Tclose(type_id: hid_t) -> herr_t;
     pub fn H5Tequal(type1_id: hid_t, type2_id: hid_t) -> htri_t;
@@ -265,18 +265,18 @@ extern "C" {
     ) -> herr_t;
     pub fn H5Tpack(type_id: hid_t) -> herr_t;
     pub fn H5Tenum_create(base_id: hid_t) -> hid_t;
-    pub fn H5Tenum_insert(_type: hid_t, name: *const c_char, value: *const c_void) -> herr_t;
+    pub fn H5Tenum_insert(type_: hid_t, name: *const c_char, value: *const c_void) -> herr_t;
     pub fn H5Tenum_nameof(
-        _type: hid_t, value: *const c_void, name: *mut c_char, size: size_t,
+        type_: hid_t, value: *const c_void, name: *mut c_char, size: size_t,
     ) -> herr_t;
-    pub fn H5Tenum_valueof(_type: hid_t, name: *const c_char, value: *mut c_void) -> herr_t;
+    pub fn H5Tenum_valueof(type_: hid_t, name: *const c_char, value: *mut c_void) -> herr_t;
     pub fn H5Tvlen_create(base_id: hid_t) -> hid_t;
     pub fn H5Tarray_create2(base_id: hid_t, ndims: c_uint, dim: *const hsize_t) -> hid_t;
     pub fn H5Tget_array_ndims(type_id: hid_t) -> c_int;
     pub fn H5Tget_array_dims2(type_id: hid_t, dims: *mut hsize_t) -> c_int;
-    pub fn H5Tset_tag(_type: hid_t, tag: *const c_char) -> herr_t;
-    pub fn H5Tget_tag(_type: hid_t) -> *mut c_char;
-    pub fn H5Tget_super(_type: hid_t) -> hid_t;
+    pub fn H5Tset_tag(type_: hid_t, tag: *const c_char) -> herr_t;
+    pub fn H5Tget_tag(type_: hid_t) -> *mut c_char;
+    pub fn H5Tget_super(type_: hid_t) -> hid_t;
     pub fn H5Tget_class(type_id: hid_t) -> H5T_class_t;
     pub fn H5Tdetect_class(type_id: hid_t, cls: H5T_class_t) -> htri_t;
     pub fn H5Tget_size(type_id: hid_t) -> size_t;

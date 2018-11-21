@@ -64,8 +64,8 @@ pub struct H5O_hdr_info_t {
     pub nmesgs: c_uint,
     pub nchunks: c_uint,
     pub flags: c_uint,
-    pub space: __H5O_hdr_info_t__space,
-    pub mesg: __H5O_hdr_info_t__mesg,
+    pub space: H5O_hdr_info_t__space,
+    pub mesg: H5O_hdr_info_t__mesg,
 }
 
 impl Default for H5O_hdr_info_t {
@@ -76,14 +76,14 @@ impl Default for H5O_hdr_info_t {
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct __H5O_hdr_info_t__space {
+pub struct H5O_hdr_info_t__space {
     pub total: hsize_t,
     pub meta: hsize_t,
     pub mesg: hsize_t,
     pub free: hsize_t,
 }
 
-impl Default for __H5O_hdr_info_t__space {
+impl Default for H5O_hdr_info_t__space {
     fn default() -> Self {
         unsafe { mem::zeroed() }
     }
@@ -91,12 +91,12 @@ impl Default for __H5O_hdr_info_t__space {
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct __H5O_hdr_info_t__mesg {
+pub struct H5O_hdr_info_t__mesg {
     pub present: uint64_t,
     pub shared: uint64_t,
 }
 
-impl Default for __H5O_hdr_info_t__mesg {
+impl Default for H5O_hdr_info_t__mesg {
     fn default() -> Self {
         unsafe { mem::zeroed() }
     }
@@ -107,7 +107,7 @@ impl Default for __H5O_hdr_info_t__mesg {
 pub struct H5O_info_t {
     pub fileno: c_ulong,
     pub addr: haddr_t,
-    pub _type: H5O_type_t,
+    pub type_: H5O_type_t,
     pub rc: c_uint,
     pub atime: time_t,
     pub mtime: time_t,
@@ -115,7 +115,7 @@ pub struct H5O_info_t {
     pub btime: time_t,
     pub num_attrs: hsize_t,
     pub hdr: H5O_hdr_info_t,
-    pub meta_size: __H5O_info_t__meta_size,
+    pub meta_size: H5O_info_t__meta_size,
 }
 
 impl Default for H5O_info_t {
@@ -126,12 +126,12 @@ impl Default for H5O_info_t {
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct __H5O_info_t__meta_size {
+pub struct H5O_info_t__meta_size {
     pub obj: H5_ih_info_t,
     pub attr: H5_ih_info_t,
 }
 
-impl Default for __H5O_info_t__meta_size {
+impl Default for H5O_info_t__meta_size {
     fn default() -> Self {
         unsafe { mem::zeroed() }
     }

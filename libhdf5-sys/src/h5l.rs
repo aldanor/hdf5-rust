@@ -30,11 +30,11 @@ pub const H5L_TYPE_UD_MIN: H5L_type_t = H5L_TYPE_EXTERNAL;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct H5L_info_t {
-    pub _type: H5L_type_t,
+    pub type_: H5L_type_t,
     pub corder_valid: hbool_t,
     pub corder: int64_t,
     pub cset: H5T_cset_t,
-    pub u: __H5L_info_t__u,
+    pub u: H5L_info_t__u,
 }
 
 impl Default for H5L_info_t {
@@ -45,22 +45,22 @@ impl Default for H5L_info_t {
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct __H5L_info_t__u {
-    pub _bindgen_data_: [u64; 1usize],
+pub struct H5L_info_t__u {
+    value: [u64; 1usize],
 }
 
-impl Default for __H5L_info_t__u {
+impl Default for H5L_info_t__u {
     fn default() -> Self {
         unsafe { mem::zeroed() }
     }
 }
 
-impl __H5L_info_t__u {
+impl H5L_info_t__u {
     pub unsafe fn address(&mut self) -> *mut haddr_t {
-        &self._bindgen_data_ as *const [u64; 1] as *mut haddr_t
+        &self.value as *const [u64; 1] as *mut haddr_t
     }
     pub unsafe fn val_size(&mut self) -> *mut size_t {
-        &self._bindgen_data_ as *const [u64; 1] as *mut size_t
+        &self.value as *const [u64; 1] as *mut size_t
     }
 }
 

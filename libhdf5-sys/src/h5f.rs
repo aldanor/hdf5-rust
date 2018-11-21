@@ -249,6 +249,8 @@ mod hdf5_1_10_0 {
         H5F_FILE_SPACE_NTYPES = 5,
     }
 
+    pub use self::H5F_file_space_type_t::*;
+
     extern "C" {
         pub fn H5Fstart_swmr_write(file_id: hid_t) -> herr_t;
         pub fn H5Fget_metadata_read_retry_info(

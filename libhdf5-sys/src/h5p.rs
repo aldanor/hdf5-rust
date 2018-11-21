@@ -349,8 +349,8 @@ extern "C" {
     pub fn H5Pget_driver_info(plist_id: hid_t) -> *mut c_void;
     pub fn H5Pset_family_offset(fapl_id: hid_t, offset: hsize_t) -> herr_t;
     pub fn H5Pget_family_offset(fapl_id: hid_t, offset: *mut hsize_t) -> herr_t;
-    pub fn H5Pset_multi_type(fapl_id: hid_t, _type: H5FD_mem_t) -> herr_t;
-    pub fn H5Pget_multi_type(fapl_id: hid_t, _type: *mut H5FD_mem_t) -> herr_t;
+    pub fn H5Pset_multi_type(fapl_id: hid_t, type_: H5FD_mem_t) -> herr_t;
+    pub fn H5Pget_multi_type(fapl_id: hid_t, type_: *mut H5FD_mem_t) -> herr_t;
     pub fn H5Pset_cache(
         plist_id: hid_t, mdc_nelmts: c_int, rdcc_nslots: size_t, rdcc_nbytes: size_t,
         rdcc_w0: c_double,

@@ -97,21 +97,21 @@ pub struct H5FD_class_t {
     pub get_type_map:
         Option<extern "C" fn(file: *const H5FD_t, type_map: *mut H5FD_mem_t) -> herr_t>,
     pub alloc: Option<
-        extern "C" fn(file: *mut H5FD_t, _type: H5FD_mem_t, dxpl_id: hid_t, size: hsize_t)
+        extern "C" fn(file: *mut H5FD_t, type_: H5FD_mem_t, dxpl_id: hid_t, size: hsize_t)
             -> haddr_t,
     >,
     pub free: Option<
         extern "C" fn(
             file: *mut H5FD_t,
-            _type: H5FD_mem_t,
+            type_: H5FD_mem_t,
             dxpl_id: hid_t,
             addr: haddr_t,
             size: hsize_t,
         ) -> herr_t,
     >,
-    pub get_eoa: Option<extern "C" fn(file: *const H5FD_t, _type: H5FD_mem_t) -> haddr_t>,
+    pub get_eoa: Option<extern "C" fn(file: *const H5FD_t, type_: H5FD_mem_t) -> haddr_t>,
     pub set_eoa:
-        Option<extern "C" fn(file: *mut H5FD_t, _type: H5FD_mem_t, addr: haddr_t) -> herr_t>,
+        Option<extern "C" fn(file: *mut H5FD_t, type_: H5FD_mem_t, addr: haddr_t) -> herr_t>,
     pub get_eof: Option<extern "C" fn(file: *const H5FD_t) -> haddr_t>,
     pub get_handle: Option<
         extern "C" fn(file: *mut H5FD_t, fapl: hid_t, file_handle: *mut *mut c_void) -> herr_t,
@@ -119,7 +119,7 @@ pub struct H5FD_class_t {
     pub read: Option<
         extern "C" fn(
             file: *mut H5FD_t,
-            _type: H5FD_mem_t,
+            type_: H5FD_mem_t,
             dxpl: hid_t,
             addr: haddr_t,
             size: size_t,
@@ -129,7 +129,7 @@ pub struct H5FD_class_t {
     pub write: Option<
         extern "C" fn(
             file: *mut H5FD_t,
-            _type: H5FD_mem_t,
+            type_: H5FD_mem_t,
             dxpl: hid_t,
             addr: haddr_t,
             size: size_t,
@@ -251,23 +251,23 @@ extern "C" {
     pub fn H5FDcmp(f1: *const H5FD_t, f2: *const H5FD_t) -> c_int;
     pub fn H5FDquery(f: *const H5FD_t, flags: *mut c_ulong) -> c_int;
     pub fn H5FDalloc(
-        file: *mut H5FD_t, _type: H5FD_mem_t, dxpl_id: hid_t, size: hsize_t,
+        file: *mut H5FD_t, type_: H5FD_mem_t, dxpl_id: hid_t, size: hsize_t,
     ) -> haddr_t;
     pub fn H5FDfree(
-        file: *mut H5FD_t, _type: H5FD_mem_t, dxpl_id: hid_t, addr: haddr_t, size: hsize_t,
+        file: *mut H5FD_t, type_: H5FD_mem_t, dxpl_id: hid_t, addr: haddr_t, size: hsize_t,
     ) -> herr_t;
-    pub fn H5FDget_eoa(file: *mut H5FD_t, _type: H5FD_mem_t) -> haddr_t;
-    pub fn H5FDset_eoa(file: *mut H5FD_t, _type: H5FD_mem_t, eoa: haddr_t) -> herr_t;
+    pub fn H5FDget_eoa(file: *mut H5FD_t, type_: H5FD_mem_t) -> haddr_t;
+    pub fn H5FDset_eoa(file: *mut H5FD_t, type_: H5FD_mem_t, eoa: haddr_t) -> herr_t;
     pub fn H5FDget_eof(file: *mut H5FD_t) -> haddr_t;
     pub fn H5FDget_vfd_handle(
         file: *mut H5FD_t, fapl: hid_t, file_handle: *mut *mut c_void,
     ) -> herr_t;
     pub fn H5FDread(
-        file: *mut H5FD_t, _type: H5FD_mem_t, dxpl_id: hid_t, addr: haddr_t, size: size_t,
+        file: *mut H5FD_t, type_: H5FD_mem_t, dxpl_id: hid_t, addr: haddr_t, size: size_t,
         buf: *mut c_void,
     ) -> herr_t;
     pub fn H5FDwrite(
-        file: *mut H5FD_t, _type: H5FD_mem_t, dxpl_id: hid_t, addr: haddr_t, size: size_t,
+        file: *mut H5FD_t, type_: H5FD_mem_t, dxpl_id: hid_t, addr: haddr_t, size: size_t,
         buf: *const c_void,
     ) -> herr_t;
     pub fn H5FDflush(file: *mut H5FD_t, dxpl_id: hid_t, closing: c_uint) -> herr_t;

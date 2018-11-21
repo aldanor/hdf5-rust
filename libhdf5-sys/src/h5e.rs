@@ -78,7 +78,7 @@ extern "C" {
     pub fn H5Eclear2(err_stack: hid_t) -> herr_t;
     pub fn H5Eauto_is_v2(err_stack: hid_t, is_stack: *mut c_uint) -> herr_t;
     pub fn H5Eget_msg(
-        msg_id: hid_t, _type: *mut H5E_type_t, msg: *mut c_char, size: size_t,
+        msg_id: hid_t, type_: *mut H5E_type_t, msg: *mut c_char, size: size_t,
     ) -> ssize_t;
     pub fn H5Eget_num(error_stack_id: hid_t) -> ssize_t;
 }

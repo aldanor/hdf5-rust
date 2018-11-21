@@ -49,7 +49,7 @@ pub enum H5S_sel_type {
 }
 
 extern "C" {
-    pub fn H5Screate(_type: H5S_class_t) -> hid_t;
+    pub fn H5Screate(type_: H5S_class_t) -> hid_t;
     pub fn H5Screate_simple(rank: c_int, dims: *const hsize_t, maxdims: *const hsize_t) -> hid_t;
     pub fn H5Sset_extent_simple(
         space_id: hid_t, rank: c_int, dims: *const hsize_t, max: *const hsize_t,

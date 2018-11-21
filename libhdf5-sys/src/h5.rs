@@ -3,7 +3,7 @@ use std::mem;
 pub use self::H5_index_t::*;
 pub use self::H5_iter_order_t::*;
 
-use libc::{c_int, c_longlong, c_uint, c_ulonglong, uint64_t};
+use libc::{c_int, c_longlong, c_uint, c_ulonglong, c_void, size_t, uint64_t};
 
 pub type herr_t = c_int;
 pub type hbool_t = c_uint;
@@ -67,15 +67,9 @@ extern "C" {
 }
 
 #[cfg(hdf5_1_8_13)]
-use libc::c_void;
-
-#[cfg(hdf5_1_8_13)]
 extern "C" {
     pub fn H5free_memory(mem: *mut c_void) -> herr_t;
 }
-
-#[cfg(hdf5_1_8_15)]
-use libc::size_t;
 
 #[cfg(hdf5_1_8_15)]
 extern "C" {

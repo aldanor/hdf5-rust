@@ -38,7 +38,7 @@ pub type H5I_search_func_t =
     Option<extern "C" fn(obj: *mut c_void, id: hid_t, key: *mut c_void) -> c_int>;
 
 extern "C" {
-    pub fn H5Iregister(_type: H5I_type_t, object: *const c_void) -> hid_t;
+    pub fn H5Iregister(type_: H5I_type_t, object: *const c_void) -> hid_t;
     pub fn H5Iobject_verify(id: hid_t, id_type: H5I_type_t) -> *mut c_void;
     pub fn H5Iremove_verify(id: hid_t, id_type: H5I_type_t) -> *mut c_void;
     pub fn H5Iget_type(id: hid_t) -> H5I_type_t;
@@ -50,13 +50,13 @@ extern "C" {
     pub fn H5Iregister_type(
         hash_size: size_t, reserved: c_uint, free_func: H5I_free_t,
     ) -> H5I_type_t;
-    pub fn H5Iclear_type(_type: H5I_type_t, force: hbool_t) -> herr_t;
-    pub fn H5Idestroy_type(_type: H5I_type_t) -> herr_t;
-    pub fn H5Iinc_type_ref(_type: H5I_type_t) -> c_int;
-    pub fn H5Idec_type_ref(_type: H5I_type_t) -> c_int;
-    pub fn H5Iget_type_ref(_type: H5I_type_t) -> c_int;
-    pub fn H5Isearch(_type: H5I_type_t, func: H5I_search_func_t, key: *mut c_void) -> *mut c_void;
-    pub fn H5Inmembers(_type: H5I_type_t, num_members: *mut hsize_t) -> herr_t;
-    pub fn H5Itype_exists(_type: H5I_type_t) -> htri_t;
+    pub fn H5Iclear_type(type_: H5I_type_t, force: hbool_t) -> herr_t;
+    pub fn H5Idestroy_type(type_: H5I_type_t) -> herr_t;
+    pub fn H5Iinc_type_ref(type_: H5I_type_t) -> c_int;
+    pub fn H5Idec_type_ref(type_: H5I_type_t) -> c_int;
+    pub fn H5Iget_type_ref(type_: H5I_type_t) -> c_int;
+    pub fn H5Isearch(type_: H5I_type_t, func: H5I_search_func_t, key: *mut c_void) -> *mut c_void;
+    pub fn H5Inmembers(type_: H5I_type_t, num_members: *mut hsize_t) -> herr_t;
+    pub fn H5Itype_exists(type_: H5I_type_t) -> htri_t;
     pub fn H5Iis_valid(id: hid_t) -> htri_t;
 }
