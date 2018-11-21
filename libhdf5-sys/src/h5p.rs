@@ -1,7 +1,3 @@
-pub use self::H5D_mpio_actual_chunk_opt_mode_t::*;
-pub use self::H5D_mpio_actual_io_mode_t::*;
-pub use self::H5D_mpio_no_collective_cause_t::*;
-
 use libc::{c_char, c_double, c_int, c_uint, c_void, off_t, size_t, ssize_t};
 
 use crate::h5::{hbool_t, herr_t, hsize_t, htri_t};
@@ -46,37 +42,6 @@ pub type H5P_prp_compare_func_t =
 pub type H5P_prp_close_func_t = H5P_prp_cb1_t;
 pub type H5P_iterate_t =
     Option<extern "C" fn(id: hid_t, name: *const c_char, iter_data: *mut c_void) -> herr_t>;
-
-#[repr(C)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
-pub enum H5D_mpio_actual_chunk_opt_mode_t {
-    H5D_MPIO_NO_CHUNK_OPTIMIZATION = 0,
-    H5D_MPIO_LINK_CHUNK = 1,
-    H5D_MPIO_MULTI_CHUNK = 2,
-}
-
-#[repr(C)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
-pub enum H5D_mpio_actual_io_mode_t {
-    H5D_MPIO_NO_COLLECTIVE = 0,
-    H5D_MPIO_CHUNK_INDEPENDENT = 1,
-    H5D_MPIO_CHUNK_COLLECTIVE = 2,
-    H5D_MPIO_CHUNK_MIXED = 3,
-    H5D_MPIO_CONTIGUOUS_COLLECTIVE = 4,
-}
-
-#[repr(C)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
-pub enum H5D_mpio_no_collective_cause_t {
-    H5D_MPIO_COLLECTIVE = 0,
-    H5D_MPIO_SET_INDEPENDENT = 1,
-    H5D_MPIO_DATATYPE_CONVERSION = 2,
-    H5D_MPIO_DATA_TRANSFORMS = 4,
-    H5D_MPIO_MPI_OPT_TYPES_ENV_VAR_DISABLED = 8,
-    H5D_MPIO_NOT_SIMPLE_OR_SCALAR_DATASPACES = 16,
-    H5D_MPIO_NOT_CONTIGUOUS_OR_CHUNKED_DATASET = 32,
-    H5D_MPIO_FILTERS = 64,
-}
 
 pub use self::globals::*;
 

@@ -2,6 +2,9 @@ pub use self::H5D_alloc_time_t::*;
 pub use self::H5D_fill_time_t::*;
 pub use self::H5D_fill_value_t::*;
 pub use self::H5D_layout_t::*;
+pub use self::H5D_mpio_actual_chunk_opt_mode_t::*;
+pub use self::H5D_mpio_actual_io_mode_t::*;
+pub use self::H5D_mpio_no_collective_cause_t::*;
 pub use self::H5D_space_status_t::*;
 
 use libc::{c_char, c_float, c_uint, c_void, size_t};
@@ -68,6 +71,37 @@ pub enum H5D_fill_value_t {
     H5D_FILL_VALUE_UNDEFINED = 0,
     H5D_FILL_VALUE_DEFAULT = 1,
     H5D_FILL_VALUE_USER_DEFINED = 2,
+}
+
+#[repr(C)]
+#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+pub enum H5D_mpio_actual_chunk_opt_mode_t {
+    H5D_MPIO_NO_CHUNK_OPTIMIZATION = 0,
+    H5D_MPIO_LINK_CHUNK = 1,
+    H5D_MPIO_MULTI_CHUNK = 2,
+}
+
+#[repr(C)]
+#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+pub enum H5D_mpio_actual_io_mode_t {
+    H5D_MPIO_NO_COLLECTIVE = 0,
+    H5D_MPIO_CHUNK_INDEPENDENT = 1,
+    H5D_MPIO_CHUNK_COLLECTIVE = 2,
+    H5D_MPIO_CHUNK_MIXED = 3,
+    H5D_MPIO_CONTIGUOUS_COLLECTIVE = 4,
+}
+
+#[repr(C)]
+#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+pub enum H5D_mpio_no_collective_cause_t {
+    H5D_MPIO_COLLECTIVE = 0,
+    H5D_MPIO_SET_INDEPENDENT = 1,
+    H5D_MPIO_DATATYPE_CONVERSION = 2,
+    H5D_MPIO_DATA_TRANSFORMS = 4,
+    H5D_MPIO_MPI_OPT_TYPES_ENV_VAR_DISABLED = 8,
+    H5D_MPIO_NOT_SIMPLE_OR_SCALAR_DATASPACES = 16,
+    H5D_MPIO_NOT_CONTIGUOUS_OR_CHUNKED_DATASET = 32,
+    H5D_MPIO_FILTERS = 64,
 }
 
 pub type H5D_operator_t = Option<
