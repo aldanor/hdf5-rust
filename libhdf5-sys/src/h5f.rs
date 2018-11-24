@@ -306,6 +306,12 @@ mod hdf5_1_10_1 {
         H5F_FSPACE_STRATEGY_NTYPES = 4,
     }
 
+    impl Default for H5F_fspace_strategy_t {
+        fn default() -> Self {
+            H5F_FSPACE_STRATEGY_FSM_AGGR
+        }
+    }
+
     pub use self::H5F_fspace_strategy_t::*;
 
     extern "C" {
