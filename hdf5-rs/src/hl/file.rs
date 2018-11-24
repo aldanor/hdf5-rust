@@ -38,15 +38,7 @@ impl File {
 
     /// Returns the file size in bytes (or 0 if the file handle is invalid).
     pub fn size(&self) -> u64 {
-        unsafe {
-            let size: *mut hsize_t = &mut 0;
-            h5lock!(H5Fget_filesize(self.id(), size));
-            if *size > 0 {
-                *size as _
-            } else {
-                0
-            }
-        }
+        h5get_d!(H5Fget_filesize(self.id()): hsize_t) as _
     }
 
     /// Returns the free space in the file in bytes (or 0 if the file handle is invalid).
