@@ -1,3 +1,7 @@
+#![allow(unused_macros)]
+
+use crate::internal_prelude::*;
+
 macro_rules! fail {
     ($err:expr) => (
         return Err(From::from($err));
@@ -109,3 +113,54 @@ macro_rules! h5try {
         }
     };
 }
+
+pub(crate) trait H5Get: Copy + Default {
+    type Func;
+
+    fn h5get(func: Self::Func, id: hid_t) -> Result<Self>;
+
+    #[inline]
+    fn h5get_d(func: Self::Func, id: hid_t) -> Self {
+        Self::h5get(func, id).unwrap_or_else(|_| Self::default())
+    }
+}
+
+macro_rules! h5get {
+    ($func:ident($id:expr): $ty:ty) => {
+        <($ty,) as $crate::macros::H5Get>::h5get($func as _, $id).0
+    };
+    ($func:ident($id:expr): $($ty:ty),+) => {
+        <($($ty),+) as $crate::macros::H5Get>::h5get($func as _, $id)
+    };
+}
+
+macro_rules! h5get_d {
+    ($func:ident($id:expr): $ty:ty) => {
+        <($ty,) as $crate::macros::H5Get>::h5get_d($func as _, $id).0
+    };
+    ($func:ident($id:expr): $($ty:ty),+) => {
+        <($($ty),+) as $crate::macros::H5Get>::h5get_d($func as _, $id)
+    };
+}
+
+macro_rules! impl_h5get {
+    ($($name:ident: $ty:ident),+) => {
+        impl<$($ty),+> H5Get for ($($ty,)+)
+        where
+            $($ty: Copy + Default),+,
+        {
+            type Func = unsafe extern "C" fn(hid_t, $(*mut $ty),+) -> herr_t;
+
+            #[inline]
+            fn h5get(func: Self::Func, id: hid_t) -> Result<Self> {
+                $(let mut $name: $ty = Default::default();)+
+                h5call!(func(id, $(&mut $name),+)).map(|_| ($($name,)+))
+            }
+        }
+    };
+}
+
+impl_h5get!(a: A);
+impl_h5get!(a: A, b: B);
+impl_h5get!(a: A, b: B, c: C);
+impl_h5get!(a: A, b: B, c: C, d: D);
