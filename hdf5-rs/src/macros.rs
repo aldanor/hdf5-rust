@@ -127,7 +127,7 @@ pub(crate) trait H5Get: Copy + Default {
 
 macro_rules! h5get {
     ($func:ident($id:expr): $ty:ty) => {
-        <($ty,) as $crate::macros::H5Get>::h5get($func as _, $id).0
+        <($ty,) as $crate::macros::H5Get>::h5get($func as _, $id).map(|x| x.0)
     };
     ($func:ident($id:expr): $($ty:ty),+) => {
         <($($ty),+) as $crate::macros::H5Get>::h5get($func as _, $id)
