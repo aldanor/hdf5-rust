@@ -81,8 +81,14 @@ impl MaybeString for Option<String> {
     }
 }
 
-macro_rules! def_object_class {
-    ($ty:ident, $name:expr, $valid_types:expr, $fmt:expr) => {
+macro_rules! object_class {
+    (
+        $(#[$attr:meta])*
+        pub struct $ty:ident {
+            name: $name:expr, types: $valid_types:expr, repr: $fmt:expr,
+        }
+    ) => {
+        $(#[$attr])*
         #[allow(dead_code)]
         pub struct $ty {
             handle: crate::handle::Handle,
@@ -126,8 +132,16 @@ macro_rules! def_object_class {
         }
     };
 
-    ($ty:ident: $parent:ty, $name:expr, $valid_types:expr, $fmt:expr) => {
-        def_object_class!($ty, $name, $valid_types, $fmt);
+    (
+        $(#[$attr:meta])*
+        pub struct $ty:ident: $parent:ty {
+            name: $name:expr, types: $valid_types:expr, repr: $fmt:expr,
+        }
+    ) => {
+        object_class! {
+            $(#[$attr])*
+            pub struct $ty { name: $name, types: $valid_types, repr: $fmt, }
+        }
 
         impl ::std::ops::Deref for $ty {
             type Target = $parent;

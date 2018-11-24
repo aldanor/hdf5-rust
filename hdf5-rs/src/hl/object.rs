@@ -2,8 +2,14 @@ use libhdf5_sys::h5i::H5Iget_ref;
 
 use crate::internal_prelude::*;
 
-/// Any HDF5 object that can be referenced through an identifier.
-def_object_class!(Object, "object", None, |_| None);
+object_class! {
+    /// Any HDF5 object that can be referenced through an identifier.
+    pub struct Object {
+        name: "object",
+        types: None,
+        repr: |_| None,
+    }
+}
 
 impl Object {
     pub(crate) fn id(&self) -> hid_t {
@@ -39,7 +45,13 @@ pub mod tests {
     use crate::handle::{is_valid_id, is_valid_user_id};
     use crate::internal_prelude::*;
 
-    def_object_class!(TestObject: Object, "test object", None, |_| None);
+    object_class! {
+        pub struct TestObject: Object {
+            name: "test object",
+            types: None,
+            repr: |_| None,
+        }
+    }
 
     impl TestObject {
         fn incref(&self) {

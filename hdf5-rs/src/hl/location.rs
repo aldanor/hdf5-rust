@@ -8,13 +8,14 @@ use libhdf5_sys::{
 
 use crate::internal_prelude::*;
 
-/// Named location (file, group, dataset, named datatype).
-def_object_class!(
-    Location: Object,
-    "location",
-    &[H5I_FILE, H5I_GROUP, H5I_DATATYPE, H5I_DATASET, H5I_ATTR] as &[_],
-    &Location::repr
-);
+object_class! {
+    /// Named location (file, group, dataset, named datatype).
+    pub struct Location: Object {
+        name: "location",
+        types: &[H5I_FILE, H5I_GROUP, H5I_DATATYPE, H5I_DATASET, H5I_ATTR] as &[_],
+        repr: &Location::repr,
+    }
+}
 
 impl Location {
     /// Returns the name of the object within the file, or empty string if the object doesn't

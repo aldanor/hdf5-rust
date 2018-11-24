@@ -14,8 +14,14 @@ use libhdf5_sys::{
 use crate::globals::{H5P_FILE_ACCESS, H5P_FILE_CREATE};
 use crate::internal_prelude::*;
 
-/// Represents the HDF5 file object.
-def_object_class!(File: Group, "file", H5I_FILE, &File::repr);
+object_class! {
+    /// Represents the HDF5 file object.
+    pub struct File: Group {
+        name: "file",
+        types: H5I_FILE,
+        repr: &File::repr,
+    }
+}
 
 impl File {
     /// Create a new file object.

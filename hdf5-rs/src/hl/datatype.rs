@@ -38,8 +38,14 @@ macro_rules! be_le {
     };
 }
 
-/// Represents the HDF5 datatype object.
-def_object_class!(Datatype: Object, "datatype", H5I_DATATYPE, |_| None);
+object_class! {
+    /// Represents the HDF5 datatype object.
+    pub struct Datatype: Object {
+        name: "datatype",
+        types: H5I_DATATYPE,
+        repr: |_| None,
+    }
+}
 
 impl PartialEq for Datatype {
     fn eq(&self, other: &Datatype) -> bool {

@@ -2,7 +2,14 @@ use libhdf5_sys::h5p::{H5Pcopy, H5Pequal};
 
 use crate::internal_prelude::*;
 
-def_object_class!(PropertyList: Object, "property list", H5I_GENPROP_LST, |_| None);
+object_class! {
+    /// Represents the HDF5 property list.
+    pub struct PropertyList: Object {
+        name: "property list",
+        types: H5I_GENPROP_LST,
+        repr: |_| None,
+    }
+}
 
 impl Clone for PropertyList {
     fn clone(&self) -> PropertyList {

@@ -6,8 +6,14 @@ use libhdf5_sys::h5s::{
 
 use crate::internal_prelude::*;
 
-/// Represents the HDF5 datatype object.
-def_object_class!(Dataspace: Object, "dataspace", H5I_DATASPACE, &Dataspace::repr);
+object_class! {
+    /// Represents the HDF5 dataspace object.
+    pub struct Dataspace: Object {
+        name: "dataspace",
+        types: H5I_DATASPACE,
+        repr: &Dataspace::repr,
+    }
+}
 
 impl Dataspace {
     pub fn new<D: Dimension>(d: D, resizable: bool) -> Result<Dataspace> {
