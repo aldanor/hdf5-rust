@@ -120,9 +120,7 @@ impl File {
                     }
                 }
             }
-            unsafe {
-                H5Fclose(self.id());
-            }
+            H5Fclose(self.id());
             while self.is_valid() {
                 self.handle.decref();
             }
