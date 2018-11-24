@@ -1,5 +1,4 @@
 use std::path::Path;
-use std::process::Command;
 
 use libhdf5_sys::{
     h5f::{
@@ -62,17 +61,6 @@ impl File {
             h5lock!(H5Fget_intent(self.id(), mode));
             *mode != H5F_ACC_RDWR
         }
-    }
-
-    /// Returns the output of the `h5dump` tool. Note that this wouldn't work with core driver.
-    pub fn dump(&self) -> Option<String> {
-        self.flush().ok().and(
-            Command::new("h5dump")
-                .arg(self.filename())
-                .output()
-                .ok()
-                .map(|out| String::from_utf8_lossy(&out.stdout).to_string()),
-        )
     }
 
     /// Returns the userblock size in bytes (or 0 if the file handle is invalid).
