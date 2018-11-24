@@ -1,4 +1,6 @@
-use libhdf5_sys::h5p::{H5Pcopy, H5Pequal};
+use std::ptr;
+
+use libhdf5_sys::h5p::{H5P_iterate_t, H5Pcopy, H5Pequal, H5Pexist, H5Piterate};
 
 use crate::internal_prelude::*;
 
@@ -21,6 +23,35 @@ impl Clone for PropertyList {
 impl PartialEq for PropertyList {
     fn eq(&self, other: &PropertyList) -> bool {
         h5call!(H5Pequal(self.id(), other.id())).unwrap_or(0) == 1
+    }
+}
+
+impl PropertyList {
+    pub fn has(&self, property: &str) -> bool {
+        to_cstring(property)
+            .ok()
+            .and_then(|property| h5call!(H5Pexist(self.id(), property.as_ptr())).ok())
+            .map(|r| r > 0)
+            .unwrap_or(false)
+    }
+
+    pub fn properties(&self) -> Vec<String> {
+        extern "C" fn callback(_: hid_t, name: *const c_char, data: *mut c_void) -> herr_t {
+            unsafe {
+                let data = &mut *(data as *mut Vec<String>);
+                let name = string_from_cstr(name);
+                if !name.is_empty() {
+                    data.push(name);
+                }
+                0
+            }
+        }
+
+        let mut data = Vec::new();
+        let data_ptr: *mut c_void = &mut data as *mut _ as *mut _;
+
+        h5lock!(H5Piterate(self.id(), ptr::null_mut(), Some(callback), data_ptr));
+        data
     }
 }
 
