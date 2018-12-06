@@ -7,3 +7,4 @@ target/
 .vagrant/
 *.ipynb*
 .idea/
+sweep.timestamp
