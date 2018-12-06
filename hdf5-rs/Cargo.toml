@@ -21,7 +21,7 @@ default = []
 bitflags = "1.0"
 lazy_static = "1.2"
 libc = "0.2"
-parking_lot = "0.6"
+parking_lot = "0.7"
 num-integer = "0.1"
 num-traits = "0.2"
 libhdf5-lib = { path = "../libhdf5-lib", version = "0.2.0" }
