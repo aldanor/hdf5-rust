@@ -1,6 +1,6 @@
 use std::ptr;
 
-use libhdf5_sys::h5p::{H5P_iterate_t, H5Pcopy, H5Pequal, H5Pexist, H5Piterate};
+use libhdf5_sys::h5p::{H5Pcopy, H5Pequal, H5Pexist, H5Piterate};
 
 use crate::internal_prelude::*;
 
