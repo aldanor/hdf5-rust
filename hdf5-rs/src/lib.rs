@@ -32,6 +32,8 @@ mod util;
 
 mod hl;
 
+pub mod plist;
+
 mod internal_prelude {
     pub use libc::{c_char, c_int, c_uint, c_void, size_t};
 
