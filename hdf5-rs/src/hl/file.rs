@@ -12,6 +12,7 @@ use libhdf5_sys::{
 
 use crate::globals::{H5P_FILE_ACCESS, H5P_FILE_CREATE};
 use crate::internal_prelude::*;
+use crate::plist::FileCreate;
 
 object_class! {
     /// Represents the HDF5 file object.
@@ -123,6 +124,10 @@ impl File {
             }
             self.handle.decref();
         })
+    }
+
+    pub fn get_create_plist(&self) -> Result<FileCreate> {
+        h5lock!(FileCreate::from_id(h5try!(H5Fget_create_plist(self.id()))))
     }
 
     fn repr(&self) -> String {
