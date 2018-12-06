@@ -28,14 +28,15 @@ use crate::globals::H5P_FILE_CREATE;
 use crate::internal_prelude::*;
 
 // TODO: def_plist_class!()
-object_class! {
-    /// File creation properties.
-    pub struct FileCreate: PropertyList {
-        name: "file create property list",
-        types: H5I_GENPROP_LST,
-        repr: |_| { None },
-    }
-}
+
+/// File creation properties.
+pub struct FileCreate(Handle);
+
+impl_class!(PropertyList => FileCreate:
+    name = "file create property list",
+    types = H5I_GENPROP_LST,
+    repr = |_| { None }
+);
 
 impl PartialEq for FileCreate {
     fn eq(&self, other: &FileCreate) -> bool {

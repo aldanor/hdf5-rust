@@ -4,19 +4,19 @@ use libhdf5_sys::h5p::{H5Pcopy, H5Pequal, H5Pexist, H5Piterate};
 
 use crate::internal_prelude::*;
 
-object_class! {
-    /// Represents the HDF5 property list.
-    pub struct PropertyList: Object {
-        name: "property list",
-        types: H5I_GENPROP_LST,
-        repr: |_| None,
-    }
-}
+/// Represents the HDF5 property list.
+pub struct PropertyList(Handle);
+
+impl_class!(Object => PropertyList:
+    name = "property list",
+    types = H5I_GENPROP_LST,
+    repr = |_| None
+);
 
 impl Clone for PropertyList {
     fn clone(&self) -> PropertyList {
         let id = h5call!(H5Pcopy(self.id())).unwrap_or(H5I_INVALID_HID);
-        PropertyList::from_id(id).unwrap_or(PropertyList { handle: Handle::invalid() })
+        PropertyList::from_id(id).ok().unwrap_or_else(PropertyList::invalid)
     }
 }
 

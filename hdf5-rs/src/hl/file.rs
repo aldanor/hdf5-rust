@@ -14,14 +14,14 @@ use crate::globals::{H5P_FILE_ACCESS, H5P_FILE_CREATE};
 use crate::internal_prelude::*;
 use crate::plist::FileCreate;
 
-object_class! {
-    /// Represents the HDF5 file object.
-    pub struct File: Group {
-        name: "file",
-        types: H5I_FILE,
-        repr: &File::repr,
-    }
-}
+/// Represents the HDF5 file object.
+pub struct File(Handle);
+
+impl_class!(Group => File:
+    name = "file",
+    types = H5I_FILE,
+    repr = &File::repr
+);
 
 impl File {
     /// Create a new file object.
@@ -120,9 +120,9 @@ impl File {
             }
             H5Fclose(self.id());
             while self.is_valid() {
-                self.handle.decref();
+                self.0.decref();
             }
-            self.handle.decref();
+            self.0.decref();
         })
     }
 

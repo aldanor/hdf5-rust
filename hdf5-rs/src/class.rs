@@ -17,7 +17,9 @@ pub trait ObjectClass: Sized {
         })
     }
 
-    fn is_valid_id_type(tp: ::libhdf5_sys::h5i::H5I_type_t) -> bool {
+    fn invalid() -> Self;
+
+    fn is_valid_id_type(tp: H5I_type_t) -> bool {
         Self::valid_types().check(tp)
     }
 
@@ -81,19 +83,8 @@ impl MaybeString for Option<String> {
     }
 }
 
-macro_rules! object_class {
-    (
-        $(#[$attr:meta])*
-        pub struct $ty:ident {
-            name: $name:expr, types: $valid_types:expr, repr: $fmt:expr,
-        }
-    ) => {
-        $(#[$attr])*
-        #[allow(dead_code)]
-        pub struct $ty {
-            handle: crate::handle::Handle,
-        }
-
+macro_rules! impl_class {
+    ($ty:ident: name=$name:expr, types=$valid_types:expr, repr=$fmt:expr) => {
         impl crate::class::ObjectClass for $ty {
             #[inline]
             fn object_class_name() -> &'static str {
@@ -107,7 +98,12 @@ macro_rules! object_class {
 
             #[inline]
             fn from_handle(handle: crate::handle::Handle) -> Self {
-                Self { handle }
+                $ty(handle)
+            }
+
+            #[inline]
+            fn invalid() -> Self {
+                $ty(crate::handle::Handle::invalid())
             }
         }
 
@@ -132,16 +128,8 @@ macro_rules! object_class {
         }
     };
 
-    (
-        $(#[$attr:meta])*
-        pub struct $ty:ident: $parent:ty {
-            name: $name:expr, types: $valid_types:expr, repr: $fmt:expr,
-        }
-    ) => {
-        object_class! {
-            $(#[$attr])*
-            pub struct $ty { name: $name, types: $valid_types, repr: $fmt, }
-        }
+    ($parent:ty => $ty:ident: name=$name:expr, types=$valid_types:expr, repr=$fmt:expr) => {
+        impl_class!($ty: name = $name, types = $valid_types, repr = $fmt);
 
         impl ::std::ops::Deref for $ty {
             type Target = $parent;

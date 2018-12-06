@@ -6,14 +6,14 @@ use libhdf5_sys::h5s::{
 
 use crate::internal_prelude::*;
 
-object_class! {
-    /// Represents the HDF5 dataspace object.
-    pub struct Dataspace: Object {
-        name: "dataspace",
-        types: H5I_DATASPACE,
-        repr: &Dataspace::repr,
-    }
-}
+/// Represents the HDF5 dataspace object.
+pub struct Dataspace(Handle);
+
+impl_class!(Object => Dataspace:
+    name = "dataspace",
+    types = H5I_DATASPACE,
+    repr = &Dataspace::repr
+);
 
 impl Dataspace {
     pub fn new<D: Dimension>(d: D, resizable: bool) -> Result<Dataspace> {
@@ -82,7 +82,7 @@ impl Dimension for Dataspace {
 impl Clone for Dataspace {
     fn clone(&self) -> Dataspace {
         let id = h5call!(H5Scopy(self.id())).unwrap_or(H5I_INVALID_HID);
-        Dataspace::from_id(id).unwrap_or(Dataspace { handle: Handle::invalid() })
+        Dataspace::from_id(id).ok().unwrap_or_else(Dataspace::invalid)
     }
 }
 

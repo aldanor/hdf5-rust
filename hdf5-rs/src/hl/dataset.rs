@@ -18,14 +18,14 @@ use libhdf5_sys::{
 use crate::globals::H5P_LINK_CREATE;
 use crate::internal_prelude::*;
 
-object_class! {
-    /// Represents the HDF5 dataset object.
-    pub struct Dataset: Location {
-        name: "dataset",
-        types: H5I_DATASET,
-        repr: |_| None,
-    }
-}
+/// Represents the HDF5 dataset object.
+pub struct Dataset(Handle);
+
+impl_class!(Location => Dataset:
+    name = "dataset",
+    types = H5I_DATASET,
+    repr = |_| None
+);
 
 #[derive(Clone, Debug)]
 pub enum Chunk {

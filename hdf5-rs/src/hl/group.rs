@@ -8,14 +8,14 @@ use libhdf5_sys::{
 use crate::globals::H5P_LINK_CREATE;
 use crate::internal_prelude::*;
 
-object_class! {
-    /// Represents the HDF5 group object.
-    pub struct Group: Location {
-        name: "group",
-        types: H5I_GROUP,
-        repr: &Group::repr,
-    }
-}
+/// Represents the HDF5 group object.
+pub struct Group(Handle);
+
+impl_class!(Location => Group:
+    name = "group",
+    types = H5I_GROUP,
+    repr = &Group::repr
+);
 
 fn group_info(id: hid_t) -> Result<H5G_info_t> {
     let info: *mut H5G_info_t = &mut H5G_info_t::default();

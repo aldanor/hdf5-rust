@@ -2,18 +2,14 @@ use libhdf5_sys::h5i::H5Iget_ref;
 
 use crate::internal_prelude::*;
 
-object_class! {
-    /// Any HDF5 object that can be referenced through an identifier.
-    pub struct Object {
-        name: "object",
-        types: None,
-        repr: |_| None,
-    }
-}
+/// Any HDF5 object that can be referenced through an identifier.
+pub struct Object(Handle);
+
+impl_class!(Object: name = "object", types = None, repr = |_| None);
 
 impl Object {
-    pub(crate) fn id(&self) -> hid_t {
-        self.handle.id()
+    pub fn id(&self) -> hid_t {
+        self.0.id()
     }
 
     /// Returns reference count if the handle is valid and 0 otherwise.
@@ -45,21 +41,21 @@ pub mod tests {
     use crate::handle::{is_valid_id, is_valid_user_id};
     use crate::internal_prelude::*;
 
-    object_class! {
-        pub struct TestObject: Object {
-            name: "test object",
-            types: None,
-            repr: |_| None,
-        }
-    }
+    pub struct TestObject(Handle);
+
+    impl_class!(Object => TestObject:
+        name = "test object",
+        types = None,
+        repr = |_| None
+    );
 
     impl TestObject {
         fn incref(&self) {
-            self.handle.incref()
+            self.0.incref()
         }
 
         fn decref(&self) {
-            self.handle.decref()
+            self.0.decref()
         }
     }
 
