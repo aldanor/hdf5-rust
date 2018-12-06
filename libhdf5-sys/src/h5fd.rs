@@ -90,8 +90,12 @@ pub struct H5FD_class_t {
     pub dxpl_copy: Option<extern "C" fn(dxpl: *const c_void) -> *mut c_void>,
     pub dxpl_free: Option<extern "C" fn(dxpl: *mut c_void) -> herr_t>,
     pub open: Option<
-        extern "C" fn(name: *const c_char, flags: c_uint, fapl: hid_t, maxaddr: haddr_t)
-            -> *mut H5FD_t,
+        extern "C" fn(
+            name: *const c_char,
+            flags: c_uint,
+            fapl: hid_t,
+            maxaddr: haddr_t,
+        ) -> *mut H5FD_t,
     >,
     pub close: Option<extern "C" fn(file: *mut H5FD_t) -> herr_t>,
     pub cmp: Option<extern "C" fn(f1: *const H5FD_t, f2: *const H5FD_t) -> c_int>,
@@ -99,8 +103,12 @@ pub struct H5FD_class_t {
     pub get_type_map:
         Option<extern "C" fn(file: *const H5FD_t, type_map: *mut H5FD_mem_t) -> herr_t>,
     pub alloc: Option<
-        extern "C" fn(file: *mut H5FD_t, type_: H5FD_mem_t, dxpl_id: hid_t, size: hsize_t)
-            -> haddr_t,
+        extern "C" fn(
+            file: *mut H5FD_t,
+            type_: H5FD_mem_t,
+            dxpl_id: hid_t,
+            size: hsize_t,
+        ) -> haddr_t,
     >,
     pub free: Option<
         extern "C" fn(
@@ -142,8 +150,12 @@ pub struct H5FD_class_t {
     pub truncate:
         Option<extern "C" fn(file: *mut H5FD_t, dxpl_id: hid_t, closing: hbool_t) -> herr_t>,
     pub lock: Option<
-        extern "C" fn(file: *mut H5FD_t, oid: *mut c_uchar, lock_type: c_uint, last: hbool_t)
-            -> herr_t,
+        extern "C" fn(
+            file: *mut H5FD_t,
+            oid: *mut c_uchar,
+            lock_type: c_uint,
+            last: hbool_t,
+        ) -> herr_t,
     >,
     pub unlock:
         Option<extern "C" fn(file: *mut H5FD_t, oid: *mut c_uchar, last: hbool_t) -> herr_t>,
@@ -207,8 +219,11 @@ pub enum H5FD_file_image_op_t {
 #[derive(Debug, Copy, Clone)]
 pub struct H5FD_file_image_callbacks_t {
     pub image_malloc: Option<
-        extern "C" fn(size: size_t, file_image_op: H5FD_file_image_op_t, udata: *mut c_void)
-            -> *mut c_void,
+        extern "C" fn(
+            size: size_t,
+            file_image_op: H5FD_file_image_op_t,
+            udata: *mut c_void,
+        ) -> *mut c_void,
     >,
     pub image_memcpy: Option<
         extern "C" fn(
@@ -228,8 +243,11 @@ pub struct H5FD_file_image_callbacks_t {
         ) -> *mut c_void,
     >,
     pub image_free: Option<
-        extern "C" fn(ptr: *mut c_void, file_image_op: H5FD_file_image_op_t, udata: *mut c_void)
-            -> herr_t,
+        extern "C" fn(
+            ptr: *mut c_void,
+            file_image_op: H5FD_file_image_op_t,
+            udata: *mut c_void,
+        ) -> herr_t,
     >,
     pub udata_copy: Option<extern "C" fn(udata: *mut c_void) -> *mut c_void>,
     pub udata_free: Option<extern "C" fn(udata: *mut c_void) -> herr_t>,

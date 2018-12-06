@@ -121,8 +121,11 @@ pub type H5D_scatter_func_t = Option<
 >;
 #[cfg(hdf5_1_8_11)]
 pub type H5D_gather_func_t = Option<
-    extern "C" fn(dst_buf: *const c_void, dst_buf_bytes_used: size_t, op_data: *mut c_void)
-        -> herr_t,
+    extern "C" fn(
+        dst_buf: *const c_void,
+        dst_buf_bytes_used: size_t,
+        op_data: *mut c_void,
+    ) -> herr_t,
 >;
 
 extern "C" {
@@ -205,8 +208,11 @@ mod hdf5_1_10_0 {
     pub const H5D_CHUNK_DONT_FILTER_PARTIAL_CHUNKS: c_uint = 1;
 
     pub type H5D_append_cb_t = Option<
-        unsafe extern "C" fn(dataset_id: hid_t, cur_dims: *mut hsize_t, op_data: *mut c_void)
-            -> herr_t,
+        unsafe extern "C" fn(
+            dataset_id: hid_t,
+            cur_dims: *mut hsize_t,
+            op_data: *mut c_void,
+        ) -> herr_t,
     >;
 
     extern "C" {

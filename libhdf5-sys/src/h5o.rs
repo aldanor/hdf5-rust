@@ -140,8 +140,12 @@ impl Default for H5O_info_t__meta_size {
 pub type H5O_msg_crt_idx_t = uint32_t;
 
 pub type H5O_iterate_t = Option<
-    extern "C" fn(obj: hid_t, name: *const c_char, info: *const H5O_info_t, op_data: *mut c_void)
-        -> herr_t,
+    extern "C" fn(
+        obj: hid_t,
+        name: *const c_char,
+        info: *const H5O_info_t,
+        op_data: *mut c_void,
+    ) -> herr_t,
 >;
 
 #[repr(C)]

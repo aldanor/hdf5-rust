@@ -44,7 +44,11 @@ impl File {
     /// Returns the free space in the file in bytes (or 0 if the file handle is invalid).
     pub fn free_space(&self) -> u64 {
         let freespace = h5lock!(H5Fget_freespace(self.id()));
-        if freespace < 0 { 0 } else { freespace as _ }
+        if freespace < 0 {
+            0
+        } else {
+            freespace as _
+        }
     }
 
     /// Returns true if the file was opened in a read-only mode.

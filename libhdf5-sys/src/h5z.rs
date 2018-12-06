@@ -89,8 +89,12 @@ pub enum H5Z_cb_return_t {
 }
 
 pub type H5Z_filter_func_t = Option<
-    extern "C" fn(filter: H5Z_filter_t, buf: *mut c_void, buf_size: size_t, op_data: *mut c_void)
-        -> H5Z_cb_return_t,
+    extern "C" fn(
+        filter: H5Z_filter_t,
+        buf: *mut c_void,
+        buf_size: size_t,
+        op_data: *mut c_void,
+    ) -> H5Z_cb_return_t,
 >;
 
 #[repr(C)]

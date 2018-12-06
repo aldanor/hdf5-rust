@@ -137,8 +137,12 @@ impl Default for H5L_class_t {
 }
 
 pub type H5L_iterate_t = Option<
-    extern "C" fn(group: hid_t, name: *const c_char, info: *const H5L_info_t, op_data: *mut c_void)
-        -> herr_t,
+    extern "C" fn(
+        group: hid_t,
+        name: *const c_char,
+        info: *const H5L_info_t,
+        op_data: *mut c_void,
+    ) -> herr_t,
 >;
 pub type H5L_elink_traverse_t = Option<
     extern "C" fn(
