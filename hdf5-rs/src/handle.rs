@@ -1,7 +1,8 @@
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex, RwLock};
+use std::sync::Arc;
 
 use lazy_static::lazy_static;
+use parking_lot::{Mutex, RwLock};
 
 use libhdf5_sys::h5i::{H5I_type_t, H5Idec_ref, H5Iget_type, H5Iinc_ref, H5Iis_valid};
 
@@ -46,9 +47,9 @@ impl Registry {
     }
 
     pub fn new_handle(&self, id: hid_t) -> Arc<RwLock<hid_t>> {
-        let mut registry = self.registry.lock().unwrap();
+        let mut registry = self.registry.lock();
         let handle = registry.entry(id).or_insert_with(|| Arc::new(RwLock::new(id)));
-        if *handle.read().unwrap() != id {
+        if *handle.read() != id {
             // an id may be left dangling by previous invalidation of a linked handle
             *handle = Arc::new(RwLock::new(id));
         }
@@ -79,11 +80,11 @@ impl Handle {
     }
 
     pub fn id(&self) -> hid_t {
-        *self.id.read().unwrap()
+        *self.id.read()
     }
 
     pub fn invalidate(&self) {
-        *self.id.write().unwrap() = H5I_INVALID_HID;
+        *self.id.write() = H5I_INVALID_HID;
     }
 
     pub fn incref(&self) {
