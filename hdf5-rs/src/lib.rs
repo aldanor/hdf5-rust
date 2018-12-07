@@ -46,7 +46,7 @@ mod internal_prelude {
 
     pub use crate::{
         class::ObjectClass,
-        error::silence_errors,
+        error::{silence_errors, ResultExt},
         export::*,
         handle::{get_id_type, is_valid_user_id, Handle},
         hl::*,
