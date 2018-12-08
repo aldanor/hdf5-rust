@@ -42,10 +42,12 @@ mod internal_prelude {
         h5i::H5I_type_t::{self, *},
         h5i::{hid_t, H5I_INVALID_HID},
         h5p::H5P_DEFAULT,
+        h5s::H5S_ALL,
     };
 
     pub use crate::{
         class::ObjectClass,
+        dim::Dimension,
         error::{silence_errors, ResultExt},
         export::*,
         handle::{get_id_type, is_valid_user_id, Handle},
