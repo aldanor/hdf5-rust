@@ -81,9 +81,7 @@ impl ErrorStack {
         }
 
         extern "C" fn callback(
-            _: c_uint,
-            err_desc: *const H5E_error2_t,
-            data: *mut c_void,
+            _: c_uint, err_desc: *const H5E_error2_t, data: *mut c_void,
         ) -> herr_t {
             unsafe {
                 let data = &mut *(data as *mut CallbackData);
