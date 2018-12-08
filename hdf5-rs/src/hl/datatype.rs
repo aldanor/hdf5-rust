@@ -195,9 +195,9 @@ impl Datatype {
         unsafe fn string_type(size: Option<usize>, encoding: H5T_cset_t) -> Result<hid_t> {
             let string_id = h5try!(H5Tcopy(*H5T_C_S1));
             let padding = if size.is_none() {
-                H5T_str_t::H5T_STR_NULLPAD
-            } else {
                 H5T_str_t::H5T_STR_NULLTERM
+            } else {
+                H5T_str_t::H5T_STR_NULLPAD
             };
             let size = size.unwrap_or(H5T_VARIABLE);
             h5try!(H5Tset_cset(string_id, encoding));
