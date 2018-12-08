@@ -1,15 +1,18 @@
+use std::borrow::Borrow;
+
 use hdf5_types::{
     CompoundField, CompoundType, EnumMember, EnumType, FloatSize, H5Type, IntSize, TypeDescriptor,
 };
 use libhdf5_sys::h5t::{
-    H5T_class_t, H5T_cset_t, H5T_str_t, H5Tarray_create2, H5Tcopy, H5Tcreate, H5Tenum_create,
-    H5Tenum_insert, H5Tequal, H5Tget_array_dims2, H5Tget_array_ndims, H5Tget_class, H5Tget_cset,
-    H5Tget_member_name, H5Tget_member_offset, H5Tget_member_type, H5Tget_member_value,
-    H5Tget_nmembers, H5Tget_sign, H5Tget_size, H5Tget_super, H5Tinsert, H5Tis_variable_str,
-    H5Tset_cset, H5Tset_size, H5Tset_strpad, H5Tvlen_create, H5T_VARIABLE,
+    H5T_cdata_t, H5T_class_t, H5T_cset_t, H5T_str_t, H5Tarray_create2, H5Tcompiler_conv, H5Tcopy,
+    H5Tcreate, H5Tenum_create, H5Tenum_insert, H5Tequal, H5Tfind, H5Tget_array_dims2,
+    H5Tget_array_ndims, H5Tget_class, H5Tget_cset, H5Tget_member_name, H5Tget_member_offset,
+    H5Tget_member_type, H5Tget_member_value, H5Tget_nmembers, H5Tget_sign, H5Tget_size,
+    H5Tget_super, H5Tinsert, H5Tis_variable_str, H5Tset_cset, H5Tset_size, H5Tset_strpad,
+    H5Tvlen_create, H5T_VARIABLE,
 };
 
-use crate::globals::{H5T_C_S1, H5T_NATIVE_INT8};
+use crate::globals::{H5T_C_S1, H5T_NATIVE_INT, H5T_NATIVE_INT8};
 use crate::internal_prelude::*;
 
 #[cfg(target_endian = "big")]
@@ -53,10 +56,41 @@ impl PartialEq for Datatype {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Conversion {
+    NoOp,
+    Hard,
+    Soft,
+}
+
 impl Datatype {
     /// Get the total size of the datatype in bytes.
     pub fn size(&self) -> usize {
         h5call!(H5Tget_size(self.id())).unwrap_or(0) as usize
+    }
+
+    pub fn get_conv_path<D>(&self, dst: D) -> Option<Conversion>
+    where
+        D: Borrow<Datatype>,
+    {
+        let dst = dst.borrow();
+        let mut cdata = H5T_cdata_t::default();
+        h5lock!({
+            silence_errors(); // TODO: turn this into a context manager
+            let noop = H5Tfind(*H5T_NATIVE_INT, *H5T_NATIVE_INT, &mut (&mut cdata as *mut _));
+            if H5Tfind(self.id(), dst.id(), &mut (&mut cdata as *mut _)) == noop {
+                Some(Conversion::NoOp)
+            } else {
+                let res = H5Tcompiler_conv(self.id(), dst.id());
+                if res == 0 {
+                    Some(Conversion::Soft)
+                } else if res > 0 {
+                    Some(Conversion::Hard)
+                } else {
+                    None
+                }
+            }
+        })
     }
 
     pub fn to_descriptor(&self) -> Result<TypeDescriptor> {
