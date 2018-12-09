@@ -122,7 +122,7 @@ pub mod tests {
 
     #[test]
     pub fn test_dataspace() {
-        silence_errors();
+        let _e = silence_errors();
         assert_err!(
             Dataspace::new(H5S_UNLIMITED as Ix, true),
             "current dimension must have a specific size"

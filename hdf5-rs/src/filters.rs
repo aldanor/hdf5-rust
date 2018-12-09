@@ -325,7 +325,7 @@ pub mod tests {
 
     #[test]
     pub fn test_szip() {
-        silence_errors();
+        let _e = silence_errors();
 
         if !szip_available() {
             assert_err!(
@@ -359,7 +359,7 @@ pub mod tests {
 
     #[test]
     pub fn test_gzip() {
-        silence_errors();
+        let _e = silence_errors();
 
         if !gzip_available() {
             assert_err!(
@@ -417,7 +417,7 @@ pub mod tests {
 
     #[test]
     pub fn test_scale_offset() {
-        silence_errors();
+        let _e = silence_errors();
 
         assert!(Filters::new().get_scale_offset().is_none());
         assert_eq!(Filters::new().scale_offset(8).get_scale_offset(), Some(8));

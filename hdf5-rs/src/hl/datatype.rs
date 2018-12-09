@@ -76,7 +76,7 @@ impl Datatype {
         let dst = dst.borrow();
         let mut cdata = H5T_cdata_t::default();
         h5lock!({
-            silence_errors(); // TODO: turn this into a context manager
+            let _e = silence_errors();
             let noop = H5Tfind(*H5T_NATIVE_INT, *H5T_NATIVE_INT, &mut (&mut cdata as *mut _));
             if H5Tfind(self.id(), dst.id(), &mut (&mut cdata as *mut _)) == noop {
                 Some(Conversion::NoOp)

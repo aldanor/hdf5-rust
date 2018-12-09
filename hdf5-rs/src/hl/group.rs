@@ -156,7 +156,6 @@ pub mod tests {
 
     #[test]
     pub fn test_group() {
-        silence_errors();
         with_tmp_file(|file| {
             assert_err_re!(file.group("a"), "unable to open group: object.+doesn't exist");
             file.create_group("a").unwrap();
@@ -193,7 +192,6 @@ pub mod tests {
 
     #[test]
     pub fn test_link_hard() {
-        silence_errors();
         with_tmp_file(|file| {
             file.create_group("foo/test/inner").unwrap();
             file.link_hard("/foo/test", "/foo/hard").unwrap();
@@ -222,7 +220,6 @@ pub mod tests {
 
     #[test]
     pub fn test_link_soft() {
-        silence_errors();
         with_tmp_file(|file| {
             file.create_group("a/b/c").unwrap();
             file.link_soft("/a/b", "a/soft").unwrap();
@@ -243,7 +240,6 @@ pub mod tests {
 
     #[test]
     pub fn test_relink() {
-        silence_errors();
         with_tmp_file(|file| {
             file.create_group("test").unwrap();
             file.group("test").unwrap();
@@ -261,7 +257,6 @@ pub mod tests {
 
     #[test]
     pub fn test_unlink() {
-        silence_errors();
         with_tmp_file(|file| {
             file.create_group("/foo/bar").unwrap();
             file.unlink("foo/bar").unwrap();

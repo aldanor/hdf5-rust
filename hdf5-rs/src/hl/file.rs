@@ -263,7 +263,6 @@ pub mod tests {
 
     #[test]
     pub fn test_invalid_mode() {
-        silence_errors();
         with_tmp_dir(|dir| {
             assert_err!(File::open(&dir, "foo"), "Invalid file access mode");
         })
@@ -271,7 +270,6 @@ pub mod tests {
 
     #[test]
     pub fn test_is_read_only() {
-        silence_errors();
         with_tmp_path(|path| {
             assert!(!File::open(&path, "w").unwrap().is_read_only());
             assert!(File::open(&path, "r").unwrap().is_read_only());
@@ -288,7 +286,6 @@ pub mod tests {
 
     #[test]
     pub fn test_unable_to_open() {
-        silence_errors();
         with_tmp_dir(|dir| {
             assert_err!(File::open(&dir, "r"), "unable to open file");
             assert_err!(File::open(&dir, "r+"), "unable to open file");
@@ -307,8 +304,6 @@ pub mod tests {
 
     #[test]
     pub fn test_access_modes() {
-        silence_errors();
-
         // "w" means overwrite
         with_tmp_path(|path| {
             File::open(&path, "w").unwrap().create_group("foo").unwrap();
@@ -374,8 +369,6 @@ pub mod tests {
 
     #[test]
     pub fn test_userblock() {
-        silence_errors();
-
         with_tmp_file(|file| {
             assert_eq!(file.userblock(), 0);
         });
@@ -454,7 +447,6 @@ pub mod tests {
 
     #[test]
     pub fn test_core_fd_non_filebacked() {
-        silence_errors();
         with_tmp_path(|path| {
             let file =
                 FileBuilder::new().driver("core").filebacked(false).mode("w").open(&path).unwrap();

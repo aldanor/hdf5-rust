@@ -304,7 +304,7 @@ pub mod tests {
 
     #[test]
     pub fn test_error_stack() {
-        silence_errors();
+        let _e = silence_errors();
 
         let result_no_error = h5lock!({
             let plist_id = H5Pcreate(*H5P_ROOT);
@@ -350,7 +350,7 @@ pub mod tests {
 
     #[test]
     pub fn test_h5call() {
-        silence_errors();
+        let _e = silence_errors();
 
         let result_no_error = h5call!({
             let plist_id = H5Pcreate(*H5P_ROOT);
@@ -368,7 +368,7 @@ pub mod tests {
 
     #[test]
     pub fn test_h5try() {
-        silence_errors();
+        let _e = silence_errors();
 
         fn f1() -> Result<herr_t> {
             let plist_id = h5try!(H5Pcreate(*H5P_ROOT));
