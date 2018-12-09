@@ -6,8 +6,8 @@ use num_integer::Integer;
 use num_traits::{Bounded, Zero};
 
 use libhdf5_sys::h5e::{
-    H5E_error2_t, H5Eclose_stack, H5Eget_current_stack, H5Eget_msg, H5Eset_auto2, H5Ewalk2,
-    H5E_DEFAULT, H5E_WALK_DOWNWARD,
+    H5E_auto2_t, H5E_error2_t, H5Eclose_stack, H5Eget_auto2, H5Eget_current_stack, H5Eget_msg,
+    H5Eset_auto2, H5Ewalk2, H5E_DEFAULT, H5E_WALK_DOWNWARD,
 };
 
 use crate::internal_prelude::*;
@@ -48,8 +48,42 @@ impl ErrorFrame {
     }
 }
 
-pub fn silence_errors() {
-    h5lock!(H5Eset_auto2(H5E_DEFAULT, None, ptr::null_mut()));
+#[must_use]
+#[doc(hidden)]
+pub struct SilenceErrors {
+    func: H5E_auto2_t,
+    cdata: *mut c_void,
+    valid: bool,
+}
+
+impl Default for SilenceErrors {
+    fn default() -> Self {
+        Self { func: None, cdata: ptr::null_mut(), valid: false }
+    }
+}
+
+impl SilenceErrors {
+    pub fn new() -> Self {
+        let mut func: H5E_auto2_t = None;
+        let mut cdata: *mut c_void = ptr::null_mut();
+        if h5lock!(H5Eget_auto2(H5E_DEFAULT, &mut func as *mut _, &mut cdata as *mut _)) < 0 {
+            return Self::default();
+        }
+        h5lock!(H5Eset_auto2(H5E_DEFAULT, None, ptr::null_mut()));
+        Self { func, cdata, valid: true }
+    }
+}
+
+impl Drop for SilenceErrors {
+    fn drop(&mut self) {
+        if self.valid {
+            h5lock!(H5Eset_auto2(H5E_DEFAULT, self.func, self.cdata));
+        }
+    }
+}
+
+pub fn silence_errors() -> SilenceErrors {
+    SilenceErrors::new()
 }
 
 #[derive(Clone)]
