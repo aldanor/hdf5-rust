@@ -13,11 +13,8 @@ environment:
   HDF5_URL: "https://support.hdfgroup.org/ftp/HDF5/prev-releases/hdf5-1.8/hdf5-1.8.17/bin/windows/extra/hdf5-1.8.17-win64-vs2015-shared.zip"
   matrix:
     - CHANNEL: 1.31.0
-      FEATURES: ""
     - CHANNEL: beta
-      FEATURES: ""
     - CHANNEL: nightly
-      FEATURES: "clippy"
 install:
   - ps: Start-FileDownload "https://static.rust-lang.org/dist/rust-${env:CHANNEL}-${env:TARGET}.msi"
   - ps: Start-Process -FilePath msiexec -ArgumentList /i, rust-${env:CHANNEL}-${env:TARGET}.msi, INSTALLDIR="C:\Rust", /quiet -Wait
@@ -30,6 +27,6 @@ install:
 
 test_script:
   - cd %APPVEYOR_BUILD_FOLDER%
-  - cargo build -v --features "%FEATURES%"
-  - cargo test -v --no-run --features "%FEATURES%"
-  - cargo test -v --features "%FEATURES%"
+  - cargo build -v
+  - cargo test -v --no-run
+  - cargo test -v
