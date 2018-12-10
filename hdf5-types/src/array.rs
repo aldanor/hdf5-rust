@@ -5,8 +5,6 @@ use std::ops::Deref;
 use std::ptr;
 use std::slice;
 
-use libc::{self, size_t};
-
 /* This trait is borrowed from arrayvec::Array (C) @bluss */
 pub unsafe trait Array: 'static {
     type Item;
@@ -62,7 +60,7 @@ impl_array!(
 
 #[repr(C)]
 pub struct VarLenArray<T: Copy> {
-    len: size_t,
+    len: usize,
     ptr: *const T,
     tag: PhantomData<T>,
 }

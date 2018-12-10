@@ -35,7 +35,8 @@ mod hl;
 pub mod plist;
 
 mod internal_prelude {
-    pub use libc::{c_char, c_int, c_uint, c_void, size_t};
+    pub use libc::size_t;
+    pub use std::os::raw::{c_char, c_int, c_uint, c_void};
 
     pub use libhdf5_sys::{
         h5::{haddr_t, hbool_t, herr_t, hsize_t},

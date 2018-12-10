@@ -1,13 +1,14 @@
 use std::mem;
 
-use libc::{c_void, size_t};
+use std::os::raw::c_void;
 
 use crate::array::{Array, VarLenArray};
 use crate::string::{FixedAscii, FixedUnicode, VarLenAscii, VarLenUnicode};
 
+#[allow(non_camel_case_types)]
 #[repr(C)]
 struct hvl_t {
-    len: size_t,
+    len: usize,
     p: *mut c_void,
 }
 

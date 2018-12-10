@@ -8,7 +8,6 @@ use std::slice;
 use std::str::{self, FromStr};
 
 use ascii::{AsAsciiStr, AsAsciiStrError, AsciiStr};
-use libc;
 
 use crate::array::Array;
 use crate::errors::Result;
