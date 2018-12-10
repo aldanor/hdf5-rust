@@ -5,9 +5,7 @@ pub use super::h5f::H5F_mem_t::*;
 
 use crate::internal_prelude::*;
 
-use crate::h5::{haddr_t, hbool_t, herr_t, hsize_t};
 use crate::h5f::{H5F_close_degree_t, H5F_mem_t};
-use crate::h5i::hid_t;
 
 pub const H5_HAVE_VFL: c_uint = 1;
 

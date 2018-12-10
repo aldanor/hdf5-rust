@@ -1,11 +1,9 @@
 use crate::internal_prelude::*;
 
-use crate::h5::{hbool_t, herr_t, hsize_t, htri_t};
 use crate::h5ac::H5AC_cache_config_t;
 use crate::h5d::{H5D_alloc_time_t, H5D_fill_time_t, H5D_fill_value_t, H5D_layout_t};
 use crate::h5f::{H5F_close_degree_t, H5F_libver_t};
 use crate::h5fd::H5FD_mem_t;
-use crate::h5i::hid_t;
 use crate::h5l::H5L_elink_traverse_t;
 use crate::h5mm::{H5MM_allocate_t, H5MM_free_t};
 use crate::h5t::{H5T_conv_except_func_t, H5T_cset_t};

@@ -5,9 +5,6 @@ pub use self::H5O_type_t::*;
 
 use crate::internal_prelude::*;
 
-use crate::h5::{haddr_t, hbool_t, herr_t, hsize_t, H5_ih_info_t, H5_index_t, H5_iter_order_t};
-use crate::h5i::hid_t;
-
 pub const H5O_COPY_SHALLOW_HIERARCHY_FLAG: c_uint = 0x0001;
 pub const H5O_COPY_EXPAND_SOFT_LINK_FLAG: c_uint = 0x0002;
 pub const H5O_COPY_EXPAND_EXT_LINK_FLAG: c_uint = 0x0004;

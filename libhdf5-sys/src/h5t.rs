@@ -16,9 +16,6 @@ pub use self::H5T_str_t::*;
 
 use crate::internal_prelude::*;
 
-use crate::h5::{hbool_t, herr_t, hsize_t, htri_t};
-use crate::h5i::hid_t;
-
 #[repr(C)]
 #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
 pub enum H5T_class_t {

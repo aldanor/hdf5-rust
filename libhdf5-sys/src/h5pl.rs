@@ -1,7 +1,5 @@
 use crate::internal_prelude::*;
 
-use crate::h5::herr_t;
-
 #[cfg(hdf5_1_8_15)]
 mod hdf5_1_8_15 {
     use super::*;

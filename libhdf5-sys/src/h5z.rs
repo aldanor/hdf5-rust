@@ -6,9 +6,6 @@ pub use self::H5Z_cb_return_t::*;
 
 use crate::internal_prelude::*;
 
-use crate::h5::{herr_t, htri_t};
-use crate::h5i::hid_t;
-
 pub const H5Z_FILTER_ERROR: hid_t = -1;
 pub const H5Z_FILTER_NONE: hid_t = 0;
 pub const H5Z_FILTER_DEFLATE: hid_t = 1;

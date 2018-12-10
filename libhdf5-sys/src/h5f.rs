@@ -7,9 +7,7 @@ pub use self::H5F_scope_t::*;
 
 use crate::internal_prelude::*;
 
-use crate::h5::{haddr_t, hbool_t, herr_t, hsize_t, hssize_t, htri_t, H5_ih_info_t};
 use crate::h5ac::H5AC_cache_config_t;
-use crate::h5i::hid_t;
 
 #[cfg_attr(hdf5_1_10_0, deprecated(note = "deprecated in HDF5 1.10.0"))]
 pub const H5F_ACC_DEBUG: c_uint = 0x0000;

@@ -2,7 +2,6 @@ use std::mem;
 
 use crate::internal_prelude::*;
 
-use crate::h5::hbool_t;
 use crate::h5c::{H5C_cache_decr_mode, H5C_cache_flash_incr_mode, H5C_cache_incr_mode};
 
 pub const H5AC__CURR_CACHE_CONFIG_VERSION: c_int = 1;

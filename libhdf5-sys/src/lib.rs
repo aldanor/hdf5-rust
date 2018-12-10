@@ -36,6 +36,12 @@ pub mod h5pl;
 
 #[allow(non_camel_case_types)]
 mod internal_prelude {
+    pub use crate::h5::{
+        haddr_t, hbool_t, herr_t, hsize_t, hssize_t, htri_t, H5_ih_info_t, H5_index_t,
+        H5_iter_order_t,
+    };
+    pub use crate::h5i::hid_t;
+    pub use crate::h5t::H5T_cset_t;
     pub use libc::{int64_t, off_t, size_t, ssize_t, time_t, uint32_t, uint64_t, FILE};
     pub use std::os::raw::{
         c_char, c_double, c_float, c_int, c_long, c_longlong, c_uchar, c_uint, c_ulong,

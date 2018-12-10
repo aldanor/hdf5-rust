@@ -2,10 +2,7 @@ use std::mem;
 
 use crate::internal_prelude::*;
 
-use crate::h5::{hbool_t, herr_t, hsize_t, htri_t, H5_index_t, H5_iter_order_t};
-use crate::h5i::hid_t;
 use crate::h5o::H5O_msg_crt_idx_t;
-use crate::h5t::H5T_cset_t;
 
 #[repr(C)]
 #[derive(Copy, Clone)]

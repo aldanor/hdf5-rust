@@ -4,10 +4,6 @@ pub use self::H5L_type_t::*;
 
 use crate::internal_prelude::*;
 
-use crate::h5::{haddr_t, hbool_t, herr_t, hsize_t, htri_t, H5_index_t, H5_iter_order_t};
-use crate::h5i::hid_t;
-use crate::h5t::H5T_cset_t;
-
 pub const H5L_MAX_LINK_NAME_LEN: uint32_t = !0;
 
 pub const H5L_SAME_LOC: hid_t = 0;

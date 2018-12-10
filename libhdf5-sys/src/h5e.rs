@@ -5,9 +5,6 @@ pub use self::H5E_type_t::*;
 
 use crate::internal_prelude::*;
 
-use crate::h5::herr_t;
-use crate::h5i::hid_t;
-
 pub const H5E_DEFAULT: hid_t = 0;
 
 #[repr(C)]

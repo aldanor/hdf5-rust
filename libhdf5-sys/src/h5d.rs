@@ -9,9 +9,6 @@ pub use self::H5D_space_status_t::*;
 
 use crate::internal_prelude::*;
 
-use crate::h5::{haddr_t, herr_t, hsize_t};
-use crate::h5i::hid_t;
-
 pub const H5D_CHUNK_CACHE_NSLOTS_DEFAULT: size_t = !0;
 pub const H5D_CHUNK_CACHE_NBYTES_DEFAULT: size_t = !0;
 

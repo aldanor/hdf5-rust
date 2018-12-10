@@ -2,8 +2,6 @@ pub use self::H5I_type_t::*;
 
 use crate::internal_prelude::*;
 
-use crate::h5::{hbool_t, herr_t, hsize_t, htri_t};
-
 #[repr(C)]
 #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
 pub enum H5I_type_t {

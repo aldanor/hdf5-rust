@@ -4,8 +4,6 @@ pub use self::H5G_storage_type_t::*;
 
 use crate::internal_prelude::*;
 
-use crate::h5::{hbool_t, herr_t, hsize_t, H5_index_t, H5_iter_order_t};
-use crate::h5i::hid_t;
 use crate::h5l::{H5L_type_t, H5L_SAME_LOC, H5L_TYPE_ERROR, H5L_TYPE_HARD, H5L_TYPE_SOFT};
 
 pub const H5G_SAME_LOC: hid_t = H5L_SAME_LOC;

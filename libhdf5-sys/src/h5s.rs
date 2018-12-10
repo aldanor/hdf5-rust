@@ -4,9 +4,6 @@ pub use self::H5S_seloper_t::*;
 
 use crate::internal_prelude::*;
 
-use crate::h5::{herr_t, hsize_t, hssize_t, htri_t};
-use crate::h5i::hid_t;
-
 pub const H5S_ALL: hid_t = 0;
 
 pub const H5S_UNLIMITED: hsize_t = (-1 as hssize_t) as _;
