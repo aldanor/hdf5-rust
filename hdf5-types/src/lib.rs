@@ -1,9 +1,6 @@
 #![recursion_limit = "1024"]
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::transmute_bytes_to_str))]
 
-extern crate ascii;
-extern crate libc;
-
 #[macro_use]
 extern crate error_chain;
 
