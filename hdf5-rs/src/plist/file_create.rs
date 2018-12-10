@@ -156,6 +156,7 @@ pub enum FileSpaceStrategy {
     None,
 }
 
+#[cfg(hdf5_1_10_1)]
 impl Default for FileSpaceStrategy {
     fn default() -> Self {
         FileSpaceStrategy::FreeSpaceManager { paged: false, persist: false, threshold: 1 }
