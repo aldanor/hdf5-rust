@@ -462,7 +462,8 @@ mod tests {
 
     #[test]
     fn test_file_create_plist() -> Result<()> {
-        with_tmp_file(|file| {
+        with_tmp_file(|_file| {
+            // TODO: proper tests
             let fcpl = FileCreate::new().unwrap();
             println!("{:?}", fcpl.properties());
             let builder = FileCreateBuilder::from_plist(&fcpl).unwrap();
