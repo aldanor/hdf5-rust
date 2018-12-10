@@ -10,8 +10,5 @@ homepage = "https://github.com/aldanor/hdf5-rs"
 description = "Build script support for the HDF5 library."
 edition = "2018"
 
-[dependencies]
-libc = "0.2"
-
 [build-dependencies]
 pkg-config = "0.3"
