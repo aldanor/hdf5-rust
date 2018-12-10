@@ -1,6 +1,5 @@
 use std::borrow::Borrow;
 use std::ffi::{CStr, CString};
-use std::mem;
 use std::ptr;
 
 use libc;
@@ -26,17 +25,14 @@ where
     F: Fn(*mut c_char, size_t) -> T,
     T: Integer + NumCast,
 {
-    unsafe {
-        let len: isize = 1 + cast::<T, isize>(func(ptr::null_mut(), 0)).unwrap();
-        ensure!(len > 0, "negative string length in get_h5_str()");
-        if len == 1 {
-            return Ok("".to_owned());
-        }
-        let buf: *mut c_char = libc::malloc(((len as usize) * mem::size_of::<c_char>()) as _) as _;
-        func(buf, len as _);
-        let msg = string_from_cstr(buf);
-        libc::free(buf as *mut _);
-        Ok(msg)
+    let len = 1 + cast::<T, isize>(func(ptr::null_mut(), 0)).unwrap();
+    ensure!(len > 0, "negative string length in get_h5_str()");
+    if len == 1 {
+        Ok("".to_owned())
+    } else {
+        let mut buf = vec![0; len as usize];
+        func(buf.as_mut_ptr(), len as _);
+        Ok(string_from_cstr(buf.as_ptr()))
     }
 }
 
