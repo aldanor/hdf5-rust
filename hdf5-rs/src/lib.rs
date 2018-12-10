@@ -42,7 +42,7 @@ mod internal_prelude {
         h5i::H5I_type_t::{self, *},
         h5i::{hid_t, H5I_INVALID_HID},
         h5p::H5P_DEFAULT,
-        h5s::H5S_ALL,
+        h5s::{H5S_ALL, H5S_UNLIMITED},
     };
 
     pub use crate::{

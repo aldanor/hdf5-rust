@@ -3,7 +3,7 @@ use std::ops::Deref;
 use std::ptr;
 
 use libhdf5_sys::h5s::{
-    H5Scopy, H5Screate_simple, H5Sget_simple_extent_dims, H5Sget_simple_extent_ndims, H5S_UNLIMITED,
+    H5Scopy, H5Screate_simple, H5Sget_simple_extent_dims, H5Sget_simple_extent_ndims,
 };
 
 use crate::internal_prelude::*;
