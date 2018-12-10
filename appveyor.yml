@@ -10,7 +10,7 @@ build: false
 environment:
   TARGET: x86_64-pc-windows-msvc
   HDF5_BINDIR: "C:\\Program Files\\HDF_Group\\HDF5\\1.8.17\\bin"
-  HDF5_URL: "https://support.hdfgroup.org/ftp/HDF5/prev-releases/hdf5-1.8.17/bin/windows/extra/hdf5-1.8.17-win64-vs2015-shared.zip"
+  HDF5_URL: "https://support.hdfgroup.org/ftp/HDF5/prev-releases/hdf5-1.8/hdf5-1.8.17/bin/windows/extra/hdf5-1.8.17-win64-vs2015-shared.zip"
   matrix:
     - CHANNEL: 1.31.0
       FEATURES: ""
