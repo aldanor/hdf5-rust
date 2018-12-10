@@ -2,7 +2,6 @@ use std::borrow::Borrow;
 use std::ffi::{CStr, CString};
 use std::ptr;
 
-use libc;
 use num_integer::Integer;
 use num_traits::{cast, NumCast};
 
