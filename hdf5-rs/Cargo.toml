@@ -14,9 +14,6 @@ edition = "2018"
 [lib]
 name = "h5"
 
-[features]
-default = []
-
 [dependencies]
 bitflags = "1.0"
 lazy_static = "1.2"
