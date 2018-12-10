@@ -46,12 +46,10 @@ pub trait ObjectClass: Sized {
         h5lock!({
             if !is_valid_user_id(self.handle().id()) {
                 write!(f, "<HDF5 {}: invalid id>", Self::NAME)
+            } else if let Some(d) = self.short_repr() {
+                write!(f, "<HDF5 {}: {}>", Self::NAME, d)
             } else {
-                if let Some(d) = self.short_repr() {
-                    write!(f, "<HDF5 {}: {}>", Self::NAME, d)
-                } else {
-                    write!(f, "<HDF5 {}>", Self::NAME)
-                }
+                write!(f, "<HDF5 {}>", Self::NAME)
             }
         })
     }

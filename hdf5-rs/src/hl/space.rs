@@ -111,8 +111,6 @@ impl Clone for Dataspace {
 
 #[cfg(test)]
 pub mod tests {
-    use libhdf5_sys::h5s::H5S_UNLIMITED;
-
     use crate::internal_prelude::*;
 
     #[test]
