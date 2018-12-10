@@ -4,7 +4,7 @@ pub use self::H5Z_EDC_t::*;
 pub use self::H5Z_SO_scale_type_t::*;
 pub use self::H5Z_cb_return_t::*;
 
-use libc::{c_char, c_int, c_uint, c_void, size_t};
+use crate::internal_prelude::*;
 
 use crate::h5::{herr_t, htri_t};
 use crate::h5i::hid_t;

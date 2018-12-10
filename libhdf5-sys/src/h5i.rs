@@ -1,6 +1,6 @@
 pub use self::H5I_type_t::*;
 
-use libc::{c_char, c_int, c_uint, c_void, size_t, ssize_t};
+use crate::internal_prelude::*;
 
 use crate::h5::{hbool_t, herr_t, hsize_t, htri_t};
 

@@ -7,7 +7,7 @@ pub use self::H5D_mpio_actual_io_mode_t::*;
 pub use self::H5D_mpio_no_collective_cause_t::*;
 pub use self::H5D_space_status_t::*;
 
-use libc::{c_char, c_float, c_uint, c_void, size_t};
+use crate::internal_prelude::*;
 
 use crate::h5::{haddr_t, herr_t, hsize_t};
 use crate::h5i::hid_t;

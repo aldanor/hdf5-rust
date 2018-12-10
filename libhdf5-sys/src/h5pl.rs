@@ -1,4 +1,4 @@
-use libc::{c_char, c_int, c_uint, size_t, ssize_t};
+use crate::internal_prelude::*;
 
 use crate::h5::herr_t;
 

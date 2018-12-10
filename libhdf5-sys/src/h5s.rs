@@ -2,7 +2,7 @@ pub use self::H5S_class_t::*;
 pub use self::H5S_sel_type::*;
 pub use self::H5S_seloper_t::*;
 
-use libc::{c_int, c_uint, c_void, size_t};
+use crate::internal_prelude::*;
 
 use crate::h5::{herr_t, hsize_t, hssize_t, htri_t};
 use crate::h5i::hid_t;

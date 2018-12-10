@@ -14,7 +14,7 @@ pub use self::H5T_pers_t::*;
 pub use self::H5T_sign_t::*;
 pub use self::H5T_str_t::*;
 
-use libc::{c_char, c_int, c_uint, c_void, size_t};
+use crate::internal_prelude::*;
 
 use crate::h5::{hbool_t, herr_t, hsize_t, htri_t};
 use crate::h5i::hid_t;

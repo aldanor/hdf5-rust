@@ -3,7 +3,7 @@ use std::mem;
 pub use self::H5E_direction_t::*;
 pub use self::H5E_type_t::*;
 
-use libc::{c_char, c_uint, c_void, size_t, ssize_t, FILE};
+use crate::internal_prelude::*;
 
 use crate::h5::herr_t;
 use crate::h5i::hid_t;

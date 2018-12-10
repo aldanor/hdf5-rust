@@ -3,7 +3,7 @@ use std::mem;
 pub use self::H5_index_t::*;
 pub use self::H5_iter_order_t::*;
 
-use libc::{c_int, c_longlong, c_uint, c_ulonglong, c_void, size_t, uint64_t};
+use crate::internal_prelude::*;
 
 pub type herr_t = c_int;
 pub type hbool_t = c_uint;

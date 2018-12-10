@@ -3,7 +3,7 @@ use std::mem;
 pub use self::H5O_mcdt_search_ret_t::*;
 pub use self::H5O_type_t::*;
 
-use libc::{c_char, c_uint, c_ulong, c_void, size_t, ssize_t, time_t, uint32_t, uint64_t};
+use crate::internal_prelude::*;
 
 use crate::h5::{haddr_t, hbool_t, herr_t, hsize_t, H5_ih_info_t, H5_index_t, H5_iter_order_t};
 use crate::h5i::hid_t;

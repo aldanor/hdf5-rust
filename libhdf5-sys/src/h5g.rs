@@ -2,7 +2,7 @@ use std::mem;
 
 pub use self::H5G_storage_type_t::*;
 
-use libc::{c_char, c_uint, int64_t};
+use crate::internal_prelude::*;
 
 use crate::h5::{hbool_t, herr_t, hsize_t, H5_index_t, H5_iter_order_t};
 use crate::h5i::hid_t;

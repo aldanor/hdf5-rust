@@ -5,7 +5,7 @@ pub use self::H5F_libver_t::*;
 pub use self::H5F_mem_t::*;
 pub use self::H5F_scope_t::*;
 
-use libc::{c_char, c_double, c_int, c_uint, c_void, size_t, ssize_t};
+use crate::internal_prelude::*;
 
 use crate::h5::{haddr_t, hbool_t, herr_t, hsize_t, hssize_t, htri_t, H5_ih_info_t};
 use crate::h5ac::H5AC_cache_config_t;

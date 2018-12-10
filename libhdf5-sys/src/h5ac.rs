@@ -1,6 +1,6 @@
 use std::mem;
 
-use libc::{c_char, c_double, c_int, c_long, size_t};
+use crate::internal_prelude::*;
 
 use crate::h5::hbool_t;
 use crate::h5c::{H5C_cache_decr_mode, H5C_cache_flash_incr_mode, H5C_cache_incr_mode};

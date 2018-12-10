@@ -34,6 +34,15 @@ pub mod h5z;
 #[cfg(hdf5_1_8_15)]
 pub mod h5pl;
 
+#[allow(non_camel_case_types)]
+mod internal_prelude {
+    pub use libc::{int64_t, off_t, size_t, ssize_t, time_t, uint32_t, uint64_t, FILE};
+    pub use std::os::raw::{
+        c_char, c_double, c_float, c_int, c_long, c_longlong, c_uchar, c_uint, c_ulong,
+        c_ulonglong, c_void,
+    };
+}
+
 #[cfg(test)]
 mod tests {
     use super::h5::H5open;
