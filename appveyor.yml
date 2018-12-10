@@ -29,12 +29,7 @@ install:
   - ps: Start-Process -FilePath msiexec -ArgumentList /i, "hdf5\HDF5-1.8.17-win64.msi", /quiet -Wait
 
 test_script:
-  - cd %APPVEYOR_BUILD_FOLDER%\libhdf5-lib
-  - cargo test -v --no-run
-  - cargo test -v
-  - cd %APPVEYOR_BUILD_FOLDER%\libhdf5-sys
-  - cargo test -v --no-run
-  - cargo test -v
   - cd %APPVEYOR_BUILD_FOLDER%
+  - cargo build -v --features "%FEATURES%"
   - cargo test -v --no-run --features "%FEATURES%"
   - cargo test -v --features "%FEATURES%"
