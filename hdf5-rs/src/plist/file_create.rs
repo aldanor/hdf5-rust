@@ -69,7 +69,7 @@ impl PartialEq for FileCreate {
 }
 
 /// Version information of various objects in a file.
-#[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct VersionInfo {
     /// Super block version number.
     pub superblock: u32,
@@ -80,7 +80,7 @@ pub struct VersionInfo {
 }
 
 /// Size of the offsets and lengths used in a file.
-#[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct SizeofInfo {
     /// Offset size in bytes.
     pub sizeof_addr: usize,
@@ -89,7 +89,7 @@ pub struct SizeofInfo {
 }
 
 /// Size of prameters used to control the symbol table nodes.
-#[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct SymbolTableInfo {
     /// Symbol table tree rank.
     pub tree_rank: u32,
@@ -98,7 +98,7 @@ pub struct SymbolTableInfo {
 }
 
 /// Shared object header message phase change information.
-#[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct PhaseChangeInfo {
     /// Threshold above which storage of a shared object header message index
     /// shifts from list to B-tree.
@@ -128,7 +128,7 @@ impl Default for SharedMessageType {
 }
 
 /// Configuration settings for a shared message index.
-#[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct SharedMessageIndex {
     /// Types of messages that may be stored in the index.
     message_types: SharedMessageType,
@@ -138,7 +138,7 @@ pub struct SharedMessageIndex {
 
 /// File space handling strategy.
 #[cfg(hdf5_1_10_1)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub enum FileSpaceStrategy {
     /// Mechanisms used: free-space managers, aggregators or embedded paged aggregation
     /// and the virtual file driver.
@@ -163,7 +163,7 @@ impl Default for FileSpaceStrategy {
 }
 
 /// Builder used to create file creation property list.
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct FileCreateBuilder {
     userblock: Option<u64>,
     sym_k: Option<SymbolTableInfo>,

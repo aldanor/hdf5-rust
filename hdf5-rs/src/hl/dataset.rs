@@ -52,7 +52,7 @@ impl Deref for Dataset {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Chunk {
     None,
     Auto,
