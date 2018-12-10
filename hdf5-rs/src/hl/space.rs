@@ -1,3 +1,5 @@
+use std::fmt::{self, Debug};
+use std::ops::Deref;
 use std::ptr;
 
 use libhdf5_sys::h5s::{
@@ -9,11 +11,41 @@ use crate::internal_prelude::*;
 /// Represents the HDF5 dataspace object.
 pub struct Dataspace(Handle);
 
-impl_class!(Object => Dataspace:
-    name = "dataspace",
-    types = H5I_DATASPACE,
-    repr = &Dataspace::repr
-);
+impl ObjectClass for Dataspace {
+    const NAME: &'static str = "dataspace";
+    const VALID_TYPES: &'static [H5I_type_t] = &[H5I_DATASPACE];
+
+    fn from_handle(handle: Handle) -> Self {
+        Dataspace(handle)
+    }
+
+    fn handle(&self) -> &Handle {
+        &self.0
+    }
+
+    fn short_repr(&self) -> Option<String> {
+        if self.ndim() == 1 {
+            Some(format!("({},)", self.dims()[0]))
+        } else {
+            let dims = self.dims().iter().map(|d| d.to_string()).collect::<Vec<_>>().join(", ");
+            Some(format!("({})", dims))
+        }
+    }
+}
+
+impl Debug for Dataspace {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.debug_fmt(f)
+    }
+}
+
+impl Deref for Dataspace {
+    type Target = Object;
+
+    fn deref(&self) -> &Object {
+        unsafe { self.transmute() }
+    }
+}
 
 impl Dataspace {
     pub fn new<D: Dimension>(d: D, resizable: bool) -> Result<Dataspace> {
@@ -45,15 +77,6 @@ impl Dataspace {
 
     pub fn resizable(&self) -> bool {
         self.maxdims().iter().any(|&x| x == H5S_UNLIMITED as _)
-    }
-
-    fn repr(&self) -> String {
-        if self.ndim() == 1 {
-            format!("({},)", self.dims()[0])
-        } else {
-            let dims = self.dims().iter().map(|d| d.to_string()).collect::<Vec<_>>().join(", ");
-            format!("({})", dims)
-        }
     }
 }
 

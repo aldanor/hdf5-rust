@@ -1,4 +1,6 @@
+use std::fmt::{self, Debug};
 use std::mem;
+use std::ops::Deref;
 
 use num_integer::div_floor;
 
@@ -21,11 +23,34 @@ use crate::internal_prelude::*;
 /// Represents the HDF5 dataset object.
 pub struct Dataset(Handle);
 
-impl_class!(Location => Dataset:
-    name = "dataset",
-    types = H5I_DATASET,
-    repr = |_| None
-);
+impl ObjectClass for Dataset {
+    const NAME: &'static str = "dataset";
+    const VALID_TYPES: &'static [H5I_type_t] = &[H5I_DATASET];
+
+    fn from_handle(handle: Handle) -> Self {
+        Dataset(handle)
+    }
+
+    fn handle(&self) -> &Handle {
+        &self.0
+    }
+
+    // TODO: short_repr()
+}
+
+impl Debug for Dataset {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.debug_fmt(f)
+    }
+}
+
+impl Deref for Dataset {
+    type Target = Location;
+
+    fn deref(&self) -> &Location {
+        unsafe { self.transmute() }
+    }
+}
 
 #[derive(Clone, Debug)]
 pub enum Chunk {

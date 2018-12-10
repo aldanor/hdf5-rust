@@ -1,3 +1,5 @@
+use std::fmt::{self, Debug};
+
 use libhdf5_sys::h5i::H5Iget_ref;
 
 use crate::internal_prelude::*;
@@ -5,7 +7,26 @@ use crate::internal_prelude::*;
 /// Any HDF5 object that can be referenced through an identifier.
 pub struct Object(Handle);
 
-impl_class!(Object: name = "object", types = None, repr = |_| None);
+impl ObjectClass for Object {
+    const NAME: &'static str = "object";
+    const VALID_TYPES: &'static [H5I_type_t] = &[];
+
+    fn from_handle(handle: Handle) -> Self {
+        Object(handle)
+    }
+
+    fn handle(&self) -> &Handle {
+        &self.0
+    }
+
+    // TODO: short_repr()
+}
+
+impl Debug for Object {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.debug_fmt(f)
+    }
+}
 
 impl Object {
     pub fn id(&self) -> hid_t {
@@ -35,6 +56,8 @@ impl Object {
 
 #[cfg(test)]
 pub mod tests {
+    use std::ops::Deref;
+
     use libhdf5_sys::{h5i::H5I_type_t, h5p::H5Pcreate};
 
     use crate::globals::H5P_FILE_ACCESS;
@@ -43,11 +66,26 @@ pub mod tests {
 
     pub struct TestObject(Handle);
 
-    impl_class!(Object => TestObject:
-        name = "test object",
-        types = None,
-        repr = |_| None
-    );
+    impl ObjectClass for TestObject {
+        const NAME: &'static str = "test object";
+        const VALID_TYPES: &'static [H5I_type_t] = &[];
+
+        fn from_handle(handle: Handle) -> Self {
+            TestObject(handle)
+        }
+
+        fn handle(&self) -> &Handle {
+            &self.0
+        }
+    }
+
+    impl Deref for TestObject {
+        type Target = Object;
+
+        fn deref(&self) -> &Object {
+            unsafe { self.transmute() }
+        }
+    }
 
     impl TestObject {
         fn incref(&self) {

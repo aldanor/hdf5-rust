@@ -1,3 +1,5 @@
+use std::fmt::{self, Debug};
+use std::ops::Deref;
 use std::path::Path;
 
 use libhdf5_sys::{
@@ -17,11 +19,41 @@ use crate::plist::FileCreate;
 /// Represents the HDF5 file object.
 pub struct File(Handle);
 
-impl_class!(Group => File:
-    name = "file",
-    types = H5I_FILE,
-    repr = &File::repr
-);
+impl ObjectClass for File {
+    const NAME: &'static str = "file";
+    const VALID_TYPES: &'static [H5I_type_t] = &[H5I_FILE];
+
+    fn from_handle(handle: Handle) -> Self {
+        File(handle)
+    }
+
+    fn handle(&self) -> &Handle {
+        &self.0
+    }
+
+    fn short_repr(&self) -> Option<String> {
+        let basename = match Path::new(&self.filename()).file_name() {
+            Some(s) => s.to_string_lossy().into_owned(),
+            None => "".to_owned(),
+        };
+        let mode = if self.is_read_only() { "read-only" } else { "read/write" };
+        Some(format!("\"{}\" ({})", basename, mode))
+    }
+}
+
+impl Debug for File {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.debug_fmt(f)
+    }
+}
+
+impl Deref for File {
+    type Target = Group;
+
+    fn deref(&self) -> &Group {
+        unsafe { self.transmute() }
+    }
+}
 
 impl File {
     /// Create a new file object.
@@ -128,15 +160,6 @@ impl File {
 
     pub fn get_create_plist(&self) -> Result<FileCreate> {
         h5lock!(FileCreate::from_id(h5try!(H5Fget_create_plist(self.id()))))
-    }
-
-    fn repr(&self) -> String {
-        let basename = match Path::new(&self.filename()).file_name() {
-            Some(s) => s.to_string_lossy().into_owned(),
-            None => "".to_owned(),
-        };
-        let mode = if self.is_read_only() { "read-only" } else { "read/write" };
-        format!("\"{}\" ({})", basename, mode)
     }
 }
 

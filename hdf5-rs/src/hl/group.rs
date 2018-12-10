@@ -1,3 +1,6 @@
+use std::fmt::{self, Debug};
+use std::ops::Deref;
+
 use libhdf5_sys::{
     h5d::H5Dopen2,
     h5g::{H5G_info_t, H5Gcreate2, H5Gget_info, H5Gopen2},
@@ -11,11 +14,41 @@ use crate::internal_prelude::*;
 /// Represents the HDF5 group object.
 pub struct Group(Handle);
 
-impl_class!(Location => Group:
-    name = "group",
-    types = H5I_GROUP,
-    repr = &Group::repr
-);
+impl ObjectClass for Group {
+    const NAME: &'static str = "group";
+    const VALID_TYPES: &'static [H5I_type_t] = &[H5I_GROUP, H5I_FILE];
+
+    fn from_handle(handle: Handle) -> Self {
+        Group(handle)
+    }
+
+    fn handle(&self) -> &Handle {
+        &self.0
+    }
+
+    fn short_repr(&self) -> Option<String> {
+        let members = match self.len() {
+            0 => "empty".to_owned(),
+            1 => "1 member".to_owned(),
+            x => format!("{} members", x),
+        };
+        Some(format!("\"{}\" ({})", self.name(), members))
+    }
+}
+
+impl Debug for Group {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.debug_fmt(f)
+    }
+}
+
+impl Deref for Group {
+    type Target = Location;
+
+    fn deref(&self) -> &Location {
+        unsafe { self.transmute() }
+    }
+}
 
 fn group_info(id: hid_t) -> Result<H5G_info_t> {
     let info: *mut H5G_info_t = &mut H5G_info_t::default();
@@ -122,15 +155,6 @@ impl Group {
     pub fn dataset(&self, name: &str) -> Result<Dataset> {
         let name = to_cstring(name)?;
         Dataset::from_id(h5try!(H5Dopen2(self.id(), name.as_ptr(), H5P_DEFAULT)))
-    }
-
-    fn repr(&self) -> String {
-        let members = match self.len() {
-            0 => "empty".to_owned(),
-            1 => "1 member".to_owned(),
-            x => format!("{} members", x),
-        };
-        format!("\"{}\" ({})", self.name(), members)
     }
 }
 

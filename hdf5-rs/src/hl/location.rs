@@ -1,3 +1,5 @@
+use std::fmt::{self, Debug};
+use std::ops::Deref;
 use std::ptr;
 
 use libhdf5_sys::{
@@ -11,11 +13,37 @@ use crate::internal_prelude::*;
 /// Named location (file, group, dataset, named datatype).
 pub struct Location(Handle);
 
-impl_class!(Object => Location:
-    name = "location",
-    types = &[H5I_FILE, H5I_GROUP, H5I_DATATYPE, H5I_DATASET, H5I_ATTR] as &[_],
-    repr = &Location::repr
-);
+impl ObjectClass for Location {
+    const NAME: &'static str = "location";
+    const VALID_TYPES: &'static [H5I_type_t] =
+        &[H5I_FILE, H5I_GROUP, H5I_DATATYPE, H5I_DATASET, H5I_ATTR];
+
+    fn from_handle(handle: Handle) -> Self {
+        Location(handle)
+    }
+
+    fn handle(&self) -> &Handle {
+        &self.0
+    }
+
+    fn short_repr(&self) -> Option<String> {
+        Some(format!("\"{}\"", self.name()))
+    }
+}
+
+impl Debug for Location {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.debug_fmt(f)
+    }
+}
+
+impl Deref for Location {
+    type Target = Object;
+
+    fn deref(&self) -> &Object {
+        unsafe { self.transmute() }
+    }
+}
 
 impl Location {
     /// Returns the name of the object within the file, or empty string if the object doesn't
@@ -54,10 +82,6 @@ impl Location {
     pub fn clear_comment(&self) -> Result<()> {
         // TODO: &mut self?
         h5call!(H5Oset_comment(self.id(), ptr::null_mut())).and(Ok(()))
-    }
-
-    fn repr(&self) -> String {
-        format!("\"{}\"", self.name())
     }
 }
 

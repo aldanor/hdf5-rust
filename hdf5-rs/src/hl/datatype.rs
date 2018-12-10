@@ -1,4 +1,6 @@
 use std::borrow::Borrow;
+use std::fmt::{self, Debug};
+use std::ops::Deref;
 
 use hdf5_types::{
     CompoundField, CompoundType, EnumMember, EnumType, FloatSize, H5Type, IntSize, TypeDescriptor,
@@ -44,11 +46,34 @@ macro_rules! be_le {
 /// Represents the HDF5 datatype object.
 pub struct Datatype(Handle);
 
-impl_class!(Object => Datatype:
-    name = "datatype",
-    types = H5I_DATATYPE,
-    repr = |_| None
-);
+impl ObjectClass for Datatype {
+    const NAME: &'static str = "datatype";
+    const VALID_TYPES: &'static [H5I_type_t] = &[H5I_DATATYPE];
+
+    fn from_handle(handle: Handle) -> Self {
+        Datatype(handle)
+    }
+
+    fn handle(&self) -> &Handle {
+        &self.0
+    }
+
+    // TODO: short_repr()
+}
+
+impl Debug for Datatype {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.debug_fmt(f)
+    }
+}
+
+impl Deref for Datatype {
+    type Target = Object;
+
+    fn deref(&self) -> &Object {
+        unsafe { self.transmute() }
+    }
+}
 
 impl PartialEq for Datatype {
     fn eq(&self, other: &Datatype) -> bool {

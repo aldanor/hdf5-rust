@@ -1,3 +1,5 @@
+use std::fmt::{self, Debug};
+use std::ops::Deref;
 use std::ptr;
 
 use libhdf5_sys::h5p::{H5Pcopy, H5Pequal, H5Pexist, H5Piterate};
@@ -7,11 +9,34 @@ use crate::internal_prelude::*;
 /// Represents the HDF5 property list.
 pub struct PropertyList(Handle);
 
-impl_class!(Object => PropertyList:
-    name = "property list",
-    types = H5I_GENPROP_LST,
-    repr = |_| None
-);
+impl ObjectClass for PropertyList {
+    const NAME: &'static str = "property list";
+    const VALID_TYPES: &'static [H5I_type_t] = &[H5I_GENPROP_LST];
+
+    fn from_handle(handle: Handle) -> Self {
+        PropertyList(handle)
+    }
+
+    fn handle(&self) -> &Handle {
+        &self.0
+    }
+
+    // TODO: short_repr()
+}
+
+impl Debug for PropertyList {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.debug_fmt(f)
+    }
+}
+
+impl Deref for PropertyList {
+    type Target = Object;
+
+    fn deref(&self) -> &Object {
+        unsafe { self.transmute() }
+    }
+}
 
 impl Clone for PropertyList {
     fn clone(&self) -> PropertyList {

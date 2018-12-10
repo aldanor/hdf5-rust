@@ -1,5 +1,8 @@
 //! File creation properties.
 
+use std::fmt::{self, Debug};
+use std::ops::Deref;
+
 use bitflags::bitflags;
 
 #[cfg(hdf5_1_10_1)]
@@ -27,16 +30,37 @@ use libhdf5_sys::h5p::{
 use crate::globals::H5P_FILE_CREATE;
 use crate::internal_prelude::*;
 
-// TODO: def_plist_class!()
-
 /// File creation properties.
 pub struct FileCreate(Handle);
 
-impl_class!(PropertyList => FileCreate:
-    name = "file create property list",
-    types = H5I_GENPROP_LST,
-    repr = |_| { None }
-);
+// TODO: def_plist_class!()
+
+impl ObjectClass for FileCreate {
+    const NAME: &'static str = "file-create property list";
+    const VALID_TYPES: &'static [H5I_type_t] = &[H5I_GENPROP_LST];
+
+    fn from_handle(handle: Handle) -> Self {
+        FileCreate(handle)
+    }
+
+    fn handle(&self) -> &Handle {
+        &self.0
+    }
+}
+
+impl Debug for FileCreate {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.debug_fmt(f)
+    }
+}
+
+impl Deref for FileCreate {
+    type Target = PropertyList;
+
+    fn deref(&self) -> &PropertyList {
+        unsafe { self.transmute() }
+    }
+}
 
 impl PartialEq for FileCreate {
     fn eq(&self, other: &FileCreate) -> bool {
