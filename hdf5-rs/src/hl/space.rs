@@ -152,7 +152,7 @@ pub mod tests {
         let d = Dataspace::try_new((5, 6), true).unwrap();
         assert_eq!((d.ndim(), d.dims(), d.size()), (2, vec![5, 6], 30));
 
-        assert_eq!(Dataspace::new((), true).unwrap().dims(), vec![]);
+        assert_eq!(Dataspace::try_new((), true).unwrap().dims(), vec![]);
 
         assert_err!(Dataspace::from_id(H5I_INVALID_HID), "Invalid dataspace id");
 
