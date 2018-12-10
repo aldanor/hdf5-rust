@@ -12,7 +12,7 @@ environment:
   HDF5_BINDIR: "C:\\Program Files\\HDF_Group\\HDF5\\1.8.17\\bin"
   HDF5_URL: "https://support.hdfgroup.org/ftp/HDF5/prev-releases/hdf5-1.8.17/bin/windows/extra/hdf5-1.8.17-win64-vs2015-shared.zip"
   matrix:
-    - CHANNEL: 1.15.0
+    - CHANNEL: 1.31.0
       FEATURES: ""
     - CHANNEL: beta
       FEATURES: ""
