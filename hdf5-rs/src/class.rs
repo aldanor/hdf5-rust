@@ -18,7 +18,7 @@ pub trait ObjectClass: Sized {
     fn from_id(id: hid_t) -> Result<Self> {
         h5lock!({
             if Self::is_valid_id_type(get_id_type(id)) {
-                Ok(Self::from_handle(Handle::new(id)?))
+                Ok(Self::from_handle(Handle::try_new(id)?))
             } else {
                 Err(From::from(format!("Invalid {} id: {}", Self::NAME, id)))
             }

@@ -62,7 +62,7 @@ pub struct Handle {
 }
 
 impl Handle {
-    pub fn new(id: hid_t) -> Result<Handle> {
+    pub fn try_new(id: hid_t) -> Result<Handle> {
         lazy_static! {
             static ref REGISTRY: Registry = Registry::new();
         }
@@ -120,7 +120,7 @@ impl Clone for Handle {
     fn clone(&self) -> Handle {
         h5lock!({
             self.incref();
-            Handle::new(self.id()).unwrap_or_else(|_| Handle::invalid())
+            Handle::try_new(self.id()).unwrap_or_else(|_| Handle::invalid())
         })
     }
 }

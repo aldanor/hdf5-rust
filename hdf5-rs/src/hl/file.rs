@@ -135,7 +135,7 @@ impl File {
             let file_ids = self.get_obj_ids(H5F_OBJ_FILE);
             let object_ids = self.get_obj_ids(H5F_OBJ_ALL & !H5F_OBJ_FILE);
             for file_id in &file_ids {
-                let handle = Handle::new(*file_id);
+                let handle = Handle::try_new(*file_id);
                 if let Ok(handle) = handle {
                     while handle.is_valid_user_id() {
                         handle.decref();
@@ -143,7 +143,7 @@ impl File {
                 }
             }
             for object_id in &object_ids {
-                let handle = Handle::new(*object_id);
+                let handle = Handle::try_new(*object_id);
                 if let Ok(handle) = handle {
                     while handle.is_valid_user_id() {
                         handle.decref();

@@ -292,7 +292,7 @@ impl FileCreateBuilder {
 
     pub fn finish(self) -> Result<FileCreate> {
         h5lock!({
-            let plist = FileCreate::new()?;
+            let plist = FileCreate::try_new()?;
             self.populate_plist(plist.id())?;
             Ok(plist)
         })
@@ -301,7 +301,7 @@ impl FileCreateBuilder {
 
 /// File creation property list.
 impl FileCreate {
-    pub fn new() -> Result<Self> {
+    pub fn try_new() -> Result<Self> {
         Self::from_id(h5try!(H5Pcreate(*H5P_FILE_CREATE)))
     }
 
@@ -465,7 +465,7 @@ mod tests {
     fn test_file_create_plist() -> Result<()> {
         with_tmp_file(|_file| {
             // TODO: proper tests
-            let fcpl = FileCreate::new().unwrap();
+            let fcpl = FileCreate::try_new().unwrap();
             println!("{:?}", fcpl.properties());
             let builder = FileCreateBuilder::from_plist(&fcpl).unwrap();
             println!("{:#?}", builder);

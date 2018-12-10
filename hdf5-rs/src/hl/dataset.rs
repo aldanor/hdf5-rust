@@ -210,7 +210,7 @@ impl<T: H5Type> DatasetBuilder<T> {
     pub fn new(parent: &Group) -> DatasetBuilder<T> {
         h5lock!({
             // Store the reference to the parent handle and try to increase its reference count.
-            let handle = Handle::new(parent.id());
+            let handle = Handle::try_new(parent.id());
             if let Ok(ref handle) = handle {
                 handle.incref();
             }
@@ -378,7 +378,7 @@ impl<T: H5Type> DatasetBuilder<T> {
             let datatype = Datatype::from_type::<T>()?;
             let parent = try_ref_clone!(self.parent);
 
-            let dataspace = Dataspace::new(&shape, self.resizable)?;
+            let dataspace = Dataspace::try_new(&shape, self.resizable)?;
             let dcpl = self.make_dcpl(&datatype, &shape)?;
 
             match name {
