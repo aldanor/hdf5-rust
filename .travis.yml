@@ -4,6 +4,11 @@ rust:
 - 1.31.0
 - beta
 - nightly
+before_script:
+- |
+  [ $TRAVIS_RUST_VERSION = "nightly" ] &&
+  rustup component add clippy --toolchain=nightly ||
+  cargo install --git https://github.com/rust-lang/rust-clippy/ --force clippy
 script:
 - |
   cd $TRAVIS_BUILD_DIR &&
