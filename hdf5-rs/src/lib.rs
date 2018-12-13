@@ -49,9 +49,10 @@ mod internal_prelude {
     pub use crate::{
         class::ObjectClass,
         dim::Dimension,
-        error::{silence_errors, ResultExt},
+        error::{h5check, silence_errors, ResultExt},
         export::*,
         handle::{get_id_type, is_valid_user_id, Handle},
+        hl::plist::PropertyListClass,
         hl::*,
         util::{get_h5_str, string_from_cstr, to_cstring},
     };
