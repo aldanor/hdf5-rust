@@ -2,7 +2,7 @@ use std::fmt::{self, Debug};
 use std::ops::Deref;
 use std::ptr;
 
-use libhdf5_sys::h5p::{H5Pcopy, H5Pequal, H5Pexist, H5Piterate};
+use libhdf5_sys::h5p::{H5Pcopy, H5Pequal, H5Pexist, H5Pget_nprops, H5Piterate};
 
 use crate::internal_prelude::*;
 
@@ -150,6 +150,10 @@ impl PropertyList {
 
         h5lock!(H5Piterate(self.id(), ptr::null_mut(), Some(callback), data_ptr));
         data
+    }
+
+    pub fn len(&self) -> usize {
+        h5get_d!(H5Pget_nprops(self.id()): size_t)
     }
 }
 
