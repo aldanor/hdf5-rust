@@ -2,7 +2,9 @@ use std::fmt::{self, Debug};
 use std::ops::Deref;
 use std::ptr;
 
-use libhdf5_sys::h5p::{H5Pcopy, H5Pequal, H5Pexist, H5Pget_nprops, H5Piterate};
+use libhdf5_sys::h5p::{
+    H5Pcopy, H5Pequal, H5Pexist, H5Pget_class, H5Pget_class_name, H5Pget_nprops, H5Piterate,
+};
 
 use crate::internal_prelude::*;
 
@@ -154,6 +156,19 @@ impl PropertyList {
 
     pub fn len(&self) -> usize {
         h5get_d!(H5Pget_nprops(self.id()): size_t)
+    }
+
+    pub fn class(&self) -> Result<PropertyListClass> {
+        h5lock!({
+            let class_id = h5check(H5Pget_class(self.id()))?;
+            let buf = H5Pget_class_name(class_id);
+            if buf.is_null() {
+                return Err(Error::query().unwrap_or_else(|| "invalid property class".into()));
+            }
+            let name = string_from_cstr(buf);
+            libc::free(buf as _);
+            PropertyListClass::from_str(&name)
+        })
     }
 }
 
