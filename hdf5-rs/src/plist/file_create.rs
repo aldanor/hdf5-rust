@@ -31,6 +31,7 @@ use crate::globals::H5P_FILE_CREATE;
 use crate::internal_prelude::*;
 
 /// File creation properties.
+#[repr(transparent)]
 pub struct FileCreate(Handle);
 
 // TODO: def_plist_class!()

@@ -21,6 +21,7 @@ use crate::globals::H5P_LINK_CREATE;
 use crate::internal_prelude::*;
 
 /// Represents the HDF5 dataset object.
+#[repr(transparent)]
 pub struct Dataset(Handle);
 
 impl ObjectClass for Dataset {

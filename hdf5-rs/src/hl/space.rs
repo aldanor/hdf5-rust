@@ -9,6 +9,7 @@ use libhdf5_sys::h5s::{
 use crate::internal_prelude::*;
 
 /// Represents the HDF5 dataspace object.
+#[repr(transparent)]
 pub struct Dataspace(Handle);
 
 impl ObjectClass for Dataspace {

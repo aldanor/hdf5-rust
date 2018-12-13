@@ -12,6 +12,7 @@ use crate::globals::H5P_LINK_CREATE;
 use crate::internal_prelude::*;
 
 /// Represents the HDF5 group object.
+#[repr(transparent)]
 pub struct Group(Handle);
 
 impl ObjectClass for Group {

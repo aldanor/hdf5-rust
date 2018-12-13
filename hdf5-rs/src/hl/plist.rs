@@ -7,6 +7,7 @@ use libhdf5_sys::h5p::{H5Pcopy, H5Pequal, H5Pexist, H5Piterate};
 use crate::internal_prelude::*;
 
 /// Represents the HDF5 property list.
+#[repr(transparent)]
 pub struct PropertyList(Handle);
 
 impl ObjectClass for PropertyList {

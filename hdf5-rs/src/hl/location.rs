@@ -11,6 +11,7 @@ use libhdf5_sys::{
 use crate::internal_prelude::*;
 
 /// Named location (file, group, dataset, named datatype).
+#[repr(transparent)]
 pub struct Location(Handle);
 
 impl ObjectClass for Location {

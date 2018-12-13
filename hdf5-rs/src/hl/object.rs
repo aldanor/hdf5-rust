@@ -5,6 +5,7 @@ use libhdf5_sys::h5i::H5Iget_ref;
 use crate::internal_prelude::*;
 
 /// Any HDF5 object that can be referenced through an identifier.
+#[repr(transparent)]
 pub struct Object(Handle);
 
 impl ObjectClass for Object {
