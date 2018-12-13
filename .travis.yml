@@ -5,6 +5,7 @@ rust:
 - beta
 - nightly
 before_script:
+- rustup update
 - |
   [ $TRAVIS_RUST_VERSION = "nightly" ] && {
   rustup component add clippy --toolchain=nightly ||
