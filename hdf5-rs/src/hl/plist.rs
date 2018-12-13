@@ -224,4 +224,11 @@ pub mod tests {
         assert_eq!(fapl, fapl_c);
         assert_ne!(fapl.id(), fapl_c.id());
     }
+
+    #[test]
+    pub fn test_debug() {
+        let (fapl, fcpl) = make_plists();
+        assert_eq!(format!("{:?}", fapl), "<HDF5 property list: file access>");
+        assert_eq!(format!("{:?}", fcpl), "<HDF5 property list: file create>");
+    }
 }
