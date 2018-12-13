@@ -15,10 +15,17 @@ pub trait ObjectClass: Sized {
         None
     }
 
+    fn validate(&self) -> Result<()> {
+        // any extra post-validation goes here if needed
+        Ok(())
+    }
+
     fn from_id(id: hid_t) -> Result<Self> {
         h5lock!({
             if Self::is_valid_id_type(get_id_type(id)) {
-                Ok(Self::from_handle(Handle::try_new(id)?))
+                let handle = Handle::try_new(id)?;
+                let obj = Self::from_handle(handle);
+                obj.validate().map(|_| obj)
             } else {
                 Err(From::from(format!("Invalid {} id: {}", Self::NAME, id)))
             }
