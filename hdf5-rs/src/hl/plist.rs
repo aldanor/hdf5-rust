@@ -24,7 +24,9 @@ impl ObjectClass for PropertyList {
         &self.0
     }
 
-    // TODO: short_repr()
+    fn short_repr(&self) -> Option<String> {
+        Some(self.class().map(|c| c.to_string()).unwrap_or_else(|_| "unknown class".to_owned()))
+    }
 }
 
 impl Debug for PropertyList {
