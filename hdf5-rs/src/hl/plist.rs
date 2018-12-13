@@ -52,6 +52,78 @@ impl PartialEq for PropertyList {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PropertyListClass {
+    AttributeCreate,
+    DatasetAccess,
+    DatasetCreate,
+    DataTransfer,
+    DatatypeAccess,
+    DatatypeCreate,
+    FileAccess,
+    FileCreate,
+    FileMount,
+    GroupAccess,
+    GroupCreate,
+    LinkAccess,
+    LinkCreate,
+    ObjectCopy,
+    ObjectCreate,
+    StringCreate,
+}
+
+impl PropertyListClass {
+    pub fn to_string(&self) -> String {
+        match self {
+            PropertyListClass::AttributeCreate => "attribute create",
+            PropertyListClass::DatasetAccess => "dataset access",
+            PropertyListClass::DatasetCreate => "dataset create",
+            PropertyListClass::DataTransfer => "data transfer",
+            PropertyListClass::DatatypeAccess => "datatype access",
+            PropertyListClass::DatatypeCreate => "datatype create",
+            PropertyListClass::FileAccess => "file access",
+            PropertyListClass::FileCreate => "file create",
+            PropertyListClass::FileMount => "file mount",
+            PropertyListClass::GroupAccess => "group access",
+            PropertyListClass::GroupCreate => "group create",
+            PropertyListClass::LinkAccess => "link access",
+            PropertyListClass::LinkCreate => "link create",
+            PropertyListClass::ObjectCopy => "object copy",
+            PropertyListClass::ObjectCreate => "object create",
+            PropertyListClass::StringCreate => "string create",
+        }
+        .to_owned()
+    }
+
+    pub fn from_str(class_name: &str) -> Result<PropertyListClass> {
+        match class_name {
+            "attribute create" => Ok(PropertyListClass::AttributeCreate),
+            "dataset access" => Ok(PropertyListClass::DatasetAccess),
+            "dataset create" => Ok(PropertyListClass::DatasetCreate),
+            "data transfer" => Ok(PropertyListClass::DataTransfer),
+            "datatype access" => Ok(PropertyListClass::DatatypeAccess),
+            "datatype create" => Ok(PropertyListClass::DatatypeCreate),
+            "file access" => Ok(PropertyListClass::FileAccess),
+            "file create" => Ok(PropertyListClass::FileCreate),
+            "file mount" => Ok(PropertyListClass::FileMount),
+            "group access" => Ok(PropertyListClass::GroupAccess),
+            "group create" => Ok(PropertyListClass::GroupCreate),
+            "link access" => Ok(PropertyListClass::LinkAccess),
+            "link create" => Ok(PropertyListClass::LinkCreate),
+            "object copy" => Ok(PropertyListClass::ObjectCopy),
+            "object create" => Ok(PropertyListClass::ObjectCreate),
+            "string create" => Ok(PropertyListClass::StringCreate),
+            _ => fail!(format!("invalid property list class: {}", class_name)),
+        }
+    }
+}
+
+impl Into<String> for PropertyListClass {
+    fn into(self) -> String {
+        self.to_string()
+    }
+}
+
 impl PropertyList {
     pub fn has(&self, property: &str) -> bool {
         to_cstring(property)
