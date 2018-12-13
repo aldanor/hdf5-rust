@@ -47,6 +47,13 @@ impl ObjectClass for FileCreate {
     fn handle(&self) -> &Handle {
         &self.0
     }
+
+    fn validate(&self) -> Result<()> {
+        let class = self.class()?;
+        Ok(if class != PropertyListClass::FileCreate {
+            fail!("expected file create property list, got {:?}", class);
+        })
+    }
 }
 
 impl Debug for FileCreate {
