@@ -12,17 +12,18 @@ before_script:
   true
 script:
 - |
+  [ $TRAVIS_RUST_VERSION = "nightly" ] &&
   cd $TRAVIS_BUILD_DIR &&
-  case $TRAVIS_RUST_VERSION in
-    nightly)  { cargo clippy -v || true } &&
-              rm -rf ./target &&
-              cargo build -v &&
-              cargo test -v --no-run &&
-              cargo test -v ;;
-    *)        cargo build -v &&
-              cargo test -v --no-run &&
-              cargo test -v ;;
-  esac &&
+  cargo clippy -v ||
+  rm -rf ./target
+- |
+  cd $TRAVIS_BUILD_DIR &&
+  cargo build -v &&
+  cargo test -v --no-run &&
+  cargo test -v
+- |
+  [ $TRAVIS_RUST_VERSION = "1.31.0" ] &&
+  cd $TRAVIS_BUILD_DIR &&
   cargo doc --no-deps
 addons:
   apt:
@@ -44,7 +45,7 @@ before_install:
 after_success: |
   [ $TRAVIS_BRANCH = "master" ] &&
   [ $TRAVIS_PULL_REQUEST = "false" ] &&
-  [ $TRAVIS_RUST_VERSION = "stable" ] &&
+  [ $TRAVIS_RUST_VERSION = "1.31.0" ] &&
   [ `uname` = "Linux" ] &&
   echo '<meta http-equiv=refresh content=0;url=hdf5_rs/index.html>' > target/doc/index.html &&
   pip install ghp-import --user $USER &&
