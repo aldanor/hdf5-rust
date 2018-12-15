@@ -46,9 +46,9 @@ impl Debug for Dataset {
 }
 
 impl Deref for Dataset {
-    type Target = Location;
+    type Target = Container;
 
-    fn deref(&self) -> &Location {
+    fn deref(&self) -> &Container {
         unsafe { self.transmute() }
     }
 }
