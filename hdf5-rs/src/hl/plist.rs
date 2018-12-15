@@ -77,7 +77,7 @@ pub enum PropertyListClass {
 }
 
 impl PropertyListClass {
-    pub fn to_string(&self) -> String {
+    pub fn to_string(self) -> String {
         match self {
             PropertyListClass::AttributeCreate => "attribute create",
             PropertyListClass::DatasetAccess => "dataset access",

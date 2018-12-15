@@ -50,9 +50,10 @@ impl ObjectClass for FileCreate {
 
     fn validate(&self) -> Result<()> {
         let class = self.class()?;
-        Ok(if class != PropertyListClass::FileCreate {
+        if class != PropertyListClass::FileCreate {
             fail!("expected file create property list, got {:?}", class);
-        })
+        }
+        Ok(())
     }
 }
 

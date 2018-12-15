@@ -1,5 +1,6 @@
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::block_in_if_condition_stmt))]
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::needless_return))]
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::len_without_is_empty))]
 #![cfg_attr(all(feature = "cargo-clippy", test), allow(clippy::cyclomatic_complexity))]
 #![cfg_attr(not(test), allow(dead_code))]
 
