@@ -148,6 +148,19 @@ impl Datatype {
         })
     }
 
+    pub(crate) fn ensure_convertible(&self, dst: &Datatype, required: Conversion) -> Result<()> {
+        // TODO: more detailed error messages after Debug/Display are implemented for Datatype
+        if let Some(conv) = self.get_conv_path(dst) {
+            if conv > required {
+                fail!("{} conversion path required; available: {} conversion", required, conv)
+            } else {
+                Ok(())
+            }
+        } else {
+            fail!("no conversion paths found")
+        }
+    }
+
     pub fn to_descriptor(&self) -> Result<TypeDescriptor> {
         use hdf5_types::TypeDescriptor as TD;
         use libhdf5_sys::h5t::{H5T_class_t::*, H5T_sign_t::*};
