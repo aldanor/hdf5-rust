@@ -53,6 +53,7 @@ mod internal_prelude {
         error::{h5check, silence_errors, ResultExt},
         export::*,
         handle::{get_id_type, is_valid_user_id, Handle},
+        hl::container::Container,
         hl::datatype::Conversion,
         hl::plist::PropertyListClass,
         hl::*,
