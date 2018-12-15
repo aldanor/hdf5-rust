@@ -1,5 +1,6 @@
 use std::borrow::Borrow;
-use std::fmt::{self, Debug};
+use std::cmp::{Ordering, PartialEq, PartialOrd};
+use std::fmt::{self, Debug, Display};
 use std::ops::Deref;
 
 use hdf5_types::{
@@ -82,11 +83,39 @@ impl PartialEq for Datatype {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Conversion {
-    NoOp,
+    NoOp = 1,
     Hard,
     Soft,
+}
+
+impl PartialEq<Conversion> for Option<Conversion> {
+    fn eq(&self, _other: &Conversion) -> bool {
+        false
+    }
+}
+
+impl PartialOrd<Conversion> for Option<Conversion> {
+    fn partial_cmp(&self, other: &Conversion) -> Option<Ordering> {
+        self.map(|conv| conv.partial_cmp(other)).unwrap_or(Some(Ordering::Greater))
+    }
+}
+
+impl Display for Conversion {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str(match self {
+            Conversion::NoOp => "no-op",
+            Conversion::Hard => "hard",
+            Conversion::Soft => "soft",
+        })
+    }
+}
+
+impl Default for Conversion {
+    fn default() -> Self {
+        Conversion::NoOp
+    }
 }
 
 impl Datatype {
