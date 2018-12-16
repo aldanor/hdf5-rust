@@ -148,6 +148,18 @@ impl Datatype {
         })
     }
 
+    pub fn conv_to<T: H5Type>(&self) -> Option<Conversion> {
+        Datatype::from_type::<T>().ok().and_then(|dtype| self.conv_path(dtype))
+    }
+
+    pub fn conv_from<T: H5Type>(&self) -> Option<Conversion> {
+        Datatype::from_type::<T>().ok().and_then(|dtype| dtype.conv_path(self))
+    }
+
+    pub fn is<T: H5Type>(&self) -> bool {
+        Datatype::from_type::<T>().ok().map(|dtype| &dtype == self).unwrap_or(false)
+    }
+
     pub(crate) fn ensure_convertible(&self, dst: &Datatype, required: Conversion) -> Result<()> {
         // TODO: more detailed error messages after Debug/Display are implemented for Datatype
         if let Some(conv) = self.conv_path(dst) {
