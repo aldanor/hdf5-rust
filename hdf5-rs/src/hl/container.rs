@@ -16,15 +16,20 @@ pub struct Reader<'a> {
 }
 
 impl<'a> Reader<'a> {
+    /// Creates a reader for a dataset/attribute.
+    ///
+    /// Conversion is set to *no-op* by default (no conversions allowed).
     pub fn new(obj: &'a Container) -> Self {
         Self { obj, conv: Conversion::NoOp }
     }
 
+    /// Set conversion level to *hard* (both *no-op* and *hard* conversion paths are accepted).
     pub fn hard(mut self) -> Self {
         self.conv = Conversion::Hard;
         self
     }
 
+    /// Set conversion level to *soft* (any valid conversion path is accepted).
     pub fn soft(mut self) -> Self {
         self.conv = Conversion::Soft;
         self
@@ -43,6 +48,10 @@ impl<'a> Reader<'a> {
         Ok(())
     }
 
+    /// Reads a dataset/attribute into an n-dimensional array.
+    ///
+    /// If the array has a fixed number of dimensions, it must match the dimensionality
+    /// of the dataset/attribute.
     pub fn read<T: H5Type, D: ndarray::Dimension>(&self) -> Result<Array<T, D>> {
         let shape = self.obj.get_shape()?;
         if let Some(ndim) = D::NDIM {
@@ -54,6 +63,7 @@ impl<'a> Reader<'a> {
         arr.into_dimensionality().str_err()
     }
 
+    /// Reads a dataset/attribute into a vector in memory order.
     pub fn read_raw<T: H5Type>(&self) -> Result<Vec<T>> {
         let size = self.obj.space()?.size();
         let mut vec = Vec::with_capacity(size);
@@ -63,18 +73,26 @@ impl<'a> Reader<'a> {
         self.read_into_buf(vec.as_mut_ptr()).map(|_| vec)
     }
 
+    /// Reads a dataset/attribute into a 1-dimensional array.
+    ///
+    /// The dataset/attribute must be 1-dimensional.
     pub fn read_1d<T: H5Type>(&self) -> Result<Array1<T>> {
         self.read()
     }
 
+    /// Reads a dataset/attribute into a 2-dimensional array.
+    ///
+    /// The dataset/attribute must be 2-dimensional.
     pub fn read_2d<T: H5Type>(&self) -> Result<Array2<T>> {
         self.read()
     }
 
+    /// Reads a dataset/attribute into an array with dynamic number of dimensions.
     pub fn read_dyn<T: H5Type>(&self) -> Result<ArrayD<T>> {
         self.read()
     }
 
+    /// Reads a scalar dataset/attribute.
     pub fn read_scalar<T: H5Type>(&self) -> Result<T> {
         let obj_ndim = self.obj.get_shape()?.ndim();
         ensure!(obj_ndim == 0, "ndim mismatch: expected scalar, got {}", obj_ndim);
@@ -90,15 +108,20 @@ pub struct Writer<'a> {
 }
 
 impl<'a> Writer<'a> {
+    /// Creates a writer for a dataset/attribute.
+    ///
+    /// Conversion is set to *no-op* by default (no conversions allowed).
     pub fn new(obj: &'a Container) -> Self {
         Self { obj, conv: Conversion::NoOp }
     }
 
+    /// Set conversion level to *hard* (both *no-op* and *hard* conversion paths are accepted).
     pub fn hard(mut self) -> Self {
         self.conv = Conversion::Hard;
         self
     }
 
+    /// Set conversion level to *soft* (any valid conversion path is accepted).
     pub fn soft(mut self) -> Self {
         self.conv = Conversion::Soft;
         self
@@ -117,6 +140,10 @@ impl<'a> Writer<'a> {
         Ok(())
     }
 
+    /// Writes an n-dimensional array view into a dataset/attribute.
+    ///
+    /// The shape of the view must match the shape of the dataset/attribute exactly.
+    /// The input argument must be convertible to an array view (this includes slices).
     pub fn write<'b, A, T, D>(&self, arr: A) -> Result<()>
     where
         A: Into<ArrayView<'b, T, D>>,
@@ -132,6 +159,11 @@ impl<'a> Writer<'a> {
         self.write_from_buf(view.as_ptr())
     }
 
+    /// Writes a 1-dimensional array view into a dataset/attribute in memory order.
+    ///
+    /// The number of elements in the view must match the number of elements in the
+    /// destination dataset/attribute. The input argument must be convertible to a
+    /// 1-dimensional array view (this includes slices).
     pub fn write_raw<'b, A, T>(&self, arr: A) -> Result<()>
     where
         A: Into<ArrayView1<'b, T>>,
@@ -146,6 +178,7 @@ impl<'a> Writer<'a> {
         self.write_from_buf(view.as_ptr())
     }
 
+    /// Writes a scalar dataset/attribute.
     pub fn write_scalar<T: H5Type>(&self, val: &T) -> Result<()> {
         let ndim = self.obj.get_shape()?.ndim();
         ensure!(ndim == 0, "ndim mismatch: expected scalar, got {}", ndim);
