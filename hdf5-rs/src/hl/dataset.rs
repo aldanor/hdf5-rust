@@ -96,11 +96,6 @@ impl Dataset {
         })
     }
 
-    /// Returns whether this dataset's type is equivalent to the given type.
-    pub fn is_type<T: H5Type>(&self) -> bool {
-        Datatype::from_type::<T>().and_then(|a| self.datatype().map(|b| a == b)).unwrap_or(false)
-    }
-
     /// Returns the chunk shape if the dataset is chunked.
     pub fn chunks(&self) -> Option<Vec<Ix>> {
         h5lock!({
@@ -800,18 +795,6 @@ pub mod tests {
 
             let ds = file.new_dataset::<f32>().fill_value(1.234).create_anon(100).unwrap();
             check_all_fill_values!(ds, 1.234);
-        })
-    }
-
-    #[test]
-    pub fn test_is_type() {
-        with_tmp_file(|file| {
-            let ds = file.new_dataset::<u16>().create_anon(100).unwrap();
-            assert_eq!(ds.is_type::<u16>(), true);
-
-            assert_eq!(ds.is_type::<i16>(), false);
-            assert_eq!(ds.is_type::<u8>(), false);
-            assert_eq!(ds.is_type::<f32>(), false);
         })
     }
 }
