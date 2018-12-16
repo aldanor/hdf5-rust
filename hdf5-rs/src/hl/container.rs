@@ -3,7 +3,7 @@ use std::fmt::{self, Debug};
 use std::mem;
 use std::ops::Deref;
 
-use ndarray::{Array, Array1, Array2, ArrayD, ArrayView};
+use ndarray::{Array, Array1, Array2, ArrayD, ArrayView, ArrayView1};
 
 use libhdf5_sys::h5a::{H5Aget_space, H5Aget_storage_size, H5Aget_type, H5Aread, H5Awrite};
 use libhdf5_sys::h5d::{H5Dget_space, H5Dget_storage_size, H5Dget_type, H5Dread, H5Dwrite};
@@ -49,7 +49,18 @@ impl<'a> Reader<'a> {
         Ok(())
     }
 
-    pub fn read_vec<T: H5Type>(&self) -> Result<Vec<T>> {
+    pub fn read<T: H5Type, D: ndarray::Dimension>(&self) -> Result<Array<T, D>> {
+        let shape = self.obj.get_shape()?;
+        if let Some(ndim) = D::NDIM {
+            let obj_ndim = shape.ndim();
+            ensure!(obj_ndim == ndim, "ndim mismatch: expected {}, got {}", ndim, obj_ndim);
+        }
+        let vec = self.read_raw()?;
+        let arr = ArrayD::from_shape_vec(shape, vec).str_err()?;
+        arr.into_dimensionality().str_err()
+    }
+
+    pub fn read_raw<T: H5Type>(&self) -> Result<Vec<T>> {
         let size = self.obj.space()?.size();
         let mut vec = Vec::with_capacity(size);
         unsafe {
@@ -58,30 +69,21 @@ impl<'a> Reader<'a> {
         self.read_into_buf(vec.as_mut_ptr()).map(|_| vec)
     }
 
-    pub fn read_arr<T: H5Type, D: ndarray::Dimension>(&self) -> Result<Array<T, D>> {
-        let shape = self.obj.get_shape()?;
-        if let Some(ndim) = D::NDIM {
-            ensure!(shape.ndim() == ndim, "ndim mismatch");
-        }
-        let vec = self.read_vec::<T>()?;
-        let arr = ArrayD::from_shape_vec(shape, vec).str_err()?;
-        arr.into_dimensionality().str_err()
-    }
-
-    pub fn read_dyn<T: H5Type>(&self) -> Result<ArrayD<T>> {
-        self.read_arr()
-    }
-
     pub fn read_1d<T: H5Type>(&self) -> Result<Array1<T>> {
-        self.read_arr()
+        self.read()
     }
 
     pub fn read_2d<T: H5Type>(&self) -> Result<Array2<T>> {
-        self.read_arr()
+        self.read()
+    }
+
+    pub fn read_dyn<T: H5Type>(&self) -> Result<ArrayD<T>> {
+        self.read()
     }
 
     pub fn read_scalar<T: H5Type>(&self) -> Result<T> {
-        ensure!(self.obj.get_shape()?.ndim() == 0, "scalar expected");
+        let obj_ndim = self.obj.get_shape()?.ndim();
+        ensure!(obj_ndim == 0, "ndim mismatch: expected scalar, got {}", obj_ndim);
         let mut val: T = unsafe { mem::uninitialized() };
         self.read_into_buf(&mut val as *mut _).map(|_| val)
     }
@@ -113,7 +115,7 @@ impl<'a> Writer<'a> {
         self
     }
 
-    fn write_buf<T: H5Type>(&self, buf: *const T) -> Result<()> {
+    fn write_from_buf<T: H5Type>(&self, buf: *const T) -> Result<()> {
         let file_dtype = self.obj.dtype()?;
         let mem_dtype = Datatype::from_type::<T>()?;
         mem_dtype.ensure_convertible(&file_dtype, self.conv.get())?;
@@ -126,7 +128,7 @@ impl<'a> Writer<'a> {
         Ok(())
     }
 
-    pub fn write_arr<'b, A, T, D>(&self, arr: A) -> Result<()>
+    pub fn write<'b, A, T, D>(&self, arr: A) -> Result<()>
     where
         A: Into<ArrayView<'b, T, D>>,
         T: H5Type,
@@ -138,12 +140,27 @@ impl<'a> Writer<'a> {
         if src != dst {
             fail!("shape mismatch when writing: memory = {:?}, destination = {:?}", src, dst);
         }
-        self.write_buf(view.as_ptr())
+        self.write_from_buf(view.as_ptr())
+    }
+
+    pub fn write_raw<'b, A, T>(&self, arr: A) -> Result<()>
+    where
+        A: Into<ArrayView1<'b, T>>,
+        T: H5Type,
+    {
+        let view = arr.into();
+        let src = view.len();
+        let dst = self.obj.get_shape()?.size();
+        if src != dst {
+            fail!("length mismatch when writing: memory = {:?}, destination = {:?}", src, dst);
+        }
+        self.write_from_buf(view.as_ptr())
     }
 
     pub fn write_scalar<T: H5Type>(&self, val: &T) -> Result<()> {
-        ensure!(self.obj.get_shape()?.is_empty(), "shape mismatch");
-        self.write_buf(val as *const _)
+        let ndim = self.obj.get_shape()?.ndim();
+        ensure!(ndim == 0, "ndim mismatch: expected scalar, got {}", ndim);
+        self.write_from_buf(val as *const _)
     }
 }
 
@@ -241,12 +258,12 @@ impl Container {
         }
     }
 
-    pub fn read_vec<T: H5Type>(&self) -> Result<Vec<T>> {
-        self.as_reader().read_vec()
+    pub fn read<T: H5Type, D: ndarray::Dimension>(&self) -> Result<Array<T, D>> {
+        self.as_reader().read()
     }
 
-    pub fn read_arr<T: H5Type, D: ndarray::Dimension>(&self) -> Result<Array<T, D>> {
-        self.as_reader().read_arr()
+    pub fn read_raw<T: H5Type>(&self) -> Result<Vec<T>> {
+        self.as_reader().read_raw()
     }
 
     pub fn read_dyn<T: H5Type>(&self) -> Result<ArrayD<T>> {
@@ -265,13 +282,21 @@ impl Container {
         self.as_reader().read_scalar()
     }
 
-    pub fn write_arr<'b, A, T, D>(&self, arr: A) -> Result<()>
+    pub fn write<'b, A, T, D>(&self, arr: A) -> Result<()>
     where
         A: Into<ArrayView<'b, T, D>>,
         T: H5Type,
         D: ndarray::Dimension,
     {
-        self.as_writer().write_arr(arr)
+        self.as_writer().write(arr)
+    }
+
+    pub fn write_raw<'b, A, T>(&self, arr: A) -> Result<()>
+    where
+        A: Into<ArrayView1<'b, T>>,
+        T: H5Type,
+    {
+        self.as_writer().write_raw(arr)
     }
 
     pub fn write_scalar<T: H5Type>(&self, val: &T) -> Result<()> {
