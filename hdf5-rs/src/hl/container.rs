@@ -1,4 +1,3 @@
-use std::cell::Cell;
 use std::fmt::{self, Debug};
 use std::mem;
 use std::ops::Deref;
@@ -13,33 +12,28 @@ use crate::internal_prelude::*;
 #[derive(Debug)]
 pub struct Reader<'a> {
     obj: &'a Container,
-    conv: Cell<Conversion>,
+    conv: Conversion,
 }
 
 impl<'a> Reader<'a> {
     pub fn new(obj: &'a Container) -> Self {
-        Self { obj, conv: Cell::new(Conversion::NoOp) }
+        Self { obj, conv: Conversion::NoOp }
     }
 
-    pub fn noop(&self) -> &Self {
-        self.conv.replace(Conversion::NoOp);
+    pub fn hard(mut self) -> Self {
+        self.conv = Conversion::Hard;
         self
     }
 
-    pub fn hard(&self) -> &Self {
-        self.conv.replace(Conversion::Hard);
-        self
-    }
-
-    pub fn soft(&self) -> &Self {
-        self.conv.replace(Conversion::Soft);
+    pub fn soft(mut self) -> Self {
+        self.conv = Conversion::Soft;
         self
     }
 
     fn read_into_buf<T: H5Type>(&self, buf: *mut T) -> Result<()> {
         let file_dtype = self.obj.dtype()?;
         let mem_dtype = Datatype::from_type::<T>()?;
-        file_dtype.ensure_convertible(&mem_dtype, self.conv.get())?;
+        file_dtype.ensure_convertible(&mem_dtype, self.conv)?;
         let (obj_id, tp_id) = (self.obj.id(), mem_dtype.id());
         if self.obj.is_attr() {
             h5try!(H5Aread(obj_id, tp_id, buf as *mut _));
@@ -92,33 +86,28 @@ impl<'a> Reader<'a> {
 #[derive(Debug)]
 pub struct Writer<'a> {
     obj: &'a Container,
-    conv: Cell<Conversion>,
+    conv: Conversion,
 }
 
 impl<'a> Writer<'a> {
     pub fn new(obj: &'a Container) -> Self {
-        Self { obj, conv: Cell::new(Conversion::NoOp) }
+        Self { obj, conv: Conversion::NoOp }
     }
 
-    pub fn noop(&self) -> &Self {
-        self.conv.replace(Conversion::NoOp);
+    pub fn hard(mut self) -> Self {
+        self.conv = Conversion::Hard;
         self
     }
 
-    pub fn hard(&self) -> &Self {
-        self.conv.replace(Conversion::Hard);
-        self
-    }
-
-    pub fn soft(&self) -> &Self {
-        self.conv.replace(Conversion::Soft);
+    pub fn soft(mut self) -> Self {
+        self.conv = Conversion::Soft;
         self
     }
 
     fn write_from_buf<T: H5Type>(&self, buf: *const T) -> Result<()> {
         let file_dtype = self.obj.dtype()?;
         let mem_dtype = Datatype::from_type::<T>()?;
-        mem_dtype.ensure_convertible(&file_dtype, self.conv.get())?;
+        mem_dtype.ensure_convertible(&file_dtype, self.conv)?;
         let (obj_id, tp_id) = (self.obj.id(), mem_dtype.id());
         if self.obj.is_attr() {
             h5try!(H5Awrite(obj_id, tp_id, buf as *const _));
