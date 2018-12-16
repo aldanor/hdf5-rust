@@ -124,7 +124,7 @@ impl Datatype {
         h5call!(H5Tget_size(self.id())).unwrap_or(0) as usize
     }
 
-    pub fn get_conv_path<D>(&self, dst: D) -> Option<Conversion>
+    pub fn conv_path<D>(&self, dst: D) -> Option<Conversion>
     where
         D: Borrow<Datatype>,
     {
@@ -150,7 +150,7 @@ impl Datatype {
 
     pub(crate) fn ensure_convertible(&self, dst: &Datatype, required: Conversion) -> Result<()> {
         // TODO: more detailed error messages after Debug/Display are implemented for Datatype
-        if let Some(conv) = self.get_conv_path(dst) {
+        if let Some(conv) = self.conv_path(dst) {
             if conv > required {
                 fail!("{} conversion path required; available: {} conversion", required, conv)
             } else {
