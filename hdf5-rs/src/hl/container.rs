@@ -221,14 +221,19 @@ impl Container {
         get_id_type(self.id()) == H5I_ATTR
     }
 
+    /// Creates a reader wrapper for this dataset/attribute, allowing to
+    /// set custom type conversion options when reading.
     pub fn as_reader(&self) -> Reader {
         Reader::new(self)
     }
 
+    /// Creates a writer wrapper for this dataset/attribute, allowing to
+    /// set custom type conversion options when writing.
     pub fn as_writer(&self) -> Writer {
         Writer::new(self)
     }
 
+    /// Returns the datatype of the dataset/attribute.
     pub fn dtype(&self) -> Result<Datatype> {
         if self.is_attr() {
             Datatype::from_id(h5try!(H5Aget_type(self.id())))
@@ -237,6 +242,7 @@ impl Container {
         }
     }
 
+    /// Returns the dataspace of the dataset/attribute.
     pub fn space(&self) -> Result<Dataspace> {
         if self.is_attr() {
             Dataspace::from_id(h5try!(H5Aget_space(self.id())))
@@ -280,30 +286,47 @@ impl Container {
         }
     }
 
+    /// Reads a dataset/attribute into an n-dimensional array.
+    ///
+    /// If the array has a fixed number of dimensions, it must match the dimensionality
+    /// of the dataset/attribute.
     pub fn read<T: H5Type, D: ndarray::Dimension>(&self) -> Result<Array<T, D>> {
         self.as_reader().read()
     }
 
+    /// Reads a dataset/attribute into a vector in memory order.
     pub fn read_raw<T: H5Type>(&self) -> Result<Vec<T>> {
         self.as_reader().read_raw()
     }
 
-    pub fn read_dyn<T: H5Type>(&self) -> Result<ArrayD<T>> {
-        self.as_reader().read_dyn()
-    }
-
+    /// Reads a dataset/attribute into a 1-dimensional array.
+    ///
+    /// The dataset/attribute must be 1-dimensional.
     pub fn read_1d<T: H5Type>(&self) -> Result<Array1<T>> {
         self.as_reader().read_1d()
     }
 
+    /// Reads a dataset/attribute into a 2-dimensional array.
+    ///
+    /// The dataset/attribute must be 2-dimensional.
     pub fn read_2d<T: H5Type>(&self) -> Result<Array2<T>> {
         self.as_reader().read_2d()
     }
 
+    /// Reads a dataset/attribute into an array with dynamic number of dimensions.
+    pub fn read_dyn<T: H5Type>(&self) -> Result<ArrayD<T>> {
+        self.as_reader().read_dyn()
+    }
+
+    /// Reads a scalar dataset/attribute.
     pub fn read_scalar<T: H5Type>(&self) -> Result<T> {
         self.as_reader().read_scalar()
     }
 
+    /// Writes an n-dimensional array view into a dataset/attribute.
+    ///
+    /// The shape of the view must match the shape of the dataset/attribute exactly.
+    /// The input argument must be convertible to an array view (this includes slices).
     pub fn write<'b, A, T, D>(&self, arr: A) -> Result<()>
     where
         A: Into<ArrayView<'b, T, D>>,
@@ -313,6 +336,11 @@ impl Container {
         self.as_writer().write(arr)
     }
 
+    /// Writes a 1-dimensional array view into a dataset/attribute in memory order.
+    ///
+    /// The number of elements in the view must match the number of elements in the
+    /// destination dataset/attribute. The input argument must be convertible to a
+    /// 1-dimensional array view (this includes slices).
     pub fn write_raw<'b, A, T>(&self, arr: A) -> Result<()>
     where
         A: Into<ArrayView1<'b, T>>,
@@ -321,6 +349,7 @@ impl Container {
         self.as_writer().write_raw(arr)
     }
 
+    /// Writes a scalar dataset/attribute.
     pub fn write_scalar<T: H5Type>(&self, val: &T) -> Result<()> {
         self.as_writer().write_scalar(val)
     }
