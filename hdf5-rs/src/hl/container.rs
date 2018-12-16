@@ -5,8 +5,8 @@ use std::ops::Deref;
 
 use ndarray::{Array, Array1, Array2, ArrayD, ArrayView};
 
-use libhdf5_sys::h5a::{H5Aget_space, H5Aget_type, H5Aread, H5Awrite};
-use libhdf5_sys::h5d::{H5Dget_space, H5Dget_type, H5Dread, H5Dwrite};
+use libhdf5_sys::h5a::{H5Aget_space, H5Aget_storage_size, H5Aget_type, H5Aread, H5Awrite};
+use libhdf5_sys::h5d::{H5Dget_space, H5Dget_storage_size, H5Dget_type, H5Dread, H5Dwrite};
 
 use crate::internal_prelude::*;
 
@@ -211,8 +211,34 @@ impl Container {
         self.space().map(|s| s.dims())
     }
 
+    /// Returns the shape of the dataset/attribute.
     pub fn shape(&self) -> Vec<Ix> {
-        self.get_shape().ok().unwrap_or_else(Vec::new)
+        self.space().ok().map_or_else(Vec::new, |s| s.dims())
+    }
+
+    /// Returns the number of dimensions in the dataset/attribute.
+    pub fn ndim(&self) -> usize {
+        self.space().ok().map_or(0, |s| s.ndim())
+    }
+
+    /// Returns the total number of elements in the dataset/attribute.
+    pub fn size(&self) -> usize {
+        self.shape().size()
+    }
+
+    /// Returns whether this dataset/attribute is a scalar.
+    pub fn is_scalar(&self) -> bool {
+        self.ndim() == 0
+    }
+
+    /// Returns the amount of file space required for the dataset/attribute. Note that this
+    /// only accounts for the space which has actually been allocated (it can be equal to zero).
+    pub fn storage_size(&self) -> u64 {
+        if self.is_attr() {
+            h5lock!(H5Aget_storage_size(self.id())) as _
+        } else {
+            h5lock!(H5Dget_storage_size(self.id())) as _
+        }
     }
 
     pub fn read_vec<T: H5Type>(&self) -> Result<Vec<T>> {

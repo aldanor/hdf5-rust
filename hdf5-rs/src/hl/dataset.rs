@@ -8,7 +8,7 @@ use libhdf5_sys::{
     h5::HADDR_UNDEF,
     h5d::{
         H5D_fill_value_t, H5D_layout_t, H5Dcreate2, H5Dcreate_anon, H5Dget_create_plist,
-        H5Dget_offset, H5Dget_space, H5Dget_storage_size, H5Dget_type, H5D_FILL_TIME_ALLOC,
+        H5Dget_offset, H5D_FILL_TIME_ALLOC,
     },
     h5p::{
         H5Pcreate, H5Pfill_value_defined, H5Pget_chunk, H5Pget_fill_value, H5Pget_layout,
@@ -62,29 +62,9 @@ pub enum Chunk {
 }
 
 impl Dataset {
-    /// Returns the shape of the dataset.
-    pub fn shape(&self) -> Vec<Ix> {
-        self.dataspace().ok().map_or_else(Vec::new, |s| s.dims())
-    }
-
-    /// Returns the number of dimensions in the dataset.
-    pub fn ndim(&self) -> usize {
-        self.dataspace().ok().map_or(0, |s| s.ndim())
-    }
-
-    /// Returns the total number of elements in the dataset.
-    pub fn size(&self) -> usize {
-        self.shape().size()
-    }
-
-    /// Returns whether this dataset is a scalar.
-    pub fn is_scalar(&self) -> bool {
-        self.ndim() == 0
-    }
-
     /// Returns whether this dataset is resizable along some axis.
     pub fn is_resizable(&self) -> bool {
-        h5lock!(self.dataspace().ok().map_or(false, |s| s.resizable()))
+        h5lock!(self.space().ok().map_or(false, |s| s.resizable()))
     }
 
     /// Returns whether this dataset has a chunked layout.
@@ -135,12 +115,6 @@ impl Dataset {
         })
     }
 
-    /// Returns the amount of file space required for the dataset. Note that this only
-    /// accounts for the space which has actually been allocated (it can be equal to zero).
-    pub fn storage_size(&self) -> u64 {
-        h5lock!(H5Dget_storage_size(self.id())) as _
-    }
-
     /// Returns the absolute byte offset of the dataset in the file if such offset is defined
     /// (which is not the case for datasets that are chunked, compact or not allocated yet).
     pub fn offset(&self) -> Option<u64> {
@@ -175,15 +149,6 @@ impl Dataset {
                 }
             }
         })
-    }
-
-    fn dataspace(&self) -> Result<Dataspace> {
-        Dataspace::from_id(h5try!(H5Dget_space(self.id())))
-    }
-
-    /// Returns a new `Datatype` object associated with this dataset.
-    pub fn datatype(&self) -> Result<Datatype> {
-        Datatype::from_id(h5try!(H5Dget_type(self.id())))
     }
 
     fn dcpl_id(&self) -> Result<hid_t> {
@@ -731,7 +696,7 @@ pub mod tests {
     pub fn test_datatype() {
         with_tmp_file(|file| {
             assert_eq!(
-                file.new_dataset::<f32>().create_anon(1).unwrap().datatype().unwrap(),
+                file.new_dataset::<f32>().create_anon(1).unwrap().dtype().unwrap(),
                 Datatype::from_type::<f32>().unwrap()
             );
         })
