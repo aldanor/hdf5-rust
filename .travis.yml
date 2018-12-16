@@ -1,30 +1,28 @@
 sudo: false
 language: rust
 rust:
-- 1.31.0
+- stable
 - beta
 - nightly
 before_script:
-- rustup update
 - |
-  [ $TRAVIS_RUST_VERSION = "nightly" ] &&
-  rustup component add clippy --toolchain=nightly ||
-  true
+  if [ $TRAVIS_RUST_VERSION = "nightly" ]; then
+    rustup component add clippy --toolchain=nightly || true;
+  fi
+- cd $TRAVIS_BUILD_DIR
 script:
 - |
-  [ $TRAVIS_RUST_VERSION = "nightly" ] &&
-  cd $TRAVIS_BUILD_DIR &&
-  cargo clippy -v ||
-  rm -rf ./target
+  if { [ $TRAVIS_RUST_VERSION = "nightly" ] && which cargo-clippy >/dev/null; }; then
+    cargo clippy -v;
+  fi
+- cargo clean
+- cargo build -v
+- cargo test -v --no-run
+- cargo test -v
 - |
-  cd $TRAVIS_BUILD_DIR &&
-  cargo build -v &&
-  cargo test -v --no-run &&
-  cargo test -v
-- |
-  [ $TRAVIS_RUST_VERSION = "1.31.0" ] &&
-  cd $TRAVIS_BUILD_DIR &&
-  cargo doc --no-deps
+  if [ $TRAVIS_RUST_VERSION = "stable" ] && [ `uname` = "Linux" ]; then
+    cargo doc --no-deps;
+  fi
 addons:
   apt:
     packages:
@@ -45,7 +43,7 @@ before_install:
 after_success: |
   [ $TRAVIS_BRANCH = "master" ] &&
   [ $TRAVIS_PULL_REQUEST = "false" ] &&
-  [ $TRAVIS_RUST_VERSION = "1.31.0" ] &&
+  [ $TRAVIS_RUST_VERSION = "stable" ] &&
   [ `uname` = "Linux" ] &&
   echo '<meta http-equiv=refresh content=0;url=hdf5_rs/index.html>' > target/doc/index.html &&
   pip install ghp-import --user $USER &&
