@@ -1,6 +1,6 @@
 use std::mem;
-
 use std::os::raw::c_void;
+use std::ptr;
 
 use crate::array::{Array, VarLenArray};
 use crate::string::{FixedAscii, FixedUnicode, VarLenAscii, VarLenUnicode};
@@ -195,18 +195,16 @@ macro_rules! impl_tuple {
     );
 
     ($t:ident, $($tt:ident),*) => (
+        #[allow(dead_code, unused_variables)]
         unsafe impl<$t, $($tt),*> H5Type for ($t, $($tt),*)
             where $t: H5Type, $($tt: H5Type),*
         {
-            #[allow(dead_code, unused_variables)]
             fn type_descriptor() -> TypeDescriptor {
-                let origin: *const ($t, $($tt),*) = ::std::ptr::null();
-                let mut fields = Vec::<CompoundField>::new();
+                let origin: *const Self = ptr::null();
+                let mut fields = Vec::new();
                 impl_tuple!(@parse_fields [] origin fields | $t, $($tt),*);
-                TypeDescriptor::Compound(CompoundType {
-                    fields: fields,
-                    size: mem::size_of::<($t, $($tt),*)>(),
-                })
+                let size = mem::size_of::<Self>();
+                TypeDescriptor::Compound(CompoundType { fields, size })
             }
         }
 
