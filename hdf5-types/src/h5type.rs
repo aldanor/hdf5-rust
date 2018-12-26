@@ -124,6 +124,18 @@ impl CompoundType {
         }
         layout
     }
+
+    pub fn to_packed_repr(&self) -> CompoundType {
+        let mut layout = self.clone();
+        layout.fields.sort_by_key(|f| f.index);
+        layout.size = 0;
+        for f in layout.fields.iter_mut() {
+            let ty = f.ty.to_packed_repr();
+            f.offset = layout.size;
+            layout.size += ty.size();
+        }
+        layout
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -180,6 +192,17 @@ impl TypeDescriptor {
             Compound(ref compound) => Compound(compound.to_c_repr()),
             FixedArray(ref ty, size) => FixedArray(Box::new(ty.to_c_repr()), size),
             VarLenArray(ref ty) => VarLenArray(Box::new(ty.to_c_repr())),
+            _ => self.clone(),
+        }
+    }
+
+    pub fn to_packed_repr(&self) -> Self {
+        use self::TypeDescriptor::*;
+
+        match *self {
+            Compound(ref compound) => Compound(compound.to_packed_repr()),
+            FixedArray(ref ty, size) => FixedArray(Box::new(ty.to_packed_repr()), size),
+            VarLenArray(ref ty) => VarLenArray(Box::new(ty.to_packed_repr())),
             _ => self.clone(),
         }
     }
