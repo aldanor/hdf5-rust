@@ -70,6 +70,10 @@ impl File {
         FileBuilder::new().mode(mode).open(filename)
     }
 
+    pub fn with_options() -> FileBuilder {
+        FileBuilder::new()
+    }
+
     /// Returns the file size in bytes (or 0 if the file handle is invalid).
     pub fn size(&self) -> u64 {
         h5get_d!(H5Fget_filesize(self.id()): hsize_t) as _
