@@ -36,7 +36,7 @@ pub fn derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 }
 
 fn impl_compound<F>(
-    ty: &Ident, ty_generics: &TypeGenerics, fields: Vec<F>, names: Vec<String>, types: Vec<Type>,
+    ty: &Ident, ty_generics: &TypeGenerics, fields: &[F], names: &[String], types: &[Type],
 ) -> TokenStream
 where
     F: ToTokens,
@@ -140,8 +140,8 @@ fn impl_trait(
                 find_repr(attrs, &["C"]).expect("H5Type requires #[repr(C)] for structs");
                 let types = pluck(fields.iter(), |f| f.ty.clone());
                 let fields = pluck(fields.iter(), |f| f.ident.clone().unwrap());
-                let names = fields.iter().map(|f| f.to_string()).collect();
-                impl_compound(ty, ty_generics, fields, names, types)
+                let names = fields.iter().map(|f| f.to_string()).collect::<Vec<_>>();
+                impl_compound(ty, ty_generics, &fields, &names, &types)
             }
             Fields::Unnamed(ref fields) => {
                 let (index, fields): (Vec<usize>, Vec<_>) = fields
@@ -154,9 +154,9 @@ fn impl_trait(
                     panic!("Cannot derive H5Type for empty tuple structs");
                 }
                 find_repr(attrs, &["C"]).expect("H5Type requires #[repr(C)] for structs");
-                let names = (0..fields.len()).map(|f| f.to_string()).collect();
+                let names = (0..fields.len()).map(|f| f.to_string()).collect::<Vec<_>>();
                 let types = pluck(fields.iter(), |f| f.ty.clone());
-                impl_compound(ty, ty_generics, index, names, types)
+                impl_compound(ty, ty_generics, &index, &names, &types)
             }
         },
         Data::Enum(ref data) => {
