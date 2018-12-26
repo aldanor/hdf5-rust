@@ -336,7 +336,8 @@ impl<T: H5Type> DatasetBuilder<T> {
 
     fn finalize<D: Dimension>(&self, name: Option<&str>, shape: D) -> Result<Dataset> {
         h5lock!({
-            let datatype = Datatype::from_type::<T>()?;
+            let type_descriptor = <T as H5Type>::type_descriptor().to_c_repr();
+            let datatype = Datatype::from_descriptor(&type_descriptor)?;
             let parent = try_ref_clone!(self.parent);
 
             let dataspace = Dataspace::try_new(&shape, self.resizable)?;
