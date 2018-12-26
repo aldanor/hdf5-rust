@@ -102,6 +102,30 @@ pub struct CompoundType {
     pub size: usize,
 }
 
+impl CompoundType {
+    pub fn to_c_repr(&self) -> CompoundType {
+        let mut layout = self.clone();
+        layout.fields.sort_by_key(|f| f.index);
+        let mut offset = 0;
+        let mut max_align = 1;
+        for f in layout.fields.iter_mut() {
+            let ty = f.ty.to_c_repr();
+            let align = ty.c_alignment();
+            while offset % align != 0 {
+                offset += 1;
+            }
+            f.offset = offset;
+            max_align = max_align.max(align);
+            offset += ty.size();
+            layout.size = offset;
+            while layout.size % max_align != 0 {
+                layout.size += 1;
+            }
+        }
+        layout
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum TypeDescriptor {
     Integer(IntSize),
@@ -132,6 +156,31 @@ impl TypeDescriptor {
             FixedAscii(len) | FixedUnicode(len) => len,
             VarLenArray(_) => mem::size_of::<hvl_t>(),
             VarLenAscii | VarLenUnicode => mem::size_of::<*const u8>(),
+        }
+    }
+
+    fn c_alignment(&self) -> usize {
+        use self::TypeDescriptor::*;
+
+        match *self {
+            Compound(ref compound) => {
+                compound.fields.iter().map(|f| f.ty.c_alignment()).max().unwrap_or(1)
+            }
+            FixedArray(ref ty, _) => ty.c_alignment(),
+            FixedAscii(_) | FixedUnicode(_) => 1,
+            VarLenArray(_) => mem::size_of::<usize>(),
+            _ => self.size(),
+        }
+    }
+
+    pub fn to_c_repr(&self) -> Self {
+        use self::TypeDescriptor::*;
+
+        match *self {
+            Compound(ref compound) => Compound(compound.to_c_repr()),
+            FixedArray(ref ty, size) => FixedArray(Box::new(ty.to_c_repr()), size),
+            VarLenArray(ref ty) => VarLenArray(Box::new(ty.to_c_repr())),
+            _ => self.clone(),
         }
     }
 }
