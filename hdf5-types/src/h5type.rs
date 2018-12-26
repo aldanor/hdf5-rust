@@ -272,8 +272,12 @@ macro_rules! impl_tuple {
         unsafe impl<$t> H5Type for ($t,) where $t: H5Type {
             #[inline]
             fn type_descriptor() -> TypeDescriptor {
-                assert_eq!(mem::size_of::<$t>(), mem::size_of::<($t,)>());
-                <$t as H5Type>::type_descriptor()
+                let size = mem::size_of::<($t,)>();
+                assert_eq!(size, mem::size_of::<$t>());
+                TypeDescriptor::Compound(CompoundType {
+                    fields: vec![CompoundField::typed::<$t>("0", 0, 0)],
+                    size,
+                })
             }
         }
     );
@@ -418,7 +422,19 @@ pub mod tests {
     #[test]
     pub fn test_tuples() {
         type T1 = (u16,);
-        assert_eq!(T1::type_descriptor(), u16::type_descriptor());
+        let td = T1::type_descriptor();
+        assert_eq!(
+            td,
+            TD::Compound(CompoundType {
+                fields: vec![
+                    CompoundField::typed::<u16>("0", 0, 0),
+                ],
+                size: 2,
+            })
+        );
+        assert_eq!(td.size(), 2);
+        assert_eq!(mem::size_of::<T1>(), 2);
+
         type T2 = (i32, f32, (u64,));
         let td = T2::type_descriptor();
         assert_eq!(
@@ -427,7 +443,12 @@ pub mod tests {
                 fields: vec![
                     CompoundField::typed::<i32>("0", 0, 0),
                     CompoundField::typed::<f32>("1", 4, 1),
-                    CompoundField::typed::<u64>("2", 8, 2),
+                    CompoundField::new("2", TD::Compound(CompoundType {
+                        fields: vec![
+                            CompoundField::typed::<u64>("0", 0, 0),
+                        ],
+                        size: 8,
+                    }), 8, 2),
                 ],
                 size: 16,
             })
