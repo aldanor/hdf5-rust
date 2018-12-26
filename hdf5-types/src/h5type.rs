@@ -109,14 +109,14 @@ impl CompoundType {
         let mut offset = 0;
         let mut max_align = 1;
         for f in layout.fields.iter_mut() {
-            let ty = f.ty.to_c_repr();
-            let align = ty.c_alignment();
+            f.ty = f.ty.to_c_repr();
+            let align = f.ty.c_alignment();
             while offset % align != 0 {
                 offset += 1;
             }
             f.offset = offset;
             max_align = max_align.max(align);
-            offset += ty.size();
+            offset += f.ty.size();
             layout.size = offset;
             while layout.size % max_align != 0 {
                 layout.size += 1;
@@ -130,9 +130,9 @@ impl CompoundType {
         layout.fields.sort_by_key(|f| f.index);
         layout.size = 0;
         for f in layout.fields.iter_mut() {
-            let ty = f.ty.to_packed_repr();
+            f.ty = f.ty.to_packed_repr();
             f.offset = layout.size;
-            layout.size += ty.size();
+            layout.size += f.ty.size();
         }
         layout
     }
