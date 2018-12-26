@@ -158,6 +158,7 @@ impl Dataset {
 
 #[derive(Clone)]
 pub struct DatasetBuilder<T> {
+    packed: bool,
     filters: Filters,
     chunk: Chunk,
     parent: Result<Handle>,
@@ -177,6 +178,7 @@ impl<T: H5Type> DatasetBuilder<T> {
             }
 
             DatasetBuilder::<T> {
+                packed: false,
                 filters: Filters::default(),
                 chunk: Chunk::Auto,
                 parent: handle,
@@ -185,6 +187,11 @@ impl<T: H5Type> DatasetBuilder<T> {
                 fill_value: None,
             }
         })
+    }
+
+    pub fn packed(&mut self, packed: bool) -> &mut DatasetBuilder<T> {
+        self.packed = packed;
+        self
     }
 
     pub fn fill_value(&mut self, fill_value: T) -> &mut DatasetBuilder<T> {
@@ -335,8 +342,12 @@ impl<T: H5Type> DatasetBuilder<T> {
     }
 
     fn finalize<D: Dimension>(&self, name: Option<&str>, shape: D) -> Result<Dataset> {
+        let type_descriptor = if self.packed {
+            <T as H5Type>::type_descriptor().to_packed_repr()
+        } else {
+            <T as H5Type>::type_descriptor().to_c_repr()
+        };
         h5lock!({
-            let type_descriptor = <T as H5Type>::type_descriptor().to_c_repr();
             let datatype = Datatype::from_descriptor(&type_descriptor)?;
             let parent = try_ref_clone!(self.parent);
 
