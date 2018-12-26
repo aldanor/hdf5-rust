@@ -83,6 +83,17 @@ pub struct CompoundField {
     pub name: String,
     pub ty: TypeDescriptor,
     pub offset: usize,
+    pub index: usize,
+}
+
+impl CompoundField {
+    pub fn new(name: &str, ty: TypeDescriptor, offset: usize, index: usize) -> Self {
+        Self { name: name.to_owned(), ty, offset, index }
+    }
+
+    pub fn typed<T: H5Type>(name: &str, offset: usize, index: usize) -> Self {
+        Self::new(name, T::type_descriptor(), offset, index)
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -178,6 +189,7 @@ macro_rules! impl_tuple {
             name: format!("{}", index),
             ty: <$t as H5Type>::type_descriptor(),
             offset: f as *const _ as _,
+            index,
         });
         impl_tuple!(@parse_fields [$($s)*] $origin $fields | $($tt),*);
     );
@@ -340,9 +352,9 @@ pub mod tests {
             td,
             TD::Compound(CompoundType {
                 fields: vec![
-                    CompoundField { name: "0".into(), ty: i32::type_descriptor(), offset: 0 },
-                    CompoundField { name: "1".into(), ty: f32::type_descriptor(), offset: 4 },
-                    CompoundField { name: "2".into(), ty: u64::type_descriptor(), offset: 8 },
+                    CompoundField::typed::<i32>("0", 0, 0),
+                    CompoundField::typed::<f32>("1", 4, 1),
+                    CompoundField::typed::<u64>("2", 8, 2),
                 ],
                 size: 16,
             })

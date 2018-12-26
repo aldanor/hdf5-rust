@@ -43,18 +43,19 @@ where
 {
     quote! {
         let origin: *const #ty #ty_generics = ::std::ptr::null();
-        ::hdf5_types::TypeDescriptor::Compound(
-            ::hdf5_types::CompoundType {
-                fields: vec![#(
-                    ::hdf5_types::CompoundField {
-                        name: #names.to_owned(),
-                        ty: <#types as ::hdf5_types::H5Type>::type_descriptor(),
-                        offset: unsafe { &((*origin).#fields) as *const _ as _ },
-                    }
-                ),*],
-                size: ::std::mem::size_of::<#ty #ty_generics>()
+        let mut fields = vec![#(
+            ::hdf5_types::CompoundField {
+                name: #names.to_owned(),
+                ty: <#types as ::hdf5_types::H5Type>::type_descriptor(),
+                offset: unsafe { &((*origin).#fields) as *const _ as _ },
+                index: 0,
             }
-        )
+        ),*];
+        for i in 0..fields.len() {
+            fields[i].index = i;
+        }
+        let size = ::std::mem::size_of::<#ty #ty_generics>();
+        ::hdf5_types::TypeDescriptor::Compound(::hdf5_types::CompoundType { fields, size })
     }
 }
 

@@ -37,8 +37,8 @@ fn test_compound_simple() {
         A::type_descriptor(),
         TD::Compound(CompoundType {
             fields: vec![
-                CompoundField { name: "a".into(), ty: TD::Integer(IntSize::U8), offset: 0 },
-                CompoundField { name: "b".into(), ty: TD::Unsigned(IntSize::U8), offset: 8 }
+                CompoundField::typed::<i64>("a", 0, 0),
+                CompoundField::typed::<u64>("b", 8, 1),
             ],
             size: 16,
         })
@@ -52,21 +52,13 @@ fn test_compound_complex() {
         B::type_descriptor(),
         TD::Compound(CompoundType {
             fields: vec![
-                CompoundField {
-                    name: "a".into(),
-                    ty: TD::FixedArray(Box::new(A::type_descriptor()), 4),
-                    offset: 0,
-                },
-                CompoundField { name: "b".into(), ty: TD::FixedAscii(8), offset: 64 },
-                CompoundField {
-                    name: "c".into(),
-                    ty: TD::VarLenArray(Box::new(TD::Float(FloatSize::U8))),
-                    offset: 72,
-                },
-                CompoundField { name: "d".into(), ty: TD::Boolean, offset: 88 },
-                CompoundField { name: "e".into(), ty: TD::FixedUnicode(7), offset: 89 },
-                CompoundField { name: "f".into(), ty: TD::VarLenAscii, offset: 96 },
-                CompoundField { name: "g".into(), ty: TD::VarLenUnicode, offset: 104 }
+                CompoundField::new("a", TD::FixedArray(Box::new(A::type_descriptor()), 4), 0, 0),
+                CompoundField::new("b", TD::FixedAscii(8), 64, 1),
+                CompoundField::new("c", TD::VarLenArray(Box::new(TD::Float(FloatSize::U8))), 72, 2),
+                CompoundField::new("d", TD::Boolean, 88, 3),
+                CompoundField::new("e", TD::FixedUnicode(7), 89, 4),
+                CompoundField::new("f", TD::VarLenAscii, 96, 5),
+                CompoundField::new("g", TD::VarLenUnicode, 104, 6),
             ],
             size: 112,
         })
@@ -80,8 +72,8 @@ fn test_compound_tuple() {
         T::type_descriptor(),
         TD::Compound(CompoundType {
             fields: vec![
-                CompoundField { name: "0".into(), ty: TD::Integer(IntSize::U8), offset: 0 },
-                CompoundField { name: "1".into(), ty: TD::Unsigned(IntSize::U8), offset: 8 }
+                CompoundField::typed::<i64>("0", 0, 0),
+                CompoundField::typed::<u64>("1", 8, 1),
             ],
             size: 16,
         })

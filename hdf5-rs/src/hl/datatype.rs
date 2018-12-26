@@ -229,6 +229,7 @@ impl Datatype {
                             name: string_from_cstr(name),
                             ty: ty.to_descriptor()?,
                             offset: offset as _,
+                            index: idx as _,
                         });
                         libc::free(name as *mut _);
                     }
@@ -425,8 +426,8 @@ pub mod tests {
         };
         let a_desc = TD::Compound(CompoundType {
             fields: vec![
-                CompoundField { name: "a".into(), ty: i64::type_descriptor(), offset: 0 },
-                CompoundField { name: "b".into(), ty: u64::type_descriptor(), offset: 8 },
+                CompoundField::typed::<i64>("a", 0, 0),
+                CompoundField::typed::<u64>("b", 8, 1),
             ],
             size: 16,
         });
@@ -438,18 +439,12 @@ pub mod tests {
             a: [X; 2],
             b: [[A; 4]; 32],
         };
+        let a_arr_desc = TD::FixedArray(Box::new(x_desc), 2);
+        let b_arr_desc = TD::FixedArray(Box::new(TD::FixedArray(Box::new(a_desc), 4)), 32);
         let c_desc = TD::Compound(CompoundType {
             fields: vec![
-                CompoundField {
-                    name: "a".into(),
-                    ty: TD::FixedArray(Box::new(x_desc), 2),
-                    offset: 0,
-                },
-                CompoundField {
-                    name: "b".into(),
-                    ty: TD::FixedArray(Box::new(TD::FixedArray(Box::new(a_desc), 4)), 32),
-                    offset: 2 * 8,
-                },
+                CompoundField::new("a", a_arr_desc, 0, 0),
+                CompoundField::new("b", b_arr_desc, 16, 1),
             ],
             size: 2 * 8 + 4 * 32 * 16,
         });
