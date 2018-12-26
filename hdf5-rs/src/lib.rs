@@ -9,7 +9,9 @@ mod export {
         dim::{Dimension, Ix},
         error::{Error, Result},
         filters::Filters,
-        hl::{Dataset, Dataspace, Datatype, File, Group, Location, Object, PropertyList},
+        hl::{
+            Container, Dataset, Dataspace, Datatype, File, Group, Location, Object, PropertyList,
+        },
     };
 
     pub use hdf5_derive::H5Type;
