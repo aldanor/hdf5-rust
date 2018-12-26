@@ -435,4 +435,55 @@ pub mod tests {
         assert_eq!(td.size(), 16);
         assert_eq!(mem::size_of::<T2>(), 16);
     }
+
+    #[test]
+    pub fn test_tuple_various_reprs() {
+        type T = (i8, u64, f32, bool);
+        assert_eq!(mem::size_of::<T>(), 16);
+
+        let td = T::type_descriptor();
+        assert_eq!(
+            td,
+            TD::Compound(CompoundType {
+                fields: vec![
+                    CompoundField::typed::<u64>("1", 0, 1),
+                    CompoundField::typed::<f32>("2", 8, 2),
+                    CompoundField::typed::<i8>("0", 12, 0),
+                    CompoundField::typed::<bool>("3", 13, 3),
+                ],
+                size: 16,
+            })
+        );
+        assert_eq!(td.size(), 16);
+
+        let td = T::type_descriptor().to_c_repr();
+        assert_eq!(
+            td,
+            TD::Compound(CompoundType {
+                fields: vec![
+                    CompoundField::typed::<i8>("0", 0, 0),
+                    CompoundField::typed::<u64>("1", 8, 1),
+                    CompoundField::typed::<f32>("2", 16, 2),
+                    CompoundField::typed::<bool>("3", 20, 3),
+                ],
+                size: 24,
+            })
+        );
+        assert_eq!(td.size(), 24);
+
+        let td = T::type_descriptor().to_packed_repr();
+        assert_eq!(
+            td,
+            TD::Compound(CompoundType {
+                fields: vec![
+                    CompoundField::typed::<i8>("0", 0, 0),
+                    CompoundField::typed::<u64>("1", 1, 1),
+                    CompoundField::typed::<f32>("2", 9, 2),
+                    CompoundField::typed::<bool>("3", 13, 3),
+                ],
+                size: 14,
+            })
+        );
+        assert_eq!(td.size(), 14);
+    }
 }
