@@ -288,6 +288,7 @@ macro_rules! impl_tuple {
                 let mut fields = Vec::new();
                 impl_tuple!(@parse_fields [] origin fields | $t, $($tt),*);
                 let size = mem::size_of::<Self>();
+                fields.sort_by_key(|f| f.offset);
                 TypeDescriptor::Compound(CompoundType { fields, size })
             }
         }
