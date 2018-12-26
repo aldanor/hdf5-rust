@@ -169,7 +169,7 @@ pub struct DatasetBuilder<T> {
 
 impl<T: H5Type> DatasetBuilder<T> {
     /// Create a new dataset builder and bind it to the parent container.
-    pub fn new(parent: &Group) -> DatasetBuilder<T> {
+    pub fn new(parent: &Group) -> Self {
         h5lock!({
             // Store the reference to the parent handle and try to increase its reference count.
             let handle = Handle::try_new(parent.id());
@@ -177,7 +177,7 @@ impl<T: H5Type> DatasetBuilder<T> {
                 handle.incref();
             }
 
-            DatasetBuilder::<T> {
+            Self {
                 packed: false,
                 filters: Filters::default(),
                 chunk: Chunk::Auto,
@@ -189,60 +189,60 @@ impl<T: H5Type> DatasetBuilder<T> {
         })
     }
 
-    pub fn packed(&mut self, packed: bool) -> &mut DatasetBuilder<T> {
+    pub fn packed(&mut self, packed: bool) -> &mut Self {
         self.packed = packed;
         self
     }
 
-    pub fn fill_value(&mut self, fill_value: T) -> &mut DatasetBuilder<T> {
+    pub fn fill_value(&mut self, fill_value: T) -> &mut Self {
         self.fill_value = Some(fill_value);
         self
     }
 
     /// Disable chunking.
-    pub fn no_chunk(&mut self) -> &mut DatasetBuilder<T> {
+    pub fn no_chunk(&mut self) -> &mut Self {
         self.chunk = Chunk::None;
         self
     }
 
     /// Enable automatic chunking only if chunking is required (default option).
-    pub fn chunk_auto(&mut self) -> &mut DatasetBuilder<T> {
+    pub fn chunk_auto(&mut self) -> &mut Self {
         self.chunk = Chunk::Auto;
         self
     }
 
     /// Enable chunking with automatic chunk shape.
-    pub fn chunk_infer(&mut self) -> &mut DatasetBuilder<T> {
+    pub fn chunk_infer(&mut self) -> &mut Self {
         self.chunk = Chunk::Infer;
         self
     }
 
     /// Set chunk shape manually.
-    pub fn chunk<D: Dimension>(&mut self, chunk: D) -> &mut DatasetBuilder<T> {
+    pub fn chunk<D: Dimension>(&mut self, chunk: D) -> &mut Self {
         self.chunk = Chunk::Manual(chunk.dims());
         self
     }
 
     /// Set the filters.
-    pub fn filters(&mut self, filters: &Filters) -> &mut DatasetBuilder<T> {
+    pub fn filters(&mut self, filters: &Filters) -> &mut Self {
         self.filters = filters.clone();
         self
     }
 
     /// Enable or disable tracking object modification time (disabled by default).
-    pub fn track_times(&mut self, track_times: bool) -> &mut DatasetBuilder<T> {
+    pub fn track_times(&mut self, track_times: bool) -> &mut Self {
         self.track_times = track_times;
         self
     }
 
     /// Make the dataset resizable along all axes (requires chunking).
-    pub fn resizable(&mut self, resizable: bool) -> &mut DatasetBuilder<T> {
+    pub fn resizable(&mut self, resizable: bool) -> &mut Self {
         self.resizable = resizable;
         self
     }
 
     /// Enable gzip compression with a specified level (0-9).
-    pub fn gzip(&mut self, level: u8) -> &mut DatasetBuilder<T> {
+    pub fn gzip(&mut self, level: u8) -> &mut Self {
         self.filters.gzip(level);
         self
     }
@@ -251,25 +251,25 @@ impl<T: H5Type> DatasetBuilder<T> {
     ///
     /// If `nn` if set to `true` (default), the nearest neighbor method is used, otherwise
     /// the method is set to entropy coding.
-    pub fn szip(&mut self, nn: bool, level: u8) -> &mut DatasetBuilder<T> {
+    pub fn szip(&mut self, nn: bool, level: u8) -> &mut Self {
         self.filters.szip(nn, level);
         self
     }
 
     /// Enable or disable shuffle filter.
-    pub fn shuffle(&mut self, shuffle: bool) -> &mut DatasetBuilder<T> {
+    pub fn shuffle(&mut self, shuffle: bool) -> &mut Self {
         self.filters.shuffle(shuffle);
         self
     }
 
     /// Enable or disable fletcher32 filter.
-    pub fn fletcher32(&mut self, fletcher32: bool) -> &mut DatasetBuilder<T> {
+    pub fn fletcher32(&mut self, fletcher32: bool) -> &mut Self {
         self.filters.fletcher32(fletcher32);
         self
     }
 
     /// Enable scale-offset filter with a specified factor (0 means automatic).
-    pub fn scale_offset(&mut self, scale_offset: u32) -> &mut DatasetBuilder<T> {
+    pub fn scale_offset(&mut self, scale_offset: u32) -> &mut Self {
         self.filters.scale_offset(scale_offset);
         self
     }
