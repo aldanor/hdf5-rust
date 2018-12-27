@@ -426,9 +426,7 @@ pub mod tests {
         assert_eq!(
             td,
             TD::Compound(CompoundType {
-                fields: vec![
-                    CompoundField::typed::<u16>("0", 0, 0),
-                ],
+                fields: vec![CompoundField::typed::<u16>("0", 0, 0),],
                 size: 2,
             })
         );
@@ -443,12 +441,15 @@ pub mod tests {
                 fields: vec![
                     CompoundField::typed::<i32>("0", 0, 0),
                     CompoundField::typed::<f32>("1", 4, 1),
-                    CompoundField::new("2", TD::Compound(CompoundType {
-                        fields: vec![
-                            CompoundField::typed::<u64>("0", 0, 0),
-                        ],
-                        size: 8,
-                    }), 8, 2),
+                    CompoundField::new(
+                        "2",
+                        TD::Compound(CompoundType {
+                            fields: vec![CompoundField::typed::<u64>("0", 0, 0),],
+                            size: 8,
+                        }),
+                        8,
+                        2
+                    ),
                 ],
                 size: 16,
             })
