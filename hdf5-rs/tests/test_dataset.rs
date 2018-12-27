@@ -73,12 +73,14 @@ where
 
                 let ds: h5::Dataset =
                     file.new_dataset::<T>().packed(*packed).create("x", arr.shape().to_vec())?;
+                let ds = scopeguard::guard(ds, |ds| {
+                    drop(ds);
+                    drop(file.unlink("x"));
+                });
+
                 ds.as_writer().soft().write(&arr)?;
 
                 test_read(&ds, &arr, ndim)?;
-
-                drop(ds);
-                drop(file.unlink("x"));
             }
         }
     }
