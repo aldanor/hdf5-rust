@@ -67,7 +67,7 @@ where
         let file =
             h5::File::with_options().mode("w").driver("core").filebacked(false).open(&filename)?;
         for ndim in 0..=4 {
-            for _ in 0..=5 {
+            for _ in 0..=30 {
                 let arr: ArrayD<T> = gen_arr(&mut rng, ndim);
                 println!("{:?}", arr.shape());
 
