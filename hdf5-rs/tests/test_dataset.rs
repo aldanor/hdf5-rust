@@ -69,7 +69,6 @@ where
         for ndim in 0..=4 {
             for _ in 0..=30 {
                 let arr: ArrayD<T> = gen_arr(&mut rng, ndim);
-                println!("{:?}", arr.shape());
 
                 let ds: h5::Dataset =
                     file.new_dataset::<T>().packed(*packed).create("x", arr.shape().to_vec())?;
