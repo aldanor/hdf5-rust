@@ -50,6 +50,29 @@ where
     Ok(())
 }
 
+fn test_write<T>(ds: &h5::Dataset, arr: &ArrayD<T>, ndim: usize) -> h5::Result<()>
+where
+    T: h5::H5Type + fmt::Debug + PartialEq + Gen,
+{
+    // .write()
+    ds.write(arr)?;
+    assert_eq!(&ds.read_dyn::<T>()?, arr);
+
+    // .write_scalar()
+    if ndim == 0 {
+        ds.write_scalar(&arr.as_slice().unwrap()[0])?;
+        assert_eq!(&ds.read_dyn::<T>()?, arr);
+    } else if arr.len() > 0 {
+        assert!(ds.write_scalar(&arr.as_slice().unwrap()[0]).is_err());
+    }
+
+    // .write_raw()
+    ds.write_raw(arr.as_slice().unwrap())?;
+    assert_eq!(&ds.read_dyn::<T>()?, arr);
+
+    Ok(())
+}
+
 fn test_read_write<T>() -> h5::Result<()>
 where
     T: h5::H5Type + fmt::Debug + PartialEq + Gen,
@@ -67,17 +90,25 @@ where
         let file =
             h5::File::with_options().mode("w").driver("core").filebacked(false).open(&filename)?;
         for ndim in 0..=4 {
-            for _ in 0..=30 {
-                let arr: ArrayD<T> = gen_arr(&mut rng, ndim);
+            for _ in 0..=20 {
+                for read in &[false, true] {
+                    let arr: ArrayD<T> = gen_arr(&mut rng, ndim);
 
-                let ds: h5::Dataset =
-                    file.new_dataset::<T>().packed(*packed).create("x", arr.shape().to_vec())?;
-                let ds = scopeguard::guard(ds, |ds| {
-                    drop(ds);
-                    drop(file.unlink("x"));
-                });
+                    let ds: h5::Dataset = file
+                        .new_dataset::<T>()
+                        .packed(*packed)
+                        .create("x", arr.shape().to_vec())?;
+                    let ds = scopeguard::guard(ds, |ds| {
+                        drop(ds);
+                        drop(file.unlink("x"));
+                    });
 
-                test_read(&ds, &arr, ndim)?;
+                    if *read {
+                        test_read(&ds, &arr, ndim)?;
+                    } else {
+                        test_write(&ds, &arr, ndim)?;
+                    }
+                }
             }
         }
     }
