@@ -11,7 +11,7 @@ pub mod space;
 pub use self::{
     container::{Container, Reader, Writer},
     dataset::{Dataset, DatasetBuilder},
-    datatype::Datatype,
+    datatype::{Conversion, Datatype},
     file::{File, FileBuilder},
     group::Group,
     location::Location,
