@@ -13,18 +13,18 @@ fn test_read<T>(ds: &h5::Dataset, arr: &ArrayD<T>, ndim: usize) -> h5::Result<()
 where
     T: h5::H5Type + fmt::Debug + PartialEq + Gen,
 {
-    let r = ds.as_reader();
+    ds.write(arr)?;
 
     // read_raw()
-    let out_vec = r.read_raw::<T>();
+    let out_vec = ds.read_raw::<T>();
     assert_eq!(arr.as_slice().unwrap(), out_vec?.as_slice());
 
     // read_dyn()
-    let out_dyn = r.read_dyn::<T>();
+    let out_dyn = ds.read_dyn::<T>();
     assert_eq!(arr, &out_dyn?.into_dimensionality().unwrap());
 
     // read_scalar()
-    let out_scalar = r.read_scalar::<T>();
+    let out_scalar = ds.read_scalar::<T>();
     if ndim == 0 {
         assert_eq!(arr.as_slice().unwrap()[0], out_scalar?);
     } else {
@@ -32,7 +32,7 @@ where
     }
 
     // read_1d()
-    let out_1d = r.read_1d::<T>();
+    let out_1d = ds.read_1d::<T>();
     if ndim == 1 {
         assert_eq!(arr, &out_1d?.into_dimensionality().unwrap());
     } else {
@@ -40,7 +40,7 @@ where
     }
 
     // read_2d()
-    let out_2d = r.read_2d::<T>();
+    let out_2d = ds.read_2d::<T>();
     if ndim == 2 {
         assert_eq!(arr, &out_2d?.into_dimensionality().unwrap());
     } else {
@@ -76,8 +76,6 @@ where
                     drop(ds);
                     drop(file.unlink("x"));
                 });
-
-                ds.as_writer().write(&arr)?;
 
                 test_read(&ds, &arr, ndim)?;
             }
