@@ -9,7 +9,7 @@ pub mod plist;
 pub mod space;
 
 pub use self::{
-    container::Container,
+    container::{Container, Reader, Writer},
     dataset::{Dataset, DatasetBuilder},
     datatype::Datatype,
     file::{File, FileBuilder},

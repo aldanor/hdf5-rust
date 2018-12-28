@@ -10,7 +10,8 @@ mod export {
         error::{Error, Result},
         filters::Filters,
         hl::{
-            Container, Dataset, Dataspace, Datatype, File, Group, Location, Object, PropertyList,
+            Container, Dataset, DatasetBuilder, Dataspace, Datatype, File, FileBuilder, Group,
+            Location, Object, PropertyList, Reader, Writer,
         },
     };
 
@@ -55,10 +56,8 @@ mod internal_prelude {
         error::{h5check, silence_errors, ResultExt},
         export::*,
         handle::{get_id_type, is_valid_user_id, Handle},
-        hl::container::Container,
         hl::datatype::Conversion,
         hl::plist::PropertyListClass,
-        hl::*,
         util::{get_h5_str, string_from_cstr, to_cstring},
     };
 
