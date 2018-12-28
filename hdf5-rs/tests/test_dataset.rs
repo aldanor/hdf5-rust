@@ -13,7 +13,7 @@ fn test_read<T>(ds: &h5::Dataset, arr: &ArrayD<T>, ndim: usize) -> h5::Result<()
 where
     T: h5::H5Type + fmt::Debug + PartialEq + Gen,
 {
-    let r = ds.as_reader().soft();
+    let r = ds.as_reader();
 
     // read_raw()
     let out_vec = r.read_raw::<T>();
@@ -78,7 +78,7 @@ where
                     drop(file.unlink("x"));
                 });
 
-                ds.as_writer().soft().write(&arr)?;
+                ds.as_writer().write(&arr)?;
 
                 test_read(&ds, &arr, ndim)?;
             }

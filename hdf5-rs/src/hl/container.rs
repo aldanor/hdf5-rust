@@ -18,20 +18,20 @@ pub struct Reader<'a> {
 impl<'a> Reader<'a> {
     /// Creates a reader for a dataset/attribute.
     ///
-    /// Conversion is set to *no-op* by default (no conversions allowed).
+    /// Any conversions (including hard/soft) are allowed by default.
     pub fn new(obj: &'a Container) -> Self {
-        Self { obj, conv: Conversion::NoOp }
+        Self { obj, conv: Conversion::Soft }
     }
 
-    /// Set conversion level to *hard* (both *no-op* and *hard* conversion paths are accepted).
-    pub fn hard(mut self) -> Self {
-        self.conv = Conversion::Hard;
+    /// Set maximum allowed conversion level.
+    pub fn conversion(mut self, conv: Conversion) -> Self {
+        self.conv = conv;
         self
     }
 
-    /// Set conversion level to *soft* (any valid conversion path is accepted).
-    pub fn soft(mut self) -> Self {
-        self.conv = Conversion::Soft;
+    /// Disallow all conversions.
+    pub fn no_convert(mut self) -> Self {
+        self.conv = Conversion::NoOp;
         self
     }
 
@@ -110,20 +110,20 @@ pub struct Writer<'a> {
 impl<'a> Writer<'a> {
     /// Creates a writer for a dataset/attribute.
     ///
-    /// Conversion is set to *no-op* by default (no conversions allowed).
+    /// Any conversions (including hard/soft) are allowed by default.
     pub fn new(obj: &'a Container) -> Self {
-        Self { obj, conv: Conversion::NoOp }
+        Self { obj, conv: Conversion::Soft }
     }
 
-    /// Set conversion level to *hard* (both *no-op* and *hard* conversion paths are accepted).
-    pub fn hard(mut self) -> Self {
-        self.conv = Conversion::Hard;
+    /// Set maximum allowed conversion level.
+    pub fn conversion(mut self, conv: Conversion) -> Self {
+        self.conv = conv;
         self
     }
 
-    /// Set conversion level to *soft* (any valid conversion path is accepted).
-    pub fn soft(mut self) -> Self {
-        self.conv = Conversion::Soft;
+    /// Disallow all conversions.
+    pub fn no_convert(mut self) -> Self {
+        self.conv = Conversion::NoOp;
         self
     }
 
