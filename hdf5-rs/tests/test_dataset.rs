@@ -125,3 +125,11 @@ fn test_read_write_fixed_struct() -> h5::Result<()> {
 fn test_read_write_varlen_struct() -> h5::Result<()> {
     test_read_write::<VarLenStruct>()
 }
+
+#[test]
+fn test_tuples() -> h5::Result<()> {
+    test_read_write::<(u8,)>()?;
+    test_read_write::<(u64, f32)>()?;
+    test_read_write::<(i8, u64, f32)>()?;
+    Ok(())
+}

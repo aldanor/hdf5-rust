@@ -37,6 +37,27 @@ macro_rules! impl_gen_primitive {
 
 impl_gen_primitive!(usize, isize, u8, u16, u32, u64, i8, i16, i32, i64, bool, f32, f64);
 
+macro_rules! impl_gen_tuple {
+    ($t:ident) => (
+        impl<$t> Gen for ($t,) where $t: Gen {
+            fn gen<R: Rng + ?Sized>(rng: &mut R) -> Self {
+                (<$t as Gen>::gen(rng),)
+            }
+        }
+    );
+
+    ($t:ident, $($tt:ident),*) => (
+        impl<$t, $($tt),*> Gen for ($t, $($tt),*) where $t: Gen, $($tt: Gen),* {
+            fn gen<R: Rng + ?Sized>(rng: &mut R) -> Self {
+                (<$t as Gen>::gen(rng), $(<$tt as Gen>::gen(rng)),*)
+            }
+        }
+        impl_gen_tuple!($($tt),*);
+    );
+}
+
+impl_gen_tuple! { A, B, C, D, E, F, G, H, I, J, K, L }
+
 pub fn gen_vec<R: Rng + ?Sized, T: Gen>(rng: &mut R, size: usize) -> Vec<T> {
     iter::repeat(()).map(|_| T::gen(rng)).take(size).collect()
 }
