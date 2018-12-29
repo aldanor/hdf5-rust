@@ -40,9 +40,14 @@ pub enum H5E_direction_t {
 }
 
 pub type H5E_walk2_t = Option<
-    extern "C" fn(n: c_uint, err_desc: *const H5E_error2_t, client_data: *mut c_void) -> herr_t,
+    unsafe extern "C" fn(
+        n: c_uint,
+        err_desc: *const H5E_error2_t,
+        client_data: *mut c_void,
+    ) -> herr_t,
 >;
-pub type H5E_auto2_t = Option<extern "C" fn(estack: hid_t, client_data: *mut c_void) -> herr_t>;
+pub type H5E_auto2_t =
+    Option<unsafe extern "C" fn(estack: hid_t, client_data: *mut c_void) -> herr_t>;
 
 extern "C" {
     pub fn H5Eregister_class(
