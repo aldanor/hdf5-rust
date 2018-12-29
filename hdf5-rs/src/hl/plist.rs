@@ -1,6 +1,7 @@
 use std::fmt::{self, Debug};
 use std::ops::Deref;
 use std::ptr;
+use std::str::FromStr;
 
 use libhdf5_sys::h5p::{
     H5Pcopy, H5Pequal, H5Pexist, H5Pget_class, H5Pget_class_name, H5Pget_nprops, H5Piterate,
@@ -127,6 +128,14 @@ impl PropertyListClass {
 impl Into<String> for PropertyListClass {
     fn into(self) -> String {
         self.to_string()
+    }
+}
+
+impl FromStr for PropertyListClass {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self> {
+        Self::from_str(s)
     }
 }
 
