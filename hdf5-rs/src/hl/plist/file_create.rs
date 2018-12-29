@@ -199,7 +199,7 @@ impl FileCreateBuilder {
             .sym_k(plist.get_sym_k()?)
             .istore_k(plist.get_istore_k()?)
             .shared_mesg_phase_change(plist.get_shared_mesg_phase_change()?)
-            .shared_mesg_indexes(plist.get_shared_mesg_indexes()?);
+            .shared_mesg_indexes(&plist.get_shared_mesg_indexes()?);
         #[cfg(hdf5_1_10_1)]
         {
             builder
@@ -229,9 +229,8 @@ impl FileCreateBuilder {
         self
     }
 
-    // TODO: Borrow/Clone/slice
-    pub fn shared_mesg_indexes(&mut self, value: Vec<SharedMessageIndex>) -> &mut Self {
-        self.shared_mesg_indexes = Some(value);
+    pub fn shared_mesg_indexes(&mut self, value: &[SharedMessageIndex]) -> &mut Self {
+        self.shared_mesg_indexes = Some(value.to_vec());
         self
     }
 
