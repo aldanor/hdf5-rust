@@ -463,23 +463,3 @@ impl FileCreate {
         self.get_file_space_strategy().unwrap_or_else(|_| Default::default())
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_file_create_plist() -> Result<()> {
-        with_tmp_file(|_file| {
-            // TODO: proper tests
-            let fcpl = FileCreate::try_new().unwrap();
-            println!("{:?}", fcpl.properties());
-            let builder = FileCreateBuilder::from_plist(&fcpl).unwrap();
-            println!("{:#?}", builder);
-            let plist = builder.finish().unwrap();
-            println!("{:#?}", plist);
-            assert_eq!(fcpl, plist);
-        });
-        Ok(())
-    }
-}
