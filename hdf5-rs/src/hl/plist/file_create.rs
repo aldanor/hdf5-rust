@@ -342,6 +342,9 @@ impl FileCreate {
 
     #[doc(hidden)]
     pub fn get_version(&self) -> Result<VersionInfo> {
+        // expected to fail if not attached to a file, that's ok
+        let _e = silence_errors();
+
         #[cfg(not(hdf5_1_10_0))]
         {
             h5get!(H5Pget_version(self.id()): c_uint, c_uint, c_uint, c_uint).map(
