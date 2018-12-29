@@ -57,7 +57,23 @@ impl ObjectClass for FileCreate {
 
 impl Debug for FileCreate {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.debug_fmt(f)
+        let _e = silence_errors();
+        let mut formatter = f.debug_struct("FileCreate");
+        formatter
+            .field("userblock", &self.userblock())
+            .field("sizes", &self.sizes())
+            .field("sym_k", &self.sym_k())
+            .field("istore_k", &self.istore_k())
+            .field("version", &self.version())
+            .field("shared_mesg_phase_change", &self.shared_mesg_phase_change())
+            .field("shared_mesg_indexes", &self.shared_mesg_indexes());
+        #[cfg(hdf5_1_10_1)]
+        {
+            formatter
+                .field("file_space_page_size", &self.file_space_page_size())
+                .field("file_space_strategy", &self.file_space_strategy());
+        }
+        formatter.finish()
     }
 }
 
