@@ -34,8 +34,6 @@ use crate::internal_prelude::*;
 #[repr(transparent)]
 pub struct FileCreate(Handle);
 
-// TODO: def_plist_class!()
-
 impl ObjectClass for FileCreate {
     const NAME: &'static str = "file-create property list";
     const VALID_TYPES: &'static [H5I_type_t] = &[H5I_GENPROP_LST];
@@ -249,7 +247,7 @@ impl FileCreateBuilder {
         self
     }
 
-    fn populate_plist(self, id: hid_t) -> Result<()> {
+    fn populate_plist(&self, id: hid_t) -> Result<()> {
         if let Some(v) = self.userblock {
             h5try!(H5Pset_userblock(id, v as _));
         }
@@ -262,7 +260,7 @@ impl FileCreateBuilder {
         if let Some(v) = self.shared_mesg_phase_change {
             h5try!(H5Pset_shared_mesg_phase_change(id, v.max_list as _, v.min_btree as _));
         }
-        if let Some(v) = self.shared_mesg_indexes {
+        if let Some(ref v) = self.shared_mesg_indexes {
             h5try!(H5Pset_shared_mesg_nindexes(id, v.len() as _));
             for (i, v) in v.iter().enumerate() {
                 h5try!(H5Pset_shared_mesg_index(
@@ -299,7 +297,7 @@ impl FileCreateBuilder {
         Ok(())
     }
 
-    pub fn finish(self) -> Result<FileCreate> {
+    pub fn finish(&self) -> Result<FileCreate> {
         h5lock!({
             let plist = FileCreate::try_new()?;
             self.populate_plist(plist.id())?;
