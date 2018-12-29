@@ -22,6 +22,11 @@ mod export {
         pub use hdf5_types::*;
     }
 
+    pub mod file {
+        pub use crate::hl::file::{File, FileBuilder};
+        pub use crate::hl::plist::file_create::*;
+    }
+
     pub mod plist {
         pub use crate::hl::plist::{PropertyList, PropertyListClass};
         pub use crate::hl::plist::file_create::FileCreate;
