@@ -134,8 +134,7 @@ impl File {
     }
 
     /// Closes the file and invalidates all open handles for contained objects.
-    pub fn close(&self) {
-        // TODO: self instead of &self?
+    pub fn close(self) {
         h5lock!({
             let file_ids = self.get_obj_ids(H5F_OBJ_FILE);
             let object_ids = self.get_obj_ids(H5F_OBJ_ALL & !H5F_OBJ_FILE);
@@ -467,7 +466,6 @@ pub mod tests {
             let group = file.create_group("foo").unwrap();
             let file_copy = group.file().unwrap();
             file.close();
-            assert!(!file.is_valid());
             assert!(!group.is_valid());
             assert!(!file_copy.is_valid());
         })
@@ -544,9 +542,9 @@ pub mod tests {
             let path = dir.join("qwe.h5");
             let file = File::open(&path, "w").unwrap();
             assert_eq!(format!("{:?}", file), "<HDF5 file: \"qwe.h5\" (read/write)>");
+            let root = file.file().unwrap();
             file.close();
-            assert_eq!(format!("{:?}", file), "<HDF5 file: invalid id>");
-            drop(file);
+            assert_eq!(format!("{:?}", root), "<HDF5 file: invalid id>");
             let file = File::open(&path, "r").unwrap();
             assert_eq!(format!("{:?}", file), "<HDF5 file: \"qwe.h5\" (read-only)>");
         })
