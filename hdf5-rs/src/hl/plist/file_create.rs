@@ -138,9 +138,9 @@ impl Default for SharedMessageType {
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct SharedMessageIndex {
     /// Types of messages that may be stored in the index.
-    message_types: SharedMessageType,
+    pub message_types: SharedMessageType,
     /// Minimum message size.
-    min_message_size: u32,
+    pub min_message_size: u32,
 }
 
 /// File space handling strategy.
