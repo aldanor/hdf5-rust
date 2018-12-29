@@ -62,11 +62,19 @@ fn test_file_create_plist() -> h5::Result<()> {
 
     #[cfg(hdf5_1_10_1)]
     {
+        let fcpl = FileCreate::try_new()?;
+        assert_eq!(fcpl.file_space_strategy(), FileSpaceStrategy::default());
+
         let file_space_page_size = 16384;
         let file_space_strategy = FileSpaceStrategy::None;
 
         test_plist!(FileCreate, FileCreateBuilder, PropertyListClass::FileCreate => {
             file_space_page_size(get_file_space_page_size),
+            file_space_strategy(get_file_space_strategy),
+        });
+
+        let file_space_strategy = FileSpaceStrategy::PageAggregation;
+        test_plist!(FileCreate, FileCreateBuilder, PropertyListClass::FileCreate => {
             file_space_strategy(get_file_space_strategy),
         });
     }
