@@ -111,20 +111,51 @@ pub struct SizeofInfo {
     pub sizeof_size: usize,
 }
 
-/// Size of prameters used to control the symbol table nodes.
+/// Size of parameters used to control the symbol table nodes.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct SymbolTableInfo {
     /// Symbol table tree rank.
+    ///
+    /// `tree_rank` is one half the rank of a B-tree that stores a symbol table
+    /// for a group. Internal nodes of the symbol table are on average 75% full.
+    /// That is, the average rank of the tree is 1.5 times the value of ik. The
+    /// HDF5library uses `tree_rank * 2` as the maximum number of entries before
+    /// splitting a B-tree node. Since only 2 bytes are used in storing the
+    /// number of entries for a B-tree node in an HDF5 file, `tree_rank * 2`
+    /// cannot exceed 65536.
+    ///
+    /// The default value for `tree_rank` is 16.
     pub tree_rank: u32,
     /// Symbol table node size.
+    ///
+    /// `node_size` is one half of the number of symbols that can be stored in a
+    /// symbol table node. A symbol table node is the leaf of a symbol table tree
+    /// which is used to store a group. When symbols are inserted randomly into a
+    /// group, the group's symbol table nodes are 75% full on average. That is,
+    /// they contain 1.5 times the number of symbols specified by `node_size`.
+    ///
+    /// The default value for `node_size` is 4.
     pub node_size: u32,
 }
 
-/// Shared object header message phase change information.
+/// Threshold values for storage of shared message indexes.
+///
+/// These phase change thresholds determine the point at which the index
+/// storage mechanism changes from a more compact list format to a more
+/// performance-oriented B-tree format, and vice-versa.
+///
+/// By default, a shared object header message index is initially stored as a
+/// compact list. When the number of messages in an index exceeds the threshold
+/// value of `max_list`, storage switches to a B-tree for improved performance.
+/// If the number of messages subsequently falls below the `min_btree` threshold,
+/// the index will revert to the list format.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct PhaseChangeInfo {
     /// Threshold above which storage of a shared object header message index
     /// shifts from list to B-tree.
+    ///
+    /// If `max_list` is set to 0 (zero), shared object header message indexes
+    /// in the file will be created as B-trees and will never revert to lists.
     pub max_list: u32,
     /// Threshold below which storage of a shared object header message index
     /// reverts to list format.
@@ -134,12 +165,19 @@ pub struct PhaseChangeInfo {
 bitflags! {
     /// Types of messages that can be stored in a shared message index.
     pub struct SharedMessageType: u32 {
+        /// No shared messages.
         const NONE = H5O_SHMESG_NONE_FLAG;
+        /// Simple dataspace message.
         const SIMPLE_DATASPACE = H5O_SHMESG_SDSPACE_FLAG;
+        /// Datatype message.
         const DATATYPE = H5O_SHMESG_DTYPE_FLAG;
+        /// Fill value message.
         const FILL_VALUE = H5O_SHMESG_FILL_FLAG;
+        /// Filter pipeline message.
         const FILTER_PIPELINE = H5O_SHMESG_PLINE_FLAG;
+        /// Attribute message.
         const ATTRIBUTE = H5O_SHMESG_ATTR_FLAG;
+        /// All message types.
         const ALL = H5O_SHMESG_ALL_FLAG;
     }
 }
@@ -163,8 +201,8 @@ pub struct SharedMessageIndex {
 #[cfg(hdf5_1_10_1)]
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub enum FileSpaceStrategy {
-    /// Mechanisms used: free-space managers, aggregators or embedded paged aggregation
-    /// and the virtual file driver.
+    /// Mechanisms used: free-space managers, aggregators or embedded paged
+    /// aggregation and the virtual file driver.
     FreeSpaceManager {
         /// Whether to use embedded paged aggregation.
         paged: bool,
@@ -200,7 +238,6 @@ pub struct FileCreateBuilder {
     file_space_strategy: Option<FileSpaceStrategy>,
 }
 
-/// Builder used to create file creation property list.
 impl FileCreateBuilder {
     /// Creates a new file creation property list builder.
     pub fn new() -> Self {
@@ -225,26 +262,57 @@ impl FileCreateBuilder {
         Ok(builder)
     }
 
+    /// Sets user block size.
+    ///
+    /// Sets the user block size of a file creation property list. The default
+    /// user block size is 0; it may be set to any power of 2 equal to 512 or
+    /// greater (512, 1024, 2048, etc.).
     pub fn userblock(&mut self, value: u64) -> &mut Self {
         self.userblock = Some(value);
         self
     }
 
+    /// Sets the size of parameters used to control the symbol table nodes.
+    ///
+    /// Passing in a value of zero (0) for one of the parameters (`tree_rank` or
+    /// `node_size`) retains the current value.
+    ///
+    /// For further details, see [`SymbolTableInfo`](struct.SymbolTableInfo.html).
     pub fn sym_k(&mut self, value: SymbolTableInfo) -> &mut Self {
         self.sym_k = Some(value);
         self
     }
 
+    /// Sets the size of the parameter used to control the B-trees for indexing
+    /// chunked datasets.
+    ///
+    /// `istore_k` is one half the rank of a tree that stores chunked raw data.
+    /// On average, such a tree will be 75% full, or have an average rank of 1.5
+    /// times the value of `istore_k`.
+    ///
+    /// The HDF5 library uses `istore_k * 2` as the maximum number of entries
+    /// before splitting a B-tree node. Since only 2 bytes are used in storing the
+    /// number of entries for a B-tree node in an HDF5 file, `istore_k * 2`
+    /// cannot exceed 65536.
+    ///
+    /// The default value for `istore_k` is 32.
     pub fn istore_k(&mut self, value: u32) -> &mut Self {
         self.istore_k = Some(value);
         self
     }
 
+    /// Sets shared object header message storage phase change thresholds.
+    ///
+    /// For further details, see [`PhaseChangeInfo`](struct.PhaseChangeInfo.html).
     pub fn shared_mesg_phase_change(&mut self, value: PhaseChangeInfo) -> &mut Self {
         self.shared_mesg_phase_change = Some(value);
         self
     }
 
+    /// Configures shared object header message indexes.
+    ///
+    /// For each specified index, sets the types of messages that may be stored
+    /// and the minimum size of each message
     pub fn shared_mesg_indexes<S>(&mut self, value: S) -> &mut Self
     where
         S: Into<Vec<SharedMessageIndex>>,
@@ -254,12 +322,22 @@ impl FileCreateBuilder {
     }
 
     #[cfg(hdf5_1_10_1)]
+    /// Sets the file space page size.
+    ///
+    /// The minimum size is 512. Setting a value less than 512 will result in
+    /// an error. The library default size for the file space page size when
+    /// not set is 4096.
     pub fn file_space_page_size(&mut self, value: u64) -> &mut Self {
         self.file_space_page_size = Some(value);
         self
     }
 
     #[cfg(hdf5_1_10_1)]
+    /// Sets the file space handling strategy and persisting free-space values.
+    ///
+    /// This setting cannot be changed for the life of the file.
+    ///
+    /// For further details, see [`FileSpaceStrategy`](enum.FileSpaceStrategy.html).
     pub fn file_space_strategy(&mut self, value: FileSpaceStrategy) -> &mut Self {
         self.file_space_strategy = Some(value);
         self
