@@ -14,7 +14,7 @@ use libhdf5_sys::{
 
 use crate::globals::{H5P_FILE_ACCESS, H5P_FILE_CREATE};
 use crate::internal_prelude::*;
-use crate::plist::FileCreate;
+use crate::hl::plist::file_create::FileCreate;
 
 /// Represents the HDF5 file object.
 #[repr(transparent)]

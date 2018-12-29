@@ -17,6 +17,15 @@ mod export {
 
     pub use hdf5_derive::H5Type;
     pub use hdf5_types::{self as types, H5Type};
+
+    pub mod plist {
+        pub use crate::hl::plist::{PropertyList, PropertyListClass};
+        pub use crate::hl::plist::file_create::FileCreate;
+
+        pub mod file_create {
+            pub use crate::hl::plist::file_create::*;
+        }
+    }
 }
 
 pub use crate::export::*;
@@ -35,8 +44,6 @@ mod sync;
 mod util;
 
 mod hl;
-
-pub mod plist;
 
 mod internal_prelude {
     pub use libc::size_t;

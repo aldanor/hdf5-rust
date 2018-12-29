@@ -8,6 +8,8 @@ use libhdf5_sys::h5p::{
 
 use crate::internal_prelude::*;
 
+pub mod file_create;
+
 /// Represents the HDF5 property list.
 #[repr(transparent)]
 pub struct PropertyList(Handle);
