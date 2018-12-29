@@ -1,13 +1,16 @@
+use std::cell::RefCell;
 use std::fmt;
 use std::ops::Index;
 use std::ptr;
 
+use lazy_static::lazy_static;
 use num_integer::Integer;
 use num_traits::{Bounded, Zero};
+use parking_lot::Mutex;
 
 use libhdf5_sys::h5e::{
-    H5E_auto2_t, H5E_error2_t, H5Eclose_stack, H5Eget_auto2, H5Eget_current_stack, H5Eget_msg,
-    H5Eset_auto2, H5Ewalk2, H5E_DEFAULT, H5E_WALK_DOWNWARD,
+    H5E_error2_t, H5Eclose_stack, H5Eget_current_stack, H5Eget_msg, H5Eprint2, H5Eset_auto2,
+    H5Ewalk2, H5E_DEFAULT, H5E_WALK_DOWNWARD,
 };
 
 use crate::internal_prelude::*;
@@ -50,35 +53,44 @@ impl ErrorFrame {
 
 #[must_use]
 #[doc(hidden)]
-pub struct SilenceErrors {
-    func: H5E_auto2_t,
-    cdata: *mut c_void,
-    valid: bool,
+pub struct SilenceErrors;
+
+lazy_static! {
+    static ref ERROR_HANDLER: Mutex<RefCell<usize>> = Default::default();
 }
 
-impl Default for SilenceErrors {
-    fn default() -> Self {
-        Self { func: None, cdata: ptr::null_mut(), valid: false }
-    }
+extern "C" fn default_error_handler(estack: hid_t, _cdata: *mut c_void) -> herr_t {
+    unsafe { H5Eprint2(estack, ptr::null_mut()) }
 }
 
 impl SilenceErrors {
     pub fn new() -> Self {
-        let mut func: H5E_auto2_t = None;
-        let mut cdata: *mut c_void = ptr::null_mut();
-        if h5lock!(H5Eget_auto2(H5E_DEFAULT, &mut func as *mut _, &mut cdata as *mut _)) < 0 {
-            return Self::default();
+        Self::silence(true);
+        SilenceErrors
+    }
+
+    fn silence(on: bool) {
+        let guard = ERROR_HANDLER.lock();
+        let counter = &mut *guard.borrow_mut();
+        if on {
+            *counter += 1;
+            if *counter == 1 {
+                h5lock!(H5Eset_auto2(H5E_DEFAULT, None, ptr::null_mut()));
+            }
+        } else {
+            if *counter > 0 {
+                *counter -= 1;
+            }
+            if *counter == 0 {
+                h5lock!(H5Eset_auto2(H5E_DEFAULT, Some(default_error_handler), ptr::null_mut()));
+            }
         }
-        h5lock!(H5Eset_auto2(H5E_DEFAULT, None, ptr::null_mut()));
-        Self { func, cdata, valid: true }
     }
 }
 
 impl Drop for SilenceErrors {
     fn drop(&mut self) {
-        if self.valid {
-            h5lock!(H5Eset_auto2(H5E_DEFAULT, self.func, self.cdata));
-        }
+        Self::silence(false);
     }
 }
 
