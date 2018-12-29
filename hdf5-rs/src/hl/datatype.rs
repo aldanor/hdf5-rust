@@ -271,7 +271,7 @@ impl Datatype {
     }
 
     pub fn from_descriptor(desc: &TypeDescriptor) -> Result<Datatype> {
-        use crate::types::TypeDescriptor as TD;
+        use hdf5_types::TypeDescriptor as TD;
 
         unsafe fn string_type(size: Option<usize>, encoding: H5T_cset_t) -> Result<hid_t> {
             let string_id = h5try!(H5Tcopy(*H5T_C_S1));

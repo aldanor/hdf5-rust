@@ -16,7 +16,11 @@ mod export {
     };
 
     pub use hdf5_derive::H5Type;
-    pub use hdf5_types::{self as types, H5Type};
+    pub use hdf5_types::H5Type;
+
+    pub mod types {
+        pub use hdf5_types::*;
+    }
 
     pub mod plist {
         pub use crate::hl::plist::{PropertyList, PropertyListClass};
