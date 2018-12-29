@@ -59,27 +59,45 @@ impl PartialEq for PropertyList {
     }
 }
 
+/// Property list class.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PropertyListClass {
+    /// Properties for attribute creation.
     AttributeCreate,
+    /// Properties for dataset access.
     DatasetAccess,
+    /// Properties for dataset creation.
     DatasetCreate,
+    /// Properties for raw data transfer.
     DataTransfer,
+    /// Properties for datatype access.
     DatatypeAccess,
+    /// Properties for datatype creation.
     DatatypeCreate,
+    /// Properties for file access.
     FileAccess,
+    /// Properties for file creation.
     FileCreate,
+    /// Properties for file mounting.
     FileMount,
+    /// Properties for group access.
     GroupAccess,
+    /// Properties for group creation.
     GroupCreate,
+    /// Properties for link traversal when accessing objects.
     LinkAccess,
+    /// Properties for link creation.
     LinkCreate,
+    /// Properties for object copying process.
     ObjectCopy,
+    /// Properties for object creatio.
     ObjectCreate,
+    /// Properties for character encoding.
     StringCreate,
 }
 
 impl PropertyListClass {
+    /// Converts the property list class to a string, e.g. "file create".
     pub fn to_string(self) -> String {
         match self {
             PropertyListClass::AttributeCreate => "attribute create",
@@ -102,6 +120,7 @@ impl PropertyListClass {
         .to_owned()
     }
 
+    /// Creates a property list class from a string, e.g. "file create".
     pub fn from_str(class_name: &str) -> Result<PropertyListClass> {
         match class_name {
             "attribute create" => Ok(PropertyListClass::AttributeCreate),
@@ -140,6 +159,7 @@ impl FromStr for PropertyListClass {
 }
 
 impl PropertyList {
+    /// Queries whether a property name exists in the property list.
     pub fn has(&self, property: &str) -> bool {
         to_cstring(property)
             .ok()
@@ -148,6 +168,7 @@ impl PropertyList {
             .unwrap_or(false)
     }
 
+    /// Iterates over properties in the property list, returning their names.
     pub fn properties(&self) -> Vec<String> {
         extern "C" fn callback(_: hid_t, name: *const c_char, data: *mut c_void) -> herr_t {
             unsafe {
@@ -167,10 +188,12 @@ impl PropertyList {
         data
     }
 
+    /// Returns the number of properties in the property list.
     pub fn len(&self) -> usize {
         h5get_d!(H5Pget_nprops(self.id()): size_t)
     }
 
+    /// Returns the class of the property list.
     pub fn class(&self) -> Result<PropertyListClass> {
         h5lock!({
             let class_id = h5check(H5Pget_class(self.id()))?;
