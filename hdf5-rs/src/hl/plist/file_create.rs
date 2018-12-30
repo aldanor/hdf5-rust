@@ -7,14 +7,10 @@ use bitflags::bitflags;
 
 #[cfg(hdf5_1_10_1)]
 use libhdf5_sys::h5f::H5F_fspace_strategy_t;
-#[cfg(hdf5_1_10_0)]
-use libhdf5_sys::h5f::{H5F_info2_t, H5Fget_info2};
 use libhdf5_sys::h5o::{
     H5O_SHMESG_ALL_FLAG, H5O_SHMESG_ATTR_FLAG, H5O_SHMESG_DTYPE_FLAG, H5O_SHMESG_FILL_FLAG,
     H5O_SHMESG_NONE_FLAG, H5O_SHMESG_PLINE_FLAG, H5O_SHMESG_SDSPACE_FLAG,
 };
-#[cfg(not(hdf5_1_10_0))]
-use libhdf5_sys::h5p::H5Pget_version;
 use libhdf5_sys::h5p::{
     H5Pcreate, H5Pget_istore_k, H5Pget_shared_mesg_index, H5Pget_shared_mesg_nindexes,
     H5Pget_shared_mesg_phase_change, H5Pget_sizes, H5Pget_sym_k, H5Pget_userblock, H5Pset_istore_k,
@@ -64,7 +60,6 @@ impl Debug for FileCreate {
             .field("sizes", &self.sizes())
             .field("sym_k", &self.sym_k())
             .field("istore_k", &self.istore_k())
-            .field("version", &self.version())
             .field("shared_mesg_phase_change", &self.shared_mesg_phase_change())
             .field("shared_mesg_indexes", &self.shared_mesg_indexes());
         #[cfg(hdf5_1_10_1)]
@@ -89,17 +84,6 @@ impl PartialEq for FileCreate {
     fn eq(&self, other: &FileCreate) -> bool {
         <PropertyList as PartialEq>::eq(self, other)
     }
-}
-
-/// Version information of various objects in a file.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub struct VersionInfo {
-    /// Super block version number.
-    pub superblock: u32,
-    /// Global freelist version number.
-    pub freelist: u32,
-    /// Shared object header version number.
-    pub shared_header: u32,
 }
 
 /// Size of the offsets and lengths used in a file.
@@ -437,31 +421,6 @@ impl FileCreate {
     }
 
     #[doc(hidden)]
-    pub fn get_version(&self) -> Result<VersionInfo> {
-        // expected to fail if not attached to a file, that's ok
-        let _e = silence_errors();
-
-        #[cfg(not(hdf5_1_10_0))]
-        {
-            h5get!(H5Pget_version(self.id()): c_uint, c_uint, c_uint, c_uint).map(
-                |(super_, free, _, sohm)| VersionInfo {
-                    superblock: super_ as _,
-                    freelist: free as _,
-                    shared_header: sohm as _,
-                },
-            )
-        }
-        #[cfg(hdf5_1_10_0)]
-        {
-            h5get!(H5Fget_info2(self.id()): H5F_info2_t).map(|info| VersionInfo {
-                superblock: info.super_.version as _,
-                freelist: info.free.version as _,
-                shared_header: info.sohm.version as _,
-            })
-        }
-    }
-
-    #[doc(hidden)]
     pub fn get_shared_mesg_phase_change(&self) -> Result<PhaseChangeInfo> {
         h5get!(H5Pget_shared_mesg_phase_change(self.id()): c_uint, c_uint).map(
             |(max_list, min_btree)| PhaseChangeInfo {
@@ -533,11 +492,6 @@ impl FileCreate {
     /// Queries the 1/2 rank of an indexed storage B-tree.
     pub fn istore_k(&self) -> u32 {
         self.get_istore_k().unwrap_or_else(|_| Default::default())
-    }
-
-    /// Retrieves the version information of various objects in the file.
-    pub fn version(&self) -> VersionInfo {
-        self.get_version().unwrap_or_else(|_| Default::default())
     }
 
     /// Retrieves shared object header message phase change information.

@@ -39,7 +39,6 @@ macro_rules! test_plist {
 fn test_file_create_plist() -> h5::Result<()> {
     let fcpl = FileCreate::try_new()?;
 
-    assert_eq!(fcpl.version(), VersionInfo::default());
     assert_eq!(fcpl.sizes().sizeof_addr, mem::size_of::<hsize_t>());
     assert_eq!(fcpl.sizes().sizeof_size, mem::size_of::<hsize_t>());
 
