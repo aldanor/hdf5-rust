@@ -7,7 +7,8 @@ use hdf5_types::TypeDescriptor;
 
 mod common;
 
-use self::common::gen::{gen_arr, gen_ascii, Enum, FixedStruct, Gen, TupleStruct, VarLenStruct};
+use self::common::gen::{gen_arr, Enum, FixedStruct, Gen, TupleStruct, VarLenStruct};
+use self::common::util::new_in_memory_file;
 
 fn test_read<T>(ds: &h5::Dataset, arr: &ArrayD<T>, ndim: usize) -> h5::Result<()>
 where
@@ -83,12 +84,10 @@ where
         packed.push(true);
     }
 
-    let filename = gen_ascii(&mut rand::thread_rng(), 8);
     let mut rng = SmallRng::seed_from_u64(42);
+    let file = new_in_memory_file()?;
 
     for packed in &packed {
-        let file =
-            h5::File::with_options().mode("w").driver("core").filebacked(false).open(&filename)?;
         for ndim in 0..=4 {
             for _ in 0..=20 {
                 for read in &[false, true] {
