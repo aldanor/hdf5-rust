@@ -5,7 +5,7 @@ use h5::types::{FixedAscii, FixedUnicode, VarLenArray, VarLenAscii, VarLenUnicod
 use h5::H5Type;
 use hdf5_types::Array;
 
-use ndarray::ArrayD;
+use ndarray::{ArrayD, SliceInfo, SliceOrIndex};
 use rand::distributions::{Alphanumeric, Uniform};
 use rand::prelude::{Rng, SliceRandom};
 
@@ -15,6 +15,41 @@ pub fn gen_shape<R: Rng + ?Sized>(rng: &mut R, ndim: usize) -> Vec<usize> {
 
 pub fn gen_ascii<R: Rng + ?Sized>(rng: &mut R, len: usize) -> String {
     iter::repeat(()).map(|_| rng.sample(Alphanumeric)).take(len).collect()
+}
+
+/// Generate a random slice of elements inside the given `shape` dimension.
+pub fn gen_slice<R: Rng + ?Sized>(
+    rng: &mut R, shape: &[usize],
+) -> SliceInfo<Vec<SliceOrIndex>, ndarray::IxDyn> {
+    let rand_slice: Vec<SliceOrIndex> =
+        shape.into_iter().map(|s| gen_slice_one_dim(rng, *s)).collect();
+    SliceInfo::new(rand_slice).unwrap()
+}
+
+/// Generate a random 1D slice of the interval [0, shape).
+fn gen_slice_one_dim<R: Rng + ?Sized>(rng: &mut R, shape: usize) -> ndarray::SliceOrIndex {
+    if shape == 0 {
+        return ndarray::SliceOrIndex::Slice { start: 0, end: None, step: 1 };
+    }
+
+    if rng.gen_bool(0.1) {
+        ndarray::SliceOrIndex::Index(rng.gen_range(0, shape) as isize)
+    } else {
+        let start = rng.gen_range(0, shape) as isize;
+
+        let end = if rng.gen_bool(0.5) {
+            None
+        } else if rng.gen_bool(0.9) {
+            Some(rng.gen_range(start, shape as isize))
+        } else {
+            // Occasionally generate a slice with end < start.
+            Some(rng.gen_range(0, shape as isize))
+        };
+
+        let step = if rng.gen_bool(0.9) { 1isize } else { rng.gen_range(1, shape * 2) as isize };
+
+        ndarray::SliceOrIndex::Slice { start, end, step }
+    }
 }
 
 pub trait Gen: Sized + fmt::Debug {

@@ -1,14 +1,90 @@
 use std::fmt;
 
-use ndarray::ArrayD;
-use rand::prelude::{SeedableRng, SmallRng};
+use ndarray::{ArrayD, IxDyn, SliceInfo};
+use rand::prelude::{Rng, SeedableRng, SmallRng};
 
 use hdf5_types::TypeDescriptor;
 
 mod common;
 
-use self::common::gen::{gen_arr, Enum, FixedStruct, Gen, TupleStruct, VarLenStruct};
+use self::common::gen::{
+    gen_arr, gen_slice, Enum, FixedStruct, Gen, TupleStruct, VarLenStruct,
+};
 use self::common::util::new_in_memory_file;
+
+fn test_write_slice<T, R>(
+    rng: &mut R, ds: &h5::Dataset, arr: &ArrayD<T>, default_value: &T, _ndim: usize,
+) -> h5::Result<()>
+where
+    T: h5::H5Type + fmt::Debug + PartialEq + Gen + Clone,
+    R: Rng + ?Sized,
+{
+    let shape = arr.shape();
+    let slice = gen_slice(rng, shape);
+
+    // Take a random slice of the dataset, and convert it to a standard dense layout
+    let sliced_array_view = arr.slice(slice.as_ref());
+    let mut sliced_array_copy = ArrayD::from_elem(sliced_array_view.shape(), default_value.clone());
+    sliced_array_copy.assign(&sliced_array_view);
+
+    // Write these elements into their 'correct' places in the matrix
+    {
+        let dsw = ds.as_writer();
+        dsw.write_slice(&sliced_array_copy, &slice)?;
+    }
+
+    // Read back out the random from the full dataset
+    let full_ds = ds.read_dyn::<T>()?;
+    let read_slice = full_ds.slice(slice.as_ref());
+
+    assert_eq!(sliced_array_view, read_slice);
+    Ok(())
+}
+
+fn test_read_slice<T, R>(
+    rng: &mut R, ds: &h5::Dataset, arr: &ArrayD<T>, _ndim: usize,
+) -> h5::Result<()>
+where
+    T: h5::H5Type + fmt::Debug + PartialEq + Gen,
+    R: Rng + ?Sized,
+{
+    ds.write(arr)?;
+
+    // Test various sliced reads
+    let shape = arr.shape();
+
+    let out_dyn = ds.read_dyn::<T>();
+    assert_eq!(arr, &out_dyn?.into_dimensionality().unwrap());
+
+    let dsr = ds.as_reader();
+
+    for _ in 0..10 {
+        let slice = gen_slice(rng, shape);
+
+        // Do a sliced HDF5 read
+        let sliced_read = dsr.read_slice(&slice).unwrap();
+
+        // Slice the full dataset
+        let sliced_dataset = arr.slice(slice.as_ref());
+
+        // Ensure that the H5 sliced read matches the ndarray slice of the original array.
+        if sliced_read != sliced_dataset {
+            println!("{:?}", slice);
+        }
+        assert_eq!(sliced_read, sliced_dataset);
+    }
+
+    // Test that we get an error if we use the wrong dimensionality when slicing.
+    let mut bad_shape = Vec::from(shape);
+    bad_shape.push(1);
+    let bad_slice = gen_slice(rng, &bad_shape);
+    let bad_slice: SliceInfo<_, IxDyn> = ndarray::SliceInfo::new(bad_slice.as_slice()).unwrap();
+
+    let bad_sliced_read: h5::Result<ArrayD<T>> = dsr.read_slice(&bad_slice);
+    assert!(bad_sliced_read.is_err());
+
+    Ok(())
+}
 
 fn test_read<T>(ds: &h5::Dataset, arr: &ArrayD<T>, ndim: usize) -> h5::Result<()>
 where
@@ -76,7 +152,7 @@ where
 
 fn test_read_write<T>() -> h5::Result<()>
 where
-    T: h5::H5Type + fmt::Debug + PartialEq + Gen,
+    T: h5::H5Type + fmt::Debug + PartialEq + Gen + Clone,
 {
     let td = T::type_descriptor();
     let mut packed = vec![false];
@@ -90,7 +166,7 @@ where
     for packed in &packed {
         for ndim in 0..=4 {
             for _ in 0..=20 {
-                for read in &[false, true] {
+                for mode in 0..4 {
                     let arr: ArrayD<T> = gen_arr(&mut rng, ndim);
 
                     let ds: h5::Dataset = file
@@ -102,10 +178,15 @@ where
                         drop(file.unlink("x"));
                     });
 
-                    if *read {
+                    if mode == 0 {
                         test_read(&ds, &arr, ndim)?;
-                    } else {
+                    } else if mode == 1 {
                         test_write(&ds, &arr, ndim)?;
+                    } else if mode == 2 {
+                        test_read_slice(&mut rng, &ds, &arr, ndim)?;
+                    } else if mode == 3 {
+                        let default_value = T::gen(&mut rng);
+                        test_write_slice(&mut rng, &ds, &arr, &default_value, ndim)?;
                     }
                 }
             }
