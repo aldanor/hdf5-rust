@@ -51,6 +51,12 @@ pub enum H5F_close_degree_t {
     H5F_CLOSE_STRONG = 3,
 }
 
+impl Default for H5F_close_degree_t {
+    fn default() -> Self {
+        H5F_close_degree_t::H5F_CLOSE_DEFAULT
+    }
+}
+
 #[cfg_attr(hdf5_1_10_0, deprecated(note = "deprecated in HDF5 1.10.0, use H5F_info2_t"))]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
