@@ -308,10 +308,6 @@ extern "C" {
     pub fn H5Pset_driver(plist_id: hid_t, driver_id: hid_t, driver_info: *const c_void) -> herr_t;
     pub fn H5Pget_driver(plist_id: hid_t) -> hid_t;
     pub fn H5Pget_driver_info(plist_id: hid_t) -> *mut c_void;
-    pub fn H5Pset_family_offset(fapl_id: hid_t, offset: hsize_t) -> herr_t;
-    pub fn H5Pget_family_offset(fapl_id: hid_t, offset: *mut hsize_t) -> herr_t;
-    pub fn H5Pset_multi_type(fapl_id: hid_t, type_: H5FD_mem_t) -> herr_t;
-    pub fn H5Pget_multi_type(fapl_id: hid_t, type_: *mut H5FD_mem_t) -> herr_t;
     pub fn H5Pset_cache(
         plist_id: hid_t, mdc_nelmts: c_int, rdcc_nslots: size_t, rdcc_nbytes: size_t,
         rdcc_w0: c_double,
@@ -447,12 +443,51 @@ extern "C" {
 
 // drivers
 extern "C" {
+    // sec2
     pub fn H5Pset_fapl_sec2(fapl_id: hid_t) -> herr_t;
+
+    // core
     pub fn H5Pset_fapl_core(fapl_id: hid_t, increment: size_t, backing_store: hbool_t) -> herr_t;
     pub fn H5Pget_fapl_core(
         fapl_id: hid_t, increment: *mut size_t, backing_store: *mut hbool_t,
     ) -> herr_t;
+
+    // stdio
     pub fn H5Pset_fapl_stdio(fapl_id: hid_t) -> herr_t;
+
+    // family
+    pub fn H5Pset_fapl_family(fapl_id: hid_t, memb_size: hsize_t, memb_fapl_id: hid_t) -> herr_t;
+    pub fn H5Pget_fapl_family(
+        fapl_id: hid_t, memb_size: *mut hsize_t, memb_fapl_id: *mut hid_t,
+    ) -> herr_t;
+    pub fn H5Pset_family_offset(fapl_id: hid_t, offset: hsize_t) -> herr_t;
+    pub fn H5Pget_family_offset(fapl_id: hid_t, offset: *mut hsize_t) -> herr_t;
+
+    // multi/split
+    pub fn H5Pset_fapl_multi(
+        fapl_id: hid_t, memb_map: *const H5FD_mem_t, memb_fapl: *const hid_t,
+        memb_name: *const *const c_char, memb_addr: *const haddr_t, relax: hbool_t,
+    ) -> herr_t;
+    pub fn H5Pget_fapl_multi(
+        fapl_id: hid_t, memb_map: *mut H5FD_mem_t, memb_fapl: *mut hid_t,
+        memb_name: *mut *const c_char, memb_addr: *mut haddr_t, relax: *mut hbool_t,
+    ) -> herr_t;
+    pub fn H5Pset_multi_type(fapl_id: hid_t, type_: H5FD_mem_t) -> herr_t;
+    pub fn H5Pget_multi_type(fapl_id: hid_t, type_: *mut H5FD_mem_t) -> herr_t;
+    pub fn H5Pset_fapl_split(
+        fapl_id: hid_t, meta_ext: *const c_char, meta_plist_id: hid_t, raw_ext: *const c_char,
+        raw_plist_id: hid_t,
+    ) -> herr_t;
+
+    // log
+    pub fn H5Pset_fapl_log(
+        fapl_id: hid_t, logfile: *const c_char, flags: c_ulonglong, buf_size: size_t,
+    ) -> herr_t;
+}
+
+#[cfg(target_env = "msvc")]
+extern "C" {
+    pub fn H5Pset_fapl_windows(fapl_id: hid_t) -> herr_t;
 }
 
 #[cfg(hdf5_1_8_7)]
