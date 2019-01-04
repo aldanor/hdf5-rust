@@ -4,7 +4,10 @@ use std::mem;
 
 use lazy_static::lazy_static;
 
-use libhdf5_sys::h5fd::{H5FD_core_init, H5FD_sec2_init, H5FD_stdio_init};
+use libhdf5_sys::h5fd::{
+    H5FD_core_init, H5FD_family_init, H5FD_log_init, H5FD_multi_init, H5FD_sec2_init,
+    H5FD_stdio_init,
+};
 
 use crate::internal_prelude::*;
 
@@ -318,6 +321,14 @@ lazy_static! {
     pub static ref H5FD_CORE: hid_t = unsafe { H5FD_core_init() };
     pub static ref H5FD_SEC2: hid_t = unsafe { H5FD_sec2_init() };
     pub static ref H5FD_STDIO: hid_t = unsafe { H5FD_stdio_init() };
+    pub static ref H5FD_FAMILY: hid_t = unsafe { H5FD_family_init() };
+    pub static ref H5FD_LOG: hid_t = unsafe { H5FD_log_init() };
+    pub static ref H5FD_MULTI: hid_t = unsafe { H5FD_multi_init() };
+}
+
+#[cfg(target_env = "msvc")]
+lazy_static! {
+    pub static ref H5FD_WINDOWS: hid_t = *H5FD_SEC2;
 }
 
 #[cfg(test)]
