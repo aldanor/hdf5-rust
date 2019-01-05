@@ -1,4 +1,6 @@
 use std::fmt;
+use std::mem;
+use std::ptr;
 
 use crate::internal_prelude::*;
 
@@ -46,6 +48,13 @@ pub trait ObjectClass: Sized {
 
     unsafe fn transmute_mut<T: ObjectClass>(&mut self) -> &mut T {
         &mut *(self as *mut Self as *mut T)
+    }
+
+    unsafe fn cast<T: ObjectClass>(self) -> T {
+        // This method requires you to be 18 years or older to use it
+        let obj = ptr::read(&self as *const _ as *const _);
+        mem::forget(self);
+        obj
     }
 
     fn debug_fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
