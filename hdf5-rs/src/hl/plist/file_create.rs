@@ -86,6 +86,8 @@ impl PartialEq for FileCreate {
     }
 }
 
+impl Eq for FileCreate {}
+
 /// Size of the offsets and lengths used in a file.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct SizeofInfo {

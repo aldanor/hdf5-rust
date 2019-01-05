@@ -59,6 +59,8 @@ impl PartialEq for PropertyList {
     }
 }
 
+impl Eq for PropertyList {}
+
 /// Property list class.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PropertyListClass {
