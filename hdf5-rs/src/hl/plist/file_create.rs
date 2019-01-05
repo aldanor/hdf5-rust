@@ -31,7 +31,7 @@ use crate::internal_prelude::*;
 pub struct FileCreate(Handle);
 
 impl ObjectClass for FileCreate {
-    const NAME: &'static str = "file-create property list";
+    const NAME: &'static str = "file create property list";
     const VALID_TYPES: &'static [H5I_type_t] = &[H5I_GENPROP_LST];
 
     fn from_handle(handle: Handle) -> Self {
