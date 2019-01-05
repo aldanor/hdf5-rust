@@ -88,6 +88,12 @@ impl PartialEq for FileCreate {
 
 impl Eq for FileCreate {}
 
+impl Clone for FileCreate {
+    fn clone(&self) -> FileCreate {
+        unsafe { self.deref().clone().cast() }
+    }
+}
+
 /// Size of the offsets and lengths used in a file.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct SizeofInfo {
