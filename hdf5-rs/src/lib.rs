@@ -36,13 +36,18 @@ mod export {
 
     pub mod file {
         pub use crate::hl::file::{File, FileBuilder};
+        pub use crate::hl::plist::file_access::*;
         pub use crate::hl::plist::file_create::*;
     }
 
     pub mod plist {
+        pub use crate::hl::plist::file_access::FileAccess;
         pub use crate::hl::plist::file_create::FileCreate;
         pub use crate::hl::plist::{PropertyList, PropertyListClass};
 
+        pub mod file_access {
+            pub use crate::hl::plist::file_access::*;
+        }
         pub mod file_create {
             pub use crate::hl::plist::file_create::*;
         }
