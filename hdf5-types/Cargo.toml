@@ -9,7 +9,7 @@ ascii = "0.9"
 libc = "0.2"
 
 [dev-dependencies]
-quickcheck = "0.7"
+quickcheck = "0.8"
 
 [dependencies.error-chain]
 version = "0.12"
