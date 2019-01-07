@@ -1,7 +1,7 @@
 //! File access properties.
 
-use std::ffi::CString;
 use std::fmt::{self, Debug};
+use std::iter;
 use std::mem;
 use std::ops::Deref;
 use std::ptr;
@@ -186,77 +186,86 @@ impl MultiFile {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MultiLayout {
-    pub mem_default: Option<MultiFile>,
-    pub mem_super: Option<MultiFile>,
-    pub mem_btree: Option<MultiFile>,
-    pub mem_draw: Option<MultiFile>,
-    pub mem_gheap: Option<MultiFile>,
-    pub mem_lheap: Option<MultiFile>,
-    pub mem_object: Option<MultiFile>,
-}
-
-impl MultiLayout {
-    pub(crate) fn empty() -> Self {
-        Self {
-            mem_default: None,
-            mem_super: None,
-            mem_btree: None,
-            mem_draw: None,
-            mem_gheap: None,
-            mem_lheap: None,
-            mem_object: None,
-        }
-    }
-
-    pub(crate) fn get(&self, index: usize) -> &Option<MultiFile> {
-        match index {
-            1 => &self.mem_super,
-            2 => &self.mem_btree,
-            3 => &self.mem_draw,
-            4 => &self.mem_gheap,
-            5 => &self.mem_lheap,
-            6 => &self.mem_object,
-            _ => &self.mem_default,
-        }
-    }
-
-    pub(crate) fn get_mut(&mut self, index: usize) -> &mut Option<MultiFile> {
-        match index {
-            1 => &mut self.mem_super,
-            2 => &mut self.mem_btree,
-            3 => &mut self.mem_draw,
-            4 => &mut self.mem_gheap,
-            5 => &mut self.mem_lheap,
-            6 => &mut self.mem_object,
-            _ => &mut self.mem_default,
-        }
-    }
+    pub mem_super: u8,
+    pub mem_btree: u8,
+    pub mem_draw: u8,
+    pub mem_gheap: u8,
+    pub mem_lheap: u8,
+    pub mem_object: u8,
 }
 
 impl Default for MultiLayout {
     fn default() -> Self {
-        let m = u64::max_value() / 6;
-        Self {
-            mem_default: Some(MultiFile::new("%s-X.h5", 0 * m)),
-            mem_super: Some(MultiFile::new("%s-s.h5", 0 * m)),
-            mem_btree: Some(MultiFile::new("%s-b.h5", 1 * m)),
-            mem_draw: Some(MultiFile::new("%s-r.h5", 2 * m)),
-            mem_gheap: Some(MultiFile::new("%s-g.h5", 3 * m)),
-            mem_lheap: Some(MultiFile::new("%s-l.h5", 4 * m)),
-            mem_object: Some(MultiFile::new("%s-o.h5", 5 * m)),
+        Self { mem_super: 0, mem_btree: 1, mem_draw: 2, mem_gheap: 3, mem_lheap: 4, mem_object: 5 }
+    }
+}
+
+impl MultiLayout {
+    pub(crate) fn get(&self, index: usize) -> &u8 {
+        match index {
+            0 => &self.mem_super,
+            1 => &self.mem_btree,
+            2 => &self.mem_draw,
+            3 => &self.mem_gheap,
+            4 => &self.mem_lheap,
+            5 => &self.mem_object,
+            _ => unreachable!(),
+        }
+    }
+
+    pub(crate) fn get_mut(&mut self, index: usize) -> &mut u8 {
+        match index {
+            0 => &mut self.mem_super,
+            1 => &mut self.mem_btree,
+            2 => &mut self.mem_draw,
+            3 => &mut self.mem_gheap,
+            4 => &mut self.mem_lheap,
+            5 => &mut self.mem_object,
+            _ => unreachable!(),
         }
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MultiDriver {
+    pub files: Vec<MultiFile>,
     pub layout: MultiLayout,
     pub relax: bool,
 }
 
+impl Default for MultiDriver {
+    fn default() -> Self {
+        let m = u64::max_value() / 6;
+        let files = vec![
+            MultiFile::new("%s-s.h5", 0 * m),
+            MultiFile::new("%s-b.h5", 1 * m),
+            MultiFile::new("%s-r.h5", 2 * m),
+            MultiFile::new("%s-g.h5", 3 * m),
+            MultiFile::new("%s-l.h5", 4 * m),
+            MultiFile::new("%s-o.h5", 5 * m),
+        ];
+        Self { files, layout: MultiLayout::default(), relax: false }
+    }
+}
+
 impl MultiDriver {
-    pub(crate) fn empty() -> Self {
-        Self { layout: MultiLayout::empty(), relax: false }
+    pub(crate) fn validate(&self) -> Result<()> {
+        let n = self.files.len();
+        if self.files.is_empty() || n > 6 {
+            fail!("invalid number of multi files: {} (expected 1-6)", n);
+        }
+        let mut used = iter::repeat(false).take(n).collect::<Vec<_>>();
+        for i in 0..6 {
+            let j = *self.layout.get(i) as usize;
+            if j >= n {
+                fail!("invalid multi layout index: {} (expected 0-{})", j, n);
+            }
+            used[j] = true;
+        }
+        if !used.iter().all(|x| *x) {
+            fail!("invalid multi layout: some files are unused");
+        }
+        Ok(())
     }
 }
 
@@ -393,8 +402,14 @@ impl FileAccessBuilder {
         self.driver(&FileDriver::Family(FamilyDriver { member_size }))
     }
 
-    pub fn multi_options(&mut self, layout: &MultiLayout, relax: bool) -> &mut Self {
-        self.driver(&FileDriver::Multi(MultiDriver { layout: layout.clone(), relax }))
+    pub fn multi_options(
+        &mut self, files: &[MultiFile], layout: &MultiLayout, relax: bool,
+    ) -> &mut Self {
+        self.driver(&FileDriver::Multi(MultiDriver {
+            files: files.to_vec(),
+            layout: layout.clone(),
+            relax,
+        }))
     }
 
     pub fn multi(&mut self) -> &mut Self {
@@ -435,30 +450,39 @@ impl FileAccessBuilder {
     fn set_multi(id: hid_t, drv: &MultiDriver) -> Result<()> {
         const N: usize = H5FD_MEM_NTYPES as _;
         debug_assert_eq!(FD_MEM_TYPES.len(), N as _);
+
+        drv.validate()?;
+
         let mut memb_map: [H5F_mem_t; N] = unsafe { mem::zeroed() };
         let mut memb_fapl: [hid_t; N] = unsafe { mem::zeroed() };
         let mut memb_name: [*const c_char; N] = unsafe { mem::zeroed() };
         let mut memb_addr: [haddr_t; N] = unsafe { mem::zeroed() };
-        let mut names = Vec::new();
-        for i in 0..N {
-            if let Some(ref mf) = drv.layout.get(i) {
-                names.push(to_cstring(mf.name.as_ref())?);
-            } else {
-                names.push(CString::default());
-            }
+
+        let mut names = Vec::with_capacity(drv.files.len());
+        for file in &drv.files {
+            names.push(to_cstring(file.name.as_ref())?);
         }
+        let default_name = to_cstring("%s-X.h5")?;
+
         for i in 0..N {
             memb_fapl[i] = H5P_DEFAULT;
-            if let Some(ref mf) = drv.layout.get(i) {
-                memb_map[i] = FD_MEM_TYPES[i];
-                memb_name[i] = names[i].as_ptr();
-                memb_addr[i] = mf.addr;
+            if i >= 1 {
+                memb_map[i] = FD_MEM_TYPES[(1 + drv.layout.get(i - 1)) as usize];
             } else {
                 memb_map[i] = H5F_mem_t::H5FD_MEM_DEFAULT;
+            }
+            if i == 0 {
+                memb_name[i] = default_name.as_ptr();
+                memb_addr[i] = 0;
+            } else if i <= drv.files.len() {
+                memb_name[i] = names[i - 1].as_ptr();
+                memb_addr[i] = drv.files[i - 1].addr;
+            } else {
                 memb_name[i] = ptr::null();
                 memb_addr[i] = 0;
             }
         }
+
         h5try!(H5Pset_fapl_multi(
             id,
             memb_map.as_ptr(),
@@ -467,6 +491,7 @@ impl FileAccessBuilder {
             memb_addr.as_ptr(),
             drv.relax as _,
         ));
+
         Ok(())
     }
 
@@ -572,18 +597,22 @@ impl FileAccess {
             memb_addr.as_mut_ptr(),
             &mut relax as *mut _,
         ));
-        let mut drv = MultiDriver::empty();
-        drv.relax = relax > 0;
-        for i in 0..N {
+        let mut mapping: [u8; N] = unsafe { mem::zeroed() };
+        let mut layout = MultiLayout::default();
+        let mut files = Vec::new();
+        for i in 1..N {
             let (map, name, addr) = (memb_map[i], memb_name[i], memb_addr[i]);
-            if let Some(idx) = FD_MEM_TYPES.iter().position(|&mem| mem == map) {
-                let mem = drv.layout.get_mut(idx);
-                if mem.is_none() && !name.is_null() {
-                    *mem = Some(MultiFile { name: string_from_cstr(name), addr: addr as _ });
-                }
+            let j = map as usize;
+            ensure!(j < N, "member map index out of bounds: {} (expected 0-{})", j, N - 1);
+            if mapping[j] == 0 {
+                mapping[j] = 0xff - (files.len() as u8);
+                files.push(MultiFile::new(&string_from_cstr(name), addr as _));
             }
+            *layout.get_mut(i - 1) = 0xff - mapping[j];
         }
-        Ok(drv)
+        let relax = relax > 0;
+        let drv = MultiDriver { files, layout, relax };
+        drv.validate().map(|_| drv)
     }
 
     #[doc(hidden)]
