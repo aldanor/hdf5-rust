@@ -1,5 +1,14 @@
 //! File access properties.
 
+/*
+Not supported due to complexity combined with low likelihood of ever being used:
+
+- Low level direct VFD access: H5P{set,get}_driver, H5Pget_driver_info
+- Direct file image API: H5P{set,get}_file_image, H5P{set,get}_file_image_callbacks
+- Custom file access property lists in multi/family drivers
+- Interfacing directly with multi/family parts via types/offsets
+*/
+
 use std::fmt::{self, Debug};
 use std::iter;
 use std::mem;
