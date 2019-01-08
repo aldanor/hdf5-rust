@@ -30,7 +30,7 @@ use libhdf5_sys::h5fd::{
 use libhdf5_sys::h5p::{
     H5Pcreate, H5Pget_driver, H5Pget_fapl_core, H5Pget_fapl_family, H5Pget_fapl_multi,
     H5Pget_fclose_degree, H5Pset_fapl_core, H5Pset_fapl_family, H5Pset_fapl_log, H5Pset_fapl_multi,
-    H5Pset_fapl_sec2, H5Pset_fapl_stdio, H5Pset_fclose_degree,
+    H5Pset_fapl_sec2, H5Pset_fapl_split, H5Pset_fapl_stdio, H5Pset_fclose_degree,
 };
 
 #[cfg(hdf5_1_8_13)]
@@ -279,6 +279,46 @@ impl MultiDriver {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SplitDriver {
+    meta_ext: String,
+    raw_ext: String,
+}
+
+impl Default for SplitDriver {
+    fn default() -> Self {
+        Self { meta_ext: ".meta".into(), raw_ext: ".raw".into() }
+    }
+}
+
+impl SplitDriver {
+    pub(crate) fn from_multi(drv: &MultiDriver) -> Option<Self> {
+        let layout = MultiLayout {
+            mem_super: 0,
+            mem_btree: 0,
+            mem_draw: 1,
+            mem_gheap: 1,
+            mem_lheap: 0,
+            mem_object: 0,
+        };
+        let is_split = drv.relax
+            && drv.layout == layout
+            && drv.files.len() == 2
+            && drv.files[0].addr == 0
+            && drv.files[1].addr == u64::max_value() / 2
+            && drv.files[0].name.starts_with("%s")
+            && drv.files[1].name.starts_with("%s");
+        if !is_split {
+            None
+        } else {
+            Some(SplitDriver {
+                meta_ext: drv.files[0].name[2..].into(),
+                raw_ext: drv.files[1].name[2..].into(),
+            })
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum FileDriver {
     Sec2,
     Stdio,
@@ -286,6 +326,7 @@ pub enum FileDriver {
     Core(CoreDriver),
     Family(FamilyDriver),
     Multi(MultiDriver),
+    Split(SplitDriver),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -425,6 +466,17 @@ impl FileAccessBuilder {
         self.driver(&FileDriver::Multi(MultiDriver::default()))
     }
 
+    pub fn split_options(&mut self, meta_ext: &str, raw_ext: &str) -> &mut Self {
+        self.driver(&FileDriver::Split(SplitDriver {
+            meta_ext: meta_ext.into(),
+            raw_ext: raw_ext.into(),
+        }))
+    }
+
+    pub fn split(&mut self) -> &mut Self {
+        self.driver(&FileDriver::Split(SplitDriver::default()))
+    }
+
     fn set_log(&self, id: hid_t) -> Result<()> {
         let opt = &self.log_options;
         let flags = opt.flags.bits() as _;
@@ -504,6 +556,19 @@ impl FileAccessBuilder {
         Ok(())
     }
 
+    fn set_split(id: hid_t, drv: &SplitDriver) -> Result<()> {
+        let meta_ext = to_cstring(drv.meta_ext.as_ref())?;
+        let raw_ext = to_cstring(drv.raw_ext.as_ref())?;
+        h5try!(H5Pset_fapl_split(
+            id,
+            meta_ext.as_ptr(),
+            H5P_DEFAULT,
+            raw_ext.as_ptr(),
+            H5P_DEFAULT
+        ));
+        Ok(())
+    }
+
     fn set_driver(&self, id: hid_t, drv: &FileDriver) -> Result<()> {
         match drv {
             FileDriver::Sec2 => {
@@ -523,6 +588,9 @@ impl FileAccessBuilder {
             }
             FileDriver::Multi(drv) => {
                 Self::set_multi(id, drv)?;
+            }
+            FileDriver::Split(drv) => {
+                Self::set_split(id, drv)?;
             }
         }
         Ok(())
@@ -638,7 +706,12 @@ impl FileAccess {
         } else if drv_id == *H5FD_FAMILY {
             self.get_family().map(FileDriver::Family)
         } else if drv_id == *H5FD_MULTI {
-            self.get_multi().map(FileDriver::Multi)
+            let multi = self.get_multi()?;
+            if let Some(split) = SplitDriver::from_multi(&multi) {
+                Ok(FileDriver::Split(split))
+            } else {
+                Ok(FileDriver::Multi(multi))
+            }
         } else {
             fail!("unknown file driver (id: {})", drv_id);
         }
