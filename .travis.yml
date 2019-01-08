@@ -13,12 +13,17 @@ before_script:
 script:
 - |
   if { [ $TRAVIS_RUST_VERSION = "nightly" ] && which cargo-clippy >/dev/null; }; then
-    cargo clippy -v;
+    if rustup component list | grep -E "clippy.+installed"; then
+      cargo clippy -v;
+    fi
   fi
 - cargo clean
+- cargo test -v --no-run -p hdf5-derive
+- cargo test -v -p hdf5-derive
+- cargo clean
 - cargo build -v
-- cargo test -v --no-run
-- cargo test -v
+- cargo test -v --no-run --all --exclude hdf5-derive
+- cargo test -v --all --exclude hdf5-derive
 - |
   if [ $TRAVIS_RUST_VERSION = "stable" ] && [ `uname` = "Linux" ]; then
     cargo doc --no-deps;
