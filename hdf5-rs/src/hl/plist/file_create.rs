@@ -81,7 +81,7 @@ impl Deref for FileCreate {
 }
 
 impl PartialEq for FileCreate {
-    fn eq(&self, other: &FileCreate) -> bool {
+    fn eq(&self, other: &Self) -> bool {
         <PropertyList as PartialEq>::eq(self, other)
     }
 }
@@ -89,7 +89,7 @@ impl PartialEq for FileCreate {
 impl Eq for FileCreate {}
 
 impl Clone for FileCreate {
-    fn clone(&self) -> FileCreate {
+    fn clone(&self) -> Self {
         unsafe { self.deref().clone().cast() }
     }
 }
@@ -176,7 +176,7 @@ bitflags! {
 
 impl Default for SharedMessageType {
     fn default() -> Self {
-        SharedMessageType::NONE
+        Self::NONE
     }
 }
 
@@ -483,44 +483,44 @@ impl FileCreate {
 
     /// Retrieves the size of a user block.
     pub fn userblock(&self) -> u64 {
-        self.get_userblock().unwrap_or_else(|_| Default::default())
+        self.get_userblock().unwrap_or(0)
     }
 
     /// Retrieves the size of the offsets and lengths used in the file.
     pub fn sizes(&self) -> SizeofInfo {
-        self.get_sizes().unwrap_or_else(|_| Default::default())
+        self.get_sizes().unwrap_or_else(|_| SizeofInfo::default())
     }
 
     /// Retrieves the size of the symbol table B-tree 1/2 rank and the symbol
     /// table leaf node 1/2 size.
     pub fn sym_k(&self) -> SymbolTableInfo {
-        self.get_sym_k().unwrap_or_else(|_| Default::default())
+        self.get_sym_k().unwrap_or_else(|_| SymbolTableInfo::default())
     }
 
     /// Queries the 1/2 rank of an indexed storage B-tree.
     pub fn istore_k(&self) -> u32 {
-        self.get_istore_k().unwrap_or_else(|_| Default::default())
+        self.get_istore_k().unwrap_or(0)
     }
 
     /// Retrieves shared object header message phase change information.
     pub fn shared_mesg_phase_change(&self) -> PhaseChangeInfo {
-        self.get_shared_mesg_phase_change().unwrap_or_else(|_| Default::default())
+        self.get_shared_mesg_phase_change().unwrap_or_else(|_| PhaseChangeInfo::default())
     }
 
     /// Retrieves configuration settings for shared message indexes.
     pub fn shared_mesg_indexes(&self) -> Vec<SharedMessageIndex> {
-        self.get_shared_mesg_indexes().unwrap_or_else(|_| Default::default())
+        self.get_shared_mesg_indexes().unwrap_or_else(|_| Vec::new())
     }
 
     /// Retrieves the file space page size.
     #[cfg(hdf5_1_10_1)]
     pub fn file_space_page_size(&self) -> u64 {
-        self.get_file_space_page_size().unwrap_or_else(|_| Default::default())
+        self.get_file_space_page_size().unwrap_or(0)
     }
 
     /// Retrieves the file space handling strategy.
     #[cfg(hdf5_1_10_1)]
     pub fn file_space_strategy(&self) -> FileSpaceStrategy {
-        self.get_file_space_strategy().unwrap_or_else(|_| Default::default())
+        self.get_file_space_strategy().unwrap_or_else(|_| FileSpaceStrategy::default())
     }
 }

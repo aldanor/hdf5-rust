@@ -75,12 +75,12 @@ impl Group {
     }
 
     /// Create a new group in a file or group.
-    pub fn create_group(&self, name: &str) -> Result<Group> {
+    pub fn create_group(&self, name: &str) -> Result<Self> {
         // TODO: &mut self?
         h5lock!({
             let lcpl = make_lcpl()?;
             let name = to_cstring(name)?;
-            Group::from_id(h5try!(H5Gcreate2(
+            Self::from_id(h5try!(H5Gcreate2(
                 self.id(),
                 name.as_ptr(),
                 lcpl.id(),
@@ -91,9 +91,9 @@ impl Group {
     }
 
     /// Opens an existing group in a file or group.
-    pub fn group(&self, name: &str) -> Result<Group> {
+    pub fn group(&self, name: &str) -> Result<Self> {
         let name = to_cstring(name)?;
-        Group::from_id(h5try!(H5Gopen2(self.id(), name.as_ptr(), H5P_DEFAULT)))
+        Self::from_id(h5try!(H5Gopen2(self.id(), name.as_ptr(), H5P_DEFAULT)))
     }
 
     /// Creates a soft link. Note: `src` and `dst` are relative to the current object.

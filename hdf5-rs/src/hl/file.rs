@@ -66,7 +66,7 @@ impl File {
     /// | `w`       | Create file, truncate if exists
     /// | `w-`, `x` | Create file, fail if exists
     /// | `a`       | Read/write if exists, create otherwise
-    pub fn open<P: AsRef<Path>>(filename: P, mode: &str) -> Result<File> {
+    pub fn open<P: AsRef<Path>>(filename: P, mode: &str) -> Result<Self> {
         FileBuilder::new().mode(mode).open(filename)
     }
 
@@ -176,14 +176,14 @@ pub struct FileBuilder {
 }
 
 impl Default for FileBuilder {
-    fn default() -> FileBuilder {
-        FileBuilder::new()
+    fn default() -> Self {
+        Self::new()
     }
 }
 
 impl FileBuilder {
-    pub fn new() -> FileBuilder {
-        FileBuilder {
+    pub fn new() -> Self {
+        Self {
             driver: "sec2".to_owned(),
             mode: "r".to_owned(),
             userblock: 0,
@@ -192,28 +192,28 @@ impl FileBuilder {
         }
     }
 
-    pub fn driver(&mut self, driver: &str) -> &mut FileBuilder {
+    pub fn driver(&mut self, driver: &str) -> &mut Self {
         self.driver = driver.into();
         self
     }
 
-    pub fn mode(&mut self, mode: &str) -> &mut FileBuilder {
+    pub fn mode(&mut self, mode: &str) -> &mut Self {
         self.mode = mode.into();
         self
     }
 
-    pub fn userblock(&mut self, userblock: u64) -> &mut FileBuilder {
+    pub fn userblock(&mut self, userblock: u64) -> &mut Self {
         self.userblock = userblock;
         self
     }
 
-    pub fn filebacked(&mut self, filebacked: bool) -> &mut FileBuilder {
+    pub fn filebacked(&mut self, filebacked: bool) -> &mut Self {
         self.filebacked = filebacked;
         self
     }
 
     #[allow(dead_code)]
-    pub fn increment(&mut self, increment: u32) -> &mut FileBuilder {
+    pub fn increment(&mut self, increment: u32) -> &mut Self {
         self.increment = increment;
         self
     }

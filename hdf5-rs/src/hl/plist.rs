@@ -28,7 +28,7 @@ impl ObjectClass for PropertyList {
     }
 
     fn short_repr(&self) -> Option<String> {
-        Some(self.class().map(|c| c.to_string()).unwrap_or_else(|_| "unknown class".to_owned()))
+        Some(self.class().ok().map_or_else(|| "unknown class".into(), |c| c.into()))
     }
 }
 
@@ -47,14 +47,14 @@ impl Deref for PropertyList {
 }
 
 impl Clone for PropertyList {
-    fn clone(&self) -> PropertyList {
+    fn clone(&self) -> Self {
         let id = h5call!(H5Pcopy(self.id())).unwrap_or(H5I_INVALID_HID);
-        PropertyList::from_id(id).ok().unwrap_or_else(PropertyList::invalid)
+        Self::from_id(id).ok().unwrap_or_else(Self::invalid)
     }
 }
 
 impl PartialEq for PropertyList {
-    fn eq(&self, other: &PropertyList) -> bool {
+    fn eq(&self, other: &Self) -> bool {
         h5call!(H5Pequal(self.id(), other.id())).unwrap_or(0) == 1
     }
 }
@@ -121,10 +121,19 @@ impl PropertyListClass {
         }
         .to_owned()
     }
+}
 
-    /// Creates a property list class from a string, e.g. "file create".
-    pub fn from_str(class_name: &str) -> Result<PropertyListClass> {
-        match class_name {
+impl Into<String> for PropertyListClass {
+    fn into(self) -> String {
+        self.to_string()
+    }
+}
+
+impl FromStr for PropertyListClass {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self> {
+        match s {
             "attribute create" => Ok(PropertyListClass::AttributeCreate),
             "dataset access" => Ok(PropertyListClass::DatasetAccess),
             "dataset create" => Ok(PropertyListClass::DatasetCreate),
@@ -141,22 +150,8 @@ impl PropertyListClass {
             "object copy" => Ok(PropertyListClass::ObjectCopy),
             "object create" => Ok(PropertyListClass::ObjectCreate),
             "string create" => Ok(PropertyListClass::StringCreate),
-            _ => fail!(format!("invalid property list class: {}", class_name)),
+            _ => fail!(format!("invalid property list class: {}", s)),
         }
-    }
-}
-
-impl Into<String> for PropertyListClass {
-    fn into(self) -> String {
-        self.to_string()
-    }
-}
-
-impl FromStr for PropertyListClass {
-    type Err = Error;
-
-    fn from_str(s: &str) -> Result<Self> {
-        Self::from_str(s)
     }
 }
 
@@ -166,21 +161,18 @@ impl PropertyList {
         to_cstring(property)
             .ok()
             .and_then(|property| h5call!(H5Pexist(self.id(), property.as_ptr())).ok())
-            .map(|r| r > 0)
-            .unwrap_or(false)
+            .map_or(false, |r| r > 0)
     }
 
     /// Iterates over properties in the property list, returning their names.
     pub fn properties(&self) -> Vec<String> {
         extern "C" fn callback(_: hid_t, name: *const c_char, data: *mut c_void) -> herr_t {
-            unsafe {
-                let data = &mut *(data as *mut Vec<String>);
-                let name = string_from_cstr(name);
-                if !name.is_empty() {
-                    data.push(name);
-                }
-                0
+            let data = unsafe { &mut *(data as *mut Vec<String>) };
+            let name = string_from_cstr(name);
+            if !name.is_empty() {
+                data.push(name);
             }
+            0
         }
 
         let mut data = Vec::new();

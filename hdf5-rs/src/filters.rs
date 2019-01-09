@@ -36,24 +36,24 @@ pub struct Filters {
 }
 
 impl Default for Filters {
-    fn default() -> Filters {
-        Filters { gzip: None, szip: None, shuffle: false, fletcher32: false, scale_offset: None }
+    fn default() -> Self {
+        Self { gzip: None, szip: None, shuffle: false, fletcher32: false, scale_offset: None }
     }
 }
 
 impl Filters {
-    pub fn new() -> Filters {
-        Filters::default()
+    pub fn new() -> Self {
+        Self::default()
     }
 
     /// Enable gzip compression with a specified level (0-9).
-    pub fn gzip(&mut self, level: u8) -> &mut Filters {
+    pub fn gzip(&mut self, level: u8) -> &mut Self {
         self.gzip = Some(level);
         self
     }
 
     /// Disable gzip compression.
-    pub fn no_gzip(&mut self) -> &mut Filters {
+    pub fn no_gzip(&mut self) -> &mut Self {
         self.gzip = None;
         self
     }
@@ -67,13 +67,13 @@ impl Filters {
     ///
     /// If `nn` if set to `true` (default), the nearest neighbor method is used, otherwise
     /// the method is set to entropy coding.
-    pub fn szip(&mut self, nn: bool, level: u8) -> &mut Filters {
+    pub fn szip(&mut self, nn: bool, level: u8) -> &mut Self {
         self.szip = Some((nn, level));
         self
     }
 
     /// Disable szip compression.
-    pub fn no_szip(&mut self) -> &mut Filters {
+    pub fn no_szip(&mut self) -> &mut Self {
         self.szip = None;
         self
     }
@@ -87,7 +87,7 @@ impl Filters {
     }
 
     /// Enable or disable shuffle filter.
-    pub fn shuffle(&mut self, shuffle: bool) -> &mut Filters {
+    pub fn shuffle(&mut self, shuffle: bool) -> &mut Self {
         self.shuffle = shuffle;
         self
     }
@@ -98,7 +98,7 @@ impl Filters {
     }
 
     /// Enable or disable fletcher32 filter.
-    pub fn fletcher32(&mut self, fletcher32: bool) -> &mut Filters {
+    pub fn fletcher32(&mut self, fletcher32: bool) -> &mut Self {
         self.fletcher32 = fletcher32;
         self
     }
@@ -109,13 +109,13 @@ impl Filters {
     }
 
     /// Enable scale-offset filter with a specified factor (0 means automatic).
-    pub fn scale_offset(&mut self, scale_offset: u32) -> &mut Filters {
+    pub fn scale_offset(&mut self, scale_offset: u32) -> &mut Self {
         self.scale_offset = Some(scale_offset);
         self
     }
 
     /// Disable scale_offset compression.
-    pub fn no_scale_offset(&mut self) -> &mut Filters {
+    pub fn no_scale_offset(&mut self) -> &mut Self {
         self.scale_offset = None;
         self
     }
@@ -126,13 +126,13 @@ impl Filters {
     }
 
     /// Enable gzip filter with default settings (compression level 4).
-    pub fn gzip_default(&mut self) -> &mut Filters {
+    pub fn gzip_default(&mut self) -> &mut Self {
         self.gzip = Some(4);
         self
     }
 
     /// Enable szip filter with default settings (NN method, compression level 8).
-    pub fn szip_default(&mut self) -> &mut Filters {
+    pub fn szip_default(&mut self) -> &mut Self {
         self.szip = Some((true, 8));
         self
     }
@@ -174,8 +174,8 @@ impl Filters {
     }
 
     #[doc(hidden)]
-    pub fn from_dcpl(dcpl: &PropertyList) -> Result<Filters> {
-        let mut filters = Filters::default();
+    pub fn from_dcpl(dcpl: &PropertyList) -> Result<Self> {
+        let mut filters = Self::default();
         h5lock!({
             let id = dcpl.id();
             let n_filters: c_int = h5try!(H5Pget_nfilters(id));

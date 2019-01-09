@@ -25,8 +25,8 @@ pub struct ErrorFrame {
 }
 
 impl ErrorFrame {
-    pub fn new(desc: &str, func: &str, major: &str, minor: &str) -> ErrorFrame {
-        ErrorFrame {
+    pub fn new(desc: &str, func: &str, major: &str, minor: &str) -> Self {
+        Self {
             desc: desc.into(),
             func: func.into(),
             major: major.into(),
@@ -44,10 +44,7 @@ impl ErrorFrame {
     }
 
     pub fn detail(&self) -> Option<String> {
-        Some(
-            format!("Error in {}(): {} [{}: {}]", self.func, self.desc, self.major, self.minor)
-                .clone(),
-        )
+        Some(format!("Error in {}(): {} [{}: {}]", self.func, self.desc, self.major, self.minor))
     }
 }
 
@@ -56,7 +53,7 @@ impl ErrorFrame {
 pub struct SilenceErrors;
 
 lazy_static! {
-    static ref ERROR_HANDLER: Mutex<RefCell<usize>> = Default::default();
+    static ref ERROR_HANDLER: Mutex<RefCell<usize>> = Mutex::default();
 }
 
 extern "C" fn default_error_handler(estack: hid_t, _cdata: *mut c_void) -> herr_t {
@@ -113,19 +110,19 @@ impl Index<usize> for ErrorStack {
 }
 
 impl Default for ErrorStack {
-    fn default() -> ErrorStack {
-        ErrorStack::new()
+    fn default() -> Self {
+        Self::new()
     }
+}
+
+struct CallbackData {
+    stack: ErrorStack,
+    err: Option<Error>,
 }
 
 impl ErrorStack {
     // This low-level function is not thread-safe and has to be synchronized by the user
-    pub fn query() -> Result<Option<ErrorStack>> {
-        struct CallbackData {
-            stack: ErrorStack,
-            err: Option<Error>,
-        }
-
+    pub fn query() -> Result<Option<Self>> {
         extern "C" fn callback(
             _: c_uint, err_desc: *const H5E_error2_t, data: *mut c_void,
         ) -> herr_t {
@@ -153,7 +150,7 @@ impl ErrorStack {
             }
         }
 
-        let mut data = CallbackData { stack: ErrorStack::new(), err: None };
+        let mut data = CallbackData { stack: Self::new(), err: None };
         let data_ptr: *mut c_void = &mut data as *mut _ as *mut _;
 
         // known HDF5 bug: H5Eget_msg() may corrupt the current stack, so we copy it first
@@ -171,8 +168,8 @@ impl ErrorStack {
         }
     }
 
-    pub fn new() -> ErrorStack {
-        ErrorStack { frames: Vec::new(), description: None }
+    pub fn new() -> Self {
+        Self { frames: Vec::new(), description: None }
     }
 
     pub fn len(&self) -> usize {
@@ -230,7 +227,7 @@ pub enum Error {
 pub type Result<T> = ::std::result::Result<T, Error>;
 
 impl Error {
-    pub fn query() -> Option<Error> {
+    pub fn query() -> Option<Self> {
         match ErrorStack::query() {
             Err(err) => Some(err),
             Ok(Some(stack)) => Some(Error::HDF5(stack)),
@@ -250,7 +247,7 @@ impl<S> From<S> for Error
 where
     S: Into<String>,
 {
-    fn from(desc: S) -> Error {
+    fn from(desc: S) -> Self {
         Error::Internal(desc.into())
     }
 }

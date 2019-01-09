@@ -78,14 +78,14 @@ impl Deref for Datatype {
 }
 
 impl PartialEq for Datatype {
-    fn eq(&self, other: &Datatype) -> bool {
+    fn eq(&self, other: &Self) -> bool {
         h5call!(H5Tequal(self.id(), other.id())).unwrap_or(0) == 1
     }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Conversion {
-    NoOp = 1,
+    NoOp = 1, // TODO: rename to "None"?
     Hard,
     Soft,
 }
@@ -126,7 +126,7 @@ impl Datatype {
 
     pub fn conv_path<D>(&self, dst: D) -> Option<Conversion>
     where
-        D: Borrow<Datatype>,
+        D: Borrow<Self>,
     {
         let dst = dst.borrow();
         let mut cdata = H5T_cdata_t::default();
@@ -149,18 +149,18 @@ impl Datatype {
     }
 
     pub fn conv_to<T: H5Type>(&self) -> Option<Conversion> {
-        Datatype::from_type::<T>().ok().and_then(|dtype| self.conv_path(dtype))
+        Self::from_type::<T>().ok().and_then(|dtype| self.conv_path(dtype))
     }
 
     pub fn conv_from<T: H5Type>(&self) -> Option<Conversion> {
-        Datatype::from_type::<T>().ok().and_then(|dtype| dtype.conv_path(self))
+        Self::from_type::<T>().ok().and_then(|dtype| dtype.conv_path(self))
     }
 
     pub fn is<T: H5Type>(&self) -> bool {
-        Datatype::from_type::<T>().ok().map(|dtype| &dtype == self).unwrap_or(false)
+        Self::from_type::<T>().ok().map_or(false, |dtype| &dtype == self)
     }
 
-    pub(crate) fn ensure_convertible(&self, dst: &Datatype, required: Conversion) -> Result<()> {
+    pub(crate) fn ensure_convertible(&self, dst: &Self, required: Conversion) -> Result<()> {
         // TODO: more detailed error messages after Debug/Display are implemented for Datatype
         if let Some(conv) = self.conv_path(dst) {
             if conv > required {
@@ -203,7 +203,7 @@ impl Datatype {
                         members.push(EnumMember { name: string_from_cstr(name), value });
                         libc::free(name as *mut _);
                     }
-                    let base_dt = Datatype::from_id(H5Tget_super(id))?;
+                    let base_dt = Self::from_id(H5Tget_super(id))?;
                     let (size, signed) = match base_dt.to_descriptor()? {
                         TD::Integer(size) => Ok((size, true)),
                         TD::Unsigned(size) => Ok((size, false)),
@@ -224,7 +224,7 @@ impl Datatype {
                     for idx in 0..h5try!(H5Tget_nmembers(id)) as _ {
                         let name = H5Tget_member_name(id, idx);
                         let offset = h5try!(H5Tget_member_offset(id, idx));
-                        let ty = Datatype::from_id(h5try!(H5Tget_member_type(id, idx)))?;
+                        let ty = Self::from_id(h5try!(H5Tget_member_type(id, idx)))?;
                         fields.push(CompoundField {
                             name: string_from_cstr(name),
                             ty: ty.to_descriptor()?,
@@ -236,7 +236,7 @@ impl Datatype {
                     Ok(TD::Compound(CompoundType { fields, size }))
                 }
                 H5T_ARRAY => {
-                    let base_dt = Datatype::from_id(H5Tget_super(id))?;
+                    let base_dt = Self::from_id(H5Tget_super(id))?;
                     let ndims = h5try!(H5Tget_array_ndims(id));
                     if ndims == 1 {
                         let mut len: hsize_t = 0;
@@ -258,7 +258,7 @@ impl Datatype {
                     }
                 }
                 H5T_VLEN => {
-                    let base_dt = Datatype::from_id(H5Tget_super(id))?;
+                    let base_dt = Self::from_id(H5Tget_super(id))?;
                     Ok(TD::VarLenArray(Box::new(base_dt.to_descriptor()?)))
                 }
                 _ => Err("Unsupported datatype class".into()),
@@ -266,11 +266,11 @@ impl Datatype {
         })
     }
 
-    pub fn from_type<T: H5Type>() -> Result<Datatype> {
-        Datatype::from_descriptor(&<T as H5Type>::type_descriptor())
+    pub fn from_type<T: H5Type>() -> Result<Self> {
+        Self::from_descriptor(&<T as H5Type>::type_descriptor())
     }
 
-    pub fn from_descriptor(desc: &TypeDescriptor) -> Result<Datatype> {
+    pub fn from_descriptor(desc: &TypeDescriptor) -> Result<Self> {
         use hdf5_types::TypeDescriptor as TD;
 
         unsafe fn string_type(size: Option<usize>, encoding: H5T_cset_t) -> Result<hid_t> {
@@ -310,17 +310,17 @@ impl Datatype {
                     h5try!(H5Tenum_insert(
                         bool_id,
                         b"FALSE\0".as_ptr() as *const _,
-                        &0i8 as *const _ as *const _
+                        &0_i8 as *const _ as *const _
                     ));
                     h5try!(H5Tenum_insert(
                         bool_id,
                         b"TRUE\0".as_ptr() as *const _,
-                        &1i8 as *const _ as *const _
+                        &1_i8 as *const _ as *const _
                     ));
                     Ok(bool_id)
                 }
                 TD::Enum(ref enum_type) => {
-                    let base = Datatype::from_descriptor(&enum_type.base_type())?;
+                    let base = Self::from_descriptor(&enum_type.base_type())?;
                     let enum_id = h5try!(H5Tenum_create(base.id()));
                     for member in &enum_type.members {
                         let name = to_cstring(member.name.as_ref())?;
@@ -336,7 +336,7 @@ impl Datatype {
                     let compound_id = h5try!(H5Tcreate(H5T_class_t::H5T_COMPOUND, 1));
                     for field in &compound_type.fields {
                         let name = to_cstring(field.name.as_ref())?;
-                        let field_dt = Datatype::from_descriptor(&field.ty)?;
+                        let field_dt = Self::from_descriptor(&field.ty)?;
                         h5try!(H5Tset_size(compound_id, field.offset + field.ty.size()));
                         h5try!(H5Tinsert(compound_id, name.as_ptr(), field.offset, field_dt.id()));
                     }
@@ -344,14 +344,14 @@ impl Datatype {
                     Ok(compound_id)
                 }
                 TD::FixedArray(ref ty, len) => {
-                    let elem_dt = Datatype::from_descriptor(&ty)?;
+                    let elem_dt = Self::from_descriptor(ty)?;
                     let dims = len as hsize_t;
                     Ok(h5try!(H5Tarray_create2(elem_dt.id(), 1, &dims as *const _)))
                 }
                 TD::FixedAscii(size) => string_type(Some(size), H5T_cset_t::H5T_CSET_ASCII),
                 TD::FixedUnicode(size) => string_type(Some(size), H5T_cset_t::H5T_CSET_UTF8),
                 TD::VarLenArray(ref ty) => {
-                    let elem_dt = Datatype::from_descriptor(&ty)?;
+                    let elem_dt = Self::from_descriptor(ty)?;
                     Ok(h5try!(H5Tvlen_create(elem_dt.id())))
                 }
                 TD::VarLenAscii => string_type(None, H5T_cset_t::H5T_CSET_ASCII),
@@ -359,7 +359,7 @@ impl Datatype {
             }
         });
 
-        Datatype::from_id(datatype_id?)
+        Self::from_id(datatype_id?)
     }
 }
 

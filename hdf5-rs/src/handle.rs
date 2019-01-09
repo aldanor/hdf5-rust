@@ -36,14 +36,14 @@ struct Registry {
 }
 
 impl Default for Registry {
-    fn default() -> Registry {
-        Registry::new()
+    fn default() -> Self {
+        Self::new()
     }
 }
 
 impl Registry {
-    pub fn new() -> Registry {
-        Registry { registry: Mutex::new(HashMap::new()) }
+    pub fn new() -> Self {
+        Self { registry: Mutex::new(HashMap::new()) }
     }
 
     pub fn new_handle(&self, id: hid_t) -> Arc<RwLock<hid_t>> {
@@ -62,21 +62,21 @@ pub struct Handle {
 }
 
 impl Handle {
-    pub fn try_new(id: hid_t) -> Result<Handle> {
+    pub fn try_new(id: hid_t) -> Result<Self> {
         lazy_static! {
             static ref REGISTRY: Registry = Registry::new();
         }
         h5lock!({
             if is_valid_user_id(id) {
-                Ok(Handle { id: REGISTRY.new_handle(id) })
+                Ok(Self { id: REGISTRY.new_handle(id) })
             } else {
                 Err(From::from(format!("Invalid handle id: {}", id)))
             }
         })
     }
 
-    pub fn invalid() -> Handle {
-        Handle { id: Arc::new(RwLock::new(H5I_INVALID_HID)) }
+    pub fn invalid() -> Self {
+        Self { id: Arc::new(RwLock::new(H5I_INVALID_HID)) }
     }
 
     pub fn id(&self) -> hid_t {
@@ -117,10 +117,10 @@ impl Handle {
 }
 
 impl Clone for Handle {
-    fn clone(&self) -> Handle {
+    fn clone(&self) -> Self {
         h5lock!({
             self.incref();
-            Handle::try_new(self.id()).unwrap_or_else(|_| Handle::invalid())
+            Self::try_new(self.id()).unwrap_or_else(|_| Self::invalid())
         })
     }
 }

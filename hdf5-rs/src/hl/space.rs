@@ -49,7 +49,7 @@ impl Deref for Dataspace {
 }
 
 impl Dataspace {
-    pub fn try_new<D: Dimension>(d: D, resizable: bool) -> Result<Dataspace> {
+    pub fn try_new<D: Dimension>(d: D, resizable: bool) -> Result<Self> {
         let rank = d.ndim();
         let mut dims: Vec<hsize_t> = vec![];
         let mut max_dims: Vec<hsize_t> = vec![];
@@ -57,7 +57,7 @@ impl Dataspace {
             dims.push(*dim as _);
             max_dims.push(if resizable { H5S_UNLIMITED } else { *dim as _ });
         }
-        Dataspace::from_id(h5try!(H5Screate_simple(rank as _, dims.as_ptr(), max_dims.as_ptr())))
+        Self::from_id(h5try!(H5Screate_simple(rank as _, dims.as_ptr(), max_dims.as_ptr())))
     }
 
     pub fn maxdims(&self) -> Vec<Ix> {
@@ -104,9 +104,9 @@ impl Dimension for Dataspace {
 }
 
 impl Clone for Dataspace {
-    fn clone(&self) -> Dataspace {
+    fn clone(&self) -> Self {
         let id = h5call!(H5Scopy(self.id())).unwrap_or(H5I_INVALID_HID);
-        Dataspace::from_id(id).ok().unwrap_or_else(Dataspace::invalid)
+        Self::from_id(id).ok().unwrap_or_else(Self::invalid)
     }
 }
 
