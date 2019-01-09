@@ -80,3 +80,17 @@ fn test_file_create_plist() -> h5::Result<()> {
 
     Ok(())
 }
+
+#[test]
+fn test_file_access_plist() -> h5::Result<()> {
+    let fapl = FileAccess::try_new()?;
+    println!("{:#?}", fapl);
+    let mut b = FileAccess::build();
+
+    b.split();
+    let fapl3 = b.finish()?;
+    println!("{:#?}", fapl3);
+    println!("{:#?}", fapl3.get_driver());
+
+    Ok(())
+}
