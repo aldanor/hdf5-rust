@@ -10,5 +10,16 @@ homepage = "https://github.com/aldanor/hdf5-rs"
 description = "Build script support for the HDF5 library."
 edition = "2018"
 
+links = "hdf5"
+
 [build-dependencies]
 pkg-config = "0.3"
+rust-crypto = "0.2"
+curl = "*"
+bzip2 = "0.3.3"
+tar = "*"
+
+[features]
+# Use static HDF5 libs downloaded from conda.
+conda = []
+

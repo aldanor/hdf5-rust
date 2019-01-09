@@ -35,3 +35,7 @@ tempdir = "0.3"
 
 [build-dependencies]
 libhdf5-lib = { path = "../libhdf5-lib", version = "0.2.0" }
+
+[features]
+# Use static HDF5 libs downloaded from conda.
+conda = ["libhdf5-lib/conda"]
