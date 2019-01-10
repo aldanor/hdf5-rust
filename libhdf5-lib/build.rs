@@ -108,8 +108,7 @@ fn find_hdf5_libs() -> (Vec<String>, Vec<String>) {
 }
 
 fn main() {
-    conda_static();
-    return;
+
     if var("CARGO_FEATURE_CONDA").is_ok() {
         conda_static();
     } else {
@@ -207,6 +206,9 @@ fn extract<P: AsRef<Path>, P2: AsRef<Path>>(archive_path: P, extract_to: P2) {
     a.unpack(extract_to).unwrap();
 }
 
+
+/// Statically link to HDF5 binaries provided by conda
+/// TODO: detect what window runtime version is in use & select correct package?
 fn conda_static() {
     let out_dir = PathBuf::from(var("OUT_DIR").unwrap());
 
