@@ -125,7 +125,7 @@ fn main() {
 }
 
 
-// Use `conda search --json --platform 'win-64' mkl-static`
+// Use `conda search --json --platform 'win-64' hdf5`
 // to query the metadata of conda package (includes MD5 sum).
 
 #[cfg(target_os = "linux")]
@@ -135,7 +135,10 @@ mod conda {
     pub const DLS: &[(&'static str, &'static str, &'static str)] = &[
         ("hdf5-1.10.4-hb1b8bf9_0.tar.bz2", 
          "https://repo.continuum.io/pkgs/main/linux-64/hdf5-1.10.4-hb1b8bf9_0.tar.bz2",
-         "e25e1d2af9836593f3678198b14816eb")
+         "e25e1d2af9836593f3678198b14816eb"),
+        ("zlib-1.2.11-hfbfcf68_1.tar.bz2", 
+         "https://repo.continuum.io/pkgs/main/linux-64/zlib-1.2.11-hfbfcf68_1.tar.bz2",
+         "cb3dfd6392fcc03474b8d71cf8f0b264")
     ];
 }
 
@@ -146,7 +149,10 @@ mod conda {
     pub const DLS: &[(&'static str, &'static str, &'static str)] = &[
         ("hdf5-1.8.20-hfa1e0ec_1.tar.bz2", 
          "https://repo.continuum.io/pkgs/main/osx-64/hdf5-1.8.20-hfa1e0ec_1.tar.bz2", 
-         "6b7457d9be3293d8ba73c36a0915d5f6")
+         "6b7457d9be3293d8ba73c36a0915d5f6"),
+        ("zlib-1.2.11-hf3cbc9b_2.tar.bz2",
+         "https://repo.continuum.io/pkgs/main/osx-64/zlib-1.2.11-hf3cbc9b_2.tar.bz2",
+         "f77c7d05dc47868e181135af65cb6e26")
     ];
 }
 
@@ -157,7 +163,10 @@ mod conda {
     pub const DLS: &[(&'static str, &'static str, &'static str)] = &[
         ("hdf5-1.8.16-vc14_0.tar.bz2", 
          "https://repo.continuum.io/pkgs/free/win-64/hdf5-1.8.16-vc14_0.tar.bz2", 
-         "c935a1d232cbe8fe09c1ffe0a64a322b")
+         "c935a1d232cbe8fe09c1ffe0a64a322b"),
+        ("zlib-1.2.11-vc14h1cdd9ab_1.tar.bz2", 
+         "https://repo.continuum.io/pkgs/main/win-64/zlib-1.2.11-vc14h1cdd9ab_1.tar.bz2",
+         "4e2394286375c49f880e159a7efae05f")
     ];
 }
 
