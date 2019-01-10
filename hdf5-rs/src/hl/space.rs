@@ -1,9 +1,13 @@
+use std::convert::AsRef;
 use std::fmt::{self, Debug};
 use std::ops::Deref;
 use std::ptr;
 
+use ndarray::{SliceInfo, SliceOrIndex};
+
 use libhdf5_sys::h5s::{
     H5Scopy, H5Screate_simple, H5Sget_simple_extent_dims, H5Sget_simple_extent_ndims,
+    H5Sselect_hyperslab, H5S_SELECT_SET,
 };
 
 use crate::internal_prelude::*;
@@ -49,6 +53,60 @@ impl Deref for Dataspace {
 }
 
 impl Dataspace {
+    /// Select a slice (known as a 'hyperslab' in HDF5 terminology) of the Dataspace.
+    /// Returns the shape of array that is capable of holding the resulting slice.
+    /// Useful when you want to read a subset of a dataset.
+    pub fn select_slice<T, D>(&self, slice: &SliceInfo<T, D>) -> Result<Vec<Ix>>
+    where
+        T: AsRef<[SliceOrIndex]>,
+        D: ndarray::Dimension,
+    {
+        let shape = self.dims();
+        let ss: &[SliceOrIndex] = slice.as_ref();
+
+        let mut start_vec = Vec::with_capacity(ss.len());
+        let mut stride_vec = Vec::with_capacity(ss.len());
+        let mut count_vec = Vec::with_capacity(ss.len());
+        let mut shape_vec = Vec::with_capacity(ss.len());
+
+        for i in 0..ss.len() {
+            let (start, stride, count) = Self::get_start_stride_count(&ss[i], shape[i])?;
+            start_vec.push(start);
+            stride_vec.push(stride);
+            count_vec.push(count);
+            shape_vec.push(count as Ix);
+        }
+
+        h5try!(H5Sselect_hyperslab(
+            self.id(),
+            H5S_SELECT_SET,
+            start_vec.as_ptr(),
+            stride_vec.as_ptr(),
+            count_vec.as_ptr(),
+            ptr::null()
+        ));
+        Ok(shape_vec)
+    }
+
+    fn get_start_stride_count(v: &SliceOrIndex, len: Ix) -> Result<(u64, u64, u64)> {
+        match v {
+            SliceOrIndex::Slice { start, end, step } => {
+                let end = end.unwrap_or(len as isize);
+                ensure!(end <= len as _, "slice extends beyond dataspace bounds");
+                ensure!(*step >= 1, "step must be >= 1 (got {})", step);
+
+                if end < *start {
+                    return Ok((0, 1, 0));
+                }
+
+                let count = if (end - start) <= 0 { 0 } else { 1 + (end - start - 1) / step };
+
+                Ok((*start as u64, *step as u64, count as u64))
+            }
+            SliceOrIndex::Index(v) => Ok((*v as u64, 1, 1)),
+        }
+    }
+
     pub fn try_new<D: Dimension>(d: D, resizable: bool) -> Result<Self> {
         let rank = d.ndim();
         let mut dims: Vec<hsize_t> = vec![];

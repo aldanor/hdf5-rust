@@ -8,7 +8,7 @@ use libhdf5_sys::{
     h5::HADDR_UNDEF,
     h5d::{
         H5D_fill_value_t, H5D_layout_t, H5Dcreate2, H5Dcreate_anon, H5Dget_create_plist,
-        H5Dget_offset, H5D_FILL_TIME_ALLOC,
+        H5Dget_offset, H5Dset_extent, H5D_FILL_TIME_ALLOC,
     },
     h5p::{
         H5Pcreate, H5Pfill_value_defined, H5Pget_chunk, H5Pget_fill_value, H5Pget_layout,
@@ -153,6 +153,15 @@ impl Dataset {
 
     fn dcpl_id(&self) -> Result<hid_t> {
         h5call!(H5Dget_create_plist(self.id()))
+    }
+
+    pub fn resize<D: Dimension>(&self, d: D) -> Result<()> {
+        let mut dims: Vec<hsize_t> = vec![];
+        for dim in &d.dims() {
+            dims.push(*dim as _);
+        }
+        h5try!(H5Dset_extent(self.id(), dims.as_ptr()));
+        Ok(())
     }
 }
 
