@@ -7,9 +7,7 @@ use hdf5_types::TypeDescriptor;
 
 mod common;
 
-use self::common::gen::{
-    gen_arr, gen_slice, Enum, FixedStruct, Gen, TupleStruct, VarLenStruct,
-};
+use self::common::gen::{gen_arr, gen_slice, Enum, FixedStruct, Gen, TupleStruct, VarLenStruct};
 use self::common::util::new_in_memory_file;
 
 fn test_write_slice<T, R>(
