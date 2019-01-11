@@ -1,6 +1,7 @@
 use std::fs::{read_dir, remove_file};
 
 // Workaround for https://github.com/laumann/compiletest-rs/issues/114
+#[allow(dead_code)]
 fn clean_rlibs(config: &compiletest_rs::Config) {
     if config.target_rustcflags.is_some() {
         for directory in config.target_rustcflags.as_ref().unwrap().split_whitespace() {
@@ -33,7 +34,7 @@ fn run_mode(mode: &'static str) {
     config.src_base = format!("tests/{}", mode).into();
     config.verbose = true;
     config.link_deps();
-    clean_rlibs(&config);
+    // clean_rlibs(&config);  // commented out for now as it's flaky on CI
 
     compiletest_rs::run_tests(&config);
 }

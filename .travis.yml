@@ -18,7 +18,6 @@ script:
     fi
   fi
 - cargo clean
-- cargo test -v --no-run -p hdf5-derive
 - cargo test -v -p hdf5-derive
 - cargo clean
 - cargo build -v
