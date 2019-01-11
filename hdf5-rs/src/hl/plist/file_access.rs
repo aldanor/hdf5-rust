@@ -103,7 +103,7 @@ pub struct CoreDriver {
     pub increment: usize,
     pub filebacked: bool,
     #[cfg(hdf5_1_8_13)]
-    pub write_tracking: Option<usize>,
+    pub write_tracking: usize,
 }
 
 impl Default for CoreDriver {
@@ -112,7 +112,7 @@ impl Default for CoreDriver {
             increment: 1024 * 1024,
             filebacked: false,
             #[cfg(hdf5_1_8_13)]
-            write_tracking: None,
+            write_tracking: 0,
         }
     }
 }
@@ -439,8 +439,8 @@ impl FileAccessBuilder {
     }
 
     #[cfg(hdf5_1_8_13)]
-    pub fn write_tracking(&mut self, page_size: Option<usize>) -> &mut Self {
-        self.write_tracking = page_size;
+    pub fn write_tracking(&mut self, page_size: usize) -> &mut Self {
+        self.write_tracking = Some(page_size);
         self
     }
 
@@ -495,9 +495,7 @@ impl FileAccessBuilder {
         #[cfg(hdf5_1_8_13)]
         {
             if let Some(page_size) = self.write_tracking {
-                h5try!(H5Pset_core_write_tracking(id, 1, page_size.max(1) as _));
-            } else {
-                h5try!(H5Pset_core_write_tracking(id, 0, 1));
+                h5try!(H5Pset_core_write_tracking(id, (page_size > 0) as _, page_size.max(1) as _));
             }
         }
         Ok(())
@@ -643,9 +641,9 @@ impl FileAccess {
                 &mut page_size as *mut _,
             ));
             if is_enabled > 0 {
-                drv.write_tracking = Some(page_size as _);
+                drv.write_tracking = page_size;
             } else {
-                drv.write_tracking = None;
+                drv.write_tracking = 0;
             }
         }
         Ok(drv)
