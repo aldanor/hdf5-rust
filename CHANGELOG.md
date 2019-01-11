@@ -1,3 +1,44 @@
+## 0.3.0-alpha.1 (unreleased)
+
+Updates:
+
+- Added Rust equivalents of HDF5 primitives: arrays, Unicode strings and ASCII strings – all of 
+  them available in both fixed-size or variable-length flavours (`hdf5-types` crate).
+- Added `H5Type` trait that unifies the types that can be handled by the HDF5 library. This trait
+  is implemented by default for all scalar types, tuples, fixed-size arrays and all types in
+  `hdf5-types`.
+- Implemented `#[derive(H5Type)]` proc macro that allows for seamless mapping of user-defined 
+  structs and enums to their HDF5 counterparts.
+- `Datatype` can now be constructed directly from an `H5Type`-compatible type (or from/to
+  a type descriptor).
+- Added support for HDF5 1.10.
+- Updated the bindings and test to the latest HDF5 versions (1.10.4 and 1.8.21).
+- Added missing bindings for previous versions (mostly in `h5p` and `h5fd` modules).
+- Removed `remutex` crate, using locking primitives from `parking_lot` crate instead.
+- Major refactor: trait-based type hierarchy has been replaced with a `Deref`-based
+  hierarchy instead (53eff4f). `ID` and `FromID` traits have been removed. Traits like `Location`,
+  `Object` and a few other have been replaced with real types (wrappers around HDF5 handles, same
+  as the concrete types like `File`). Subtypes then dereference into parent types, so the
+  user can user methods of the parent type without having to import any traits into scope
+  (for instance, `File` dereferences into `Group`, which dereferences into `Location`,
+  which dereferences into `Object`).
+- `Container` trait has been removed, all of its functionality is moved into `Group` type.
+- Added high-level wrappers for file-creation H5P API (`plist::FileCreate`) and
+  file-access H5P API (`plist::FileAccess`).
+- Various improvements and additions to `PropertyList` type.
+- Added support for various file drivers (sec2/stdio/core/family/multi/split/log).
+- Querying the HDF5 error stack is now thread-safe.
+- Error silencing (`silence_errors()`) is now thread-safe.
+- Various clean ups in `libhdf5-sys`: implemented `Default` and `Clone` where
+  applicable, moved a few types and methods to matching parent modules.
+- `Dataset` now dereferences into `Container` (dataset/attribute shared functionality).
+- The main crate now depends on `ndarray` (multi-dimensional arrays).
+- Added core reading/writing API for `Container`, with support for reading/writing scalars, 
+  1-d, 2-d, and dynamic-dimensional arrays, and raw slices.
+- Added basic support for reading and writing dataset slices.
+- Added `packed` option to `DatasetBuilder` (for creating packed HDF5 datasets).
+- When creating datasets, in-memory type layouts are normalized (converted to C repr).
+
 ## 0.2.0 (Apr 17, 2016)
 
 Features:
