@@ -28,9 +28,10 @@ use libhdf5_sys::h5fd::{
     H5FD_LOG_TIME_WRITE, H5FD_LOG_TRUNCATE,
 };
 use libhdf5_sys::h5p::{
-    H5Pcreate, H5Pget_driver, H5Pget_fapl_core, H5Pget_fapl_family, H5Pget_fapl_multi,
-    H5Pget_fclose_degree, H5Pset_fapl_core, H5Pset_fapl_family, H5Pset_fapl_log, H5Pset_fapl_multi,
-    H5Pset_fapl_sec2, H5Pset_fapl_split, H5Pset_fapl_stdio, H5Pset_fclose_degree,
+    H5Pcreate, H5Pget_alignment, H5Pget_driver, H5Pget_fapl_core, H5Pget_fapl_family,
+    H5Pget_fapl_multi, H5Pget_fclose_degree, H5Pset_alignment, H5Pset_fapl_core,
+    H5Pset_fapl_family, H5Pset_fapl_log, H5Pset_fapl_multi, H5Pset_fapl_sec2, H5Pset_fapl_split,
+    H5Pset_fapl_stdio, H5Pset_fclose_degree,
 };
 
 #[cfg(hdf5_1_8_13)]
@@ -70,6 +71,7 @@ impl Debug for FileAccess {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let _e = silence_errors();
         let mut formatter = f.debug_struct("FileAccess");
+        formatter.field("alignment", &self.alignment());
         formatter.field("fclose_degree", &self.fclose_degree());
         formatter.field("driver", &self.driver());
         formatter.finish()
@@ -365,6 +367,18 @@ impl Into<H5F_close_degree_t> for FileCloseDegree {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Alignment {
+    pub threshold: u64,
+    pub alignment: u64,
+}
+
+impl Default for Alignment {
+    fn default() -> Self {
+        Self { threshold: 1, alignment: 1 }
+    }
+}
+
 /// Builder used to create file access property list.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct FileAccessBuilder {
@@ -373,6 +387,7 @@ pub struct FileAccessBuilder {
     #[cfg(hdf5_1_8_13)]
     write_tracking: Option<usize>,
     fclose_degree: Option<FileCloseDegree>,
+    alignment: Option<Alignment>,
 }
 
 impl FileAccessBuilder {
@@ -385,6 +400,8 @@ impl FileAccessBuilder {
     pub fn from_plist(plist: &FileAccess) -> Result<Self> {
         let mut builder = Self::default();
         builder.fclose_degree(plist.get_fclose_degree()?);
+        let v = plist.get_alignment()?;
+        builder.alignment(v.threshold, v.alignment);
         let drv = plist.get_driver()?;
         builder.driver(&drv);
         #[cfg(hdf5_1_8_13)]
@@ -398,6 +415,11 @@ impl FileAccessBuilder {
 
     pub fn fclose_degree(&mut self, value: FileCloseDegree) -> &mut Self {
         self.fclose_degree = Some(value);
+        self
+    }
+
+    pub fn alignment(&mut self, threshold: u64, alignment: u64) -> &mut Self {
+        self.alignment = Some(Alignment { threshold, alignment });
         self
     }
 
@@ -598,6 +620,9 @@ impl FileAccessBuilder {
         if let Some(ref v) = self.file_driver {
             self.set_driver(id, v)?;
         }
+        if let Some(v) = self.alignment {
+            h5try!(H5Pset_alignment(id, v.threshold as _, v.alignment as _));
+        }
         if let Some(v) = self.fclose_degree {
             h5try!(H5Pset_fclose_degree(id, v.into()));
         }
@@ -726,5 +751,16 @@ impl FileAccess {
 
     pub fn fclose_degree(&self) -> FileCloseDegree {
         self.get_fclose_degree().unwrap_or_else(|_| FileCloseDegree::default())
+    }
+
+    #[doc(hidden)]
+    pub fn get_alignment(&self) -> Result<Alignment> {
+        h5get!(H5Pget_alignment(self.id()): hsize_t, hsize_t).map(|(threshold, alignment)| {
+            Alignment { threshold: threshold as _, alignment: alignment as _ }
+        })
+    }
+
+    pub fn alignment(&self) -> Alignment {
+        self.get_alignment().unwrap_or_else(|_| Alignment::default())
     }
 }
