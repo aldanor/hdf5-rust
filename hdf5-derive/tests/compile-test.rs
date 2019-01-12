@@ -32,7 +32,7 @@ fn run_mode(mode: &'static str) {
 
     config.mode = cfg_mode;
     config.src_base = format!("tests/{}", mode).into();
-    config.verbose = true;
+    config.verbose = false;
     config.link_deps();
     // clean_rlibs(&config);  // commented out for now as it's flaky on CI
 
