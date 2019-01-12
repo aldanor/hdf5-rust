@@ -86,23 +86,20 @@ impl<'a> Reader<'a> {
         }
 
         if shape.ndim() == 0 {
-            // Fall back to a simple read for the scalar case
-            // Slicing has no effect
+            // Fall back to a simple read for the scalar case, slicing has no effect
             self.read()
         } else {
             let fspace = self.obj.space()?;
             let out_shape = fspace.select_slice(slice)?;
 
-            // Remove dimensions from out_shape that were an
-            //SliceOrIndex::Index in the slice
-            let reduced_shape: Vec<usize> = slice_s
+            // Remove dimensions from out_shape that were SliceOrIndex::Index in the slice
+            let reduced_shape: Vec<_> = slice_s
                 .iter()
                 .zip(out_shape.iter().cloned())
-                .filter(|(slc, _)| match slc {
-                    SliceOrIndex::Index(_) => false,
-                    _ => true,
+                .filter_map(|(slc, sz)| match slc {
+                    SliceOrIndex::Index(_) => None,
+                    _ => Some(sz),
                 })
-                .map(|(_, sz)| sz)
                 .collect();
 
             let mspace = Dataspace::try_new(&out_shape, false)?;
@@ -286,14 +283,11 @@ impl<'a> Writer<'a> {
             let mut data_shape_hydrated = Vec::new();
             let mut pos = 0;
             for s in slice_s {
-                match s {
-                    SliceOrIndex::Index(_) => {
-                        data_shape_hydrated.push(1);
-                    }
-                    _ => {
-                        data_shape_hydrated.push(data_shape[pos]);
-                        pos += 1;
-                    }
+                if let SliceOrIndex::Index(_) = s {
+                    data_shape_hydrated.push(1);
+                } else {
+                    data_shape_hydrated.push(data_shape[pos]);
+                    pos += 1;
                 }
             }
 
