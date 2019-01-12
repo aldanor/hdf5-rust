@@ -28,8 +28,8 @@ use libhdf5_sys::h5fd::{
     H5FD_LOG_TIME_WRITE, H5FD_LOG_TRUNCATE,
 };
 use libhdf5_sys::h5p::{
-    H5Pcreate, H5Pget_alignment, H5Pget_driver, H5Pget_fapl_core, H5Pget_fapl_family,
-    H5Pget_fapl_multi, H5Pget_fclose_degree, H5Pset_alignment, H5Pset_fapl_core,
+    H5Pcreate, H5Pget_alignment, H5Pget_cache, H5Pget_driver, H5Pget_fapl_core, H5Pget_fapl_family,
+    H5Pget_fapl_multi, H5Pget_fclose_degree, H5Pset_alignment, H5Pset_cache, H5Pset_fapl_core,
     H5Pset_fapl_family, H5Pset_fapl_log, H5Pset_fapl_multi, H5Pset_fapl_sec2, H5Pset_fapl_split,
     H5Pset_fapl_stdio, H5Pset_fclose_degree,
 };
@@ -72,6 +72,7 @@ impl Debug for FileAccess {
         let _e = silence_errors();
         let mut formatter = f.debug_struct("FileAccess");
         formatter.field("alignment", &self.alignment());
+        formatter.field("chunk_cache", &self.chunk_cache());
         formatter.field("fclose_degree", &self.fclose_degree());
         formatter.field("driver", &self.driver());
         formatter.finish()
@@ -379,6 +380,21 @@ impl Default for Alignment {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct ChunkCache {
+    pub nslots: usize,
+    pub nbytes: usize,
+    pub w0: f64,
+}
+
+impl Default for ChunkCache {
+    fn default() -> Self {
+        Self { nslots: 521, nbytes: 1024 * 1024, w0: 0.75 }
+    }
+}
+
+impl Eq for ChunkCache {}
+
 /// Builder used to create file access property list.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct FileAccessBuilder {
@@ -388,6 +404,7 @@ pub struct FileAccessBuilder {
     write_tracking: Option<usize>,
     fclose_degree: Option<FileCloseDegree>,
     alignment: Option<Alignment>,
+    chunk_cache: Option<ChunkCache>,
 }
 
 impl FileAccessBuilder {
@@ -402,6 +419,8 @@ impl FileAccessBuilder {
         builder.fclose_degree(plist.get_fclose_degree()?);
         let v = plist.get_alignment()?;
         builder.alignment(v.threshold, v.alignment);
+        let v = plist.get_chunk_cache()?;
+        builder.chunk_cache(v.nslots, v.nbytes, v.w0);
         let drv = plist.get_driver()?;
         builder.driver(&drv);
         #[cfg(hdf5_1_8_13)]
@@ -420,6 +439,11 @@ impl FileAccessBuilder {
 
     pub fn alignment(&mut self, threshold: u64, alignment: u64) -> &mut Self {
         self.alignment = Some(Alignment { threshold, alignment });
+        self
+    }
+
+    pub fn chunk_cache(&mut self, nslots: usize, nbytes: usize, w0: f64) -> &mut Self {
+        self.chunk_cache = Some(ChunkCache { nslots, nbytes, w0 });
         self
     }
 
@@ -623,6 +647,9 @@ impl FileAccessBuilder {
         if let Some(v) = self.alignment {
             h5try!(H5Pset_alignment(id, v.threshold as _, v.alignment as _));
         }
+        if let Some(v) = self.chunk_cache {
+            h5try!(H5Pset_cache(id, 0, v.nslots as _, v.nbytes as _, v.w0 as _));
+        }
         if let Some(v) = self.fclose_degree {
             h5try!(H5Pset_fclose_degree(id, v.into()));
         }
@@ -762,5 +789,20 @@ impl FileAccess {
 
     pub fn alignment(&self) -> Alignment {
         self.get_alignment().unwrap_or_else(|_| Alignment::default())
+    }
+
+    #[doc(hidden)]
+    pub fn get_chunk_cache(&self) -> Result<ChunkCache> {
+        h5get!(H5Pget_cache(self.id()): c_int, size_t, size_t, c_double).map(
+            |(_, nslots, nbytes, w0)| ChunkCache {
+                nslots: nslots as _,
+                nbytes: nbytes as _,
+                w0: w0 as _,
+            },
+        )
+    }
+
+    pub fn chunk_cache(&self) -> ChunkCache {
+        self.get_chunk_cache().unwrap_or_else(|_| ChunkCache::default())
     }
 }
