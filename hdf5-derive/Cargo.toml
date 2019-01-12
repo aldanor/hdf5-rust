@@ -14,4 +14,4 @@ syn = { version = "0.15", features = ["derive", "extra-traits"]}
 hdf5-types = { path = "../hdf5-types", version = "0.2.0" }
 
 [dev-dependencies]
-compiletest_rs = { version = "0.3.17", features = ["stable"] }
+compiletest_rs = { version = "0.3.18", features = ["stable"] }
