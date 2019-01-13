@@ -28,8 +28,9 @@ use libhdf5_sys::h5fd::{
     H5FD_LOG_TIME_WRITE, H5FD_LOG_TRUNCATE,
 };
 use libhdf5_sys::h5p::{
-    H5Pcreate, H5Pget_alignment, H5Pget_cache, H5Pget_driver, H5Pget_fapl_core, H5Pget_fapl_family,
-    H5Pget_fapl_multi, H5Pget_fclose_degree, H5Pset_alignment, H5Pset_cache, H5Pset_fapl_core,
+    H5Pcreate, H5Pget_alignment, H5Pget_cache, H5Pget_driver, H5Pget_elink_file_cache_size,
+    H5Pget_fapl_core, H5Pget_fapl_family, H5Pget_fapl_multi, H5Pget_fclose_degree,
+    H5Pset_alignment, H5Pset_cache, H5Pset_elink_file_cache_size, H5Pset_fapl_core,
     H5Pset_fapl_family, H5Pset_fapl_log, H5Pset_fapl_multi, H5Pset_fapl_sec2, H5Pset_fapl_split,
     H5Pset_fapl_stdio, H5Pset_fclose_degree,
 };
@@ -74,6 +75,7 @@ impl Debug for FileAccess {
         formatter.field("alignment", &self.alignment());
         formatter.field("chunk_cache", &self.chunk_cache());
         formatter.field("fclose_degree", &self.fclose_degree());
+        formatter.field("elink_file_cache_size", &self.elink_file_cache_size());
         formatter.field("driver", &self.driver());
         formatter.finish()
     }
@@ -405,6 +407,7 @@ pub struct FileAccessBuilder {
     fclose_degree: Option<FileCloseDegree>,
     alignment: Option<Alignment>,
     chunk_cache: Option<ChunkCache>,
+    elink_file_cache_size: Option<u32>,
 }
 
 impl FileAccessBuilder {
@@ -444,6 +447,11 @@ impl FileAccessBuilder {
 
     pub fn chunk_cache(&mut self, nslots: usize, nbytes: usize, w0: f64) -> &mut Self {
         self.chunk_cache = Some(ChunkCache { nslots, nbytes, w0 });
+        self
+    }
+
+    pub fn elink_file_cache_size(&mut self, efc_size: u32) -> &mut Self {
+        self.elink_file_cache_size = Some(efc_size);
         self
     }
 
@@ -653,6 +661,9 @@ impl FileAccessBuilder {
         if let Some(v) = self.fclose_degree {
             h5try!(H5Pset_fclose_degree(id, v.into()));
         }
+        if let Some(v) = self.elink_file_cache_size {
+            h5try!(H5Pset_elink_file_cache_size(id, v as _));
+        }
         Ok(())
     }
 
@@ -804,5 +815,14 @@ impl FileAccess {
 
     pub fn chunk_cache(&self) -> ChunkCache {
         self.get_chunk_cache().unwrap_or_else(|_| ChunkCache::default())
+    }
+
+    #[doc(hidden)]
+    pub fn get_elink_file_cache_size(&self) -> Result<u32> {
+        h5get!(H5Pget_elink_file_cache_size(self.id()): c_uint).map(|x| x as _)
+    }
+
+    pub fn elink_file_cache_size(&self) -> u32 {
+        self.get_elink_file_cache_size().unwrap_or(0)
     }
 }
