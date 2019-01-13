@@ -29,10 +29,10 @@ use libhdf5_sys::h5fd::{
 };
 use libhdf5_sys::h5p::{
     H5Pcreate, H5Pget_alignment, H5Pget_cache, H5Pget_driver, H5Pget_fapl_core, H5Pget_fapl_family,
-    H5Pget_fapl_multi, H5Pget_fclose_degree, H5Pget_meta_block_size, H5Pset_alignment,
-    H5Pset_cache, H5Pset_fapl_core, H5Pset_fapl_family, H5Pset_fapl_log, H5Pset_fapl_multi,
-    H5Pset_fapl_sec2, H5Pset_fapl_split, H5Pset_fapl_stdio, H5Pset_fclose_degree,
-    H5Pset_meta_block_size,
+    H5Pget_fapl_multi, H5Pget_fclose_degree, H5Pget_meta_block_size, H5Pget_sieve_buf_size,
+    H5Pset_alignment, H5Pset_cache, H5Pset_fapl_core, H5Pset_fapl_family, H5Pset_fapl_log,
+    H5Pset_fapl_multi, H5Pset_fapl_sec2, H5Pset_fapl_split, H5Pset_fapl_stdio,
+    H5Pset_fclose_degree, H5Pset_meta_block_size, H5Pset_sieve_buf_size,
 };
 
 #[cfg(hdf5_1_8_13)]
@@ -85,6 +85,7 @@ impl Debug for FileAccess {
         }
         formatter.field("meta_block_size", &self.meta_block_size());
         formatter.field("page_buffer_size", &self.page_buffer_size());
+        formatter.field("sieve_buf_size", &self.sieve_buf_size());
         formatter.field("driver", &self.driver());
         formatter.finish()
     }
@@ -434,6 +435,7 @@ pub struct FileAccessBuilder {
     meta_block_size: Option<u64>,
     #[cfg(hdf5_1_10_1)]
     page_buffer_size: Option<PageBufferSize>,
+    sieve_buf_size: Option<usize>,
 }
 
 impl FileAccessBuilder {
@@ -462,6 +464,7 @@ impl FileAccessBuilder {
             let v = plist.get_page_buffer_size()?;
             builder.page_buffer_size(v.buf_size, v.min_meta_perc, v.min_raw_perc);
         }
+        builder.sieve_buf_size(plist.get_sieve_buf_size()?);
         #[cfg(hdf5_1_8_13)]
         {
             if let FileDriver::Core(ref drv) = drv {
@@ -502,6 +505,11 @@ impl FileAccessBuilder {
         &mut self, buf_size: usize, min_meta_perc: u32, min_raw_perc: u32,
     ) -> &mut Self {
         self.page_buffer_size = Some(PageBufferSize { buf_size, min_meta_perc, min_raw_perc });
+        self
+    }
+
+    pub fn sieve_buf_size(&mut self, size: usize) -> &mut Self {
+        self.sieve_buf_size = Some(size);
         self
     }
 
@@ -731,6 +739,9 @@ impl FileAccessBuilder {
                 ));
             }
         }
+        if let Some(v) = self.sieve_buf_size {
+            h5try!(H5Pset_sieve_buf_size(id, v as _));
+        }
         Ok(())
     }
 
@@ -919,5 +930,14 @@ impl FileAccess {
     #[cfg(hdf5_1_10_1)]
     pub fn page_buffer_size(&self) -> PageBufferSize {
         self.get_page_buffer_size().unwrap_or_else(|_| PageBufferSize::default())
+    }
+
+    #[doc(hidden)]
+    pub fn get_sieve_buf_size(&self) -> Result<usize> {
+        h5get!(H5Pget_sieve_buf_size(self.id()): size_t).map(|x| x as _)
+    }
+
+    pub fn sieve_buf_size(&self) -> usize {
+        self.get_sieve_buf_size().unwrap_or(64 * 1024)
     }
 }
