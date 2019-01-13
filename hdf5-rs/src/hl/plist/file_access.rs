@@ -43,6 +43,8 @@ use libhdf5_sys::h5p::{H5Pget_elink_file_cache_size, H5Pset_elink_file_cache_siz
 use libhdf5_sys::h5p::{
     H5Pget_evict_on_close, H5Pget_page_buffer_size, H5Pset_evict_on_close, H5Pset_page_buffer_size,
 };
+#[cfg(hdf5_1_10_0)]
+use libhdf5_sys::h5p::{H5Pget_metadata_read_attempts, H5Pset_metadata_read_attempts};
 
 use crate::globals::{
     H5FD_CORE, H5FD_FAMILY, H5FD_LOG, H5FD_MULTI, H5FD_SEC2, H5FD_STDIO, H5P_FILE_ACCESS,
@@ -92,6 +94,10 @@ impl Debug for FileAccess {
             formatter.field("evict_on_close", &self.evict_on_close());
         }
         formatter.field("sieve_buf_size", &self.sieve_buf_size());
+        #[cfg(hdf5_1_10_0)]
+        {
+            formatter.field("metadata_read_attempts", &self.metadata_read_attempts());
+        }
         formatter.field("driver", &self.driver());
         formatter.finish()
     }
@@ -444,6 +450,8 @@ pub struct FileAccessBuilder {
     sieve_buf_size: Option<usize>,
     #[cfg(hdf5_1_10_1)]
     evict_on_close: Option<bool>,
+    #[cfg(hdf5_1_10_0)]
+    metadata_read_attempts: Option<u32>,
 }
 
 impl FileAccessBuilder {
@@ -474,6 +482,10 @@ impl FileAccessBuilder {
             builder.evict_on_close(plist.get_evict_on_close()?);
         }
         builder.sieve_buf_size(plist.get_sieve_buf_size()?);
+        #[cfg(hdf5_1_10_0)]
+        {
+            builder.metadata_read_attempts(plist.get_metadata_read_attempts()?);
+        }
         #[cfg(hdf5_1_8_13)]
         {
             if let FileDriver::Core(ref drv) = drv {
@@ -525,6 +537,12 @@ impl FileAccessBuilder {
     #[cfg(hdf5_1_10_1)]
     pub fn evict_on_close(&mut self, evict_on_close: bool) -> &mut Self {
         self.evict_on_close = Some(evict_on_close);
+        self
+    }
+
+    #[cfg(hdf5_1_10_0)]
+    pub fn metadata_read_attempts(&mut self, attempts: u32) -> &mut Self {
+        self.metadata_read_attempts = Some(attempts);
         self
     }
 
@@ -760,6 +778,12 @@ impl FileAccessBuilder {
         if let Some(v) = self.sieve_buf_size {
             h5try!(H5Pset_sieve_buf_size(id, v as _));
         }
+        #[cfg(hdf5_1_10_0)]
+        {
+            if let Some(v) = self.metadata_read_attempts {
+                h5try!(H5Pset_metadata_read_attempts(id, v as _));
+            }
+        }
         Ok(())
     }
 
@@ -968,5 +992,16 @@ impl FileAccess {
     #[cfg(hdf5_1_10_1)]
     pub fn evict_on_close(&self) -> bool {
         self.get_evict_on_close().unwrap_or(false)
+    }
+
+    #[cfg(hdf5_1_10_0)]
+    #[doc(hidden)]
+    pub fn get_metadata_read_attempts(&self) -> Result<u32> {
+        h5get!(H5Pget_metadata_read_attempts(self.id()): c_uint).map(|x| x as _)
+    }
+
+    #[cfg(hdf5_1_10_0)]
+    pub fn metadata_read_attempts(&self) -> u32 {
+        self.get_metadata_read_attempts().unwrap_or(1)
     }
 }
