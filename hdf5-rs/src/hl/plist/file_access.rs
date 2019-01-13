@@ -29,9 +29,10 @@ use libhdf5_sys::h5fd::{
 };
 use libhdf5_sys::h5p::{
     H5Pcreate, H5Pget_alignment, H5Pget_cache, H5Pget_driver, H5Pget_fapl_core, H5Pget_fapl_family,
-    H5Pget_fapl_multi, H5Pget_fclose_degree, H5Pset_alignment, H5Pset_cache, H5Pset_fapl_core,
-    H5Pset_fapl_family, H5Pset_fapl_log, H5Pset_fapl_multi, H5Pset_fapl_sec2, H5Pset_fapl_split,
-    H5Pset_fapl_stdio, H5Pset_fclose_degree,
+    H5Pget_fapl_multi, H5Pget_fclose_degree, H5Pget_meta_block_size, H5Pset_alignment,
+    H5Pset_cache, H5Pset_fapl_core, H5Pset_fapl_family, H5Pset_fapl_log, H5Pset_fapl_multi,
+    H5Pset_fapl_sec2, H5Pset_fapl_split, H5Pset_fapl_stdio, H5Pset_fclose_degree,
+    H5Pset_meta_block_size,
 };
 
 #[cfg(hdf5_1_8_13)]
@@ -80,6 +81,7 @@ impl Debug for FileAccess {
         {
             formatter.field("elink_file_cache_size", &self.elink_file_cache_size());
         }
+        formatter.field("meta_block_size", &self.meta_block_size());
         formatter.field("driver", &self.driver());
         formatter.finish()
     }
@@ -413,6 +415,7 @@ pub struct FileAccessBuilder {
     chunk_cache: Option<ChunkCache>,
     #[cfg(hdf5_1_8_7)]
     elink_file_cache_size: Option<u32>,
+    meta_block_size: Option<u64>,
 }
 
 impl FileAccessBuilder {
@@ -435,6 +438,7 @@ impl FileAccessBuilder {
         {
             builder.elink_file_cache_size(plist.get_elink_file_cache_size()?);
         }
+        builder.meta_block_size(plist.get_meta_block_size()?);
         #[cfg(hdf5_1_8_13)]
         {
             if let FileDriver::Core(ref drv) = drv {
@@ -462,6 +466,11 @@ impl FileAccessBuilder {
     #[cfg(hdf5_1_8_7)]
     pub fn elink_file_cache_size(&mut self, efc_size: u32) -> &mut Self {
         self.elink_file_cache_size = Some(efc_size);
+        self
+    }
+
+    pub fn meta_block_size(&mut self, size: u64) -> &mut Self {
+        self.meta_block_size = Some(size);
         self
     }
 
@@ -677,6 +686,9 @@ impl FileAccessBuilder {
                 h5try!(H5Pset_elink_file_cache_size(id, v as _));
             }
         }
+        if let Some(v) = self.meta_block_size {
+            h5try!(H5Pset_meta_block_size(id, v as _));
+        }
         Ok(())
     }
 
@@ -839,5 +851,14 @@ impl FileAccess {
     #[cfg(hdf5_1_8_7)]
     pub fn elink_file_cache_size(&self) -> u32 {
         self.get_elink_file_cache_size().unwrap_or(0)
+    }
+
+    #[doc(hidden)]
+    pub fn get_meta_block_size(&self) -> Result<u64> {
+        h5get!(H5Pget_meta_block_size(self.id()): hsize_t).map(|x| x as _)
+    }
+
+    pub fn meta_block_size(&self) -> u64 {
+        self.get_meta_block_size().unwrap_or(2048)
     }
 }
