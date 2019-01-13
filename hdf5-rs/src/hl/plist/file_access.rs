@@ -84,7 +84,10 @@ impl Debug for FileAccess {
             formatter.field("elink_file_cache_size", &self.elink_file_cache_size());
         }
         formatter.field("meta_block_size", &self.meta_block_size());
-        formatter.field("page_buffer_size", &self.page_buffer_size());
+        #[cfg(hdf5_1_10_1)]
+        {
+            formatter.field("page_buffer_size", &self.page_buffer_size());
+        }
         formatter.field("sieve_buf_size", &self.sieve_buf_size());
         formatter.field("driver", &self.driver());
         formatter.finish()
