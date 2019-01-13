@@ -426,6 +426,7 @@ impl FileAccessBuilder {
         builder.chunk_cache(v.nslots, v.nbytes, v.w0);
         let drv = plist.get_driver()?;
         builder.driver(&drv);
+        builder.elink_file_cache_size(plist.get_elink_file_cache_size()?);
         #[cfg(hdf5_1_8_13)]
         {
             if let FileDriver::Core(ref drv) = drv {
