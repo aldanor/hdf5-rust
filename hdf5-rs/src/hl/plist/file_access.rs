@@ -40,7 +40,9 @@ use libhdf5_sys::h5p::{H5Pget_core_write_tracking, H5Pset_core_write_tracking};
 #[cfg(hdf5_1_8_7)]
 use libhdf5_sys::h5p::{H5Pget_elink_file_cache_size, H5Pset_elink_file_cache_size};
 #[cfg(hdf5_1_10_1)]
-use libhdf5_sys::h5p::{H5Pget_page_buffer_size, H5Pset_page_buffer_size};
+use libhdf5_sys::h5p::{
+    H5Pget_evict_on_close, H5Pget_page_buffer_size, H5Pset_evict_on_close, H5Pset_page_buffer_size,
+};
 
 use crate::globals::{
     H5FD_CORE, H5FD_FAMILY, H5FD_LOG, H5FD_MULTI, H5FD_SEC2, H5FD_STDIO, H5P_FILE_ACCESS,
@@ -87,6 +89,7 @@ impl Debug for FileAccess {
         #[cfg(hdf5_1_10_1)]
         {
             formatter.field("page_buffer_size", &self.page_buffer_size());
+            formatter.field("evict_on_close", &self.evict_on_close());
         }
         formatter.field("sieve_buf_size", &self.sieve_buf_size());
         formatter.field("driver", &self.driver());
@@ -439,6 +442,8 @@ pub struct FileAccessBuilder {
     #[cfg(hdf5_1_10_1)]
     page_buffer_size: Option<PageBufferSize>,
     sieve_buf_size: Option<usize>,
+    #[cfg(hdf5_1_10_1)]
+    evict_on_close: Option<bool>,
 }
 
 impl FileAccessBuilder {
@@ -466,6 +471,7 @@ impl FileAccessBuilder {
         {
             let v = plist.get_page_buffer_size()?;
             builder.page_buffer_size(v.buf_size, v.min_meta_perc, v.min_raw_perc);
+            builder.evict_on_close(plist.get_evict_on_close()?);
         }
         builder.sieve_buf_size(plist.get_sieve_buf_size()?);
         #[cfg(hdf5_1_8_13)]
@@ -513,6 +519,12 @@ impl FileAccessBuilder {
 
     pub fn sieve_buf_size(&mut self, size: usize) -> &mut Self {
         self.sieve_buf_size = Some(size);
+        self
+    }
+
+    #[cfg(hdf5_1_10_1)]
+    pub fn evict_on_close(&mut self, evict_on_close: bool) -> &mut Self {
+        self.evict_on_close = Some(evict_on_close);
         self
     }
 
@@ -741,6 +753,9 @@ impl FileAccessBuilder {
                     v.min_raw_perc as _,
                 ));
             }
+            if let Some(v) = self.evict_on_close {
+                h5try!(H5Pset_evict_on_close(id, v as _));
+            }
         }
         if let Some(v) = self.sieve_buf_size {
             h5try!(H5Pset_sieve_buf_size(id, v as _));
@@ -942,5 +957,16 @@ impl FileAccess {
 
     pub fn sieve_buf_size(&self) -> usize {
         self.get_sieve_buf_size().unwrap_or(64 * 1024)
+    }
+
+    #[cfg(hdf5_1_10_1)]
+    #[doc(hidden)]
+    pub fn get_evict_on_close(&self) -> Result<bool> {
+        h5get!(H5Pget_evict_on_close(self.id()): hbool_t).map(|x| x > 0)
+    }
+
+    #[cfg(hdf5_1_10_1)]
+    pub fn evict_on_close(&self) -> bool {
+        self.get_evict_on_close().unwrap_or(false)
     }
 }
