@@ -39,6 +39,8 @@ use libhdf5_sys::h5p::{
 use libhdf5_sys::h5p::{H5Pget_core_write_tracking, H5Pset_core_write_tracking};
 #[cfg(hdf5_1_8_7)]
 use libhdf5_sys::h5p::{H5Pget_elink_file_cache_size, H5Pset_elink_file_cache_size};
+#[cfg(hdf5_1_10_1)]
+use libhdf5_sys::h5p::{H5Pget_page_buffer_size, H5Pset_page_buffer_size};
 
 use crate::globals::{
     H5FD_CORE, H5FD_FAMILY, H5FD_LOG, H5FD_MULTI, H5FD_SEC2, H5FD_STDIO, H5P_FILE_ACCESS,
@@ -82,6 +84,7 @@ impl Debug for FileAccess {
             formatter.field("elink_file_cache_size", &self.elink_file_cache_size());
         }
         formatter.field("meta_block_size", &self.meta_block_size());
+        formatter.field("page_buffer_size", &self.page_buffer_size());
         formatter.field("driver", &self.driver());
         formatter.finish()
     }
@@ -403,6 +406,19 @@ impl Default for ChunkCache {
 
 impl Eq for ChunkCache {}
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct PageBufferSize {
+    pub buf_size: usize,
+    pub min_meta_perc: u32,
+    pub min_raw_perc: u32,
+}
+
+impl Default for PageBufferSize {
+    fn default() -> Self {
+        Self { buf_size: 0, min_meta_perc: 0, min_raw_perc: 0 }
+    }
+}
+
 /// Builder used to create file access property list.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct FileAccessBuilder {
@@ -416,6 +432,8 @@ pub struct FileAccessBuilder {
     #[cfg(hdf5_1_8_7)]
     elink_file_cache_size: Option<u32>,
     meta_block_size: Option<u64>,
+    #[cfg(hdf5_1_10_1)]
+    page_buffer_size: Option<PageBufferSize>,
 }
 
 impl FileAccessBuilder {
@@ -439,6 +457,11 @@ impl FileAccessBuilder {
             builder.elink_file_cache_size(plist.get_elink_file_cache_size()?);
         }
         builder.meta_block_size(plist.get_meta_block_size()?);
+        #[cfg(hdf5_1_10_1)]
+        {
+            let v = plist.get_page_buffer_size()?;
+            builder.page_buffer_size(v.buf_size, v.min_meta_perc, v.min_raw_perc);
+        }
         #[cfg(hdf5_1_8_13)]
         {
             if let FileDriver::Core(ref drv) = drv {
@@ -471,6 +494,14 @@ impl FileAccessBuilder {
 
     pub fn meta_block_size(&mut self, size: u64) -> &mut Self {
         self.meta_block_size = Some(size);
+        self
+    }
+
+    #[cfg(hdf5_1_10_1)]
+    pub fn page_buffer_size(
+        &mut self, buf_size: usize, min_meta_perc: u32, min_raw_perc: u32,
+    ) -> &mut Self {
+        self.page_buffer_size = Some(PageBufferSize { buf_size, min_meta_perc, min_raw_perc });
         self
     }
 
@@ -689,6 +720,17 @@ impl FileAccessBuilder {
         if let Some(v) = self.meta_block_size {
             h5try!(H5Pset_meta_block_size(id, v as _));
         }
+        #[cfg(hdf5_1_10_1)]
+        {
+            if let Some(v) = self.page_buffer_size {
+                h5try!(H5Pset_page_buffer_size(
+                    id,
+                    v.buf_size as _,
+                    v.min_meta_perc as _,
+                    v.min_raw_perc as _,
+                ));
+            }
+        }
         Ok(())
     }
 
@@ -860,5 +902,22 @@ impl FileAccess {
 
     pub fn meta_block_size(&self) -> u64 {
         self.get_meta_block_size().unwrap_or(2048)
+    }
+
+    #[cfg(hdf5_1_10_1)]
+    #[doc(hidden)]
+    pub fn get_page_buffer_size(&self) -> Result<PageBufferSize> {
+        h5get!(H5Pget_page_buffer_size(self.id()): size_t, c_uint, c_uint).map(
+            |(buf_size, min_meta_perc, min_raw_perc)| PageBufferSize {
+                buf_size: buf_size as _,
+                min_meta_perc: min_meta_perc as _,
+                min_raw_perc: min_raw_perc as _,
+            },
+        )
+    }
+
+    #[cfg(hdf5_1_10_1)]
+    pub fn page_buffer_size(&self) -> PageBufferSize {
+        self.get_page_buffer_size().unwrap_or_else(|_| PageBufferSize::default())
     }
 }
