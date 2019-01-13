@@ -485,7 +485,7 @@ extern "C" {
     ) -> herr_t;
 }
 
-#[cfg(target_env = "msvc")]
+#[cfg(target_os = "windows")]
 extern "C" {
     pub fn H5Pset_fapl_windows(fapl_id: hid_t) -> herr_t;
 }
