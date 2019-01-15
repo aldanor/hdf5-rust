@@ -610,7 +610,7 @@ extern "C" {
     pub fn H5Pset_evict_on_close(fapl_id: hid_t, evict_on_close: hbool_t) -> herr_t;
     pub fn H5Pget_evict_on_close(fapl_id: hid_t, evict_on_close: *mut hbool_t) -> herr_t;
     pub fn H5Pset_mdc_image_config(
-        plist_id: hid_t, config_ptr: *mut H5AC_cache_image_config_t,
+        plist_id: hid_t, config_ptr: *const H5AC_cache_image_config_t,
     ) -> herr_t;
     pub fn H5Pget_mdc_image_config(
         plist_id: hid_t, config_ptr: *mut H5AC_cache_image_config_t,
