@@ -56,8 +56,9 @@ impl<'a> Reader<'a> {
     }
 
     /// Reads a slice of an n-dimensional array.
-    /// If the array has a fixed number of dimensions, it must match the dimensionality of
-    /// dataset. Use the multi-dimensional slice macro `s![]` from `ndarray` to conveniently create
+    /// If the dimensionality `D` has a fixed number of dimensions, it must match the dimensionality of
+    /// the slice, after singleton dimensions are dropped. 
+    /// Use the multi-dimensional slice macro `s![]` from `ndarray` to conveniently create
     /// a multidimensional slice.
     pub fn read_slice<T, S, D>(&self, slice: &SliceInfo<S, D>) -> Result<Array<T, D>>
     where
@@ -68,10 +69,6 @@ impl<'a> Reader<'a> {
         ensure!(!self.obj.is_attr(), "slicing cannot be used on attribute datasets");
 
         let shape = self.obj.get_shape()?;
-        if let Some(ndim) = D::NDIM {
-            let obj_ndim = shape.ndim();
-            ensure!(obj_ndim == ndim, "ndim mismatch: expected {}, got {}", ndim, obj_ndim);
-        }
 
         let slice_s: &[SliceOrIndex] = slice.as_ref();
         let slice_dim = slice_s.len();
@@ -86,7 +83,14 @@ impl<'a> Reader<'a> {
         }
 
         if shape.ndim() == 0 {
-            // Fall back to a simple read for the scalar case, slicing has no effect
+            // Check that return dimensionality is 0.
+            if let Some(ndim) = D::NDIM {
+                let obj_ndim = 0;
+                ensure!(obj_ndim == ndim, "ndim mismatch: slice outputs dims {}, output type dims {}", obj_ndim, ndim);
+            }
+
+            // Fall back to a simple read for the scalar case
+            // Slicing has no effect
             self.read()
         } else {
             let fspace = self.obj.space()?;
@@ -101,6 +105,14 @@ impl<'a> Reader<'a> {
                     _ => Some(sz),
                 })
                 .collect();
+
+            // *Output* dimensionality must match the reduced shape,
+            // (i.e. dimensionality after singleton 'SliceOrIndex::Index'
+            // axes are dropped.
+            if let Some(ndim) = D::NDIM {
+                let obj_ndim = reduced_shape.len();
+                ensure!(obj_ndim == ndim, "ndim mismatch: slice outputs dims {}, output type dims {}", obj_ndim, ndim);
+            }
 
             let mspace = Dataspace::try_new(&out_shape, false)?;
             let size = out_shape.iter().product();
@@ -251,11 +263,6 @@ impl<'a> Writer<'a> {
         ensure!(!self.obj.is_attr(), "slicing cannot be used on attribute datasets");
 
         let shape = self.obj.get_shape()?;
-        if let Some(ndim) = D::NDIM {
-            let obj_ndim = shape.ndim();
-            ensure!(obj_ndim == ndim, "ndim mismatch: expected {}, got {}", ndim, obj_ndim);
-        }
-
         let slice_s: &[SliceOrIndex] = slice.as_ref();
         let slice_dim = slice_s.len();
         if shape.ndim() != slice_dim {
@@ -490,6 +497,17 @@ impl Container {
         self.as_reader().read_1d()
     }
 
+    /// Reads the given `slice` of the dataset into a 1-dimensional array.
+    ///
+    /// The dataset must be 1-dimensional.
+    pub fn read_slice_1d<T, S>(&self, slice: &SliceInfo<S, Ix1>) -> Result<Array1<T>>
+    where
+        T: H5Type,
+        S: AsRef<[SliceOrIndex]>,
+    {
+        self.as_reader().read_slice_1d(slice)
+    }
+
     /// Reads a dataset/attribute into a 2-dimensional array.
     ///
     /// The dataset/attribute must be 2-dimensional.
@@ -497,9 +515,34 @@ impl Container {
         self.as_reader().read_2d()
     }
 
+    /// Reads the given `slice` of the dataset into a 2-dimensional array.
+    ///
+    /// The dataset must be 2-dimensional.
+    pub fn read_slice_2d<T, S>(&self, slice: &SliceInfo<S, Ix2>) -> Result<Array2<T>>
+    where
+        T: H5Type,
+        S: AsRef<[SliceOrIndex]>,
+    {
+        self.as_reader().read_slice_2d(slice)
+    }
+
     /// Reads a dataset/attribute into an array with dynamic number of dimensions.
     pub fn read_dyn<T: H5Type>(&self) -> Result<ArrayD<T>> {
         self.as_reader().read_dyn()
+    }
+
+    /// Reads a slice of an n-dimensional array.
+    /// If the dimensionality `D` has a fixed number of dimensions, it must match the dimensionality of
+    /// the slice, after singleton dimensions are dropped. 
+    /// Use the multi-dimensional slice macro `s![]` from `ndarray` to conveniently create
+    /// a multidimensional slice.
+    pub fn read_slice<T, S, D>(&self, slice: &SliceInfo<S, D>) -> Result<Array<T, D>>
+    where
+        T: H5Type,
+        S: AsRef<[SliceOrIndex]>,
+        D: ndarray::Dimension,
+    {
+        self.as_reader().read_slice(slice)
     }
 
     /// Reads a scalar dataset/attribute.
@@ -531,6 +574,21 @@ impl Container {
         T: H5Type,
     {
         self.as_writer().write_raw(arr)
+    }
+
+    /// Writes all data from the array `arr` into the given `slice` of the target dataset.
+    /// The shape of `arr` must match the shape the set of elements included in the slice.
+    /// If the array has a fixed number of dimensions, it must match the dimensionality of
+    /// dataset. Use the multi-dimensional slice macro `s![]` from `ndarray` to conveniently create
+    /// a multidimensional slice.
+    pub fn write_slice<'b, A, T, S, D>(&self, arr: A, slice: &SliceInfo<S, D>) -> Result<()>
+    where
+        A: Into<ArrayView<'b, T, D>>,
+        T: H5Type,
+        S: AsRef<[SliceOrIndex]>,
+        D: ndarray::Dimension,
+    {
+        self.as_writer().write_slice(arr, slice)
     }
 
     /// Writes a scalar dataset/attribute.
