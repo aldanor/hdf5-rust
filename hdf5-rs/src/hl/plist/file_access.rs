@@ -41,13 +41,16 @@ use libhdf5_sys::h5p::{
     H5Pset_fclose_degree, H5Pset_mdc_config, H5Pset_meta_block_size, H5Pset_sieve_buf_size,
 };
 
+#[cfg(hdf5_1_10_1)]
+use libhdf5_sys::h5ac::{H5AC_cache_image_config_t, H5AC__CACHE_IMAGE__ENTRY_AGEOUT__NONE};
 #[cfg(hdf5_1_8_13)]
 use libhdf5_sys::h5p::{H5Pget_core_write_tracking, H5Pset_core_write_tracking};
 #[cfg(hdf5_1_8_7)]
 use libhdf5_sys::h5p::{H5Pget_elink_file_cache_size, H5Pset_elink_file_cache_size};
 #[cfg(hdf5_1_10_1)]
 use libhdf5_sys::h5p::{
-    H5Pget_evict_on_close, H5Pget_page_buffer_size, H5Pset_evict_on_close, H5Pset_page_buffer_size,
+    H5Pget_evict_on_close, H5Pget_mdc_image_config, H5Pget_page_buffer_size, H5Pset_evict_on_close,
+    H5Pset_mdc_image_config, H5Pset_page_buffer_size,
 };
 #[cfg(hdf5_1_10_0)]
 use libhdf5_sys::h5p::{H5Pget_metadata_read_attempts, H5Pset_metadata_read_attempts};
@@ -98,6 +101,7 @@ impl Debug for FileAccess {
         {
             formatter.field("page_buffer_size", &self.page_buffer_size());
             formatter.field("evict_on_close", &self.evict_on_close());
+            formatter.field("mdc_image_config", &self.mdc_image_config());
         }
         formatter.field("sieve_buf_size", &self.sieve_buf_size());
         #[cfg(hdf5_1_10_0)]
@@ -662,6 +666,37 @@ impl From<H5AC_cache_config_t> for MetadataCacheConfig {
     }
 }
 
+#[cfg(hdf5_1_10_1)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub struct CacheImageConfig {
+    pub generate_image: bool,
+    pub save_resize_status: bool,
+    pub entry_ageout: i32,
+}
+
+#[cfg(hdf5_1_10_1)]
+impl Into<H5AC_cache_image_config_t> for CacheImageConfig {
+    fn into(self) -> H5AC_cache_image_config_t {
+        H5AC_cache_image_config_t {
+            version: H5AC__CURR_CACHE_CONFIG_VERSION,
+            generate_image: self.generate_image as _,
+            save_resize_status: self.save_resize_status as _,
+            entry_ageout: self.entry_ageout as _,
+        }
+    }
+}
+
+#[cfg(hdf5_1_10_1)]
+impl From<H5AC_cache_image_config_t> for CacheImageConfig {
+    fn from(config: H5AC_cache_image_config_t) -> Self {
+        Self {
+            generate_image: config.generate_image > 0,
+            save_resize_status: config.save_resize_status > 0,
+            entry_ageout: config.entry_ageout as _,
+        }
+    }
+}
+
 /// Builder used to create file access property list.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct FileAccessBuilder {
@@ -683,6 +718,8 @@ pub struct FileAccessBuilder {
     #[cfg(hdf5_1_10_0)]
     metadata_read_attempts: Option<u32>,
     mdc_config: Option<MetadataCacheConfig>,
+    #[cfg(hdf5_1_10_1)]
+    mdc_image_config: Option<CacheImageConfig>,
 }
 
 impl FileAccessBuilder {
@@ -711,6 +748,7 @@ impl FileAccessBuilder {
             let v = plist.get_page_buffer_size()?;
             builder.page_buffer_size(v.buf_size, v.min_meta_perc, v.min_raw_perc);
             builder.evict_on_close(plist.get_evict_on_close()?);
+            builder.mdc_image_config(plist.get_mdc_image_config()?.generate_image);
         }
         builder.sieve_buf_size(plist.get_sieve_buf_size()?);
         #[cfg(hdf5_1_10_0)]
@@ -780,6 +818,16 @@ impl FileAccessBuilder {
 
     pub fn mdc_config(&mut self, config: &MetadataCacheConfig) -> &mut Self {
         self.mdc_config = Some(config.clone());
+        self
+    }
+
+    #[cfg(hdf5_1_10_1)]
+    pub fn mdc_image_config(&mut self, generate_image: bool) -> &mut Self {
+        self.mdc_image_config = Some(CacheImageConfig {
+            generate_image,
+            save_resize_status: false,
+            entry_ageout: H5AC__CACHE_IMAGE__ENTRY_AGEOUT__NONE,
+        });
         self
     }
 
@@ -1010,6 +1058,9 @@ impl FileAccessBuilder {
             }
             if let Some(v) = self.evict_on_close {
                 h5try!(H5Pset_evict_on_close(id, v as _));
+            }
+            if let Some(v) = self.mdc_image_config {
+                h5try!(H5Pset_mdc_image_config(id, &v.clone().into() as *const _));
             }
         }
         if let Some(v) = self.sieve_buf_size {
@@ -1254,5 +1305,18 @@ impl FileAccess {
 
     pub fn mdc_config(&self) -> Option<MetadataCacheConfig> {
         self.get_mdc_config().ok()
+    }
+
+    #[cfg(hdf5_1_10_1)]
+    #[doc(hidden)]
+    pub fn get_mdc_image_config(&self) -> Result<CacheImageConfig> {
+        let mut config: H5AC_cache_image_config_t = unsafe { mem::zeroed() };
+        config.version = H5AC__CURR_CACHE_CONFIG_VERSION;
+        h5call!(H5Pget_mdc_image_config(self.id(), &mut config)).map(|_| config.into())
+    }
+
+    #[cfg(hdf5_1_10_1)]
+    pub fn mdc_image_config(&self) -> Option<CacheImageConfig> {
+        self.get_mdc_image_config().ok()
     }
 }
