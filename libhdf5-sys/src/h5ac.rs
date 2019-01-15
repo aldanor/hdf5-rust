@@ -10,6 +10,9 @@ pub const H5AC__MAX_TRACE_FILE_NAME_LEN: usize = 1024;
 pub const H5AC_METADATA_WRITE_STRATEGY__PROCESS_0_ONLY: c_int = 0;
 pub const H5AC_METADATA_WRITE_STRATEGY__DISTRIBUTED: c_int = 1;
 
+pub const H5AC__CACHE_IMAGE__ENTRY_AGEOUT__NONE: i32 = -1;
+pub const H5AC__CACHE_IMAGE__ENTRY_AGEOUT__MAX: i32 = 100;
+
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct H5AC_cache_config_t {
