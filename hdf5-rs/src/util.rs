@@ -1,6 +1,8 @@
 use std::borrow::Borrow;
 use std::ffi::{CStr, CString};
+use std::mem;
 use std::ptr;
+use std::str;
 
 use num_integer::Integer;
 use num_traits::{cast, NumCast};
@@ -16,6 +18,28 @@ pub fn string_from_cstr(string: *const c_char) -> String {
 pub fn to_cstring<S: Borrow<str>>(string: S) -> Result<CString> {
     let string = string.borrow();
     CString::new(string).map_err(|_| format!("null byte in string: {:?}", string).into())
+}
+
+/// Convert a fixed-length (possibly zero-terminated) char buffer to a string.
+pub fn string_from_fixed_bytes(bytes: &[c_char], len: usize) -> String {
+    let len = bytes.iter().position(|&c| c == 0).unwrap_or(len);
+    let s = unsafe { str::from_utf8_unchecked(mem::transmute(&bytes[..len])) };
+    s.to_owned()
+}
+
+/// Write a string into a fixed-length char buffer (possibly truncating it).
+pub fn string_to_fixed_bytes(s: &str, buf: &mut [c_char]) {
+    let mut s = s;
+    while s.as_bytes().len() > buf.len() {
+        s = &s[..(s.len() - 1)];
+    }
+    let bytes = s.as_bytes();
+    unsafe {
+        ptr::copy_nonoverlapping(bytes.as_ptr(), buf.as_mut_ptr() as *mut _, bytes.len());
+    }
+    for c in &mut buf[bytes.len()..] {
+        *c = 0;
+    }
 }
 
 #[doc(hidden)]
