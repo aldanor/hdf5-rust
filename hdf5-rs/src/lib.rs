@@ -73,7 +73,7 @@ mod hl;
 
 mod internal_prelude {
     pub use libc::size_t;
-    pub use std::os::raw::{c_char, c_double, c_int, c_uint, c_void};
+    pub use std::os::raw::{c_char, c_double, c_int, c_long, c_uint, c_void};
 
     pub use libhdf5_sys::{
         h5::{haddr_t, hbool_t, herr_t, hsize_t},
