@@ -326,7 +326,7 @@ lazy_static! {
     pub static ref H5FD_MULTI: hid_t = unsafe { h5lock!(H5FD_multi_init()) };
 }
 
-#[cfg(target_env = "msvc")]
+#[cfg(target_os = "windows")]
 lazy_static! {
     pub static ref H5FD_WINDOWS: hid_t = *H5FD_SEC2;
 }
