@@ -5,7 +5,7 @@ use crate::internal_prelude::*;
 use crate::h5c::{H5C_cache_decr_mode, H5C_cache_flash_incr_mode, H5C_cache_incr_mode};
 
 pub const H5AC__CURR_CACHE_CONFIG_VERSION: c_int = 1;
-pub const H5AC__MAX_TRACE_FILE_NAME_LEN: c_int = 1024;
+pub const H5AC__MAX_TRACE_FILE_NAME_LEN: usize = 1024;
 
 pub const H5AC_METADATA_WRITE_STRATEGY__PROCESS_0_ONLY: c_int = 0;
 pub const H5AC_METADATA_WRITE_STRATEGY__DISTRIBUTED: c_int = 1;
@@ -17,7 +17,7 @@ pub struct H5AC_cache_config_t {
     pub rpt_fcn_enabled: hbool_t,
     pub open_trace_file: hbool_t,
     pub close_trace_file: hbool_t,
-    pub trace_file_name: [c_char; 1025usize],
+    pub trace_file_name: [c_char; H5AC__MAX_TRACE_FILE_NAME_LEN + 1],
     pub evictions_enabled: hbool_t,
     pub set_initial_size: hbool_t,
     pub initial_size: size_t,
