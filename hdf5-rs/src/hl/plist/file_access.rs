@@ -17,6 +17,12 @@ use std::ptr;
 
 use bitflags::bitflags;
 
+use libhdf5_sys::h5ac::{
+    H5AC_cache_config_t, H5AC_METADATA_WRITE_STRATEGY__DISTRIBUTED,
+    H5AC_METADATA_WRITE_STRATEGY__PROCESS_0_ONLY, H5AC__CURR_CACHE_CONFIG_VERSION,
+    H5AC__MAX_TRACE_FILE_NAME_LEN,
+};
+use libhdf5_sys::h5c::{H5C_cache_decr_mode, H5C_cache_flash_incr_mode, H5C_cache_incr_mode};
 use libhdf5_sys::h5f::{H5F_close_degree_t, H5F_mem_t, H5F_FAMILY_DEFAULT};
 use libhdf5_sys::h5fd::H5FD_MEM_NTYPES;
 use libhdf5_sys::h5fd::{
@@ -29,10 +35,10 @@ use libhdf5_sys::h5fd::{
 };
 use libhdf5_sys::h5p::{
     H5Pcreate, H5Pget_alignment, H5Pget_cache, H5Pget_driver, H5Pget_fapl_core, H5Pget_fapl_family,
-    H5Pget_fapl_multi, H5Pget_fclose_degree, H5Pget_meta_block_size, H5Pget_sieve_buf_size,
-    H5Pset_alignment, H5Pset_cache, H5Pset_fapl_core, H5Pset_fapl_family, H5Pset_fapl_log,
-    H5Pset_fapl_multi, H5Pset_fapl_sec2, H5Pset_fapl_split, H5Pset_fapl_stdio,
-    H5Pset_fclose_degree, H5Pset_meta_block_size, H5Pset_sieve_buf_size,
+    H5Pget_fapl_multi, H5Pget_fclose_degree, H5Pget_mdc_config, H5Pget_meta_block_size,
+    H5Pget_sieve_buf_size, H5Pset_alignment, H5Pset_cache, H5Pset_fapl_core, H5Pset_fapl_family,
+    H5Pset_fapl_log, H5Pset_fapl_multi, H5Pset_fapl_sec2, H5Pset_fapl_split, H5Pset_fapl_stdio,
+    H5Pset_fclose_degree, H5Pset_mdc_config, H5Pset_meta_block_size, H5Pset_sieve_buf_size,
 };
 
 #[cfg(hdf5_1_8_13)]
@@ -98,6 +104,7 @@ impl Debug for FileAccess {
         {
             formatter.field("metadata_read_attempts", &self.metadata_read_attempts());
         }
+        formatter.field("mdc_config", &self.mdc_config());
         formatter.field("driver", &self.driver());
         formatter.finish()
     }
@@ -432,6 +439,229 @@ impl Default for PageBufferSize {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CacheIncreaseMode {
+    Off,
+    Threshold,
+}
+
+impl From<H5C_cache_incr_mode> for CacheIncreaseMode {
+    fn from(mode: H5C_cache_incr_mode) -> Self {
+        use self::{CacheIncreaseMode::*, H5C_cache_incr_mode::*};
+        match mode {
+            H5C_incr__threshold => Threshold,
+            _ => Off,
+        }
+    }
+}
+
+impl Into<H5C_cache_incr_mode> for CacheIncreaseMode {
+    fn into(self) -> H5C_cache_incr_mode {
+        use self::{CacheIncreaseMode::*, H5C_cache_incr_mode::*};
+        match self {
+            Threshold => H5C_incr__threshold,
+            _ => H5C_incr__off,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum FlashIncreaseMode {
+    Off,
+    AddSpace,
+}
+
+impl From<H5C_cache_flash_incr_mode> for FlashIncreaseMode {
+    fn from(mode: H5C_cache_flash_incr_mode) -> Self {
+        use self::{FlashIncreaseMode::*, H5C_cache_flash_incr_mode::*};
+        match mode {
+            H5C_flash_incr__add_space => AddSpace,
+            _ => Off,
+        }
+    }
+}
+
+impl Into<H5C_cache_flash_incr_mode> for FlashIncreaseMode {
+    fn into(self) -> H5C_cache_flash_incr_mode {
+        use self::{FlashIncreaseMode::*, H5C_cache_flash_incr_mode::*};
+        match self {
+            AddSpace => H5C_flash_incr__add_space,
+            _ => H5C_flash_incr__off,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CacheDecreaseMode {
+    Off,
+    Threshold,
+    AgeOut,
+    AgeOutWithThreshold,
+}
+
+impl From<H5C_cache_decr_mode> for CacheDecreaseMode {
+    fn from(mode: H5C_cache_decr_mode) -> Self {
+        use self::{CacheDecreaseMode::*, H5C_cache_decr_mode::*};
+        match mode {
+            H5C_decr__threshold => Threshold,
+            H5C_decr__age_out => AgeOut,
+            H5C_decr__age_out_with_threshold => AgeOutWithThreshold,
+            _ => Off,
+        }
+    }
+}
+
+impl Into<H5C_cache_decr_mode> for CacheDecreaseMode {
+    fn into(self) -> H5C_cache_decr_mode {
+        use self::{CacheDecreaseMode::*, H5C_cache_decr_mode::*};
+        match self {
+            Threshold => H5C_decr__threshold,
+            AgeOut => H5C_decr__age_out,
+            AgeOutWithThreshold => H5C_decr__age_out_with_threshold,
+            _ => H5C_decr__off,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum MetadataWriteStrategy {
+    ProcessZeroOnly,
+    Distributed,
+}
+
+impl From<c_int> for MetadataWriteStrategy {
+    fn from(strategy: c_int) -> Self {
+        use self::MetadataWriteStrategy::*;
+        match strategy {
+            H5AC_METADATA_WRITE_STRATEGY__DISTRIBUTED => Distributed,
+            _ => ProcessZeroOnly,
+        }
+    }
+}
+
+impl Into<c_int> for MetadataWriteStrategy {
+    fn into(self) -> c_int {
+        use self::MetadataWriteStrategy::*;
+        match self {
+            Distributed => H5AC_METADATA_WRITE_STRATEGY__DISTRIBUTED,
+            _ => H5AC_METADATA_WRITE_STRATEGY__PROCESS_0_ONLY,
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct MetadataCacheConfig {
+    pub rpt_fcn_enabled: bool,
+    pub open_trace_file: bool,
+    pub close_trace_file: bool,
+    pub trace_file_name: String,
+    pub evictions_enabled: bool,
+    pub set_initial_size: bool,
+    pub initial_size: usize,
+    pub min_clean_fraction: f64,
+    pub max_size: usize,
+    pub min_size: usize,
+    pub epoch_length: i64,
+    pub incr_mode: CacheIncreaseMode,
+    pub lower_hr_threshold: f64,
+    pub increment: f64,
+    pub apply_max_increment: bool,
+    pub max_increment: usize,
+    pub flash_incr_mode: FlashIncreaseMode,
+    pub flash_multiple: f64,
+    pub flash_threshold: f64,
+    pub decr_mode: CacheDecreaseMode,
+    pub upper_hr_threshold: f64,
+    pub decrement: f64,
+    pub apply_max_decrement: bool,
+    pub max_decrement: usize,
+    pub epochs_before_eviction: i32,
+    pub apply_empty_reserve: bool,
+    pub empty_reserve: f64,
+    pub dirty_bytes_threshold: usize,
+    pub metadata_write_strategy: MetadataWriteStrategy,
+}
+
+impl Eq for MetadataCacheConfig {}
+
+impl Into<H5AC_cache_config_t> for MetadataCacheConfig {
+    fn into(self) -> H5AC_cache_config_t {
+        const N: usize = H5AC__MAX_TRACE_FILE_NAME_LEN;
+        let mut trace_file_name: [c_char; N + 1] = unsafe { mem::zeroed() };
+        string_to_fixed_bytes(&self.trace_file_name, &mut trace_file_name[..N]);
+        H5AC_cache_config_t {
+            version: H5AC__CURR_CACHE_CONFIG_VERSION,
+            rpt_fcn_enabled: self.rpt_fcn_enabled as _,
+            open_trace_file: self.open_trace_file as _,
+            close_trace_file: self.close_trace_file as _,
+            trace_file_name,
+            evictions_enabled: self.evictions_enabled as _,
+            set_initial_size: self.set_initial_size as _,
+            initial_size: self.initial_size as _,
+            min_clean_fraction: self.min_clean_fraction as _,
+            max_size: self.max_size as _,
+            min_size: self.min_size as _,
+            epoch_length: self.epoch_length as _,
+            incr_mode: self.incr_mode.into(),
+            lower_hr_threshold: self.lower_hr_threshold as _,
+            increment: self.increment as _,
+            apply_max_increment: self.apply_max_increment as _,
+            max_increment: self.max_increment as _,
+            flash_incr_mode: self.flash_incr_mode.into(),
+            flash_multiple: self.flash_multiple as _,
+            flash_threshold: self.flash_threshold as _,
+            decr_mode: self.decr_mode.into(),
+            upper_hr_threshold: self.upper_hr_threshold as _,
+            decrement: self.decrement as _,
+            apply_max_decrement: self.apply_max_decrement as _,
+            max_decrement: self.max_decrement as _,
+            epochs_before_eviction: self.epochs_before_eviction as _,
+            apply_empty_reserve: self.apply_empty_reserve as _,
+            empty_reserve: self.empty_reserve as _,
+            dirty_bytes_threshold: self.dirty_bytes_threshold as _,
+            metadata_write_strategy: self.metadata_write_strategy.into(),
+        }
+    }
+}
+
+impl From<H5AC_cache_config_t> for MetadataCacheConfig {
+    fn from(mdc: H5AC_cache_config_t) -> Self {
+        const N: usize = H5AC__MAX_TRACE_FILE_NAME_LEN;
+        let trace_file_name = string_from_fixed_bytes(&mdc.trace_file_name, N);
+        Self {
+            rpt_fcn_enabled: mdc.rpt_fcn_enabled > 0,
+            open_trace_file: mdc.open_trace_file > 0,
+            close_trace_file: mdc.close_trace_file > 0,
+            trace_file_name,
+            evictions_enabled: mdc.evictions_enabled > 0,
+            set_initial_size: mdc.set_initial_size > 0,
+            initial_size: mdc.initial_size as _,
+            min_clean_fraction: mdc.min_clean_fraction as _,
+            max_size: mdc.max_size as _,
+            min_size: mdc.min_size as _,
+            epoch_length: mdc.epoch_length as _,
+            incr_mode: mdc.incr_mode.into(),
+            lower_hr_threshold: mdc.lower_hr_threshold as _,
+            increment: mdc.increment as _,
+            apply_max_increment: mdc.apply_max_increment > 0,
+            max_increment: mdc.max_increment as _,
+            flash_incr_mode: mdc.flash_incr_mode.into(),
+            flash_multiple: mdc.flash_multiple as _,
+            flash_threshold: mdc.flash_threshold as _,
+            decr_mode: mdc.decr_mode.into(),
+            upper_hr_threshold: mdc.upper_hr_threshold as _,
+            decrement: mdc.decrement as _,
+            apply_max_decrement: mdc.apply_max_decrement > 0,
+            max_decrement: mdc.max_decrement as _,
+            epochs_before_eviction: mdc.epochs_before_eviction as _,
+            apply_empty_reserve: mdc.apply_empty_reserve > 0,
+            empty_reserve: mdc.empty_reserve as _,
+            dirty_bytes_threshold: mdc.dirty_bytes_threshold as _,
+            metadata_write_strategy: mdc.metadata_write_strategy.into(),
+        }
+    }
+}
+
 /// Builder used to create file access property list.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct FileAccessBuilder {
@@ -452,6 +682,7 @@ pub struct FileAccessBuilder {
     evict_on_close: Option<bool>,
     #[cfg(hdf5_1_10_0)]
     metadata_read_attempts: Option<u32>,
+    mdc_config: Option<MetadataCacheConfig>,
 }
 
 impl FileAccessBuilder {
@@ -486,6 +717,7 @@ impl FileAccessBuilder {
         {
             builder.metadata_read_attempts(plist.get_metadata_read_attempts()?);
         }
+        builder.mdc_config(&plist.get_mdc_config()?);
         #[cfg(hdf5_1_8_13)]
         {
             if let FileDriver::Core(ref drv) = drv {
@@ -543,6 +775,11 @@ impl FileAccessBuilder {
     #[cfg(hdf5_1_10_0)]
     pub fn metadata_read_attempts(&mut self, attempts: u32) -> &mut Self {
         self.metadata_read_attempts = Some(attempts);
+        self
+    }
+
+    pub fn mdc_config(&mut self, config: &MetadataCacheConfig) -> &mut Self {
+        self.mdc_config = Some(config.clone());
         self
     }
 
@@ -784,6 +1021,9 @@ impl FileAccessBuilder {
                 h5try!(H5Pset_metadata_read_attempts(id, v as _));
             }
         }
+        if let Some(ref v) = self.mdc_config {
+            h5try!(H5Pset_mdc_config(id, &v.clone().into() as *const _));
+        }
         Ok(())
     }
 
@@ -1003,5 +1243,16 @@ impl FileAccess {
     #[cfg(hdf5_1_10_0)]
     pub fn metadata_read_attempts(&self) -> u32 {
         self.get_metadata_read_attempts().unwrap_or(1)
+    }
+
+    #[doc(hidden)]
+    pub fn get_mdc_config(&self) -> Result<MetadataCacheConfig> {
+        let mut config: H5AC_cache_config_t = unsafe { mem::zeroed() };
+        config.version = H5AC__CURR_CACHE_CONFIG_VERSION;
+        h5call!(H5Pget_mdc_config(self.id(), &mut config)).map(|_| config.into())
+    }
+
+    pub fn mdc_config(&self) -> Option<MetadataCacheConfig> {
+        self.get_mdc_config().ok()
     }
 }
