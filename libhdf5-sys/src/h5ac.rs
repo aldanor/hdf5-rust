@@ -44,7 +44,7 @@ pub struct H5AC_cache_config_t {
     pub epochs_before_eviction: c_int,
     pub apply_empty_reserve: hbool_t,
     pub empty_reserve: c_double,
-    pub dirty_bytes_threshold: c_int,
+    pub dirty_bytes_threshold: size_t,
     pub metadata_write_strategy: c_int,
 }
 
