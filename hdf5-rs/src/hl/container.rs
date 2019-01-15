@@ -60,10 +60,9 @@ impl<'a> Reader<'a> {
     /// the slice, after singleton dimensions are dropped. 
     /// Use the multi-dimensional slice macro `s![]` from `ndarray` to conveniently create
     /// a multidimensional slice.
-    pub fn read_slice<T, S, D>(&self, slice: &SliceInfo<S, D>) -> Result<Array<T, D>>
+    pub fn read_slice<T, D>(&self, slice: &AsRef<[SliceOrIndex]>) -> Result<Array<T, D>>
     where
         T: H5Type,
-        S: AsRef<[SliceOrIndex]>,
         D: ndarray::Dimension,
     {
         ensure!(!self.obj.is_attr(), "slicing cannot be used on attribute datasets");
@@ -163,10 +162,9 @@ impl<'a> Reader<'a> {
     /// Reads the given `slice` of the dataset into a 1-dimensional array.
     ///
     /// The dataset must be 1-dimensional.
-    pub fn read_slice_1d<T, S>(&self, slice: &SliceInfo<S, Ix1>) -> Result<Array1<T>>
+    pub fn read_slice_1d<T>(&self, slice: &AsRef<[SliceOrIndex]>) -> Result<Array1<T>>
     where
         T: H5Type,
-        S: AsRef<[SliceOrIndex]>,
     {
         self.read_slice(slice)
     }
@@ -181,10 +179,9 @@ impl<'a> Reader<'a> {
     /// Reads the given `slice` of the dataset into a 2-dimensional array.
     ///
     /// The dataset must be 2-dimensional.
-    pub fn read_slice_2d<T, S>(&self, slice: &SliceInfo<S, Ix2>) -> Result<Array2<T>>
+    pub fn read_slice_2d<T>(&self, slice: &AsRef<[SliceOrIndex]>) -> Result<Array2<T>>
     where
         T: H5Type,
-        S: AsRef<[SliceOrIndex]>,
     {
         self.read_slice(slice)
     }
@@ -253,11 +250,10 @@ impl<'a> Writer<'a> {
     /// If the array has a fixed number of dimensions, it must match the dimensionality of
     /// dataset. Use the multi-dimensional slice macro `s![]` from `ndarray` to conveniently create
     /// a multidimensional slice.
-    pub fn write_slice<'b, A, T, S, D>(&self, arr: A, slice: &SliceInfo<S, D>) -> Result<()>
+    pub fn write_slice<'b, A, T, D>(&self, arr: A, slice: &AsRef<[SliceOrIndex]>) -> Result<()>
     where
         A: Into<ArrayView<'b, T, D>>,
         T: H5Type,
-        S: AsRef<[SliceOrIndex]>,
         D: ndarray::Dimension,
     {
         ensure!(!self.obj.is_attr(), "slicing cannot be used on attribute datasets");
@@ -500,10 +496,9 @@ impl Container {
     /// Reads the given `slice` of the dataset into a 1-dimensional array.
     ///
     /// The dataset must be 1-dimensional.
-    pub fn read_slice_1d<T, S>(&self, slice: &SliceInfo<S, Ix1>) -> Result<Array1<T>>
+    pub fn read_slice_1d<T>(&self, slice: &AsRef<[SliceOrIndex]>) -> Result<Array1<T>>
     where
-        T: H5Type,
-        S: AsRef<[SliceOrIndex]>,
+        T: H5Type
     {
         self.as_reader().read_slice_1d(slice)
     }
@@ -518,10 +513,9 @@ impl Container {
     /// Reads the given `slice` of the dataset into a 2-dimensional array.
     ///
     /// The dataset must be 2-dimensional.
-    pub fn read_slice_2d<T, S>(&self, slice: &SliceInfo<S, Ix2>) -> Result<Array2<T>>
+    pub fn read_slice_2d<T>(&self, slice: &AsRef<[SliceOrIndex]>) -> Result<Array2<T>>
     where
-        T: H5Type,
-        S: AsRef<[SliceOrIndex]>,
+        T: H5Type
     {
         self.as_reader().read_slice_2d(slice)
     }
@@ -536,10 +530,9 @@ impl Container {
     /// the slice, after singleton dimensions are dropped. 
     /// Use the multi-dimensional slice macro `s![]` from `ndarray` to conveniently create
     /// a multidimensional slice.
-    pub fn read_slice<T, S, D>(&self, slice: &SliceInfo<S, D>) -> Result<Array<T, D>>
+    pub fn read_slice<T, D>(&self, slice: &AsRef<[SliceOrIndex]>) -> Result<Array<T, D>>
     where
         T: H5Type,
-        S: AsRef<[SliceOrIndex]>,
         D: ndarray::Dimension,
     {
         self.as_reader().read_slice(slice)
@@ -581,11 +574,10 @@ impl Container {
     /// If the array has a fixed number of dimensions, it must match the dimensionality of
     /// dataset. Use the multi-dimensional slice macro `s![]` from `ndarray` to conveniently create
     /// a multidimensional slice.
-    pub fn write_slice<'b, A, T, S, D>(&self, arr: A, slice: &SliceInfo<S, D>) -> Result<()>
+    pub fn write_slice<'b, A, T, D>(&self, arr: A, slice: &AsRef<[SliceOrIndex]>) -> Result<()>
     where
         A: Into<ArrayView<'b, T, D>>,
         T: H5Type,
-        S: AsRef<[SliceOrIndex]>,
         D: ndarray::Dimension,
     {
         self.as_writer().write_slice(arr, slice)
