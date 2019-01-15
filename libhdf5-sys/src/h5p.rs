@@ -316,7 +316,7 @@ extern "C" {
         plist_id: hid_t, mdc_nelmts: *mut c_int, rdcc_nslots: *mut size_t,
         rdcc_nbytes: *mut size_t, rdcc_w0: *mut c_double,
     ) -> herr_t;
-    pub fn H5Pset_mdc_config(plist_id: hid_t, config_ptr: *mut H5AC_cache_config_t) -> herr_t;
+    pub fn H5Pset_mdc_config(plist_id: hid_t, config_ptr: *const H5AC_cache_config_t) -> herr_t;
     pub fn H5Pget_mdc_config(plist_id: hid_t, config_ptr: *mut H5AC_cache_config_t) -> herr_t;
     pub fn H5Pset_gc_references(fapl_id: hid_t, gc_ref: c_uint) -> herr_t;
     pub fn H5Pget_gc_references(fapl_id: hid_t, gc_ref: *mut c_uint) -> herr_t;
