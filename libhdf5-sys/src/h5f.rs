@@ -114,6 +114,12 @@ pub const H5F_LIBVER_LATEST: H5F_libver_t = H5F_LIBVER_V18;
 #[cfg(hdf5_1_10_0)]
 pub const H5F_LIBVER_LATEST: H5F_libver_t = H5F_LIBVER_V110;
 
+impl Default for H5F_libver_t {
+    fn default() -> Self {
+        H5F_LIBVER_LATEST
+    }
+}
+
 #[cfg(not(hdf5_1_10_0))]
 extern "C" {
     pub fn H5Fget_info(obj_id: hid_t, bh_info: *mut H5F_info_t) -> herr_t;
