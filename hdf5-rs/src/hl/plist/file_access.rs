@@ -7,6 +7,11 @@ Not supported due to complexity combined with low likelihood of ever being used:
 - Direct file image API: H5P{set,get}_file_image, H5P{set,get}_file_image_callbacks
 - Custom file access property lists in multi/family drivers
 - Interfacing directly with multi/family parts via types/offsets
+
+Not currently supported because it's only available in parallel mode:
+
+- H5P{set,get}_all_coll_metadata_ops
+- H5P{set,get}_coll_metadata_write
 */
 
 use std::fmt::{self, Debug};
