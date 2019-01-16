@@ -35,10 +35,11 @@ use libhdf5_sys::h5fd::{
 };
 use libhdf5_sys::h5p::{
     H5Pcreate, H5Pget_alignment, H5Pget_cache, H5Pget_driver, H5Pget_fapl_core, H5Pget_fapl_family,
-    H5Pget_fapl_multi, H5Pget_fclose_degree, H5Pget_mdc_config, H5Pget_meta_block_size,
-    H5Pget_sieve_buf_size, H5Pset_alignment, H5Pset_cache, H5Pset_fapl_core, H5Pset_fapl_family,
-    H5Pset_fapl_log, H5Pset_fapl_multi, H5Pset_fapl_sec2, H5Pset_fapl_split, H5Pset_fapl_stdio,
-    H5Pset_fclose_degree, H5Pset_mdc_config, H5Pset_meta_block_size, H5Pset_sieve_buf_size,
+    H5Pget_fapl_multi, H5Pget_fclose_degree, H5Pget_gc_references, H5Pget_mdc_config,
+    H5Pget_meta_block_size, H5Pget_sieve_buf_size, H5Pset_alignment, H5Pset_cache,
+    H5Pset_fapl_core, H5Pset_fapl_family, H5Pset_fapl_log, H5Pset_fapl_multi, H5Pset_fapl_sec2,
+    H5Pset_fapl_split, H5Pset_fapl_stdio, H5Pset_fclose_degree, H5Pset_gc_references,
+    H5Pset_mdc_config, H5Pset_meta_block_size, H5Pset_sieve_buf_size,
 };
 
 #[cfg(hdf5_1_10_1)]
@@ -95,6 +96,7 @@ impl Debug for FileAccess {
         formatter.field("alignment", &self.alignment());
         formatter.field("chunk_cache", &self.chunk_cache());
         formatter.field("fclose_degree", &self.fclose_degree());
+        formatter.field("gc_references", &self.gc_references());
         #[cfg(hdf5_1_8_7)]
         {
             formatter.field("elink_file_cache_size", &self.elink_file_cache_size());
@@ -734,6 +736,7 @@ pub struct FileAccessBuilder {
     mdc_image_config: Option<CacheImageConfig>,
     #[cfg(hdf5_1_10_0)]
     mdc_log_options: Option<CacheLogOptions>,
+    gc_references: Option<bool>,
 }
 
 impl FileAccessBuilder {
@@ -752,6 +755,7 @@ impl FileAccessBuilder {
         builder.chunk_cache(v.nslots, v.nbytes, v.w0);
         let drv = plist.get_driver()?;
         builder.driver(&drv);
+        builder.gc_references(plist.get_gc_references()?);
         #[cfg(hdf5_1_8_7)]
         {
             builder.elink_file_cache_size(plist.get_elink_file_cache_size()?);
@@ -853,6 +857,11 @@ impl FileAccessBuilder {
     ) -> &mut Self {
         self.mdc_log_options =
             Some(CacheLogOptions { is_enabled, location: location.into(), start_on_access });
+        self
+    }
+
+    pub fn gc_references(&mut self, gc_ref: bool) -> &mut Self {
+        self.gc_references = Some(gc_ref);
         self
     }
 
@@ -1061,6 +1070,9 @@ impl FileAccessBuilder {
         }
         if let Some(v) = self.fclose_degree {
             h5try!(H5Pset_fclose_degree(id, v.into()));
+        }
+        if let Some(v) = self.gc_references {
+            h5try!(H5Pset_gc_references(id, v as _));
         }
         #[cfg(hdf5_1_8_7)]
         {
@@ -1385,5 +1397,14 @@ impl FileAccess {
     #[cfg(hdf5_1_10_0)]
     pub fn mdc_log_options(&self) -> Option<CacheLogOptions> {
         self.get_mdc_log_options().ok()
+    }
+
+    #[doc(hidden)]
+    pub fn get_gc_references(&self) -> Result<bool> {
+        h5get!(H5Pget_gc_references(self.id()): c_uint).map(|x| x > 0)
+    }
+
+    pub fn gc_references(&self) -> bool {
+        self.get_gc_references().unwrap_or(false)
     }
 }
