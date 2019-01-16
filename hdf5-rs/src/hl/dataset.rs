@@ -109,9 +109,9 @@ impl Dataset {
     pub fn tracks_times(&self) -> bool {
         h5lock!({
             self.dcpl_id().ok().map_or(false, |dcpl_id| {
-                let track_times: *mut hbool_t = &mut 0;
-                h5lock!(H5Pget_obj_track_times(dcpl_id, track_times));
-                *track_times == 1
+                let mut track_times: hbool_t = 0;
+                h5lock!(H5Pget_obj_track_times(dcpl_id, &mut track_times as *mut _));
+                track_times > 0
             })
         })
     }
