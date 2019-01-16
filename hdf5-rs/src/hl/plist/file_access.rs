@@ -53,7 +53,10 @@ use libhdf5_sys::h5p::{
     H5Pset_mdc_image_config, H5Pset_page_buffer_size,
 };
 #[cfg(hdf5_1_10_0)]
-use libhdf5_sys::h5p::{H5Pget_metadata_read_attempts, H5Pset_metadata_read_attempts};
+use libhdf5_sys::h5p::{
+    H5Pget_mdc_log_options, H5Pget_metadata_read_attempts, H5Pset_mdc_log_options,
+    H5Pset_metadata_read_attempts,
+};
 
 use crate::globals::{
     H5FD_CORE, H5FD_FAMILY, H5FD_LOG, H5FD_MULTI, H5FD_SEC2, H5FD_STDIO, H5P_FILE_ACCESS,
@@ -107,6 +110,7 @@ impl Debug for FileAccess {
         #[cfg(hdf5_1_10_0)]
         {
             formatter.field("metadata_read_attempts", &self.metadata_read_attempts());
+            formatter.field("mdc_log_options", &self.mdc_log_options());
         }
         formatter.field("mdc_config", &self.mdc_config());
         formatter.field("driver", &self.driver());
@@ -697,6 +701,14 @@ impl From<H5AC_cache_image_config_t> for CacheImageConfig {
     }
 }
 
+#[cfg(hdf5_1_10_0)]
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct CacheLogOptions {
+    pub is_enabled: bool,
+    pub location: String,
+    pub start_on_access: bool,
+}
+
 /// Builder used to create file access property list.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct FileAccessBuilder {
@@ -720,6 +732,8 @@ pub struct FileAccessBuilder {
     mdc_config: Option<MetadataCacheConfig>,
     #[cfg(hdf5_1_10_1)]
     mdc_image_config: Option<CacheImageConfig>,
+    #[cfg(hdf5_1_10_0)]
+    mdc_log_options: Option<CacheLogOptions>,
 }
 
 impl FileAccessBuilder {
@@ -754,6 +768,8 @@ impl FileAccessBuilder {
         #[cfg(hdf5_1_10_0)]
         {
             builder.metadata_read_attempts(plist.get_metadata_read_attempts()?);
+            let v = plist.get_mdc_log_options()?;
+            builder.mdc_log_options(v.is_enabled, &v.location, v.start_on_access);
         }
         builder.mdc_config(&plist.get_mdc_config()?);
         #[cfg(hdf5_1_8_13)]
@@ -828,6 +844,15 @@ impl FileAccessBuilder {
             save_resize_status: false,
             entry_ageout: H5AC__CACHE_IMAGE__ENTRY_AGEOUT__NONE,
         });
+        self
+    }
+
+    #[cfg(hdf5_1_10_0)]
+    pub fn mdc_log_options(
+        &mut self, is_enabled: bool, location: &str, start_on_access: bool,
+    ) -> &mut Self {
+        self.mdc_log_options =
+            Some(CacheLogOptions { is_enabled, location: location.into(), start_on_access });
         self
     }
 
@@ -1070,6 +1095,15 @@ impl FileAccessBuilder {
         {
             if let Some(v) = self.metadata_read_attempts {
                 h5try!(H5Pset_metadata_read_attempts(id, v as _));
+            }
+            if let Some(ref v) = self.mdc_log_options {
+                let location = to_cstring(v.location.as_ref())?;
+                h5try!(H5Pset_mdc_log_options(
+                    id,
+                    v.is_enabled as _,
+                    location.as_ptr(),
+                    v.start_on_access as _,
+                ));
             }
         }
         if let Some(ref v) = self.mdc_config {
@@ -1318,5 +1352,38 @@ impl FileAccess {
     #[cfg(hdf5_1_10_1)]
     pub fn mdc_image_config(&self) -> Option<CacheImageConfig> {
         self.get_mdc_image_config().ok()
+    }
+
+    #[cfg(hdf5_1_10_0)]
+    #[doc(hidden)]
+    pub fn get_mdc_log_options(&self) -> Result<CacheLogOptions> {
+        let mut is_enabled: hbool_t = 0;
+        let mut location_size: size_t = 0;
+        let mut start_on_access: hbool_t = 0;
+        h5try!(H5Pget_mdc_log_options(
+            self.id(),
+            &mut is_enabled,
+            ptr::null_mut(),
+            &mut location_size,
+            &mut start_on_access
+        ));
+        let mut buf = vec![0; 1 + (location_size as usize)];
+        h5try!(H5Pget_mdc_log_options(
+            self.id(),
+            &mut is_enabled,
+            buf.as_mut_ptr(),
+            ptr::null_mut(),
+            &mut start_on_access
+        ));
+        Ok(CacheLogOptions {
+            is_enabled: is_enabled > 0,
+            location: string_from_cstr(buf.as_ptr()),
+            start_on_access: start_on_access > 0,
+        })
+    }
+
+    #[cfg(hdf5_1_10_0)]
+    pub fn mdc_log_options(&self) -> Option<CacheLogOptions> {
+        self.get_mdc_log_options().ok()
     }
 }
