@@ -23,7 +23,7 @@ use libhdf5_sys::h5ac::{
     H5AC__MAX_TRACE_FILE_NAME_LEN,
 };
 use libhdf5_sys::h5c::{H5C_cache_decr_mode, H5C_cache_flash_incr_mode, H5C_cache_incr_mode};
-use libhdf5_sys::h5f::{H5F_close_degree_t, H5F_mem_t, H5F_FAMILY_DEFAULT};
+use libhdf5_sys::h5f::{H5F_close_degree_t, H5F_libver_t, H5F_mem_t, H5F_FAMILY_DEFAULT};
 use libhdf5_sys::h5fd::H5FD_MEM_NTYPES;
 use libhdf5_sys::h5fd::{
     H5FD_LOG_ALL, H5FD_LOG_FILE_IO, H5FD_LOG_FILE_READ, H5FD_LOG_FILE_WRITE, H5FD_LOG_FLAVOR,
@@ -35,12 +35,12 @@ use libhdf5_sys::h5fd::{
 };
 use libhdf5_sys::h5p::{
     H5Pcreate, H5Pget_alignment, H5Pget_cache, H5Pget_driver, H5Pget_fapl_core, H5Pget_fapl_family,
-    H5Pget_fapl_multi, H5Pget_fclose_degree, H5Pget_gc_references, H5Pget_mdc_config,
-    H5Pget_meta_block_size, H5Pget_sieve_buf_size, H5Pget_small_data_block_size, H5Pset_alignment,
-    H5Pset_cache, H5Pset_fapl_core, H5Pset_fapl_family, H5Pset_fapl_log, H5Pset_fapl_multi,
-    H5Pset_fapl_sec2, H5Pset_fapl_split, H5Pset_fapl_stdio, H5Pset_fclose_degree,
-    H5Pset_gc_references, H5Pset_mdc_config, H5Pset_meta_block_size, H5Pset_sieve_buf_size,
-    H5Pset_small_data_block_size,
+    H5Pget_fapl_multi, H5Pget_fclose_degree, H5Pget_gc_references, H5Pget_libver_bounds,
+    H5Pget_mdc_config, H5Pget_meta_block_size, H5Pget_sieve_buf_size, H5Pget_small_data_block_size,
+    H5Pset_alignment, H5Pset_cache, H5Pset_fapl_core, H5Pset_fapl_family, H5Pset_fapl_log,
+    H5Pset_fapl_multi, H5Pset_fapl_sec2, H5Pset_fapl_split, H5Pset_fapl_stdio,
+    H5Pset_fclose_degree, H5Pset_gc_references, H5Pset_libver_bounds, H5Pset_mdc_config,
+    H5Pset_meta_block_size, H5Pset_sieve_buf_size, H5Pset_small_data_block_size,
 };
 
 #[cfg(hdf5_1_10_1)]
@@ -99,6 +99,7 @@ impl Debug for FileAccess {
         formatter.field("fclose_degree", &self.fclose_degree());
         formatter.field("gc_references", &self.gc_references());
         formatter.field("small_data_block_size", &self.small_data_block_size());
+        formatter.field("libver_bounds", &self.libver_bounds());
         #[cfg(hdf5_1_8_7)]
         {
             formatter.field("elink_file_cache_size", &self.elink_file_cache_size());
@@ -713,6 +714,55 @@ pub struct CacheLogOptions {
     pub start_on_access: bool,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub enum LibraryVersion {
+    Earliest = 0,
+    V18 = 1,
+    V110 = 2,
+}
+
+impl LibraryVersion {
+    pub fn is_earliest(self) -> bool {
+        self == LibraryVersion::Earliest
+    }
+
+    pub fn latest() -> Self {
+        if cfg!(hdf5_1_10_0) {
+            LibraryVersion::V110
+        } else {
+            LibraryVersion::V18
+        }
+    }
+}
+
+impl Into<H5F_libver_t> for LibraryVersion {
+    fn into(self) -> H5F_libver_t {
+        use self::{H5F_libver_t::*, LibraryVersion::*};
+        match self {
+            V18 => H5F_LIBVER_V18,
+            V110 => H5F_LIBVER_V110,
+            _ => H5F_LIBVER_EARLIEST,
+        }
+    }
+}
+
+impl From<H5F_libver_t> for LibraryVersion {
+    fn from(libver: H5F_libver_t) -> Self {
+        use self::{H5F_libver_t::*, LibraryVersion::*};
+        match libver {
+            H5F_LIBVER_V18 => V18,
+            H5F_LIBVER_V110 => V110,
+            _ => Earliest,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct LibVerBounds {
+    pub low: LibraryVersion,
+    pub high: LibraryVersion,
+}
+
 /// Builder used to create file access property list.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct FileAccessBuilder {
@@ -740,6 +790,7 @@ pub struct FileAccessBuilder {
     mdc_log_options: Option<CacheLogOptions>,
     gc_references: Option<bool>,
     small_data_block_size: Option<u64>,
+    libver_low_earliest: Option<bool>,
 }
 
 impl FileAccessBuilder {
@@ -760,6 +811,7 @@ impl FileAccessBuilder {
         builder.driver(&drv);
         builder.gc_references(plist.get_gc_references()?);
         builder.small_data_block_size(plist.get_small_data_block_size()?);
+        builder.libver_bounds(plist.get_libver_bounds()?.low.is_earliest());
         #[cfg(hdf5_1_8_7)]
         {
             builder.elink_file_cache_size(plist.get_elink_file_cache_size()?);
@@ -871,6 +923,11 @@ impl FileAccessBuilder {
 
     pub fn small_data_block_size(&mut self, size: u64) -> &mut Self {
         self.small_data_block_size = Some(size);
+        self
+    }
+
+    pub fn libver_bounds(&mut self, low_earliest: bool) -> &mut Self {
+        self.libver_low_earliest = Some(low_earliest);
         self
     }
 
@@ -1085,6 +1142,11 @@ impl FileAccessBuilder {
         }
         if let Some(v) = self.small_data_block_size {
             h5try!(H5Pset_small_data_block_size(id, v as _));
+        }
+        if let Some(v) = self.libver_low_earliest {
+            let high = LibraryVersion::latest();
+            let low = if v { LibraryVersion::Earliest } else { high };
+            h5try!(H5Pset_libver_bounds(id, low.into(), high.into()));
         }
         #[cfg(hdf5_1_8_7)]
         {
@@ -1427,5 +1489,15 @@ impl FileAccess {
 
     pub fn small_data_block_size(&self) -> u64 {
         self.get_small_data_block_size().unwrap_or(2048)
+    }
+
+    #[doc(hidden)]
+    pub fn get_libver_bounds(&self) -> Result<LibVerBounds> {
+        h5get!(H5Pget_libver_bounds(self.id()): H5F_libver_t, H5F_libver_t)
+            .map(|(low, high)| LibVerBounds { low: low.into(), high: high.into() })
+    }
+
+    pub fn libver_bounds(&self) -> Option<LibVerBounds> {
+        self.get_libver_bounds().ok()
     }
 }
