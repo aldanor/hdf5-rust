@@ -36,10 +36,11 @@ use libhdf5_sys::h5fd::{
 use libhdf5_sys::h5p::{
     H5Pcreate, H5Pget_alignment, H5Pget_cache, H5Pget_driver, H5Pget_fapl_core, H5Pget_fapl_family,
     H5Pget_fapl_multi, H5Pget_fclose_degree, H5Pget_gc_references, H5Pget_mdc_config,
-    H5Pget_meta_block_size, H5Pget_sieve_buf_size, H5Pset_alignment, H5Pset_cache,
-    H5Pset_fapl_core, H5Pset_fapl_family, H5Pset_fapl_log, H5Pset_fapl_multi, H5Pset_fapl_sec2,
-    H5Pset_fapl_split, H5Pset_fapl_stdio, H5Pset_fclose_degree, H5Pset_gc_references,
-    H5Pset_mdc_config, H5Pset_meta_block_size, H5Pset_sieve_buf_size,
+    H5Pget_meta_block_size, H5Pget_sieve_buf_size, H5Pget_small_data_block_size, H5Pset_alignment,
+    H5Pset_cache, H5Pset_fapl_core, H5Pset_fapl_family, H5Pset_fapl_log, H5Pset_fapl_multi,
+    H5Pset_fapl_sec2, H5Pset_fapl_split, H5Pset_fapl_stdio, H5Pset_fclose_degree,
+    H5Pset_gc_references, H5Pset_mdc_config, H5Pset_meta_block_size, H5Pset_sieve_buf_size,
+    H5Pset_small_data_block_size,
 };
 
 #[cfg(hdf5_1_10_1)]
@@ -97,6 +98,7 @@ impl Debug for FileAccess {
         formatter.field("chunk_cache", &self.chunk_cache());
         formatter.field("fclose_degree", &self.fclose_degree());
         formatter.field("gc_references", &self.gc_references());
+        formatter.field("small_data_block_size", &self.small_data_block_size());
         #[cfg(hdf5_1_8_7)]
         {
             formatter.field("elink_file_cache_size", &self.elink_file_cache_size());
@@ -737,6 +739,7 @@ pub struct FileAccessBuilder {
     #[cfg(hdf5_1_10_0)]
     mdc_log_options: Option<CacheLogOptions>,
     gc_references: Option<bool>,
+    small_data_block_size: Option<u64>,
 }
 
 impl FileAccessBuilder {
@@ -756,6 +759,7 @@ impl FileAccessBuilder {
         let drv = plist.get_driver()?;
         builder.driver(&drv);
         builder.gc_references(plist.get_gc_references()?);
+        builder.small_data_block_size(plist.get_small_data_block_size()?);
         #[cfg(hdf5_1_8_7)]
         {
             builder.elink_file_cache_size(plist.get_elink_file_cache_size()?);
@@ -862,6 +866,11 @@ impl FileAccessBuilder {
 
     pub fn gc_references(&mut self, gc_ref: bool) -> &mut Self {
         self.gc_references = Some(gc_ref);
+        self
+    }
+
+    pub fn small_data_block_size(&mut self, size: u64) -> &mut Self {
+        self.small_data_block_size = Some(size);
         self
     }
 
@@ -1073,6 +1082,9 @@ impl FileAccessBuilder {
         }
         if let Some(v) = self.gc_references {
             h5try!(H5Pset_gc_references(id, v as _));
+        }
+        if let Some(v) = self.small_data_block_size {
+            h5try!(H5Pset_small_data_block_size(id, v as _));
         }
         #[cfg(hdf5_1_8_7)]
         {
@@ -1406,5 +1418,14 @@ impl FileAccess {
 
     pub fn gc_references(&self) -> bool {
         self.get_gc_references().unwrap_or(false)
+    }
+
+    #[doc(hidden)]
+    pub fn get_small_data_block_size(&self) -> Result<u64> {
+        h5get!(H5Pget_small_data_block_size(self.id()): hsize_t).map(|x| x as _)
+    }
+
+    pub fn small_data_block_size(&self) -> u64 {
+        self.get_small_data_block_size().unwrap_or(2048)
     }
 }
