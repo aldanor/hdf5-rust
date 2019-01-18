@@ -56,7 +56,8 @@ impl Dataspace {
     /// Select a slice (known as a 'hyperslab' in HDF5 terminology) of the Dataspace.
     /// Returns the shape of array that is capable of holding the resulting slice.
     /// Useful when you want to read a subset of a dataset.
-    pub fn select_slice(&self, slice: &AsRef<[SliceOrIndex]>) -> Result<Vec<Ix>>
+    pub fn select_slice<S>(&self, slice: S) -> Result<Vec<Ix>>
+    where S: AsRef<[SliceOrIndex]>
     {
         let shape = self.dims();
         let ss: &[SliceOrIndex] = slice.as_ref();
