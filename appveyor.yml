@@ -3,30 +3,29 @@ platform:
   - x64
 os: Visual Studio 2015
 matrix:
-  fast_finish: true
+  fast_finish: false
 skip_tags: true
-build: false
+build: off
+init:
+- set CONDA=C:\Miniconda36-x64
+- set PATH=%CONDA%;%CONDA%\Scripts;%CONDA%\Library\bin;C:\Rust\bin;%PATH%
 
 environment:
-  TARGET: x86_64-pc-windows-msvc
-  HDF5_BINDIR: "C:\\Program Files\\HDF_Group\\HDF5\\1.8.17\\bin"
-  HDF5_URL: "https://support.hdfgroup.org/ftp/HDF5/prev-releases/hdf5-1.8/hdf5-1.8.17/bin/windows/extra/hdf5-1.8.17-win64-vs2015-shared.zip"
   matrix:
-    - CHANNEL: 1.31.0
+    - CHANNEL: 1.32.0
+      H5_VERSION: 1.8.21
+      H5_SOURCE: msi
     - CHANNEL: beta
+      H5_VERSION: 1.10.0
+      H5_SOURCE: msi
+      H5_PIN: yes
     - CHANNEL: nightly
+      H5_VERSION: 1.10.4
+      H5_SOURCE: conda
+
 install:
-  - ps: Start-FileDownload "https://static.rust-lang.org/dist/rust-${env:CHANNEL}-${env:TARGET}.msi"
-  - ps: Start-Process -FilePath msiexec -ArgumentList /i, rust-${env:CHANNEL}-${env:TARGET}.msi, INSTALLDIR="C:\Rust", /quiet -Wait
-  - set PATH=%PATH%;C:\Rust\bin;%HDF5_BINDIR%
-  - rustc -vV
-  - cargo -vV
-  - ps: Invoke-WebRequest ${env:HDF5_URL} -OutFile hdf5.zip
-  - 7z x hdf5.zip -y
-  - ps: Start-Process -FilePath msiexec -ArgumentList /i, "hdf5\HDF5-1.8.17-win64.msi", /quiet -Wait
+  - python scripts\appveyor.py install-rust
+  - python scripts\appveyor.py install-hdf5
 
 test_script:
-  - cd %APPVEYOR_BUILD_FOLDER%
-  - cargo build -v
-  - cargo test -v --no-run
-  - cargo test -v --all --exclude hdf5-derive
+  - python scripts\appveyor.py run-tests
