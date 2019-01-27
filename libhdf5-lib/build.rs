@@ -1,5 +1,9 @@
 use std::env;
-use std::fmt::{self, Debug};
+use std::error::Error;
+use std::fmt::{self, Debug, Display};
+use std::fs;
+use std::io;
+use std::os::raw::{c_int, c_uint};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::str;
@@ -70,6 +74,78 @@ fn is_inc_dir<P: AsRef<Path>>(path: P) -> bool {
 #[allow(dead_code)]
 fn is_root_dir<P: AsRef<Path>>(path: P) -> bool {
     is_inc_dir(path.as_ref().join("include"))
+}
+
+#[derive(Clone, Debug)]
+struct RuntimeError(String);
+
+impl Error for RuntimeError {}
+
+impl Display for RuntimeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "HDF5 runtime error: {}", self.0)
+    }
+}
+
+#[allow(non_snake_case, non_camel_case_types)]
+fn get_runtime_version_single<P: AsRef<Path>>(path: P) -> io::Result<Version> {
+    let lib = libloading::Library::new(path.as_ref())?;
+
+    type H5open_t = unsafe extern "C" fn() -> c_int;
+    let H5open = unsafe { lib.get::<H5open_t>(b"H5open")? };
+
+    type H5get_libversion_t = unsafe extern "C" fn(*mut c_uint, *mut c_uint, *mut c_uint) -> c_int;
+    let H5get_libversion = unsafe { lib.get::<H5get_libversion_t>(b"H5get_libversion")? };
+
+    let mut v: (c_uint, c_uint, c_uint) = (0, 0, 0);
+    unsafe {
+        if H5open() != 0 {
+            Err(io::Error::new(io::ErrorKind::Other, Box::new(RuntimeError("H5open()".into()))))
+        } else if H5get_libversion(&mut v.0, &mut v.1, &mut v.2) != 0 {
+            Err(io::Error::new(
+                io::ErrorKind::Other,
+                Box::new(RuntimeError("H5get_libversion()".into())),
+            ))
+        } else {
+            Ok(Version::new(v.0 as _, v.1 as _, v.2 as _))
+        }
+    }
+}
+
+fn validate_runtime_version(config: &Config) {
+    let libfiles = &["libhdf5.dylib", "libhdf5.so", "hdf5.dll"];
+    for link_path in &config.link_paths {
+        if let Ok(paths) = fs::read_dir(link_path) {
+            for path in paths {
+                if let Ok(path) = path {
+                    let path = path.path();
+                    if let Some(filename) = path.file_name() {
+                        let filename = filename.to_str().unwrap_or("");
+                        if path.is_file() && libfiles.contains(&filename) {
+                            println!("Attempting to load: {:?}", path);
+                            match get_runtime_version_single(&path) {
+                                Ok(version) => {
+                                    println!("    => runtime version = {:?}", version);
+                                    if version == config.header.version {
+                                        println!("HDF5 library runtime version matches headers.");
+                                        return;
+                                    }
+                                    panic!(
+                                        "Invalid HDF5 runtime version (expected: {:?}).",
+                                        config.header.version
+                                    );
+                                }
+                                Err(err) => {
+                                    println!("    => {}", err);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    panic!("Unable to infer HDF5 library runtime version.");
 }
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -453,7 +529,9 @@ impl LibrarySearcher {
                     );
                 }
             }
-            Config { inc_dir: inc_dir.clone(), link_paths, header }
+            let config = Config { inc_dir: inc_dir.clone(), link_paths, header };
+            validate_runtime_version(&config);
+            config
         } else {
             panic!("Unable to determine HDF5 location (set HDF5_DIR to specify it manually).");
         }
