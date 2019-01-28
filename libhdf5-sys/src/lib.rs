@@ -80,6 +80,9 @@ pub fn emit_cfg_flags() {
     check_and_emit!(hdf5_1_10_2);
     check_and_emit!(hdf5_1_10_3);
     check_and_emit!(hdf5_1_10_4);
+    check_and_emit!(h5_have_direct);
+    check_and_emit!(h5_have_parallel);
+    check_and_emit!(h5_have_threadsafe);
 }
 
 #[cfg(test)]

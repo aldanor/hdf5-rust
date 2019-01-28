@@ -153,6 +153,7 @@ pub struct Header {
     pub have_stdbool_h: bool,
     pub have_direct: bool,
     pub have_parallel: bool,
+    pub have_threadsafe: bool,
     pub version: Version,
 }
 
@@ -172,6 +173,8 @@ impl ParseCallbacks for HeaderParser {
             hdr.have_direct = value > 0;
         } else if name == "H5_HAVE_PARALLEL" {
             hdr.have_parallel = value > 0;
+        } else if name == "H5_HAVE_THREADSAFE" {
+            hdr.have_threadsafe = value > 0;
         }
         None
     }
@@ -562,6 +565,18 @@ impl Config {
         vs.extend((0..=4).map(|v| Version::new(1, 10, v))); // 1.10.0-4
         for v in vs.into_iter().filter(|&v| version >= v) {
             println!("cargo:rustc-cfg=hdf5_{}_{}_{}", v.major, v.minor, v.micro);
+        }
+        if self.header.have_stdbool_h {
+            println!("cargo:rustc-cfg=h5_have_stdbool_h");
+        }
+        if self.header.have_direct {
+            println!("cargo:rustc-cfg=h5_have_direct");
+        }
+        if self.header.have_parallel {
+            println!("cargo:rustc-cfg=h5_have_parallel");
+        }
+        if self.header.have_threadsafe {
+            println!("cargo:rustc-cfg=h5_have_threadsafe");
         }
     }
 }
