@@ -95,9 +95,14 @@ mod internal_prelude {
 #[cfg(test)]
 pub mod test;
 
-/// Returns the version of the HDF5 library that the crate was compiled against.
+/// Returns the runtime version of the HDF5 library.
 pub fn hdf5_version() -> (u8, u8, u8) {
-    h5lock!(libhdf5_lib::hdf5_version()).unwrap_or((0, 0, 0))
+    use self::internal_prelude::c_uint;
+    use libhdf5_sys::h5::H5get_libversion;
+    let mut v: (c_uint, c_uint, c_uint) = (0, 0, 0);
+    h5call!(H5get_libversion(&mut v.0, &mut v.1, &mut v.2))
+        .map(|_| (v.0 as _, v.1 as _, v.2 as _))
+        .unwrap_or((0, 0, 0))
 }
 
 #[cfg(test)]
@@ -106,6 +111,6 @@ pub mod tests {
 
     #[test]
     pub fn test_hdf5_version() {
-        assert!(hdf5_version() >= (1, 8, 0));
+        assert!(hdf5_version() >= (1, 8, 4));
     }
 }

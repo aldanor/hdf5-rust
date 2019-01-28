@@ -546,13 +546,23 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn emit_flags(&self) {
+    pub fn emit_link_flags(&self) {
         println!("cargo:rustc-link-lib=dylib=hdf5");
         for dir in &self.link_paths {
             println!("cargo:rustc-link-search=native={}", dir.to_str().unwrap());
         }
         println!("cargo:rerun-if-env-changed=HDF5_DIR");
         println!("cargo:rerun-if-env-changed=HDF5_VERSION");
+    }
+
+    pub fn emit_cfg_flags(&self) {
+        let version = self.header.version;
+        assert!(version >= Version::new(1, 8, 4), "required HDF5 version: >=1.8.4");
+        let mut vs: Vec<_> = (5..=21).map(|v| Version::new(1, 8, v)).collect(); // 1.8.5-21
+        vs.extend((0..=4).map(|v| Version::new(1, 10, v))); // 1.10.0-4
+        for v in vs.into_iter().filter(|&v| version >= v) {
+            println!("cargo:rustc-cfg=hdf5_{}_{}_{}", v.major, v.minor, v.micro);
+        }
     }
 }
 
@@ -561,5 +571,6 @@ fn main() {
     searcher.try_locate_hdf5_library();
     let config = searcher.finalize();
     println!("{:#?}", config);
-    config.emit_flags();
+    config.emit_link_flags();
+    config.emit_cfg_flags();
 }
