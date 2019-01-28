@@ -6,11 +6,15 @@ pub use self::H5_iter_order_t::*;
 use crate::internal_prelude::*;
 
 pub type herr_t = c_int;
-pub type hbool_t = c_uint;
 pub type htri_t = c_int;
 pub type hsize_t = c_ulonglong;
 pub type hssize_t = c_longlong;
 pub type haddr_t = uint64_t;
+
+#[cfg(all(hdf5_1_10_0, h5_have_stdbool_h))]
+pub type hbool_t = u8;
+#[cfg(any(not(hdf5_1_10_0), not(h5_have_stdbool_h)))]
+pub type hbool_t = c_uint;
 
 #[repr(C)]
 #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
