@@ -4,7 +4,6 @@ members = [
     "hdf5-types",
     "hdf5-derive",
     "libhdf5-sys",
-    "libhdf5-lib",
 ]
 exclude = [
     "*.yml"
