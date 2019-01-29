@@ -22,16 +22,12 @@ pub struct Version {
 
 impl Version {
     pub fn new(major: u8, minor: u8, micro: u8) -> Self {
-        Self {
-            major,
-            minor,
-            micro,
-            // TODO: patch level (1.10.2_1)
-        }
+        Self { major, minor, micro }
     }
 
     pub fn parse(s: &str) -> Option<Self> {
         let s = s.lines().next()?.trim();
+        let s = s.rfind('_').map(|i| &s[..i]).unwrap_or(s);
         let mut parts = s.split('.');
         let v = Self::new(
             parts.next()?.parse().ok()?,
