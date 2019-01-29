@@ -67,16 +67,18 @@ fn main() -> h5::Result<()> {
 
 ### Platforms
 
-`hdf5-rs` is known to run on these platforms:
-
-- Linux (tested on Travis CI, HDF5 v1.8.4)
-- OS X (tested on Travis CI, HDF5 v1.8.16)
-- Windows (tested on AppVeyor, MSVC target, HDF5 v1.8.16, VS2015 x64)
+`hdf5-rs` is known to run on these platforms: Linux, macOS, Windows (tested on Travis CI and 
+AppVeyor, HDF5 1.8 and 1.10, system installations and conda environments).
 
 ### Rust
 
-`hdf5-rs` is tested for all three official release channels, and requires Rust compiler
-of version 1.13 or newer.
+`hdf5-rs` is tested continuously for all three official release channels, and requires 
+a modern Rust compiler (e.g. of version 1.31 or later).
+
+### HDF5
+
+Required HDF5 version is 1.8.4 or newer. The library doesn't have to be built with
+threadsafe option enabled.
 
 ## Building
 
@@ -88,38 +90,56 @@ enabled or disabled at compile time. While this allows supporting multiple versi
 in a single codebase, this is something the library user should be aware of in case they
 choose to use the low level FFI bindings.
 
-### Linux, OS X
+### Environment variables
 
-The build script of `libhdf5-lib` crate will try to use `pkg-config` if it's available
-to deduce HDF5 library location. This is sufficient for most standard setups.
+If `HDF5_DIR` is set, the build script will look there (and nowhere else) for HDF5
+headers and binaries (i.e., it will look for headers under `$HDF5_DIR/include`).
 
-There are also two environment variables that may be of use if the library location and/or name
-is unconventional:
+If `HDF5_VERSION` is set, the build script will check that the library version matches
+the specified version string; in some cases it may also be used by the build script to
+help locating the library (e.g. when both 1.8 and 1.10 are installed via Homebrew on macOS).
 
-- `HDF5_LIBDIR` – added to library search path during the build step
-- `HDF5_LIBNAME` – library name (defaults to `hdf5`)
+### conda
 
-Note that `cargo clean` is requred before rebuilding if any of those variables are changed.
+It is possible to link against `hdf5` conda package; a few notes and tips:
+
+- Point `HDF5_DIR` to conda environment root.
+- The build script knows about conda environment layout specifics and will adjust
+  paths accordingly (e.g. `Library` subfolder in Windows environments).
+- On Windows, environment's `bin` folder must be in `PATH` (or the environment can
+  be activated prior to running cargo).
+- On Linux / macOS, it is recommended to set rpath, e.g. by setting
+  `RUSTFLAGS="-C link-args=-Wl,-rpath,$HDF5_DIR/lib"`.
+- For old versions of HDF5 conda packages on macOS, it may also be necessary to set
+  `DYLD_FALLBACK_LIBRARY_PATH="$HDF5_DIR/lib"`.
+
+### Linux
+
+The build script will attempt to use pkg-config first, which will likely work out without
+further tweaking for the more recent versions of HDF5. The build script will then also look 
+in some standard locations where HDF5 can be found after being apt-installed on Ubuntu.
+
+### macOS
+
+On macOS, the build script will attempt to locate HDF5 via Homebrew if it's available.
+If both 1.8 and 1.10 are installed and available, the default (1.10) will be used 
+unless `HDF5_VERSION` is set.
 
 ### Windows
 
 `hdf5-rs` fully supports MSVC toolchain, which allows using the
 [official releases](https://www.hdfgroup.org/downloads/index.html) of
-HDF5 and is generally the recommended way to go. That being said, previous experiments have shown
-that all tests pass on the `gnu` target as well, one just needs to be careful with building the
-HDF5 binary itself and configuring the build environment.
+HDF5 and is generally the recommended way to go. That being said, previous experiments have 
+shown that all tests pass on the `gnu` target as well, one just needs to be careful with 
+building the HDF5 binary itself and configuring the build environment.
 
 Few things to note when building on Windows:
 
 - `hdf5.dll` should be available in the search path at build time and runtime (both `gnu` and `msvc`).
   This normally requires adding the `bin` folder of HDF5 installation to `PATH`. If using an official
-  HDF5 release (`msvc` only), this will be done automatically by the installer.
-- If `HDF5_LIBDIR` or `HDF5_LIBNAME` change, `cargo clean` is required before rebuilding.
+  HDF5 release (`msvc` only), this will typically be done automatically by the installer.
 - `msvc`: installed Visual Studio version should match the HDF5 binary (2013 or 2015). Note that it
   is not necessary to run `vcvars` scripts; Rust build system will take care of that.
-- In most cases, it is not necessary to manually set `HDF5_LIBDIR` as it would be inferred from the
-  search path (both `gnu` and `msvc`). This also implies that the official releases should work
-  out of the box.
 - When building for either target, make sure that there are no conflicts in the search path (e.g.,
   some binaries from MinGW toolchain may shadow MSVS executables or vice versa).
 - The recommended platform for `gnu` target is [TDM distribution](http://tdm-gcc.tdragon.net/) of
