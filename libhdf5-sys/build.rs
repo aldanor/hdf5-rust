@@ -12,6 +12,7 @@ use std::sync::Mutex;
 use bindgen::callbacks::IntKind;
 use bindgen::callbacks::ParseCallbacks;
 use lazy_static::lazy_static;
+use regex::Regex;
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub struct Version {
@@ -109,8 +110,23 @@ fn get_runtime_version_single<P: AsRef<Path>>(path: P) -> io::Result<Version> {
 }
 
 fn validate_runtime_version(config: &Config) {
+    println!("Looking for HDF5 library binary...");
     let libfiles = &["libhdf5.dylib", "libhdf5.so", "hdf5.dll"];
-    for link_path in &config.link_paths {
+    let mut link_paths = config.link_paths.clone();
+    if cfg!(all(unix, not(target_os = "macos"))) {
+        if let Some(ldv) = run_command("ld", &["--verbose"]) {
+            let re = Regex::new(r#"SEARCH_DIR\("=(?P<path>[^"]+)"\)"#).unwrap();
+            println!("Adding extra link paths (ld)...");
+            for caps in re.captures_iter(&ldv) {
+                let path = &caps["path"];
+                println!("    {}", path);
+                link_paths.push(path.into());
+            }
+        } else {
+            println!("Unable to add extra link paths (ld).");
+        }
+    }
+    for link_path in &link_paths {
         if let Ok(paths) = fs::read_dir(link_path) {
             for path in paths {
                 if let Ok(path) = path {
@@ -141,7 +157,7 @@ fn validate_runtime_version(config: &Config) {
             }
         }
     }
-    panic!("Unable to infer HDF5 library runtime version.");
+    panic!("Unable to infer HDF5 library runtime version (can't find the binary).");
 }
 
 #[derive(Clone, Copy, Debug, Default)]

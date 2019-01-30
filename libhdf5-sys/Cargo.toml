@@ -17,6 +17,7 @@ libc = "0.2"
 bindgen = "0.47"
 lazy_static = "1.2"
 libloading = "0.5"
+regex = "1.1"
 
 [target.'cfg(all(unix, not(target_os = "macos")))'.build-dependencies]
 pkg-config = "0.3"
