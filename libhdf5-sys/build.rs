@@ -27,15 +27,13 @@ impl Version {
     }
 
     pub fn parse(s: &str) -> Option<Self> {
-        let s = s.lines().next()?.trim();
-        let s = s.rfind('_').map(|i| &s[..i]).unwrap_or(s);
-        let mut parts = s.split('.');
-        let v = Self::new(
-            parts.next()?.parse().ok()?,
-            parts.next()?.parse().ok()?,
-            parts.next()?.parse().ok()?,
-        );
-        parts.next().map_or(Some(v), |_| None)
+        let re = Regex::new(r"^(1)\.(8|10)\.(\d\d?)(_\d+)?(-patch\d+)?$").ok()?;
+        let captures = re.captures(s)?;
+        Some(Self {
+            major: captures.get(1).and_then(|c| c.as_str().parse::<u8>().ok())?,
+            minor: captures.get(2).and_then(|c| c.as_str().parse::<u8>().ok())?,
+            micro: captures.get(3).and_then(|c| c.as_str().parse::<u8>().ok())?,
+        })
     }
 
     pub fn is_valid(&self) -> bool {
