@@ -113,7 +113,7 @@ fn validate_runtime_version(config: &Config) {
     let mut link_paths = config.link_paths.clone();
     if cfg!(all(unix, not(target_os = "macos"))) {
         if let Some(ldv) = run_command("ld", &["--verbose"]) {
-            let re = Regex::new(r#"SEARCH_DIR\("=(?P<path>[^"]+)"\)"#).unwrap();
+            let re = Regex::new(r#"SEARCH_DIR\("=?(?P<path>[^"]+)"\)"#).unwrap();
             println!("Adding extra link paths (ld)...");
             for caps in re.captures_iter(&ldv) {
                 let path = &caps["path"];
