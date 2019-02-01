@@ -12,7 +12,17 @@ edition = "2018"
 
 [dependencies]
 libc = "0.2"
-libhdf5-lib = { path = "../libhdf5-lib", version = "0.2.0" }
 
 [build-dependencies]
-libhdf5-lib = { path = "../libhdf5-lib", version = "0.2.0" }
+bindgen = "0.47"
+lazy_static = "1.2"
+libloading = "0.5"
+regex = "1.1"
+
+[target.'cfg(all(unix, not(target_os = "macos")))'.build-dependencies]
+pkg-config = "0.3"
+
+[target.'cfg(windows)'.build-dependencies]
+serde = "1.0"
+serde_derive = "1.0"
+winreg = { version = "0.6", features = ["serialization-serde"]}

@@ -1,3 +1,3 @@
 fn main() {
-    libhdf5_lib::dump_build_flags();
+    libhdf5_sys::emit_cfg_flags();
 }
