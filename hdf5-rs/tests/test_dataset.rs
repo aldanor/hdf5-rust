@@ -1,6 +1,6 @@
 use std::fmt;
 
-use ndarray::{ArrayD, IxDyn, SliceInfo};
+use ndarray::{s, Array1, Array2, ArrayD, IxDyn, SliceInfo};
 use rand::prelude::{Rng, SeedableRng, SmallRng};
 
 use hdf5_types::TypeDescriptor;
@@ -40,7 +40,7 @@ where
 }
 
 fn test_read_slice<T, R>(
-    rng: &mut R, ds: &h5::Dataset, arr: &ArrayD<T>, _ndim: usize,
+    rng: &mut R, ds: &h5::Dataset, arr: &ArrayD<T>, ndim: usize,
 ) -> h5::Result<()>
 where
     T: h5::H5Type + fmt::Debug + PartialEq + Gen,
@@ -80,6 +80,24 @@ where
 
     let bad_sliced_read: h5::Result<ArrayD<T>> = dsr.read_slice(&bad_slice);
     assert!(bad_sliced_read.is_err());
+
+    // Tests for dimension-dropping slices with static dimensionality.
+    if ndim == 2 && shape[0] > 0 && shape[1] > 0 {
+        let v: Array1<T> = dsr.read_slice_1d(s![0, ..])?;
+        assert_eq!(shape[1], v.shape()[0]);
+
+        let v: Array1<T> = dsr.read_slice_1d(s![.., 0])?;
+        assert_eq!(shape[0], v.shape()[0]);
+    } 
+
+    if ndim == 3 && shape[0] > 0 && shape[1] > 0 && shape[2] > 0 {
+        let v: Array2<T> = dsr.read_slice_2d(s![0, .., ..])?;
+        assert_eq!(shape[1], v.shape()[0]);
+        assert_eq!(shape[2], v.shape()[1]);
+
+        let v: Array1<T> = dsr.read_slice_1d(s![0, 0, ..])?;
+        assert_eq!(shape[2], v.shape()[0]);
+    } 
 
     Ok(())
 }
