@@ -57,7 +57,7 @@ impl<'a> Reader<'a> {
 
     /// Reads a slice of an n-dimensional array.
     /// If the dimensionality `D` has a fixed number of dimensions, it must match the dimensionality of
-    /// the slice, after singleton dimensions are dropped. 
+    /// the slice, after singleton dimensions are dropped.
     /// Use the multi-dimensional slice macro `s![]` from `ndarray` to conveniently create
     /// a multidimensional slice.
     pub fn read_slice<T, S, D>(&self, slice: &SliceInfo<S, D>) -> Result<Array<T, D>>
@@ -86,7 +86,12 @@ impl<'a> Reader<'a> {
             // Check that return dimensionality is 0.
             if let Some(ndim) = D::NDIM {
                 let obj_ndim = 0;
-                ensure!(obj_ndim == ndim, "ndim mismatch: slice outputs dims {}, output type dims {}", obj_ndim, ndim);
+                ensure!(
+                    obj_ndim == ndim,
+                    "ndim mismatch: slice outputs dims {}, output type dims {}",
+                    obj_ndim,
+                    ndim
+                );
             }
 
             // Fall back to a simple read for the scalar case
@@ -111,7 +116,12 @@ impl<'a> Reader<'a> {
             // axes are dropped.
             if let Some(ndim) = D::NDIM {
                 let obj_ndim = reduced_shape.len();
-                ensure!(obj_ndim == ndim, "ndim mismatch: slice outputs dims {}, output type dims {}", obj_ndim, ndim);
+                ensure!(
+                    obj_ndim == ndim,
+                    "ndim mismatch: slice outputs dims {}, output type dims {}",
+                    obj_ndim,
+                    ndim
+                );
             }
 
             let mspace = Dataspace::try_new(&out_shape, false)?;
@@ -176,7 +186,6 @@ impl<'a> Reader<'a> {
     pub fn read_2d<T: H5Type>(&self) -> Result<Array2<T>> {
         self.read()
     }
-
 
     /// Reads the given `slice` of the dataset into a 2-dimensional array.
     /// The slice must yield a 2-dimensional result.
@@ -530,7 +539,7 @@ impl Container {
 
     /// Reads a slice of an n-dimensional array.
     /// If the dimensionality `D` has a fixed number of dimensions, it must match the dimensionality of
-    /// the slice, after singleton dimensions are dropped. 
+    /// the slice, after singleton dimensions are dropped.
     /// Use the multi-dimensional slice macro `s![]` from `ndarray` to conveniently create
     /// a multidimensional slice.
     pub fn read_slice<T, S, D>(&self, slice: &SliceInfo<S, D>) -> Result<Array<T, D>>

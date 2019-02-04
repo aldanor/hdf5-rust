@@ -88,7 +88,7 @@ where
 
         let v: Array1<T> = dsr.read_slice_1d(s![.., 0])?;
         assert_eq!(shape[0], v.shape()[0]);
-    } 
+    }
 
     if ndim == 3 && shape[0] > 0 && shape[1] > 0 && shape[2] > 0 {
         let v: Array2<T> = dsr.read_slice_2d(s![0, .., ..])?;
@@ -97,7 +97,7 @@ where
 
         let v: Array1<T> = dsr.read_slice_1d(s![0, 0, ..])?;
         assert_eq!(shape[2], v.shape()[0]);
-    } 
+    }
 
     Ok(())
 }
