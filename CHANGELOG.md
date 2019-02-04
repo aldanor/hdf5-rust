@@ -1,20 +1,44 @@
+# Changelog
+
 ## 0.3.0-alpha.1 (unreleased)
 
-Updates:
+### Added
 
+- Added support for HDF5 1.10.
 - Added Rust equivalents of HDF5 primitives: arrays, Unicode strings and ASCII strings – all of 
   them available in both fixed-size or variable-length flavours (`hdf5-types` crate).
 - Added `H5Type` trait that unifies the types that can be handled by the HDF5 library. This trait
   is implemented by default for all scalar types, tuples, fixed-size arrays and all types in
-  `hdf5-types`.
+  `hdf5-types` and can be used to create `Datatype` objects.
 - Implemented `#[derive(H5Type)]` proc macro that allows for seamless mapping of user-defined 
   structs and enums to their HDF5 counterparts.
-- `Datatype` can now be constructed directly from an `H5Type`-compatible type (or from/to
-  a type descriptor).
-- Added support for HDF5 1.10.
-- Updated the bindings and test to the latest HDF5 versions (1.10.4 and 1.8.21).
-- Added missing bindings for previous versions (mostly in `h5p` and `h5fd` modules).
-- Removed `remutex` crate, using locking primitives from `parking_lot` crate instead.
+- Added high-level wrappers for file-creation H5P API (`plist::FileCreate`) and
+  file-access H5P API (`plist::FileAccess`).
+- Various improvements and additions to `PropertyList` type.
+- Added support for various file drivers (sec2/stdio/core/family/multi/split/log).
+- Added core reading/writing API in `Container`, with support for reading/writing scalars, 
+  1-d, 2-d, and dynamic-dimensional arrays, and raw slices. As a side effect, the main crate
+  now depends on `ndarray`. `Dataset` now dereferences to `Container`.
+- Added basic support for reading and writing dataset slices.
+- When creating datasets, in-memory type layouts are normalized (converted to C repr).
+- Added `packed` option to `DatasetBuilder` (for creating packed HDF5 datasets).
+
+### Changed
+
+- Updated the bindings and tests to the latest HDF5 versions (1.10.4 and 1.8.21).
+- The build system has been reworked from the ground up:
+  - `libhdf5-lib` crate has been removed; all of the build-time logic now resides
+    in the build script of `libhdf5-sys`.
+  - The environment variables the build script reacts to are now `HDF5_DIR` and `HDF5_VERSION`.
+  - `pkg-config` is now only launched on Linux.
+  - On macOS, the build scripts detects Homebrew installations, for both 1.8 and 1.10 versions.
+  - On Windows, we now scan the registry to detect official system-wide installations.
+  - Dynamic linking now works with conda envs; `HDF5_DIR` can be now pointed to a conda env.
+  - A few definitions from `H5pubconf.h` are now exposed as cfg definitions, like
+    `h5_have_parallel`, `h5_have_threadsafe` and `h5_have_direct` (this requires us to
+    locate the include folder and parse the header at build time).
+- Various clean ups in `libhdf5-sys`: implemented `Default` and `Clone` where
+  applicable, moved a few types and methods to matching parent modules.
 - Major refactor: trait-based type hierarchy has been replaced with a `Deref`-based
   hierarchy instead (53eff4f). `ID` and `FromID` traits have been removed. Traits like `Location`,
   `Object` and a few other have been replaced with real types (wrappers around HDF5 handles, same
@@ -22,26 +46,24 @@ Updates:
   user can user methods of the parent type without having to import any traits into scope
   (for instance, `File` dereferences into `Group`, which dereferences into `Location`,
   which dereferences into `Object`).
-- `Container` trait has been removed, all of its functionality is moved into `Group` type.
-- Added high-level wrappers for file-creation H5P API (`plist::FileCreate`) and
-  file-access H5P API (`plist::FileAccess`).
-- Various improvements and additions to `PropertyList` type.
-- Added support for various file drivers (sec2/stdio/core/family/multi/split/log).
+
+### Fixed
+
+- `hbool_t` is now mapped to unsigned integer of proper size (either 1 byte or 4 bytes),
+  depending on how the HDF5 library was built and on which platform.
+- Added missing bindings for previous versions (mostly in `h5p` and `h5fd` modules).
 - Querying the HDF5 error stack is now thread-safe.
 - Error silencing (`silence_errors()`) is now thread-safe.
-- Various clean ups in `libhdf5-sys`: implemented `Default` and `Clone` where
-  applicable, moved a few types and methods to matching parent modules.
-- `Dataset` now dereferences into `Container` (dataset/attribute shared functionality).
-- The main crate now depends on `ndarray` (multi-dimensional arrays).
-- Added core reading/writing API for `Container`, with support for reading/writing scalars, 
-  1-d, 2-d, and dynamic-dimensional arrays, and raw slices.
-- Added basic support for reading and writing dataset slices.
-- Added `packed` option to `DatasetBuilder` (for creating packed HDF5 datasets).
-- When creating datasets, in-memory type layouts are normalized (converted to C repr).
+
+### Removed
+
+- Removed `libhdf5-lib` crate (merged it into `libhdf5-sys`, see above).
+- Removed `remutex` crate, using locking primitives from `parking_lot` crate instead.
+- `Container` trait has been removed, all of its functionality merged into `Group` type.
 
 ## 0.2.0 (Apr 17, 2016)
 
-Features:
+### Added
 
 - Full support of `msvc` target on Windows. CI tests on AppVeyor now use official reeases of HDF5
   binaries (1.8.16, VS2015, x86_x64). The `gnu` target are still unofficially supported but
@@ -66,14 +88,14 @@ Features:
   now of reference type and need to be dereferenced upon use (for `msvc`, they have to be
   dereferenced twice).
 
-Changes:
+### Changed
 
 - API simplification: many methods previously expecting `Into<String>` inputs now just take `&str`.
 - `util::to_cstring` now takes `Borrow<str>` instead of `Into<String>` so as to avoid
   unnecessary allocations, and the return value is now wrapped in `Result` so that interior
   null bytes in input strings trigger an error.
 
-Bugfixes:
+### Fixed
 
 - Fixed dangling pointer problems when strings were being passed as pointers to the C API.
 - Fixed target path not being passed correctly in `Container::link_soft`.
