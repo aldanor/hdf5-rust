@@ -22,6 +22,7 @@
 - Added basic support for reading and writing dataset slices.
 - When creating datasets, in-memory type layouts are normalized (converted to C repr).
 - Added `packed` option to `DatasetBuilder` (for creating packed HDF5 datasets).
+- All high-level objects now implement `Clone` (shallow copy, increases refcount).
 
 ### Changed
 
@@ -46,6 +47,7 @@
   user can user methods of the parent type without having to import any traits into scope
   (for instance, `File` dereferences into `Group`, which dereferences into `Location`,
   which dereferences into `Object`).
+- Dataspaces and property lists can now be copied via `.copy()` method (instead of `.clone()`).
 
 ### Fixed
 
