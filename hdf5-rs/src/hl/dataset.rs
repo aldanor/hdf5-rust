@@ -22,6 +22,7 @@ use crate::internal_prelude::*;
 
 /// Represents the HDF5 dataset object.
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct Dataset(Handle);
 
 impl ObjectClass for Dataset {
@@ -311,7 +312,7 @@ impl<T: H5Type> DatasetBuilder<T> {
 
                     let dims = match self.chunk {
                         Chunk::Manual(ref c) => c.clone(),
-                        _ => infer_chunk_size(shape.clone(), datatype.size()),
+                        _ => infer_chunk_size(&shape, datatype.size()),
                     };
 
                     ensure!(
@@ -399,7 +400,7 @@ impl<T: H5Type> DatasetBuilder<T> {
     }
 }
 
-fn infer_chunk_size<D: Dimension>(shape: D, typesize: usize) -> Vec<Ix> {
+fn infer_chunk_size<D: Dimension>(shape: &D, typesize: usize) -> Vec<Ix> {
     // This algorithm is borrowed from h5py, though the idea originally comes from PyTables.
 
     const CHUNK_BASE: f64 = (16 * 1024) as _;
@@ -452,27 +453,27 @@ pub mod tests {
 
     #[test]
     pub fn test_infer_chunk_size() {
-        assert_eq!(infer_chunk_size((), 1), vec![]);
-        assert_eq!(infer_chunk_size(0, 1), vec![1]);
-        assert_eq!(infer_chunk_size((1,), 1), vec![1]);
+        assert_eq!(infer_chunk_size(&(), 1), vec![]);
+        assert_eq!(infer_chunk_size(&0, 1), vec![1]);
+        assert_eq!(infer_chunk_size(&(1,), 1), vec![1]);
 
         // generated regression tests vs h5py implementation
-        assert_eq!(infer_chunk_size((65682868,), 1), vec![64144]);
-        assert_eq!(infer_chunk_size((56755037,), 2), vec![27713]);
-        assert_eq!(infer_chunk_size((56882283,), 4), vec![27775]);
-        assert_eq!(infer_chunk_size((21081789,), 8), vec![10294]);
-        assert_eq!(infer_chunk_size((5735, 6266), 1), vec![180, 392]);
-        assert_eq!(infer_chunk_size((467, 4427), 2), vec![30, 554]);
-        assert_eq!(infer_chunk_size((5579, 8323), 4), vec![88, 261]);
-        assert_eq!(infer_chunk_size((1686, 770), 8), vec![106, 49]);
-        assert_eq!(infer_chunk_size((344, 414, 294), 1), vec![22, 52, 37]);
-        assert_eq!(infer_chunk_size((386, 192, 444), 2), vec![25, 24, 56]);
-        assert_eq!(infer_chunk_size((277, 161, 460), 4), vec![18, 21, 58]);
-        assert_eq!(infer_chunk_size((314, 22, 253), 8), vec![40, 3, 32]);
-        assert_eq!(infer_chunk_size((89, 49, 91, 59), 1), vec![12, 13, 23, 15]);
-        assert_eq!(infer_chunk_size((42, 92, 60, 80), 2), vec![6, 12, 15, 20]);
-        assert_eq!(infer_chunk_size((15, 62, 62, 47), 4), vec![4, 16, 16, 12]);
-        assert_eq!(infer_chunk_size((62, 51, 55, 64), 8), vec![8, 7, 7, 16]);
+        assert_eq!(infer_chunk_size(&(65682868,), 1), vec![64144]);
+        assert_eq!(infer_chunk_size(&(56755037,), 2), vec![27713]);
+        assert_eq!(infer_chunk_size(&(56882283,), 4), vec![27775]);
+        assert_eq!(infer_chunk_size(&(21081789,), 8), vec![10294]);
+        assert_eq!(infer_chunk_size(&(5735, 6266), 1), vec![180, 392]);
+        assert_eq!(infer_chunk_size(&(467, 4427), 2), vec![30, 554]);
+        assert_eq!(infer_chunk_size(&(5579, 8323), 4), vec![88, 261]);
+        assert_eq!(infer_chunk_size(&(1686, 770), 8), vec![106, 49]);
+        assert_eq!(infer_chunk_size(&(344, 414, 294), 1), vec![22, 52, 37]);
+        assert_eq!(infer_chunk_size(&(386, 192, 444), 2), vec![25, 24, 56]);
+        assert_eq!(infer_chunk_size(&(277, 161, 460), 4), vec![18, 21, 58]);
+        assert_eq!(infer_chunk_size(&(314, 22, 253), 8), vec![40, 3, 32]);
+        assert_eq!(infer_chunk_size(&(89, 49, 91, 59), 1), vec![12, 13, 23, 15]);
+        assert_eq!(infer_chunk_size(&(42, 92, 60, 80), 2), vec![6, 12, 15, 20]);
+        assert_eq!(infer_chunk_size(&(15, 62, 62, 47), 4), vec![4, 16, 16, 12]);
+        assert_eq!(infer_chunk_size(&(62, 51, 55, 64), 8), vec![8, 7, 7, 16]);
     }
 
     #[test]

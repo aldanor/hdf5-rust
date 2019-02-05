@@ -2,7 +2,7 @@ use std::fmt::{self, Debug};
 use std::mem;
 use std::ops::Deref;
 
-use ndarray::{Array, Array1, Array2, ArrayD, ArrayView, ArrayView1, Ix1, Ix2};
+use ndarray::{Array, Array1, Array2, ArrayD, ArrayView, ArrayView1};
 use ndarray::{SliceInfo, SliceOrIndex};
 
 use libhdf5_sys::h5a::{H5Aget_space, H5Aget_storage_size, H5Aget_type, H5Aread, H5Awrite};
@@ -386,6 +386,7 @@ impl<'a> Writer<'a> {
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct Container(Handle);
 
 impl ObjectClass for Container {

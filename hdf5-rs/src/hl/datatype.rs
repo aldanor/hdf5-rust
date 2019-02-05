@@ -46,6 +46,7 @@ macro_rules! be_le {
 
 /// Represents the HDF5 datatype object.
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct Datatype(Handle);
 
 impl ObjectClass for Datatype {

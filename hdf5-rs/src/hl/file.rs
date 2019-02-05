@@ -18,6 +18,7 @@ use crate::internal_prelude::*;
 
 /// Represents the HDF5 file object.
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct File(Handle);
 
 impl ObjectClass for File {

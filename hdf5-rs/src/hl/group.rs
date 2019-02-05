@@ -13,6 +13,7 @@ use crate::internal_prelude::*;
 
 /// Represents the HDF5 group object.
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct Group(Handle);
 
 impl ObjectClass for Group {
@@ -195,6 +196,25 @@ pub mod tests {
             file.group("foo").unwrap().group("bar").unwrap();
             file.create_group("x/y/").unwrap();
             file.group("/x").unwrap().group("./y/").unwrap();
+        })
+    }
+
+    #[test]
+    pub fn test_clone() {
+        with_tmp_file(|file| {
+            file.create_group("a").unwrap();
+            let a = file.group("a").unwrap();
+            assert_eq!(a.name(), "/a");
+            assert_eq!(a.file().unwrap().id(), file.id());
+            assert_eq!(a.refcount(), 1);
+            let b = a.clone();
+            assert_eq!(b.name(), "/a");
+            assert_eq!(b.file().unwrap().id(), file.id());
+            assert_eq!(b.refcount(), 2);
+            assert_eq!(a.refcount(), 2);
+            drop(a);
+            assert_eq!(b.refcount(), 1);
+            assert!(b.is_valid());
         })
     }
 

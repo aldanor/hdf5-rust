@@ -3,7 +3,7 @@ use std::fmt::{self, Debug};
 use std::ops::Deref;
 use std::ptr;
 
-use ndarray::{SliceInfo, SliceOrIndex};
+use ndarray::SliceOrIndex;
 
 use libhdf5_sys::h5s::{
     H5Scopy, H5Screate_simple, H5Sget_simple_extent_dims, H5Sget_simple_extent_ndims,
@@ -14,6 +14,7 @@ use crate::internal_prelude::*;
 
 /// Represents the HDF5 dataspace object.
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct Dataspace(Handle);
 
 impl ObjectClass for Dataspace {
@@ -53,6 +54,11 @@ impl Deref for Dataspace {
 }
 
 impl Dataspace {
+    /// Copies the dataspace.
+    pub fn copy(&self) -> Self {
+        Self::from_id(h5lock!(H5Scopy(self.id()))).unwrap_or_else(|_| Self::invalid())
+    }
+
     /// Select a slice (known as a 'hyperslab' in HDF5 terminology) of the Dataspace.
     /// Returns the shape of array that is capable of holding the resulting slice.
     /// Useful when you want to read a subset of a dataset.
@@ -160,13 +166,6 @@ impl Dimension for Dataspace {
     }
 }
 
-impl Clone for Dataspace {
-    fn clone(&self) -> Self {
-        let id = h5call!(H5Scopy(self.id())).unwrap_or(H5I_INVALID_HID);
-        Self::from_id(id).ok().unwrap_or_else(Self::invalid)
-    }
-}
-
 #[cfg(test)]
 pub mod tests {
     use crate::internal_prelude::*;
@@ -214,7 +213,7 @@ pub mod tests {
 
         assert_err!(Dataspace::from_id(H5I_INVALID_HID), "Invalid dataspace id");
 
-        let dc = d.clone();
+        let dc = d.copy();
         assert!(dc.is_valid());
         assert_ne!(dc.id(), d.id());
         assert_eq!((d.ndim(), d.dims(), d.size()), (dc.ndim(), dc.dims(), dc.size()));

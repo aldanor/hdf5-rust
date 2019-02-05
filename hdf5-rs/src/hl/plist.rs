@@ -13,6 +13,7 @@ pub mod file_create;
 
 /// Represents the HDF5 property list.
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct PropertyList(Handle);
 
 impl ObjectClass for PropertyList {
@@ -43,13 +44,6 @@ impl Deref for PropertyList {
 
     fn deref(&self) -> &Object {
         unsafe { self.transmute() }
-    }
-}
-
-impl Clone for PropertyList {
-    fn clone(&self) -> Self {
-        let id = h5call!(H5Pcopy(self.id())).unwrap_or(H5I_INVALID_HID);
-        Self::from_id(id).ok().unwrap_or_else(Self::invalid)
     }
 }
 
@@ -156,6 +150,11 @@ impl FromStr for PropertyListClass {
 }
 
 impl PropertyList {
+    /// Copies the property list.
+    pub fn copy(&self) -> Self {
+        Self::from_id(h5lock!(H5Pcopy(self.id()))).unwrap_or_else(|_| Self::invalid())
+    }
+
     /// Queries whether a property name exists in the property list.
     pub fn has(&self, property: &str) -> bool {
         to_cstring(property)
@@ -244,7 +243,7 @@ pub mod tests {
     pub fn test_clone() {
         let (fapl, _) = make_plists();
         assert!(fapl.is_valid());
-        let fapl_c = fapl.clone();
+        let fapl_c = fapl.copy();
         assert!(fapl.is_valid());
         assert!(fapl_c.is_valid());
         assert_eq!(fapl.refcount(), 1);
