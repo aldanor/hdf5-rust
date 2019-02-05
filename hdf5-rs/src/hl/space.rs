@@ -53,6 +53,11 @@ impl Deref for Dataspace {
 }
 
 impl Dataspace {
+    /// Copies the dataspace.
+    pub fn copy(&self) -> Result<Self> {
+        Self::from_id(h5call!(H5Scopy(self.id()))?)
+    }
+
     /// Select a slice (known as a 'hyperslab' in HDF5 terminology) of the Dataspace.
     /// Returns the shape of array that is capable of holding the resulting slice.
     /// Useful when you want to read a subset of a dataset.
@@ -160,13 +165,6 @@ impl Dimension for Dataspace {
     }
 }
 
-impl Clone for Dataspace {
-    fn clone(&self) -> Self {
-        let id = h5call!(H5Scopy(self.id())).unwrap_or(H5I_INVALID_HID);
-        Self::from_id(id).ok().unwrap_or_else(Self::invalid)
-    }
-}
-
 #[cfg(test)]
 pub mod tests {
     use crate::internal_prelude::*;
@@ -214,7 +212,7 @@ pub mod tests {
 
         assert_err!(Dataspace::from_id(H5I_INVALID_HID), "Invalid dataspace id");
 
-        let dc = d.clone();
+        let dc = d.copy().unwrap();
         assert!(dc.is_valid());
         assert_ne!(dc.id(), d.id());
         assert_eq!((d.ndim(), d.dims(), d.size()), (dc.ndim(), dc.dims(), dc.size()));
