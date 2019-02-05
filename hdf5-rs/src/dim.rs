@@ -4,7 +4,7 @@ use std::slice;
 pub type Ix = usize;
 
 /// A trait for the shape and index types.
-pub trait Dimension: Clone {
+pub trait Dimension {
     fn ndim(&self) -> usize;
     fn dims(&self) -> Vec<Ix>;
 
