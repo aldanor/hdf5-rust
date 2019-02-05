@@ -200,6 +200,25 @@ pub mod tests {
     }
 
     #[test]
+    pub fn test_clone() {
+        with_tmp_file(|file| {
+            file.create_group("a").unwrap();
+            let a = file.group("a").unwrap();
+            assert_eq!(a.name(), "/a");
+            assert_eq!(a.file().unwrap().id(), file.id());
+            assert_eq!(a.refcount(), 1);
+            let b = a.clone();
+            assert_eq!(b.name(), "/a");
+            assert_eq!(b.file().unwrap().id(), file.id());
+            assert_eq!(b.refcount(), 2);
+            assert_eq!(a.refcount(), 2);
+            drop(a);
+            assert_eq!(b.refcount(), 1);
+            assert!(b.is_valid());
+        })
+    }
+
+    #[test]
     pub fn test_len() {
         with_tmp_file(|file| {
             assert_eq!(file.len(), 0);
