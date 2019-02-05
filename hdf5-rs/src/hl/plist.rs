@@ -151,8 +151,8 @@ impl FromStr for PropertyListClass {
 
 impl PropertyList {
     /// Copies the property list.
-    pub fn copy(&self) -> Result<Self> {
-        Self::from_id(h5call!(H5Pcopy(self.id()))?)
+    pub fn copy(&self) -> Self {
+        Self::from_id(h5lock!(H5Pcopy(self.id()))).unwrap_or_else(|_| Self::invalid())
     }
 
     /// Queries whether a property name exists in the property list.
@@ -243,7 +243,7 @@ pub mod tests {
     pub fn test_clone() {
         let (fapl, _) = make_plists();
         assert!(fapl.is_valid());
-        let fapl_c = fapl.copy().unwrap();
+        let fapl_c = fapl.copy();
         assert!(fapl.is_valid());
         assert!(fapl_c.is_valid());
         assert_eq!(fapl.refcount(), 1);

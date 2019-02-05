@@ -395,8 +395,8 @@ impl FileCreate {
         Self::from_id(h5try!(H5Pcreate(*H5P_FILE_CREATE)))
     }
 
-    pub fn copy(&self) -> Result<Self> {
-        Ok(unsafe { self.deref().copy()?.cast() })
+    pub fn copy(&self) -> Self {
+        unsafe { self.deref().copy().cast() }
     }
 
     pub fn build() -> FileCreateBuilder {

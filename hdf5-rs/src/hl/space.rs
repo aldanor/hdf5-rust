@@ -55,8 +55,8 @@ impl Deref for Dataspace {
 
 impl Dataspace {
     /// Copies the dataspace.
-    pub fn copy(&self) -> Result<Self> {
-        Self::from_id(h5call!(H5Scopy(self.id()))?)
+    pub fn copy(&self) -> Self {
+        Self::from_id(h5lock!(H5Scopy(self.id()))).unwrap_or_else(|_| Self::invalid())
     }
 
     /// Select a slice (known as a 'hyperslab' in HDF5 terminology) of the Dataspace.
@@ -213,7 +213,7 @@ pub mod tests {
 
         assert_err!(Dataspace::from_id(H5I_INVALID_HID), "Invalid dataspace id");
 
-        let dc = d.copy().unwrap();
+        let dc = d.copy();
         assert!(dc.is_valid());
         assert_ne!(dc.id(), d.id());
         assert_eq!((d.ndim(), d.dims(), d.size()), (dc.ndim(), dc.dims(), dc.size()));
