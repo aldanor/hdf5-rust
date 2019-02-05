@@ -3,7 +3,7 @@ use std::fmt::{self, Debug};
 use std::ops::Deref;
 use std::ptr;
 
-use ndarray::{SliceInfo, SliceOrIndex};
+use ndarray::SliceOrIndex;
 
 use libhdf5_sys::h5s::{
     H5Scopy, H5Screate_simple, H5Sget_simple_extent_dims, H5Sget_simple_extent_ndims,

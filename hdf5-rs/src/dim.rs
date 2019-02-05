@@ -6,6 +6,7 @@ pub type Ix = usize;
 /// A trait for the shape and index types.
 pub trait Dimension {
     fn ndim(&self) -> usize;
+
     fn dims(&self) -> Vec<Ix>;
 
     fn size(&self) -> Ix {
@@ -22,6 +23,7 @@ impl<'a, T: Dimension> Dimension for &'a T {
     fn ndim(&self) -> usize {
         Dimension::ndim(*self)
     }
+
     fn dims(&self) -> Vec<Ix> {
         Dimension::dims(*self)
     }
@@ -31,6 +33,7 @@ impl Dimension for Vec<Ix> {
     fn ndim(&self) -> usize {
         self.len()
     }
+
     fn dims(&self) -> Vec<Ix> {
         self.clone()
     }
@@ -74,6 +77,7 @@ impl Dimension for Ix {
     fn ndim(&self) -> usize {
         1
     }
+
     fn dims(&self) -> Vec<Ix> {
         vec![*self]
     }
