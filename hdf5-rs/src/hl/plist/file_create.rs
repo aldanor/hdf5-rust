@@ -88,12 +88,6 @@ impl PartialEq for FileCreate {
 
 impl Eq for FileCreate {}
 
-impl Clone for FileCreate {
-    fn clone(&self) -> Self {
-        unsafe { self.deref().clone().cast() }
-    }
-}
-
 /// Size of the offsets and lengths used in a file.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct SizeofInfo {
@@ -398,6 +392,10 @@ impl FileCreateBuilder {
 impl FileCreate {
     pub fn try_new() -> Result<Self> {
         Self::from_id(h5try!(H5Pcreate(*H5P_FILE_CREATE)))
+    }
+
+    pub fn copy(&self) -> Result<Self> {
+        Ok(unsafe { self.deref().copy()?.cast() })
     }
 
     pub fn build() -> FileCreateBuilder {
