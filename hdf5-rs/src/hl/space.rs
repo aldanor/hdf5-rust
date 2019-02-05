@@ -14,6 +14,7 @@ use crate::internal_prelude::*;
 
 /// Represents the HDF5 dataspace object.
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct Dataspace(Handle);
 
 impl ObjectClass for Dataspace {

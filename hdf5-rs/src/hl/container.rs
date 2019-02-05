@@ -386,6 +386,7 @@ impl<'a> Writer<'a> {
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct Container(Handle);
 
 impl ObjectClass for Container {

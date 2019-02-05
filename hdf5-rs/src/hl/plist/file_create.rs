@@ -28,6 +28,7 @@ use crate::internal_prelude::*;
 
 /// File creation properties.
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct FileCreate(Handle);
 
 impl ObjectClass for FileCreate {

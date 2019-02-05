@@ -13,6 +13,7 @@ pub mod file_create;
 
 /// Represents the HDF5 property list.
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct PropertyList(Handle);
 
 impl ObjectClass for PropertyList {

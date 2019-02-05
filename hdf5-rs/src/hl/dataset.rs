@@ -22,6 +22,7 @@ use crate::internal_prelude::*;
 
 /// Represents the HDF5 dataset object.
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct Dataset(Handle);
 
 impl ObjectClass for Dataset {

@@ -13,6 +13,7 @@ use crate::internal_prelude::*;
 
 /// Represents the HDF5 group object.
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct Group(Handle);
 
 impl ObjectClass for Group {

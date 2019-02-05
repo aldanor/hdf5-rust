@@ -12,6 +12,7 @@ use crate::internal_prelude::*;
 
 /// Named location (file, group, dataset, named datatype).
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct Location(Handle);
 
 impl ObjectClass for Location {
