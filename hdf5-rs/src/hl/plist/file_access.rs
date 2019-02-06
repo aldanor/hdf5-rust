@@ -50,6 +50,8 @@ use libhdf5_sys::h5p::{
 
 #[cfg(hdf5_1_10_1)]
 use libhdf5_sys::h5ac::{H5AC_cache_image_config_t, H5AC__CACHE_IMAGE__ENTRY_AGEOUT__NONE};
+#[cfg(all(hdf5_1_10_0, h5_have_parallel))]
+use libhdf5_sys::h5p::{H5Pget_all_coll_metadata_ops, H5Pset_all_coll_metadata_ops};
 #[cfg(hdf5_1_8_13)]
 use libhdf5_sys::h5p::{H5Pget_core_write_tracking, H5Pset_core_write_tracking};
 #[cfg(hdf5_1_8_7)]
@@ -121,6 +123,10 @@ impl Debug for FileAccess {
         {
             formatter.field("metadata_read_attempts", &self.metadata_read_attempts());
             formatter.field("mdc_log_options", &self.mdc_log_options());
+        }
+        #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
+        {
+            formatter.field("all_coll_metadata_ops", &self.all_coll_metadata_ops());
         }
         formatter.field("mdc_config", &self.mdc_config());
         formatter.field("driver", &self.driver());
@@ -793,6 +799,8 @@ pub struct FileAccessBuilder {
     mdc_image_config: Option<CacheImageConfig>,
     #[cfg(hdf5_1_10_0)]
     mdc_log_options: Option<CacheLogOptions>,
+    #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
+    all_coll_metadata_ops: Option<bool>,
     gc_references: Option<bool>,
     small_data_block_size: Option<u64>,
     libver_low_earliest: Option<bool>,
@@ -835,6 +843,10 @@ impl FileAccessBuilder {
             builder.metadata_read_attempts(plist.get_metadata_read_attempts()?);
             let v = plist.get_mdc_log_options()?;
             builder.mdc_log_options(v.is_enabled, &v.location, v.start_on_access);
+        }
+        #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
+        {
+            builder.all_coll_metadata_ops(plist.get_all_coll_metadata_ops()?);
         }
         builder.mdc_config(&plist.get_mdc_config()?);
         #[cfg(hdf5_1_8_13)]
@@ -918,6 +930,12 @@ impl FileAccessBuilder {
     ) -> &mut Self {
         self.mdc_log_options =
             Some(CacheLogOptions { is_enabled, location: location.into(), start_on_access });
+        self
+    }
+
+    #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
+    pub fn all_coll_metadata_ops(&mut self, is_collective: bool) -> &mut Self {
+        self.all_coll_metadata_ops = Some(is_collective);
         self
     }
 
@@ -1195,6 +1213,12 @@ impl FileAccessBuilder {
                     location.as_ptr(),
                     v.start_on_access as _,
                 ));
+            }
+        }
+        #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
+        {
+            if let Some(v) = self.all_coll_metadata_ops {
+                h5try!(H5Pset_all_coll_metadata_ops(id, v as _));
             }
         }
         if let Some(ref v) = self.mdc_config {
@@ -1476,6 +1500,17 @@ impl FileAccess {
     #[cfg(hdf5_1_10_0)]
     pub fn mdc_log_options(&self) -> Option<CacheLogOptions> {
         self.get_mdc_log_options().ok()
+    }
+
+    #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
+    #[doc(hidden)]
+    pub fn get_all_coll_metadata_ops(&self) -> Result<bool> {
+        h5get!(H5Pget_all_coll_metadata_ops(self.id()): hbool_t).map(|x| x > 0)
+    }
+
+    #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
+    pub fn all_coll_metadata_ops(&self) -> bool {
+        self.get_all_coll_metadata_ops().unwrap_or(false)
     }
 
     #[doc(hidden)]
