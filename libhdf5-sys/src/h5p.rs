@@ -605,6 +605,14 @@ extern "C" {
     ) -> herr_t;
 }
 
+#[cfg(all(hdf5_1_10_0, h5_have_parallel))]
+extern "C" {
+    pub fn H5Pset_coll_metadata_write(fapl_id: hid_t, is_collective: hbool_t) -> herr_t;
+    pub fn H5Pget_coll_metadata_write(fapl_id: hid_t, is_collective: *mut hbool_t) -> herr_t;
+    pub fn H5Pset_all_coll_metadata_ops(accpl_id: hid_t, is_collective: hbool_t) -> herr_t;
+    pub fn H5Pget_all_coll_metadata_ops(accpl_id: hid_t, is_collective: *mut hbool_t) -> herr_t;
+}
+
 #[cfg(hdf5_1_10_1)]
 extern "C" {
     pub fn H5Pset_evict_on_close(fapl_id: hid_t, evict_on_close: hbool_t) -> herr_t;
