@@ -51,7 +51,10 @@ use libhdf5_sys::h5p::{
 #[cfg(hdf5_1_10_1)]
 use libhdf5_sys::h5ac::{H5AC_cache_image_config_t, H5AC__CACHE_IMAGE__ENTRY_AGEOUT__NONE};
 #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
-use libhdf5_sys::h5p::{H5Pget_all_coll_metadata_ops, H5Pset_all_coll_metadata_ops};
+use libhdf5_sys::h5p::{
+    H5Pget_all_coll_metadata_ops, H5Pget_coll_metadata_write, H5Pset_all_coll_metadata_ops,
+    H5Pset_coll_metadata_write,
+};
 #[cfg(hdf5_1_8_13)]
 use libhdf5_sys::h5p::{H5Pget_core_write_tracking, H5Pset_core_write_tracking};
 #[cfg(hdf5_1_8_7)]
@@ -127,6 +130,7 @@ impl Debug for FileAccess {
         #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
         {
             formatter.field("all_coll_metadata_ops", &self.all_coll_metadata_ops());
+            formatter.field("coll_metadata_write", &self.coll_metadata_write());
         }
         formatter.field("mdc_config", &self.mdc_config());
         formatter.field("driver", &self.driver());
@@ -801,6 +805,8 @@ pub struct FileAccessBuilder {
     mdc_log_options: Option<CacheLogOptions>,
     #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
     all_coll_metadata_ops: Option<bool>,
+    #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
+    coll_metadata_write: Option<bool>,
     gc_references: Option<bool>,
     small_data_block_size: Option<u64>,
     libver_low_earliest: Option<bool>,
@@ -847,6 +853,7 @@ impl FileAccessBuilder {
         #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
         {
             builder.all_coll_metadata_ops(plist.get_all_coll_metadata_ops()?);
+            builder.coll_metadata_write(plist.get_coll_metadata_write()?);
         }
         builder.mdc_config(&plist.get_mdc_config()?);
         #[cfg(hdf5_1_8_13)]
@@ -936,6 +943,12 @@ impl FileAccessBuilder {
     #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
     pub fn all_coll_metadata_ops(&mut self, is_collective: bool) -> &mut Self {
         self.all_coll_metadata_ops = Some(is_collective);
+        self
+    }
+
+    #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
+    pub fn coll_metadata_write(&mut self, is_collective: bool) -> &mut Self {
+        self.coll_metadata_write = Some(is_collective);
         self
     }
 
@@ -1219,6 +1232,9 @@ impl FileAccessBuilder {
         {
             if let Some(v) = self.all_coll_metadata_ops {
                 h5try!(H5Pset_all_coll_metadata_ops(id, v as _));
+            }
+            if let Some(v) = self.coll_metadata_write {
+                h5try!(H5Pset_coll_metadata_write(id, v as _));
             }
         }
         if let Some(ref v) = self.mdc_config {
@@ -1511,6 +1527,17 @@ impl FileAccess {
     #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
     pub fn all_coll_metadata_ops(&self) -> bool {
         self.get_all_coll_metadata_ops().unwrap_or(false)
+    }
+
+    #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
+    #[doc(hidden)]
+    pub fn get_coll_metadata_write(&self) -> Result<bool> {
+        h5get!(H5Pget_coll_metadata_write(self.id()): hbool_t).map(|x| x > 0)
+    }
+
+    #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
+    pub fn coll_metadata_write(&self) -> bool {
+        self.get_coll_metadata_write().unwrap_or(false)
     }
 
     #[doc(hidden)]
