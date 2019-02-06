@@ -456,7 +456,14 @@ impl LibrarySearcher {
         if let Ok(var) = env::var("HDF5_DIR") {
             println!("Setting HDF5 root from environment variable:");
             println!("    HDF5_DIR = {:?}", var);
-            config.inc_dir = Some(PathBuf::from(var).join("include"));
+            let root = PathBuf::from(var);
+            if root.is_relative() {
+                panic!("HDF5_DIR cannot be relative.");
+            }
+            if !root.is_dir() {
+                panic!("HDF5_DIR is not a directory.");
+            }
+            config.inc_dir = Some(root.join("include"));
         }
         if cfg!(target_env = "msvc") {
             // in order to allow HDF5_DIR to be pointed to a conda environment, we have
