@@ -14,8 +14,6 @@ edition = "2018"
 libc = "0.2"
 
 [build-dependencies]
-bindgen = "0.47"
-lazy_static = "1.2"
 libloading = "0.5"
 regex = "1.1"
 

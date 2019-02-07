@@ -7,11 +7,7 @@ use std::os::raw::{c_int, c_uint};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::str;
-use std::sync::Mutex;
 
-use bindgen::callbacks::IntKind;
-use bindgen::callbacks::ParseCallbacks;
-use lazy_static::lazy_static;
 use regex::Regex;
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Default)]
@@ -167,53 +163,43 @@ pub struct Header {
     pub version: Version,
 }
 
-lazy_static! {
-    static ref HEADER: Mutex<Header> = Default::default();
-}
-
-#[derive(Debug)]
-struct HeaderParser;
-
-impl ParseCallbacks for HeaderParser {
-    fn int_macro(&self, name: &str, value: i64) -> Option<IntKind> {
-        let mut hdr = HEADER.lock().unwrap();
-        if name == "H5_HAVE_STDBOOL_H" {
-            hdr.have_stdbool_h = value > 0;
-        } else if name == "H5_HAVE_DIRECT" {
-            hdr.have_direct = value > 0;
-        } else if name == "H5_HAVE_PARALLEL" {
-            hdr.have_parallel = value > 0;
-        } else if name == "H5_HAVE_THREADSAFE" {
-            hdr.have_threadsafe = value > 0;
-        }
-        None
-    }
-
-    fn str_macro(&self, name: &str, value: &[u8]) {
-        let mut hdr = HEADER.lock().unwrap();
-        let str_value = unsafe { str::from_utf8_unchecked(value) };
-        if name == "H5_VERSION" {
-            if let Some(version) = Version::parse(str_value) {
-                hdr.version = version;
-            } else {
-                panic!("Invalid H5_VERSION: {:?}", str_value);
-            }
-        }
-    }
-}
-
 impl Header {
     pub fn parse<P: AsRef<Path>>(inc_dir: P) -> Self {
         let inc_dir = inc_dir.as_ref();
         let header = inc_dir.join("H5pubconf.h");
         println!("Parsing HDF5 config from:\n    {:?}", header);
-        bindgen::builder()
-            .header(header.to_str().unwrap())
-            .clang_args(&["-I", inc_dir.to_str().unwrap()])
-            .parse_callbacks(Box::new(HeaderParser))
-            .generate()
-            .unwrap();
-        let hdr = HEADER.lock().unwrap().clone();
+
+        let contents = fs::read_to_string(header).unwrap();
+        let mut hdr = Self::default();
+
+        let num_def_re = Regex::new(r"(?m)^#define\s+(H5_[A-Z_]+)\s+([0-9]+)\s*$").unwrap();
+        for captures in num_def_re.captures_iter(&contents) {
+            let name = captures.get(1).unwrap().as_str();
+            let value = captures.get(2).unwrap().as_str().parse::<i64>().unwrap();
+            if name == "H5_HAVE_STDBOOL_H" {
+                hdr.have_stdbool_h = value > 0;
+            } else if name == "H5_HAVE_DIRECT" {
+                hdr.have_direct = value > 0;
+            } else if name == "H5_HAVE_PARALLEL" {
+                hdr.have_parallel = value > 0;
+            } else if name == "H5_HAVE_THREADSAFE" {
+                hdr.have_threadsafe = value > 0;
+            }
+        }
+
+        let str_def_re = Regex::new(r#"(?m)^#define\s+(H5_[A-Z_]+)\s+"([^"]+)"\s*$"#).unwrap();
+        for captures in str_def_re.captures_iter(&contents) {
+            let name = captures.get(1).unwrap().as_str();
+            let value = captures.get(2).unwrap().as_str();
+            if name == "H5_VERSION" {
+                if let Some(version) = Version::parse(value) {
+                    hdr.version = version;
+                } else {
+                    panic!("Invalid H5_VERSION: {:?}", value);
+                }
+            }
+        }
+
         if !hdr.version.is_valid() {
             panic!("Invalid H5_VERSION in the header: {:?}");
         }
