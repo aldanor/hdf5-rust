@@ -172,6 +172,12 @@ extern "C" {
     pub fn H5Fget_file_image(file_id: hid_t, buf_ptr: *mut c_void, buf_len: size_t) -> ssize_t;
 }
 
+#[cfg(all(hdf5_1_8_9, h5_have_parallel))]
+extern "C" {
+    pub fn H5Fset_mpi_atomicity(file_id: hid_t, flag: hbool_t) -> herr_t;
+    pub fn H5Fget_mpi_atomicity(file_id: hid_t, flag: *mut hbool_t) -> herr_t;
+}
+
 #[cfg(hdf5_1_10_0)]
 mod hdf5_1_10_0 {
     use super::*;
