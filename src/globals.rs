@@ -4,6 +4,8 @@ use std::mem;
 
 use lazy_static::lazy_static;
 
+#[cfg(h5_have_parallel)]
+use libhdf5_sys::h5fd::H5FD_mpio_init;
 use libhdf5_sys::h5fd::{
     H5FD_core_init, H5FD_family_init, H5FD_log_init, H5FD_multi_init, H5FD_sec2_init,
     H5FD_stdio_init,
@@ -324,6 +326,16 @@ lazy_static! {
     pub static ref H5FD_FAMILY: hid_t = unsafe { h5lock!(H5FD_family_init()) };
     pub static ref H5FD_LOG: hid_t = unsafe { h5lock!(H5FD_log_init()) };
     pub static ref H5FD_MULTI: hid_t = unsafe { h5lock!(H5FD_multi_init()) };
+}
+
+// MPI-IO file driver
+#[cfg(h5_have_parallel)]
+lazy_static! {
+    pub static ref H5FD_MPIO: hid_t = unsafe { h5lock!(H5FD_mpio_init()) };
+}
+#[cfg(not(h5_have_parallel))]
+lazy_static! {
+    pub static ref H5FD_MPIO: hid_t = H5I_INVALID_HID;
 }
 
 #[cfg(target_os = "windows")]

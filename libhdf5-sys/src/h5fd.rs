@@ -352,8 +352,12 @@ extern "C" {
 /*
 Missing drivers:
 - direct (HDF5 library needs to be compiled with H5_HAVE_DIRECT)
-- mpio (HDF5 library needs to be compiled with H5_HAVE_PARALLEL)
 */
+}
+
+#[cfg(h5_have_parallel)]
+extern "C" {
+    pub fn H5FD_mpio_init() -> hid_t;
 }
 
 #[cfg(hdf5_1_10_0)]
