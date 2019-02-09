@@ -764,6 +764,16 @@ pub struct CacheImageConfig {
     pub entry_ageout: i32,
 }
 
+impl Default for CacheImageConfig {
+    fn default() -> Self {
+        CacheImageConfig {
+            generate_image: false,
+            save_resize_status: false,
+            entry_ageout: H5AC__CACHE_IMAGE__ENTRY_AGEOUT__NONE,
+        }
+    }
+}
+
 #[cfg(hdf5_1_10_1)]
 impl Into<H5AC_cache_image_config_t> for CacheImageConfig {
     fn into(self) -> H5AC_cache_image_config_t {
