@@ -1461,8 +1461,8 @@ impl FileAccess {
         }
     }
 
-    pub fn driver(&self) -> Option<FileDriver> {
-        self.get_driver().ok()
+    pub fn driver(&self) -> FileDriver {
+        self.get_driver().unwrap_or(FileDriver::Sec2)
     }
 
     #[doc(hidden)]
