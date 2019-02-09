@@ -16,6 +16,9 @@
 #![cfg_attr(all(feature = "cargo-clippy", test), allow(clippy::cyclomatic_complexity))]
 #![cfg_attr(not(test), allow(dead_code))]
 
+#[cfg(all(feature = "mpio", not(h5_have_parallel)))]
+compile_error!("Enabling \"mpio\" feature requires HDF5 library built with MPI support");
+
 mod export {
     pub use crate::{
         dim::{Dimension, Ix},
