@@ -1588,8 +1588,8 @@ impl FileAccess {
     }
 
     #[cfg(hdf5_1_10_1)]
-    pub fn mdc_image_config(&self) -> Option<CacheImageConfig> {
-        self.get_mdc_image_config().ok()
+    pub fn mdc_image_config(&self) -> CacheImageConfig {
+        self.get_mdc_image_config().ok().unwrap_or_else(CacheImageConfig::default)
     }
 
     #[cfg(hdf5_1_10_0)]
