@@ -14,6 +14,10 @@ edition = "2018"
 [lib]
 name = "h5"
 
+[features]
+default = []
+mpio = ["mpi-sys", "libhdf5-sys/mpio"]
+
 [workspace]
 members = ["hdf5-types", "hdf5-derive", "libhdf5-sys"]
 exclude = ["*.yml", "scripts/*"]
@@ -26,6 +30,7 @@ parking_lot = "0.7"
 ndarray = "0.12"
 num-integer = "0.1"
 num-traits = "0.2"
+mpi-sys = { version = "0.1", optional = true }
 libhdf5-sys = { path = "libhdf5-sys", version = "0.2.0" }
 hdf5-types = { path = "hdf5-types", version = "0.2.0" }
 hdf5-derive = { path = "hdf5-derive", version = "0.2.0" }

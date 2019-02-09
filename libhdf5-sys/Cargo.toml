@@ -12,6 +12,11 @@ edition = "2018"
 
 [dependencies]
 libc = "0.2"
+mpi-sys = { version = "0.1", optional = true }
+
+[features]
+default = []
+mpio = ["mpi-sys"]
 
 [build-dependencies]
 libloading = "0.5"
