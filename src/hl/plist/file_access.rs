@@ -1679,7 +1679,7 @@ impl FileAccess {
             .map(|(low, high)| LibVerBounds { low: low.into(), high: high.into() })
     }
 
-    pub fn libver_bounds(&self) -> Option<LibVerBounds> {
-        self.get_libver_bounds().ok()
+    pub fn libver_bounds(&self) -> LibVerBounds {
+        self.get_libver_bounds().ok().unwrap_or_else(LibVerBounds::default)
     }
 }
