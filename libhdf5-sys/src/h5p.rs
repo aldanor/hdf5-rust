@@ -495,6 +495,55 @@ extern "C" {
     ) -> herr_t;
 }
 
+#[cfg(h5_have_parallel)]
+mod mpio {
+    use crate::internal_prelude::*;
+
+    pub const H5D_ONE_LINK_CHUNK_IO_THRESHOLD: c_uint = 0;
+    pub const H5D_MULTI_CHUNK_IO_COL_THRESHOLD: c_uint = 60;
+
+    #[repr(C)]
+    #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+    pub enum H5FD_mpio_xfer_t {
+        H5FD_MPIO_INDEPENDENT = 0,
+        H5FD_MPIO_COLLECTIVE = 1,
+    }
+
+    #[repr(C)]
+    #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+    pub enum H5FD_mpio_chunk_opt_t {
+        H5FD_MPIO_CHUNK_DEFAULT = 0,
+        H5FD_MPIO_CHUNK_ONE_IO = 1,
+        H5FD_MPIO_CHUNK_MULTI_IO = 2,
+    }
+
+    #[repr(C)]
+    #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+    pub enum H5FD_mpio_collective_opt_t {
+        H5FD_MPIO_COLLECTIVE_IO = 0,
+        H5FD_MPIO_INDIVIDUAL_IO = 1,
+    }
+
+    extern "C" {
+        pub fn H5Pset_dxpl_mpio(dxpl_id: hid_t, xfer_mode: H5FD_mpio_xfer_t) -> herr_t;
+        pub fn H5Pget_dxpl_mpio(dxpl_id: hid_t, xfer_mode: *mut H5FD_mpio_xfer_t) -> herr_t;
+        pub fn H5Pset_dxpl_mpio_collective_opt(
+            dxpl_id: hid_t, opt_mode: H5FD_mpio_collective_opt_t,
+        ) -> herr_t;
+        pub fn H5Pset_dxpl_mpio_chunk_opt(
+            dxpl_id: hid_t, opt_mode: H5FD_mpio_chunk_opt_t,
+        ) -> herr_t;
+        pub fn H5Pset_dxpl_mpio_chunk_opt_num(dxpl_id: hid_t, num_chunk_per_proc: c_uint)
+            -> herr_t;
+        pub fn H5Pset_dxpl_mpio_chunk_opt_ratio(
+            dxpl_id: hid_t, percent_num_proc_per_chunk: c_uint,
+        ) -> herr_t;
+    }
+}
+
+#[cfg(h5_have_parallel)]
+pub use self::mpio::*;
+
 #[cfg(target_os = "windows")]
 extern "C" {
     pub fn H5Pset_fapl_windows(fapl_id: hid_t) -> herr_t;
