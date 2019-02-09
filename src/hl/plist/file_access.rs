@@ -1636,8 +1636,8 @@ impl FileAccess {
     }
 
     #[cfg(hdf5_1_10_0)]
-    pub fn mdc_log_options(&self) -> Option<CacheLogOptions> {
-        self.get_mdc_log_options().ok()
+    pub fn mdc_log_options(&self) -> CacheLogOptions {
+        self.get_mdc_log_options().ok().unwrap_or_else(CacheLogOptions::default)
     }
 
     #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
