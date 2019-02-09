@@ -212,6 +212,7 @@ pub struct LibrarySearcher {
     pub version: Option<Version>,
     pub inc_dir: Option<PathBuf>,
     pub link_paths: Vec<PathBuf>,
+    pub user_provided_dir: bool,
 }
 
 #[cfg(all(unix, not(target_os = "macos")))]
@@ -449,6 +450,7 @@ impl LibrarySearcher {
             if !root.is_dir() {
                 panic!("HDF5_DIR is not a directory.");
             }
+            config.user_provided_dir = true;
             config.inc_dir = Some(root.join("include"));
         }
         if cfg!(target_env = "msvc") {
@@ -496,9 +498,9 @@ impl LibrarySearcher {
         if let Some(ref inc_dir) = self.inc_dir {
             if cfg!(unix) {
                 if let Some(envdir) = inc_dir.parent() {
-                    if envdir.join("conda-meta").is_dir() {
+                    if self.user_provided_dir {
                         let lib_dir = format!("{}/lib", envdir.to_string_lossy());
-                        println!("Conda environment detected, rpath can be set via:");
+                        println!("Custom HDF5_DIR provided; rpath can be set via:");
                         println!("    RUSTFLAGS=\"-C link-args=-Wl,-rpath,{}\"", lib_dir);
                         if cfg!(target_os = "macos") {
                             println!("On some OS X installations, you may also need to set:");
