@@ -212,7 +212,7 @@ impl Default for FileSpaceStrategy {
 }
 
 /// Builder used to create file creation property list.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, Default)]
 pub struct FileCreateBuilder {
     userblock: Option<u64>,
     sym_k: Option<SymbolTableInfo>,

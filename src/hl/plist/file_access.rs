@@ -387,7 +387,7 @@ mod mpio {
 
     use super::{c_int, Result};
 
-    #[derive(Debug, PartialEq, Eq)]
+    #[derive(Debug)]
     pub struct MpioDriver {
         pub comm: MPI_Comm,
         pub info: MPI_Info,
@@ -444,7 +444,7 @@ mod mpio {
 #[cfg(feature = "mpio")]
 pub use self::mpio::*;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug)]
 pub enum FileDriver {
     Sec2,
     Stdio,
@@ -845,7 +845,7 @@ pub struct LibVerBounds {
 }
 
 /// Builder used to create file access property list.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, Default)]
 pub struct FileAccessBuilder {
     file_driver: Option<FileDriver>,
     log_options: LogOptions,
