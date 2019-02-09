@@ -678,6 +678,42 @@ pub struct MetadataCacheConfig {
 
 impl Eq for MetadataCacheConfig {}
 
+impl Default for MetadataCacheConfig {
+    fn default() -> Self {
+        Self {
+            rpt_fcn_enabled: false,
+            open_trace_file: false,
+            close_trace_file: false,
+            trace_file_name: "".into(),
+            evictions_enabled: true,
+            set_initial_size: true,
+            initial_size: 1 << 21,
+            min_clean_fraction: 0.30000001192092896,
+            max_size: 1 << 25,
+            min_size: 1 << 20,
+            epoch_length: 50_000,
+            incr_mode: CacheIncreaseMode::Threshold,
+            lower_hr_threshold: 0.8999999761581421,
+            increment: 2.0,
+            apply_max_increment: true,
+            max_increment: 1 << 22,
+            flash_incr_mode: FlashIncreaseMode::AddSpace,
+            flash_multiple: 1.0,
+            flash_threshold: 0.25,
+            decr_mode: CacheDecreaseMode::AgeOutWithThreshold,
+            upper_hr_threshold: 0.9990000128746033,
+            decrement: 0.8999999761581421,
+            apply_max_decrement: true,
+            max_decrement: 1 << 20,
+            epochs_before_eviction: 3,
+            apply_empty_reserve: true,
+            empty_reserve: 0.10000000149011612,
+            dirty_bytes_threshold: 1 << 18,
+            metadata_write_strategy: MetadataWriteStrategy::Distributed,
+        }
+    }
+}
+
 impl Into<H5AC_cache_config_t> for MetadataCacheConfig {
     fn into(self) -> H5AC_cache_config_t {
         const N: usize = H5AC__MAX_TRACE_FILE_NAME_LEN;
