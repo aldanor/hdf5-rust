@@ -42,6 +42,8 @@ use libhdf5_sys::h5p::{
     H5Pset_fclose_degree, H5Pset_gc_references, H5Pset_libver_bounds, H5Pset_mdc_config,
     H5Pset_meta_block_size, H5Pset_sieve_buf_size, H5Pset_small_data_block_size,
 };
+#[cfg(feature = "mpio")]
+use libhdf5_sys::h5p::{H5Pget_fapl_mpio, H5Pset_fapl_mpio};
 
 #[cfg(hdf5_1_10_1)]
 use libhdf5_sys::h5ac::{H5AC_cache_image_config_t, H5AC__CACHE_IMAGE__ENTRY_AGEOUT__NONE};
@@ -65,6 +67,8 @@ use libhdf5_sys::h5p::{
     H5Pset_metadata_read_attempts,
 };
 
+#[cfg(feature = "mpio")]
+use crate::globals::H5FD_MPIO;
 use crate::globals::{
     H5FD_CORE, H5FD_FAMILY, H5FD_LOG, H5FD_MULTI, H5FD_SEC2, H5FD_STDIO, H5P_FILE_ACCESS,
 };
@@ -375,6 +379,71 @@ impl SplitDriver {
     }
 }
 
+#[cfg(feature = "mpio")]
+mod mpio {
+    use std::mem;
+
+    use mpi_sys::{MPI_Comm, MPI_Info};
+
+    use super::{c_int, Result};
+
+    #[derive(Debug, PartialEq, Eq)]
+    pub struct MpioDriver {
+        pub comm: MPI_Comm,
+        pub info: MPI_Info,
+    }
+
+    macro_rules! mpi_exec {
+        ($func:ident, $($arg:tt)*) => (
+            if unsafe { mpi_sys::$func($($arg)*) } != mpi_sys::MPI_SUCCESS as _ {
+                fail!("{} failed", stringify!($func));
+            }
+        );
+    }
+
+    impl MpioDriver {
+        pub(crate) fn try_new(comm: MPI_Comm, info: Option<MPI_Info>) -> Result<Self> {
+            let mut comm_dup = unsafe { mem::zeroed() };
+            let mut info_dup = unsafe { mem::zeroed() };
+            mpi_exec!(MPI_Comm_dup, comm, &mut comm_dup);
+            if let Some(info) = info {
+                mpi_exec!(MPI_Info_dup, info, &mut info_dup);
+            } else {
+                mpi_exec!(MPI_Info_create, &mut info_dup);
+            }
+            Ok(Self { comm: comm_dup, info: info_dup })
+        }
+    }
+
+    impl Clone for MpioDriver {
+        fn clone(&self) -> Self {
+            unsafe {
+                let mut comm_dup = mem::zeroed();
+                mpi_sys::MPI_Comm_dup(self.comm, &mut comm_dup);
+                let mut info_dup = mem::zeroed();
+                mpi_sys::MPI_Info_dup(self.info, &mut info_dup);
+                Self { comm: comm_dup, info: info_dup }
+            }
+        }
+    }
+
+    impl Drop for MpioDriver {
+        fn drop(&mut self) {
+            let mut finalized: c_int = 1;
+            unsafe {
+                let code = mpi_sys::MPI_Finalized(&mut finalized);
+                if code == mpi_sys::MPI_SUCCESS as _ && finalized == 0 {
+                    mpi_sys::MPI_Info_free(&mut self.info);
+                    mpi_sys::MPI_Comm_free(&mut self.comm);
+                }
+            }
+        }
+    }
+}
+
+#[cfg(feature = "mpio")]
+pub use self::mpio::*;
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum FileDriver {
     Sec2,
@@ -384,6 +453,8 @@ pub enum FileDriver {
     Family(FamilyDriver),
     Multi(MultiDriver),
     Split(SplitDriver),
+    #[cfg(feature = "mpio")]
+    Mpio(MpioDriver),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -1038,6 +1109,12 @@ impl FileAccessBuilder {
         self.driver(&FileDriver::Split(SplitDriver::default()))
     }
 
+    #[cfg(feature = "mpio")]
+    pub fn mpio(&mut self, comm: mpi_sys::MPI_Comm, info: Option<mpi_sys::MPI_Info>) -> &mut Self {
+        // We use .unwrap() here since MPI will almost surely terminate the process anyway.
+        self.driver(&FileDriver::Mpio(MpioDriver::try_new(comm, info).unwrap()))
+    }
+
     fn set_log(&self, id: hid_t) -> Result<()> {
         let opt = &self.log_options;
         let flags = opt.flags.bits() as _;
@@ -1128,6 +1205,12 @@ impl FileAccessBuilder {
         Ok(())
     }
 
+    #[cfg(feature = "mpio")]
+    fn set_mpio(id: hid_t, drv: &MpioDriver) -> Result<()> {
+        h5try!(H5Pset_fapl_mpio(id, drv.comm, drv.info));
+        Ok(())
+    }
+
     fn set_driver(&self, id: hid_t, drv: &FileDriver) -> Result<()> {
         match drv {
             FileDriver::Sec2 => {
@@ -1150,6 +1233,10 @@ impl FileAccessBuilder {
             }
             FileDriver::Split(drv) => {
                 Self::set_split(id, drv)?;
+            }
+            #[cfg(feature = "mpio")]
+            FileDriver::Mpio(drv) => {
+                Self::set_mpio(id, drv)?;
             }
         }
         Ok(())
@@ -1325,8 +1412,23 @@ impl FileAccess {
     }
 
     #[doc(hidden)]
+    #[cfg(feature = "mpio")]
+    fn get_mpio(&self) -> Result<MpioDriver> {
+        let mut comm: mpi_sys::MPI_Comm = unsafe { mem::uninitialized() };
+        let mut info: mpi_sys::MPI_Info = unsafe { mem::uninitialized() };
+        h5try!(H5Pget_fapl_mpio(self.id(), &mut comm as *mut _, &mut info as *mut _));
+        Ok(MpioDriver { comm, info })
+    }
+
+    #[doc(hidden)]
     pub fn get_driver(&self) -> Result<FileDriver> {
         let drv_id = h5try!(H5Pget_driver(self.id()));
+        #[cfg(feature = "mpio")]
+        {
+            if drv_id == *H5FD_MPIO {
+                return self.get_mpio().map(FileDriver::Mpio);
+            }
+        }
         if drv_id == *H5FD_SEC2 {
             Ok(FileDriver::Sec2)
         } else if drv_id == *H5FD_STDIO {
@@ -1345,7 +1447,7 @@ impl FileAccess {
                 Ok(FileDriver::Multi(multi))
             }
         } else {
-            fail!("unknown file driver (id: {})", drv_id);
+            fail!("unknown or unsupported file driver (id: {})", drv_id);
         }
     }
 
