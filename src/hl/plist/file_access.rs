@@ -805,6 +805,13 @@ pub struct CacheLogOptions {
     pub start_on_access: bool,
 }
 
+#[cfg(hdf5_1_10_0)]
+impl Default for CacheLogOptions {
+    fn default() -> Self {
+        Self { is_enabled: false, location: "".into(), start_on_access: false }
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum LibraryVersion {
     Earliest = 0,
