@@ -493,6 +493,16 @@ extern "C" {
     pub fn H5Pget_fapl_mpio(
         fapl_id: hid_t, comm: *mut mpi_sys::MPI_Comm, info: *mut mpi_sys::MPI_Info,
     ) -> herr_t;
+
+    // direct
+    #[cfg(h5_have_direct)]
+    pub fn H5Pset_fapl_direct(
+        fapl_id: hid_t, alignment: size_t, block_size: size_t, cbuf_size: size_t,
+    ) -> herr_t;
+    #[cfg(h5_have_direct)]
+    pub fn H5Pget_fapl_direct(
+        fapl_id: hid_t, alignment: *mut size_t, block_size: *mut size_t, cbuf_size: *mut size_t,
+    ) -> herr_t;
 }
 
 #[cfg(h5_have_parallel)]
