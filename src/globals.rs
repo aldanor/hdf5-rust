@@ -338,6 +338,16 @@ lazy_static! {
     pub static ref H5FD_MPIO: hid_t = H5I_INVALID_HID;
 }
 
+// Direct VFD
+#[cfg(h5_have_direct)]
+lazy_static! {
+    pub static ref H5FD_DIRECT: hid_t = unsafe { h5lock!(H5FD_direct_init()) };
+}
+#[cfg(not(h5_have_direct))]
+lazy_static! {
+    pub static ref H5FD_DIRECT: hid_t = H5I_INVALID_HID;
+}
+
 #[cfg(target_os = "windows")]
 lazy_static! {
     pub static ref H5FD_WINDOWS: hid_t = *H5FD_SEC2;

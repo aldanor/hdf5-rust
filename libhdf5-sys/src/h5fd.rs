@@ -349,15 +349,16 @@ extern "C" {
     pub fn H5FD_family_init() -> hid_t;
     pub fn H5FD_log_init() -> hid_t;
     pub fn H5FD_multi_init() -> hid_t;
-/*
-Missing drivers:
-- direct (HDF5 library needs to be compiled with H5_HAVE_DIRECT)
-*/
 }
 
 #[cfg(h5_have_parallel)]
 extern "C" {
     pub fn H5FD_mpio_init() -> hid_t;
+}
+
+#[cfg(h5_have_direct)]
+extern "C" {
+    pub fn H5FD_direct_init() -> hid_t;
 }
 
 #[cfg(hdf5_1_10_0)]
