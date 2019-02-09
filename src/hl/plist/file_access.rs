@@ -814,6 +814,7 @@ pub struct CacheImageConfig {
     pub entry_ageout: i32,
 }
 
+#[cfg(hdf5_1_10_1)]
 impl Default for CacheImageConfig {
     fn default() -> Self {
         CacheImageConfig {
