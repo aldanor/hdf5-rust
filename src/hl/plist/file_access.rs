@@ -42,6 +42,8 @@ use libhdf5_sys::h5p::{
     H5Pset_fclose_degree, H5Pset_gc_references, H5Pset_libver_bounds, H5Pset_mdc_config,
     H5Pset_meta_block_size, H5Pset_sieve_buf_size, H5Pset_small_data_block_size,
 };
+#[cfg(h5_have_direct)]
+use libhdf5_sys::h5p::{H5Pget_fapl_direct, H5Pset_fapl_direct};
 #[cfg(feature = "mpio")]
 use libhdf5_sys::h5p::{H5Pget_fapl_mpio, H5Pset_fapl_mpio};
 
@@ -67,6 +69,8 @@ use libhdf5_sys::h5p::{
     H5Pset_metadata_read_attempts,
 };
 
+#[cfg(h5_have_direct)]
+use crate::globals::H5FD_DIRECT;
 #[cfg(feature = "mpio")]
 use crate::globals::H5FD_MPIO;
 use crate::globals::{
@@ -444,6 +448,14 @@ mod mpio {
 #[cfg(feature = "mpio")]
 pub use self::mpio::*;
 
+#[cfg(h5_have_direct)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct DirectDriver {
+    pub alignment: usize,
+    pub block_size: usize,
+    pub cbuf_size: usize,
+}
+
 #[derive(Clone, Debug)]
 pub enum FileDriver {
     Sec2,
@@ -455,6 +467,8 @@ pub enum FileDriver {
     Split(SplitDriver),
     #[cfg(feature = "mpio")]
     Mpio(MpioDriver),
+    #[cfg(h5_have_direct)]
+    Direct(DirectDriver),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -1176,6 +1190,11 @@ impl FileAccessBuilder {
         self.driver(&FileDriver::Mpio(MpioDriver::try_new(comm, info).unwrap()))
     }
 
+    #[cfg(h5_have_direct)]
+    pub fn direct(&mut self, alignment: usize, block_size: usize, cbuf_size: usize) -> &mut Self {
+        self.driver(&FileDriver::Direct(DirectDriver { alignment, block_size, cbuf_size }))
+    }
+
     fn set_log(&self, id: hid_t) -> Result<()> {
         let opt = &self.log_options;
         let flags = opt.flags.bits() as _;
@@ -1272,6 +1291,12 @@ impl FileAccessBuilder {
         Ok(())
     }
 
+    #[cfg(h5_have_direct)]
+    fn set_direct(id: hid_t, drv: &DirectDriver) -> Result<()> {
+        h5try!(H5Pset_fapl_direct(id, drv.alignment as _, drv.block_size as _, drv.cbuf_size as _));
+        Ok(())
+    }
+
     fn set_driver(&self, id: hid_t, drv: &FileDriver) -> Result<()> {
         match drv {
             FileDriver::Sec2 => {
@@ -1298,6 +1323,10 @@ impl FileAccessBuilder {
             #[cfg(feature = "mpio")]
             FileDriver::Mpio(drv) => {
                 Self::set_mpio(id, drv)?;
+            }
+            #[cfg(h5_have_direct)]
+            FileDriver::Direct(drv) => {
+                Self::set_direct(id, drv)?;
             }
         }
         Ok(())
@@ -1482,12 +1511,25 @@ impl FileAccess {
     }
 
     #[doc(hidden)]
+    #[cfg(h5_have_direct)]
+    fn get_direct(&self) -> Result<DirectDriver> {
+        let res = h5get!(H5Pget_fapl_direct(self.id()): size_t, size_t, size_t)?;
+        Ok(DirectDriver { alignment: res.0 as _, block_size: res.1 as _, cbuf_size: res.2 as _ })
+    }
+
+    #[doc(hidden)]
     pub fn get_driver(&self) -> Result<FileDriver> {
         let drv_id = h5try!(H5Pget_driver(self.id()));
         #[cfg(feature = "mpio")]
         {
             if drv_id == *H5FD_MPIO {
                 return self.get_mpio().map(FileDriver::Mpio);
+            }
+        }
+        #[cfg(h5_have_direct)]
+        {
+            if drv_id == *H5FD_DIRECT {
+                return self.get_direct().map(FileDriver::Direct);
             }
         }
         if drv_id == *H5FD_SEC2 {
