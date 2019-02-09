@@ -4,6 +4,8 @@ use std::mem;
 
 use lazy_static::lazy_static;
 
+#[cfg(h5_have_direct)]
+use libhdf5_sys::h5fd::H5FD_direct_init;
 #[cfg(h5_have_parallel)]
 use libhdf5_sys::h5fd::H5FD_mpio_init;
 use libhdf5_sys::h5fd::{
