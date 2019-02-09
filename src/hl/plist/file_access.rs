@@ -1626,8 +1626,8 @@ impl FileAccess {
         h5call!(H5Pget_mdc_config(self.id(), &mut config)).map(|_| config.into())
     }
 
-    pub fn mdc_config(&self) -> Option<MetadataCacheConfig> {
-        self.get_mdc_config().ok()
+    pub fn mdc_config(&self) -> MetadataCacheConfig {
+        self.get_mdc_config().ok().unwrap_or_else(MetadataCacheConfig::default)
     }
 
     #[cfg(hdf5_1_10_1)]
