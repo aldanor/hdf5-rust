@@ -854,6 +854,14 @@ pub struct LibVerBounds {
     pub high: LibraryVersion,
 }
 
+impl Default for LibVerBounds {
+    fn default() -> Self {
+        let low = LibraryVersion::Earliest;
+        let high = if cfg!(hdf5_1_10_0) { LibraryVersion::V110 } else { LibraryVersion::V18 };
+        Self { low, high }
+    }
+}
+
 /// Builder used to create file access property list.
 #[derive(Clone, Debug, Default)]
 pub struct FileAccessBuilder {
