@@ -20,7 +20,7 @@ mpio = ["mpi-sys", "libhdf5-sys/mpio"]
 
 [workspace]
 members = ["hdf5-types", "hdf5-derive", "libhdf5-sys"]
-exclude = ["*.yml", "scripts/*"]
+exclude = ["*.yml", "ci/*"]
 
 [dependencies]
 bitflags = "1.0"
