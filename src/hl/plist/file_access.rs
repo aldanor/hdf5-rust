@@ -644,6 +644,12 @@ pub enum MetadataWriteStrategy {
     Distributed,
 }
 
+impl Default for MetadataWriteStrategy {
+    fn default() -> Self {
+        MetadataWriteStrategy::Distributed
+    }
+}
+
 impl From<c_int> for MetadataWriteStrategy {
     fn from(strategy: c_int) -> Self {
         use self::MetadataWriteStrategy::*;
