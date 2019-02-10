@@ -8,36 +8,6 @@ use libhdf5_sys::h5::hsize_t;
 use h5::file::*;
 use h5::plist::*;
 
-macro_rules! test_plist {
-    ($ty:ident, $builder:ident, $cls:expr => {$($field:ident($get:ident),)*}) => {
-        test_plist!($ty, $builder, $cls => {$($field($get)),*});
-    };
-
-    ($ty:ident, $builder:ident, $cls:expr => {$($field:ident($get:ident)),*}) => {
-        let pl_default = $ty::try_new()?;
-        assert_eq!(pl_default.class()?, $cls);
-
-        let mut builder = $ty::build();
-        $(
-        builder.$field($field.clone());
-        )*
-
-        let pl = builder.finish()?;
-        assert_eq!(pl.class()?, $cls);
-        $(
-        assert_eq!(pl.$field(), $field);
-        assert_eq!(pl.$get().unwrap(), $field);
-        )*;
-
-        assert_eq!(pl_default, pl_default);
-        assert_eq!(pl, pl);
-        assert_ne!(pl, pl_default);
-
-        let pl_copy = $builder::from_plist(&pl)?.finish()?;
-        assert_eq!(pl, pl_copy);
-    }
-}
-
 macro_rules! test_pl {
     ($ty:ident, $field:ident ($($arg:expr),+): $($name:ident=$value:expr),+) => (
         test_pl!($ty, $field ($($arg,)+): $($name=$value,)+)
