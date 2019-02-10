@@ -36,6 +36,7 @@ hdf5-types = { path = "hdf5-types", version = "0.2.0" }
 hdf5-derive = { path = "hdf5-derive", version = "0.2.0" }
 
 [dev-dependencies]
+mashup = "0.1"
 rand = "0.6"
 regex = "1.1"
 scopeguard = "1.0"
