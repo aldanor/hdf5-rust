@@ -1007,8 +1007,8 @@ impl FileAccessBuilder {
         Ok(builder)
     }
 
-    pub fn fclose_degree(&mut self, value: FileCloseDegree) -> &mut Self {
-        self.fclose_degree = Some(value);
+    pub fn fclose_degree(&mut self, fc_degree: FileCloseDegree) -> &mut Self {
+        self.fclose_degree = Some(fc_degree);
         self
     }
 
@@ -1109,8 +1109,8 @@ impl FileAccessBuilder {
         self
     }
 
-    pub fn driver(&mut self, value: &FileDriver) -> &mut Self {
-        self.file_driver = Some(value.clone());
+    pub fn driver(&mut self, file_driver: &FileDriver) -> &mut Self {
+        self.file_driver = Some(file_driver.clone());
         self
     }
 
