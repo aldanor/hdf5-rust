@@ -345,8 +345,8 @@ impl MultiDriver {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SplitDriver {
-    meta_ext: String,
-    raw_ext: String,
+    pub meta_ext: String,
+    pub raw_ext: String,
 }
 
 impl Default for SplitDriver {
