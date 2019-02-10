@@ -34,12 +34,12 @@ matrix:
         apt:
           packages:
             - libhdf5-serial-dev
-    - name: macos-stable-brew-1.10.*
+    - name: macos-stable-brew-1.8.*
       os: osx
       rust: stable
       env:
         - H5_BREW=1.8
-    - name: macos-beta-brew-1.8.*
+    - name: macos-beta-brew-1.10.*
       os: osx
       rust: beta
       env:
