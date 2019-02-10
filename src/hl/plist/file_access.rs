@@ -1199,8 +1199,15 @@ impl FileAccessBuilder {
     }
 
     #[cfg(h5_have_direct)]
-    pub fn direct(&mut self, alignment: usize, block_size: usize, cbuf_size: usize) -> &mut Self {
+    pub fn direct_options(
+        &mut self, alignment: usize, block_size: usize, cbuf_size: usize,
+    ) -> &mut Self {
         self.driver(&FileDriver::Direct(DirectDriver { alignment, block_size, cbuf_size }))
+    }
+
+    #[cfg(h5_have_direct)]
+    pub fn direct(&mut self) -> &mut Self {
+        self.driver(&FileDriver::Direct(DirectDriver::default()))
     }
 
     fn set_log(&self, id: hid_t) -> Result<()> {
