@@ -357,14 +357,17 @@ impl Default for SplitDriver {
 
 impl SplitDriver {
     pub(crate) fn from_multi(drv: &MultiDriver) -> Option<Self> {
-        let layout = MultiLayout {
+        let mut layout = MultiLayout {
             mem_super: 0,
             mem_btree: 0,
             mem_draw: 1,
-            mem_gheap: 1,
+            mem_gheap: 0,
             mem_lheap: 0,
             mem_object: 0,
         };
+        if cfg!(hdf5_1_8_10) {
+            layout.mem_gheap = 1; // was changed in 1.8.10
+        }
         let is_split = drv.relax
             && drv.layout == layout
             && drv.files.len() == 2
