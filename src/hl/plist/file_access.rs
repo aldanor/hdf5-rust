@@ -707,6 +707,8 @@ impl Eq for MetadataCacheConfig {}
 
 impl Default for MetadataCacheConfig {
     fn default() -> Self {
+        let min_clean_fraction = if cfg!(h5_have_parallel) { 0.3_f32 } else { 0.01_f32 };
+        let flash_multiple = if cfg!(h5_have_parallel) { 1.0_f32 } else { 1.4_f32 };
         Self {
             rpt_fcn_enabled: false,
             open_trace_file: false,
@@ -715,28 +717,28 @@ impl Default for MetadataCacheConfig {
             evictions_enabled: true,
             set_initial_size: true,
             initial_size: 1 << 21,
-            min_clean_fraction: 0.30000001192092896,
+            min_clean_fraction: min_clean_fraction as _,
             max_size: 1 << 25,
             min_size: 1 << 20,
             epoch_length: 50_000,
             incr_mode: CacheIncreaseMode::Threshold,
-            lower_hr_threshold: 0.8999999761581421,
+            lower_hr_threshold: 0.9_f32 as _,
             increment: 2.0,
             apply_max_increment: true,
             max_increment: 1 << 22,
             flash_incr_mode: FlashIncreaseMode::AddSpace,
-            flash_multiple: 1.0,
+            flash_multiple: flash_multiple as _,
             flash_threshold: 0.25,
             decr_mode: CacheDecreaseMode::AgeOutWithThreshold,
-            upper_hr_threshold: 0.9990000128746033,
-            decrement: 0.8999999761581421,
+            upper_hr_threshold: 0.999_f32 as _,
+            decrement: 0.9_f32 as _,
             apply_max_decrement: true,
             max_decrement: 1 << 20,
             epochs_before_eviction: 3,
             apply_empty_reserve: true,
-            empty_reserve: 0.10000000149011612,
+            empty_reserve: 0.1_f32 as _,
             dirty_bytes_threshold: 1 << 18,
-            metadata_write_strategy: MetadataWriteStrategy::Distributed,
+            metadata_write_strategy: MetadataWriteStrategy::default(),
         }
     }
 }
