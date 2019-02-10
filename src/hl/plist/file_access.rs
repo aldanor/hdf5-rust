@@ -1704,7 +1704,7 @@ impl FileAccess {
             self.id(),
             &mut is_enabled,
             buf.as_mut_ptr(),
-            ptr::null_mut(),
+            &mut location_size,
             &mut start_on_access
         ));
         Ok(CacheLogOptions {
