@@ -332,7 +332,7 @@ impl MultiDriver {
         for i in 0..6 {
             let j = *self.layout.get(i) as usize;
             if j >= n {
-                fail!("invalid multi layout index: {} (expected 0-{})", j, n);
+                fail!("invalid multi layout index: {} (expected 0-{})", j, n - 1);
             }
             used[j] = true;
         }
