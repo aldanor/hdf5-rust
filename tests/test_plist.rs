@@ -55,7 +55,7 @@ macro_rules! test_pl_common {
         assert_ne!(pl, pl_default);
 
         let pl2 = pl.copy();
-        assert_eq!(pl.class()?, $plc);
+        assert_eq!(pl2.class()?, $plc);
         assert_eq!(pl2, pl);
         assert_ne!(pl2, pl_default);
     };
