@@ -456,6 +456,13 @@ pub struct DirectDriver {
     pub cbuf_size: usize,
 }
 
+#[cfg(h5_have_direct)]
+impl Default for DirectDriver {
+    fn default() -> Self {
+        Self { alignment: 4096, block_size: 4096, cbuf_size: 16 * 1024 * 1024 }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub enum FileDriver {
     Sec2,
