@@ -151,7 +151,7 @@ type FAB = FileAccessBuilder;
 
 #[test]
 fn test_fapl_common() -> h5::Result<()> {
-    test_pl_common!(FA, PropertyListClass::FileAccess, |b: &mut FAB| b.family().finish());
+    test_pl_common!(FA, PropertyListClass::FileAccess, |b: &mut FAB| b.sieve_buf_size(8).finish());
     Ok(())
 }
 
