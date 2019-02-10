@@ -1445,6 +1445,10 @@ impl FileAccess {
         Self::from_id(h5try!(H5Pcreate(*H5P_FILE_ACCESS)))
     }
 
+    pub fn copy(&self) -> Self {
+        unsafe { self.deref().copy().cast() }
+    }
+
     pub fn build() -> FileAccessBuilder {
         FileAccessBuilder::new()
     }
