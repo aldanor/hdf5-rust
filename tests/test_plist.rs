@@ -103,52 +103,6 @@ macro_rules! check_matches {
 }
 
 #[test]
-fn test_file_create_plist() -> h5::Result<()> {
-    let fcpl = FileCreate::try_new()?;
-
-    assert_eq!(fcpl.sizes().sizeof_addr, mem::size_of::<hsize_t>());
-    assert_eq!(fcpl.sizes().sizeof_size, mem::size_of::<hsize_t>());
-
-    let userblock = 2048;
-    let sym_k = SymbolTableInfo { tree_rank: 17, node_size: 5 };
-    let istore_k = 33;
-    let shared_mesg_phase_change = PhaseChangeInfo { max_list: 51, min_btree: 41 };
-    let shared_mesg_indexes = vec![SharedMessageIndex {
-        message_types: SharedMessageType::ATTRIBUTE,
-        min_message_size: 16,
-    }];
-
-    test_plist!(FileCreate, FileCreateBuilder, PropertyListClass::FileCreate => {
-        userblock(get_userblock),
-        sym_k(get_sym_k),
-        istore_k(get_istore_k),
-        shared_mesg_phase_change(get_shared_mesg_phase_change),
-        shared_mesg_indexes(get_shared_mesg_indexes),
-    });
-
-    #[cfg(hdf5_1_10_1)]
-    {
-        let fcpl = FileCreate::try_new()?;
-        assert_eq!(fcpl.file_space_strategy(), FileSpaceStrategy::default());
-
-        let file_space_page_size = 16384;
-        let file_space_strategy = FileSpaceStrategy::None;
-
-        test_plist!(FileCreate, FileCreateBuilder, PropertyListClass::FileCreate => {
-            file_space_page_size(get_file_space_page_size),
-            file_space_strategy(get_file_space_strategy),
-        });
-
-        let file_space_strategy = FileSpaceStrategy::PageAggregation;
-        test_plist!(FileCreate, FileCreateBuilder, PropertyListClass::FileCreate => {
-            file_space_strategy(get_file_space_strategy),
-        });
-    }
-
-    Ok(())
-}
-
-#[test]
 fn test_file_access_plist() -> h5::Result<()> {
     let fapl = FileAccess::try_new()?;
     println!("{:#?}", fapl);
