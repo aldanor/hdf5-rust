@@ -99,6 +99,15 @@ pub enum H5F_mem_t {
     H5FD_MEM_NTYPES = 7,
 }
 
+#[cfg(not(hdf5_1_10_2))]
+#[repr(C)]
+#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+pub enum H5F_libver_t {
+    H5F_LIBVER_EARLIEST = 0,
+    H5F_LIBVER_LATEST = 1,
+}
+
+#[cfg(hdf5_1_10_2)]
 #[repr(C)]
 #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
 pub enum H5F_libver_t {
@@ -109,9 +118,7 @@ pub enum H5F_libver_t {
     H5F_LIBVER_NBOUNDS = 3,
 }
 
-#[cfg(not(hdf5_1_10_0))]
-pub const H5F_LIBVER_LATEST: H5F_libver_t = H5F_LIBVER_V18;
-#[cfg(hdf5_1_10_0)]
+#[cfg(hdf5_1_10_2)]
 pub const H5F_LIBVER_LATEST: H5F_libver_t = H5F_LIBVER_V110;
 
 impl Default for H5F_libver_t {
