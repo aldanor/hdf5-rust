@@ -117,31 +117,25 @@ impl Debug for FileAccess {
         formatter.field("gc_references", &self.gc_references());
         formatter.field("small_data_block_size", &self.small_data_block_size());
         #[cfg(hdf5_1_10_2)]
-        {
-            formatter.field("libver_bounds", &self.libver_bounds());
-        }
+        formatter.field("libver_bounds", &self.libver_bounds());
         #[cfg(hdf5_1_8_7)]
-        {
-            formatter.field("elink_file_cache_size", &self.elink_file_cache_size());
-        }
+        formatter.field("elink_file_cache_size", &self.elink_file_cache_size());
         formatter.field("meta_block_size", &self.meta_block_size());
         #[cfg(hdf5_1_10_1)]
-        {
-            formatter.field("page_buffer_size", &self.page_buffer_size());
-            formatter.field("evict_on_close", &self.evict_on_close());
-            formatter.field("mdc_image_config", &self.mdc_image_config());
-        }
+        formatter.field("page_buffer_size", &self.page_buffer_size());
+        #[cfg(hdf5_1_10_1)]
+        formatter.field("evict_on_close", &self.evict_on_close());
+        #[cfg(hdf5_1_10_1)]
+        formatter.field("mdc_image_config", &self.mdc_image_config());
         formatter.field("sieve_buf_size", &self.sieve_buf_size());
         #[cfg(hdf5_1_10_0)]
-        {
-            formatter.field("metadata_read_attempts", &self.metadata_read_attempts());
-            formatter.field("mdc_log_options", &self.mdc_log_options());
-        }
+        formatter.field("metadata_read_attempts", &self.metadata_read_attempts());
+        #[cfg(hdf5_1_10_0)]
+        formatter.field("mdc_log_options", &self.mdc_log_options());
         #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
-        {
-            formatter.field("all_coll_metadata_ops", &self.all_coll_metadata_ops());
-            formatter.field("coll_metadata_write", &self.coll_metadata_write());
-        }
+        formatter.field("all_coll_metadata_ops", &self.all_coll_metadata_ops());
+        #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
+        formatter.field("coll_metadata_write", &self.coll_metadata_write());
         formatter.field("mdc_config", &self.mdc_config());
         formatter.field("driver", &self.driver());
         formatter.finish()
@@ -832,46 +826,50 @@ impl From<H5AC_cache_config_t> for MetadataCacheConfig {
 }
 
 #[cfg(hdf5_1_10_1)]
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
-pub struct CacheImageConfig {
-    pub generate_image: bool,
-    pub save_resize_status: bool,
-    pub entry_ageout: i32,
-}
+mod cache_image_config {
+    use super::*;
 
-#[cfg(hdf5_1_10_1)]
-impl Default for CacheImageConfig {
-    fn default() -> Self {
-        CacheImageConfig {
-            generate_image: false,
-            save_resize_status: false,
-            entry_ageout: H5AC__CACHE_IMAGE__ENTRY_AGEOUT__NONE,
+    #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+    pub struct CacheImageConfig {
+        pub generate_image: bool,
+        pub save_resize_status: bool,
+        pub entry_ageout: i32,
+    }
+
+    impl Default for CacheImageConfig {
+        fn default() -> Self {
+            CacheImageConfig {
+                generate_image: false,
+                save_resize_status: false,
+                entry_ageout: H5AC__CACHE_IMAGE__ENTRY_AGEOUT__NONE,
+            }
+        }
+    }
+
+    impl Into<H5AC_cache_image_config_t> for CacheImageConfig {
+        fn into(self) -> H5AC_cache_image_config_t {
+            H5AC_cache_image_config_t {
+                version: H5AC__CURR_CACHE_CONFIG_VERSION,
+                generate_image: self.generate_image as _,
+                save_resize_status: self.save_resize_status as _,
+                entry_ageout: self.entry_ageout as _,
+            }
+        }
+    }
+
+    impl From<H5AC_cache_image_config_t> for CacheImageConfig {
+        fn from(config: H5AC_cache_image_config_t) -> Self {
+            Self {
+                generate_image: config.generate_image > 0,
+                save_resize_status: config.save_resize_status > 0,
+                entry_ageout: config.entry_ageout as _,
+            }
         }
     }
 }
 
 #[cfg(hdf5_1_10_1)]
-impl Into<H5AC_cache_image_config_t> for CacheImageConfig {
-    fn into(self) -> H5AC_cache_image_config_t {
-        H5AC_cache_image_config_t {
-            version: H5AC__CURR_CACHE_CONFIG_VERSION,
-            generate_image: self.generate_image as _,
-            save_resize_status: self.save_resize_status as _,
-            entry_ageout: self.entry_ageout as _,
-        }
-    }
-}
-
-#[cfg(hdf5_1_10_1)]
-impl From<H5AC_cache_image_config_t> for CacheImageConfig {
-    fn from(config: H5AC_cache_image_config_t) -> Self {
-        Self {
-            generate_image: config.generate_image > 0,
-            save_resize_status: config.save_resize_status > 0,
-            entry_ageout: config.entry_ageout as _,
-        }
-    }
-}
+pub use self::cache_image_config::*;
 
 #[cfg(hdf5_1_10_0)]
 #[derive(Clone, Debug, PartialEq, Eq)]
