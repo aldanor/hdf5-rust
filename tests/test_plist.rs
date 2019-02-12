@@ -204,6 +204,16 @@ fn test_fapl_driver_core() -> h5::Result<()> {
     #[cfg(hdf5_1_8_13)]
     assert_eq!(d.write_tracking, 456);
 
+    b.core_filebacked(false);
+    let d = check_matches!(b.finish()?.get_driver()?, d, FileDriver::Core(d));
+    assert_eq!(d.increment, CoreDriver::default().increment);
+    assert_eq!(d.filebacked, false);
+
+    b.core_filebacked(true);
+    let d = check_matches!(b.finish()?.get_driver()?, d, FileDriver::Core(d));
+    assert_eq!(d.increment, CoreDriver::default().increment);
+    assert_eq!(d.filebacked, true);
+
     Ok(())
 }
 
