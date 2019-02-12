@@ -478,22 +478,13 @@ fn test_fapl_set_coll_metadata_write() -> h5::Result<()> {
 }
 
 #[test]
+#[cfg(hdf5_1_10_2)]
 fn test_fapl_set_libver_bounds() -> h5::Result<()> {
-    if cfg!(hdf5_1_10_0) {
-        test_pl!(
-            FA,
-            libver_bounds(true): low = LibraryVersion::Earliest,
-            high = LibraryVersion::V110
-        );
-        test_pl!(FA, libver_bounds(false): low = LibraryVersion::V110, high = LibraryVersion::V110);
-    } else {
-        test_pl!(
-            FA,
-            libver_bounds(true): low = LibraryVersion::Earliest,
-            high = LibraryVersion::V18
-        );
-        test_pl!(FA, libver_bounds(false): low = LibraryVersion::V18, high = LibraryVersion::V18);
-    }
+    test_pl!(FA, libver_bounds: low = LibraryVersion::Earliest, high = LibraryVersion::V18);
+    test_pl!(FA, libver_bounds: low = LibraryVersion::Earliest, high = LibraryVersion::V110);
+    test_pl!(FA, libver_bounds: low = LibraryVersion::V18, high = LibraryVersion::V18);
+    test_pl!(FA, libver_bounds: low = LibraryVersion::V18, high = LibraryVersion::V110);
+    test_pl!(FA, libver_bounds: low = LibraryVersion::V110, high = LibraryVersion::V110);
     Ok(())
 }
 
