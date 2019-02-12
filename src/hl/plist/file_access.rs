@@ -1173,6 +1173,12 @@ impl FileAccessBuilder {
         self.driver(&FileDriver::Core(drv))
     }
 
+    pub fn core_filebacked(&mut self, filebacked: bool) -> &mut Self {
+        let mut drv = CoreDriver::default();
+        drv.filebacked = filebacked;
+        self.driver(&FileDriver::Core(drv))
+    }
+
     pub fn core(&mut self) -> &mut Self {
         self.driver(&FileDriver::Core(CoreDriver::default()))
     }
