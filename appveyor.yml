@@ -24,8 +24,8 @@ environment:
       H5_SOURCE: conda
 
 install:
-  - python scripts\appveyor.py install-rust
-  - python scripts\appveyor.py install-hdf5
+  - python ci\appveyor.py install-rust
+  - python ci\appveyor.py install-hdf5
 
 test_script:
-  - python scripts\appveyor.py run-tests
+  - python ci\appveyor.py run-tests

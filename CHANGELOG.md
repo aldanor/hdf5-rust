@@ -13,9 +13,15 @@
 - Implemented `#[derive(H5Type)]` proc macro that allows for seamless mapping of user-defined 
   structs and enums to their HDF5 counterparts.
 - Added high-level wrappers for file-creation H5P API (`plist::FileCreate`) and
-  file-access H5P API (`plist::FileAccess`).
+  file-access H5P API (`plist::FileAccess`), covering almost the entirety of
+  FCPL and FAPL property list functionality.
 - Various improvements and additions to `PropertyList` type.
 - Added support for various file drivers (sec2/stdio/core/family/multi/split/log).
+- Added support for MPIO driver (HDF5 has to be built with H5_HAVE_PARALLEL and
+  the crate has to be built with "mpio" feature enabled).
+- Added support for direct VFD driver (HDF5 has to be built with H5_HAVE_DIRECT).
+- Added some missing bindings to `libhdf5-sys`: driver-related FAPL bindings 
+  in h5p/h5fd (including MPIO and direct VFD drivers), MPIO bindings in h5p/h5f/h5fd.
 - Added core reading/writing API in `Container`, with support for reading/writing scalars, 
   1-d, 2-d, and dynamic-dimensional arrays, and raw slices. As a side effect, the main crate
   now depends on `ndarray`. `Dataset` now dereferences to `Container`.
@@ -56,6 +62,7 @@
 - Added missing bindings for previous versions (mostly in `h5p` and `h5fd` modules).
 - Querying the HDF5 error stack is now thread-safe.
 - Error silencing (`silence_errors()`) is now thread-safe.
+- Fixed wrong bindings for `H5AC_cache_config_t`.
 
 ### Removed
 

@@ -5,10 +5,13 @@ use crate::internal_prelude::*;
 use crate::h5c::{H5C_cache_decr_mode, H5C_cache_flash_incr_mode, H5C_cache_incr_mode};
 
 pub const H5AC__CURR_CACHE_CONFIG_VERSION: c_int = 1;
-pub const H5AC__MAX_TRACE_FILE_NAME_LEN: c_int = 1024;
+pub const H5AC__MAX_TRACE_FILE_NAME_LEN: usize = 1024;
 
 pub const H5AC_METADATA_WRITE_STRATEGY__PROCESS_0_ONLY: c_int = 0;
 pub const H5AC_METADATA_WRITE_STRATEGY__DISTRIBUTED: c_int = 1;
+
+pub const H5AC__CACHE_IMAGE__ENTRY_AGEOUT__NONE: i32 = -1;
+pub const H5AC__CACHE_IMAGE__ENTRY_AGEOUT__MAX: i32 = 100;
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -17,7 +20,7 @@ pub struct H5AC_cache_config_t {
     pub rpt_fcn_enabled: hbool_t,
     pub open_trace_file: hbool_t,
     pub close_trace_file: hbool_t,
-    pub trace_file_name: [c_char; 1025usize],
+    pub trace_file_name: [c_char; H5AC__MAX_TRACE_FILE_NAME_LEN + 1],
     pub evictions_enabled: hbool_t,
     pub set_initial_size: hbool_t,
     pub initial_size: size_t,
@@ -41,7 +44,10 @@ pub struct H5AC_cache_config_t {
     pub epochs_before_eviction: c_int,
     pub apply_empty_reserve: hbool_t,
     pub empty_reserve: c_double,
+    #[cfg(not(hdf5_1_10_0))]
     pub dirty_bytes_threshold: c_int,
+    #[cfg(hdf5_1_10_0)]
+    pub dirty_bytes_threshold: size_t,
     pub metadata_write_strategy: c_int,
 }
 

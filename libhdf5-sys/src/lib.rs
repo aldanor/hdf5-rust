@@ -10,6 +10,9 @@ macro_rules! extern_static {
     };
 }
 
+#[cfg(all(feature = "mpio", not(h5_have_parallel)))]
+compile_error!("Enabling \"mpio\" feature requires HDF5 library built with MPI support");
+
 pub mod h5;
 pub mod h5a;
 pub mod h5ac;

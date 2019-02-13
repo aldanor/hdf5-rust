@@ -16,6 +16,9 @@
 #![cfg_attr(all(feature = "cargo-clippy", test), allow(clippy::cyclomatic_complexity))]
 #![cfg_attr(not(test), allow(dead_code))]
 
+#[cfg(all(feature = "mpio", not(h5_have_parallel)))]
+compile_error!("Enabling \"mpio\" feature requires HDF5 library built with MPI support");
+
 mod export {
     pub use crate::{
         dim::{Dimension, Ix},
@@ -36,13 +39,18 @@ mod export {
 
     pub mod file {
         pub use crate::hl::file::{File, FileBuilder};
+        pub use crate::hl::plist::file_access::*;
         pub use crate::hl::plist::file_create::*;
     }
 
     pub mod plist {
+        pub use crate::hl::plist::file_access::FileAccess;
         pub use crate::hl::plist::file_create::FileCreate;
         pub use crate::hl::plist::{PropertyList, PropertyListClass};
 
+        pub mod file_access {
+            pub use crate::hl::plist::file_access::*;
+        }
         pub mod file_create {
             pub use crate::hl::plist::file_create::*;
         }
@@ -68,7 +76,7 @@ mod hl;
 
 mod internal_prelude {
     pub use libc::size_t;
-    pub use std::os::raw::{c_char, c_int, c_uint, c_void};
+    pub use std::os::raw::{c_char, c_double, c_int, c_long, c_uint, c_void};
 
     pub use libhdf5_sys::{
         h5::{haddr_t, hbool_t, herr_t, hsize_t},
@@ -85,7 +93,10 @@ mod internal_prelude {
         export::*,
         handle::{get_id_type, is_valid_user_id, Handle},
         hl::plist::PropertyListClass,
-        util::{get_h5_str, string_from_cstr, to_cstring},
+        util::{
+            get_h5_str, string_from_cstr, string_from_fixed_bytes, string_to_fixed_bytes,
+            to_cstring,
+        },
     };
 
     #[cfg(test)]

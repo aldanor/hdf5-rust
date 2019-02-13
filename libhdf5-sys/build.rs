@@ -7,11 +7,7 @@ use std::os::raw::{c_int, c_uint};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::str;
-use std::sync::Mutex;
 
-use bindgen::callbacks::IntKind;
-use bindgen::callbacks::ParseCallbacks;
-use lazy_static::lazy_static;
 use regex::Regex;
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Default)]
@@ -167,53 +163,43 @@ pub struct Header {
     pub version: Version,
 }
 
-lazy_static! {
-    static ref HEADER: Mutex<Header> = Default::default();
-}
-
-#[derive(Debug)]
-struct HeaderParser;
-
-impl ParseCallbacks for HeaderParser {
-    fn int_macro(&self, name: &str, value: i64) -> Option<IntKind> {
-        let mut hdr = HEADER.lock().unwrap();
-        if name == "H5_HAVE_STDBOOL_H" {
-            hdr.have_stdbool_h = value > 0;
-        } else if name == "H5_HAVE_DIRECT" {
-            hdr.have_direct = value > 0;
-        } else if name == "H5_HAVE_PARALLEL" {
-            hdr.have_parallel = value > 0;
-        } else if name == "H5_HAVE_THREADSAFE" {
-            hdr.have_threadsafe = value > 0;
-        }
-        None
-    }
-
-    fn str_macro(&self, name: &str, value: &[u8]) {
-        let mut hdr = HEADER.lock().unwrap();
-        let str_value = unsafe { str::from_utf8_unchecked(value) };
-        if name == "H5_VERSION" {
-            if let Some(version) = Version::parse(str_value) {
-                hdr.version = version;
-            } else {
-                panic!("Invalid H5_VERSION: {:?}", str_value);
-            }
-        }
-    }
-}
-
 impl Header {
     pub fn parse<P: AsRef<Path>>(inc_dir: P) -> Self {
         let inc_dir = inc_dir.as_ref();
         let header = inc_dir.join("H5pubconf.h");
         println!("Parsing HDF5 config from:\n    {:?}", header);
-        bindgen::builder()
-            .header(header.to_str().unwrap())
-            .clang_args(&["-I", inc_dir.to_str().unwrap()])
-            .parse_callbacks(Box::new(HeaderParser))
-            .generate()
-            .unwrap();
-        let hdr = HEADER.lock().unwrap().clone();
+
+        let contents = fs::read_to_string(header).unwrap();
+        let mut hdr = Self::default();
+
+        let num_def_re = Regex::new(r"(?m)^#define\s+(H5_[A-Z_]+)\s+([0-9]+)\s*$").unwrap();
+        for captures in num_def_re.captures_iter(&contents) {
+            let name = captures.get(1).unwrap().as_str();
+            let value = captures.get(2).unwrap().as_str().parse::<i64>().unwrap();
+            if name == "H5_HAVE_STDBOOL_H" {
+                hdr.have_stdbool_h = value > 0;
+            } else if name == "H5_HAVE_DIRECT" {
+                hdr.have_direct = value > 0;
+            } else if name == "H5_HAVE_PARALLEL" {
+                hdr.have_parallel = value > 0;
+            } else if name == "H5_HAVE_THREADSAFE" {
+                hdr.have_threadsafe = value > 0;
+            }
+        }
+
+        let str_def_re = Regex::new(r#"(?m)^#define\s+(H5_[A-Z_]+)\s+"([^"]+)"\s*$"#).unwrap();
+        for captures in str_def_re.captures_iter(&contents) {
+            let name = captures.get(1).unwrap().as_str();
+            let value = captures.get(2).unwrap().as_str();
+            if name == "H5_VERSION" {
+                if let Some(version) = Version::parse(value) {
+                    hdr.version = version;
+                } else {
+                    panic!("Invalid H5_VERSION: {:?}", value);
+                }
+            }
+        }
+
         if !hdr.version.is_valid() {
             panic!("Invalid H5_VERSION in the header: {:?}");
         }
@@ -226,6 +212,7 @@ pub struct LibrarySearcher {
     pub version: Option<Version>,
     pub inc_dir: Option<PathBuf>,
     pub link_paths: Vec<PathBuf>,
+    pub user_provided_dir: bool,
 }
 
 #[cfg(all(unix, not(target_os = "macos")))]
@@ -456,7 +443,15 @@ impl LibrarySearcher {
         if let Ok(var) = env::var("HDF5_DIR") {
             println!("Setting HDF5 root from environment variable:");
             println!("    HDF5_DIR = {:?}", var);
-            config.inc_dir = Some(PathBuf::from(var).join("include"));
+            let root = PathBuf::from(var);
+            if root.is_relative() {
+                panic!("HDF5_DIR cannot be relative.");
+            }
+            if !root.is_dir() {
+                panic!("HDF5_DIR is not a directory.");
+            }
+            config.user_provided_dir = true;
+            config.inc_dir = Some(root.join("include"));
         }
         if cfg!(target_env = "msvc") {
             // in order to allow HDF5_DIR to be pointed to a conda environment, we have
@@ -503,9 +498,9 @@ impl LibrarySearcher {
         if let Some(ref inc_dir) = self.inc_dir {
             if cfg!(unix) {
                 if let Some(envdir) = inc_dir.parent() {
-                    if envdir.join("conda-meta").is_dir() {
+                    if self.user_provided_dir {
                         let lib_dir = format!("{}/lib", envdir.to_string_lossy());
-                        println!("Conda environment detected, rpath can be set via:");
+                        println!("Custom HDF5_DIR provided; rpath can be set via:");
                         println!("    RUSTFLAGS=\"-C link-args=-Wl,-rpath,{}\"", lib_dir);
                         if cfg!(target_os = "macos") {
                             println!("On some OS X installations, you may also need to set:");

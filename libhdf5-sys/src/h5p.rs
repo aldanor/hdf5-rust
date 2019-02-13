@@ -308,10 +308,6 @@ extern "C" {
     pub fn H5Pset_driver(plist_id: hid_t, driver_id: hid_t, driver_info: *const c_void) -> herr_t;
     pub fn H5Pget_driver(plist_id: hid_t) -> hid_t;
     pub fn H5Pget_driver_info(plist_id: hid_t) -> *mut c_void;
-    pub fn H5Pset_family_offset(fapl_id: hid_t, offset: hsize_t) -> herr_t;
-    pub fn H5Pget_family_offset(fapl_id: hid_t, offset: *mut hsize_t) -> herr_t;
-    pub fn H5Pset_multi_type(fapl_id: hid_t, type_: H5FD_mem_t) -> herr_t;
-    pub fn H5Pget_multi_type(fapl_id: hid_t, type_: *mut H5FD_mem_t) -> herr_t;
     pub fn H5Pset_cache(
         plist_id: hid_t, mdc_nelmts: c_int, rdcc_nslots: size_t, rdcc_nbytes: size_t,
         rdcc_w0: c_double,
@@ -320,7 +316,7 @@ extern "C" {
         plist_id: hid_t, mdc_nelmts: *mut c_int, rdcc_nslots: *mut size_t,
         rdcc_nbytes: *mut size_t, rdcc_w0: *mut c_double,
     ) -> herr_t;
-    pub fn H5Pset_mdc_config(plist_id: hid_t, config_ptr: *mut H5AC_cache_config_t) -> herr_t;
+    pub fn H5Pset_mdc_config(plist_id: hid_t, config_ptr: *const H5AC_cache_config_t) -> herr_t;
     pub fn H5Pget_mdc_config(plist_id: hid_t, config_ptr: *mut H5AC_cache_config_t) -> herr_t;
     pub fn H5Pset_gc_references(fapl_id: hid_t, gc_ref: c_uint) -> herr_t;
     pub fn H5Pget_gc_references(fapl_id: hid_t, gc_ref: *mut c_uint) -> herr_t;
@@ -445,6 +441,124 @@ extern "C" {
     ) -> herr_t;
 }
 
+// drivers
+extern "C" {
+    // sec2
+    pub fn H5Pset_fapl_sec2(fapl_id: hid_t) -> herr_t;
+
+    // core
+    pub fn H5Pset_fapl_core(fapl_id: hid_t, increment: size_t, backing_store: hbool_t) -> herr_t;
+    pub fn H5Pget_fapl_core(
+        fapl_id: hid_t, increment: *mut size_t, backing_store: *mut hbool_t,
+    ) -> herr_t;
+
+    // stdio
+    pub fn H5Pset_fapl_stdio(fapl_id: hid_t) -> herr_t;
+
+    // family
+    pub fn H5Pset_fapl_family(fapl_id: hid_t, memb_size: hsize_t, memb_fapl_id: hid_t) -> herr_t;
+    pub fn H5Pget_fapl_family(
+        fapl_id: hid_t, memb_size: *mut hsize_t, memb_fapl_id: *mut hid_t,
+    ) -> herr_t;
+    pub fn H5Pset_family_offset(fapl_id: hid_t, offset: hsize_t) -> herr_t;
+    pub fn H5Pget_family_offset(fapl_id: hid_t, offset: *mut hsize_t) -> herr_t;
+
+    // multi/split
+    pub fn H5Pset_fapl_multi(
+        fapl_id: hid_t, memb_map: *const H5FD_mem_t, memb_fapl: *const hid_t,
+        memb_name: *const *const c_char, memb_addr: *const haddr_t, relax: hbool_t,
+    ) -> herr_t;
+    pub fn H5Pget_fapl_multi(
+        fapl_id: hid_t, memb_map: *mut H5FD_mem_t, memb_fapl: *mut hid_t,
+        memb_name: *mut *const c_char, memb_addr: *mut haddr_t, relax: *mut hbool_t,
+    ) -> herr_t;
+    pub fn H5Pset_multi_type(fapl_id: hid_t, type_: H5FD_mem_t) -> herr_t;
+    pub fn H5Pget_multi_type(fapl_id: hid_t, type_: *mut H5FD_mem_t) -> herr_t;
+    pub fn H5Pset_fapl_split(
+        fapl_id: hid_t, meta_ext: *const c_char, meta_plist_id: hid_t, raw_ext: *const c_char,
+        raw_plist_id: hid_t,
+    ) -> herr_t;
+
+    // log
+    pub fn H5Pset_fapl_log(
+        fapl_id: hid_t, logfile: *const c_char, flags: c_ulonglong, buf_size: size_t,
+    ) -> herr_t;
+
+    // mpi-io
+    #[cfg(feature = "mpio")]
+    pub fn H5Pset_fapl_mpio(
+        fapl_id: hid_t, comm: mpi_sys::MPI_Comm, info: mpi_sys::MPI_Info,
+    ) -> herr_t;
+    #[cfg(feature = "mpio")]
+    pub fn H5Pget_fapl_mpio(
+        fapl_id: hid_t, comm: *mut mpi_sys::MPI_Comm, info: *mut mpi_sys::MPI_Info,
+    ) -> herr_t;
+
+    // direct
+    #[cfg(h5_have_direct)]
+    pub fn H5Pset_fapl_direct(
+        fapl_id: hid_t, alignment: size_t, block_size: size_t, cbuf_size: size_t,
+    ) -> herr_t;
+    #[cfg(h5_have_direct)]
+    pub fn H5Pget_fapl_direct(
+        fapl_id: hid_t, alignment: *mut size_t, block_size: *mut size_t, cbuf_size: *mut size_t,
+    ) -> herr_t;
+}
+
+#[cfg(h5_have_parallel)]
+mod mpio {
+    use crate::internal_prelude::*;
+
+    pub const H5D_ONE_LINK_CHUNK_IO_THRESHOLD: c_uint = 0;
+    pub const H5D_MULTI_CHUNK_IO_COL_THRESHOLD: c_uint = 60;
+
+    #[repr(C)]
+    #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+    pub enum H5FD_mpio_xfer_t {
+        H5FD_MPIO_INDEPENDENT = 0,
+        H5FD_MPIO_COLLECTIVE = 1,
+    }
+
+    #[repr(C)]
+    #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+    pub enum H5FD_mpio_chunk_opt_t {
+        H5FD_MPIO_CHUNK_DEFAULT = 0,
+        H5FD_MPIO_CHUNK_ONE_IO = 1,
+        H5FD_MPIO_CHUNK_MULTI_IO = 2,
+    }
+
+    #[repr(C)]
+    #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+    pub enum H5FD_mpio_collective_opt_t {
+        H5FD_MPIO_COLLECTIVE_IO = 0,
+        H5FD_MPIO_INDIVIDUAL_IO = 1,
+    }
+
+    extern "C" {
+        pub fn H5Pset_dxpl_mpio(dxpl_id: hid_t, xfer_mode: H5FD_mpio_xfer_t) -> herr_t;
+        pub fn H5Pget_dxpl_mpio(dxpl_id: hid_t, xfer_mode: *mut H5FD_mpio_xfer_t) -> herr_t;
+        pub fn H5Pset_dxpl_mpio_collective_opt(
+            dxpl_id: hid_t, opt_mode: H5FD_mpio_collective_opt_t,
+        ) -> herr_t;
+        pub fn H5Pset_dxpl_mpio_chunk_opt(
+            dxpl_id: hid_t, opt_mode: H5FD_mpio_chunk_opt_t,
+        ) -> herr_t;
+        pub fn H5Pset_dxpl_mpio_chunk_opt_num(dxpl_id: hid_t, num_chunk_per_proc: c_uint)
+            -> herr_t;
+        pub fn H5Pset_dxpl_mpio_chunk_opt_ratio(
+            dxpl_id: hid_t, percent_num_proc_per_chunk: c_uint,
+        ) -> herr_t;
+    }
+}
+
+#[cfg(h5_have_parallel)]
+pub use self::mpio::*;
+
+#[cfg(target_os = "windows")]
+extern "C" {
+    pub fn H5Pset_fapl_windows(fapl_id: hid_t) -> herr_t;
+}
+
 #[cfg(hdf5_1_8_7)]
 extern "C" {
     pub fn H5Pset_elink_file_cache_size(plist_id: hid_t, efc_size: c_uint) -> herr_t;
@@ -560,12 +674,20 @@ extern "C" {
     ) -> herr_t;
 }
 
+#[cfg(all(hdf5_1_10_0, h5_have_parallel))]
+extern "C" {
+    pub fn H5Pset_coll_metadata_write(fapl_id: hid_t, is_collective: hbool_t) -> herr_t;
+    pub fn H5Pget_coll_metadata_write(fapl_id: hid_t, is_collective: *mut hbool_t) -> herr_t;
+    pub fn H5Pset_all_coll_metadata_ops(accpl_id: hid_t, is_collective: hbool_t) -> herr_t;
+    pub fn H5Pget_all_coll_metadata_ops(accpl_id: hid_t, is_collective: *mut hbool_t) -> herr_t;
+}
+
 #[cfg(hdf5_1_10_1)]
 extern "C" {
     pub fn H5Pset_evict_on_close(fapl_id: hid_t, evict_on_close: hbool_t) -> herr_t;
     pub fn H5Pget_evict_on_close(fapl_id: hid_t, evict_on_close: *mut hbool_t) -> herr_t;
     pub fn H5Pset_mdc_image_config(
-        plist_id: hid_t, config_ptr: *mut H5AC_cache_image_config_t,
+        plist_id: hid_t, config_ptr: *const H5AC_cache_image_config_t,
     ) -> herr_t;
     pub fn H5Pget_mdc_image_config(
         plist_id: hid_t, config_ptr: *mut H5AC_cache_image_config_t,

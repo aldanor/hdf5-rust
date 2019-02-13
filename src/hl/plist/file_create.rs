@@ -212,7 +212,7 @@ impl Default for FileSpaceStrategy {
 }
 
 /// Builder used to create file creation property list.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, Default)]
 pub struct FileCreateBuilder {
     userblock: Option<u64>,
     sym_k: Option<SymbolTableInfo>,
@@ -234,17 +234,17 @@ impl FileCreateBuilder {
     /// Creates a new builder from an existing property list.
     pub fn from_plist(plist: &FileCreate) -> Result<Self> {
         let mut builder = Self::default();
-        builder
-            .userblock(plist.get_userblock()?)
-            .sym_k(plist.get_sym_k()?)
-            .istore_k(plist.get_istore_k()?)
-            .shared_mesg_phase_change(plist.get_shared_mesg_phase_change()?)
-            .shared_mesg_indexes(plist.get_shared_mesg_indexes()?);
+        builder.userblock(plist.get_userblock()?);
+        let v = plist.get_sym_k()?;
+        builder.sym_k(v.tree_rank, v.node_size);
+        builder.istore_k(plist.get_istore_k()?);
+        let v = plist.get_shared_mesg_phase_change()?;
+        builder.shared_mesg_phase_change(v.max_list, v.min_btree);
+        builder.shared_mesg_indexes(&plist.get_shared_mesg_indexes()?);
         #[cfg(hdf5_1_10_1)]
         {
-            builder
-                .file_space_page_size(plist.get_file_space_page_size()?)
-                .file_space_strategy(plist.get_file_space_strategy()?);
+            builder.file_space_page_size(plist.get_file_space_page_size()?);
+            builder.file_space_strategy(plist.get_file_space_strategy()?);
         }
         Ok(builder)
     }
@@ -254,8 +254,8 @@ impl FileCreateBuilder {
     /// Sets the user block size of a file creation property list. The default
     /// user block size is 0; it may be set to any power of 2 equal to 512 or
     /// greater (512, 1024, 2048, etc.).
-    pub fn userblock(&mut self, value: u64) -> &mut Self {
-        self.userblock = Some(value);
+    pub fn userblock(&mut self, size: u64) -> &mut Self {
+        self.userblock = Some(size);
         self
     }
 
@@ -265,8 +265,8 @@ impl FileCreateBuilder {
     /// `node_size`) retains the current value.
     ///
     /// For further details, see [`SymbolTableInfo`](struct.SymbolTableInfo.html).
-    pub fn sym_k(&mut self, value: SymbolTableInfo) -> &mut Self {
-        self.sym_k = Some(value);
+    pub fn sym_k(&mut self, tree_rank: u32, node_size: u32) -> &mut Self {
+        self.sym_k = Some(SymbolTableInfo { tree_rank, node_size });
         self
     }
 
@@ -283,16 +283,16 @@ impl FileCreateBuilder {
     /// cannot exceed 65536.
     ///
     /// The default value for `istore_k` is 32.
-    pub fn istore_k(&mut self, value: u32) -> &mut Self {
-        self.istore_k = Some(value);
+    pub fn istore_k(&mut self, ik: u32) -> &mut Self {
+        self.istore_k = Some(ik);
         self
     }
 
     /// Sets shared object header message storage phase change thresholds.
     ///
     /// For further details, see [`PhaseChangeInfo`](struct.PhaseChangeInfo.html).
-    pub fn shared_mesg_phase_change(&mut self, value: PhaseChangeInfo) -> &mut Self {
-        self.shared_mesg_phase_change = Some(value);
+    pub fn shared_mesg_phase_change(&mut self, max_list: u32, min_btree: u32) -> &mut Self {
+        self.shared_mesg_phase_change = Some(PhaseChangeInfo { max_list, min_btree });
         self
     }
 
@@ -300,11 +300,8 @@ impl FileCreateBuilder {
     ///
     /// For each specified index, sets the types of messages that may be stored
     /// and the minimum size of each message
-    pub fn shared_mesg_indexes<S>(&mut self, value: S) -> &mut Self
-    where
-        S: Into<Vec<SharedMessageIndex>>,
-    {
-        self.shared_mesg_indexes = Some(value.into());
+    pub fn shared_mesg_indexes(&mut self, indexes: &[SharedMessageIndex]) -> &mut Self {
+        self.shared_mesg_indexes = Some(indexes.into());
         self
     }
 
@@ -314,8 +311,8 @@ impl FileCreateBuilder {
     /// The minimum size is 512. Setting a value less than 512 will result in
     /// an error. The library default size for the file space page size when
     /// not set is 4096.
-    pub fn file_space_page_size(&mut self, value: u64) -> &mut Self {
-        self.file_space_page_size = Some(value);
+    pub fn file_space_page_size(&mut self, fsp_size: u64) -> &mut Self {
+        self.file_space_page_size = Some(fsp_size);
         self
     }
 
@@ -325,8 +322,8 @@ impl FileCreateBuilder {
     /// This setting cannot be changed for the life of the file.
     ///
     /// For further details, see [`FileSpaceStrategy`](enum.FileSpaceStrategy.html).
-    pub fn file_space_strategy(&mut self, value: FileSpaceStrategy) -> &mut Self {
-        self.file_space_strategy = Some(value);
+    pub fn file_space_strategy(&mut self, strategy: FileSpaceStrategy) -> &mut Self {
+        self.file_space_strategy = Some(strategy);
         self
     }
 

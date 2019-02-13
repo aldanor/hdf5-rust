@@ -69,6 +69,55 @@ pub const H5FD_FEAT_CAN_USE_FILE_IMAGE_CALLBACKS: c_uint = 0x00000800;
 #[cfg(hdf5_1_10_2)]
 pub const H5FD_FEAT_DEFAULT_VFD_COMPATIBLE: c_uint = 0x00008000;
 
+/* Flags for H5Pset_fapl_log() */
+/* Flags for tracking 'meta' operations (truncate) */
+pub const H5FD_LOG_TRUNCATE: c_ulonglong = 0x00000001;
+pub const H5FD_LOG_META_IO: c_ulonglong = H5FD_LOG_TRUNCATE;
+/* Flags for tracking where reads/writes/seeks occur */
+pub const H5FD_LOG_LOC_READ: c_ulonglong = 0x00000002;
+pub const H5FD_LOG_LOC_WRITE: c_ulonglong = 0x00000004;
+pub const H5FD_LOG_LOC_SEEK: c_ulonglong = 0x00000008;
+pub const H5FD_LOG_LOC_IO: c_ulonglong = H5FD_LOG_LOC_READ | H5FD_LOG_LOC_WRITE | H5FD_LOG_LOC_SEEK;
+/* Flags for tracking number of times each byte is read/written */
+pub const H5FD_LOG_FILE_READ: c_ulonglong = 0x00000010;
+pub const H5FD_LOG_FILE_WRITE: c_ulonglong = 0x00000020;
+pub const H5FD_LOG_FILE_IO: c_ulonglong = H5FD_LOG_FILE_READ | H5FD_LOG_FILE_WRITE;
+/* Flag for tracking "flavor" (type) of information stored at each byte */
+pub const H5FD_LOG_FLAVOR: c_ulonglong = 0x00000040;
+/* Flags for tracking total number of reads/writes/seeks/truncates */
+pub const H5FD_LOG_NUM_READ: c_ulonglong = 0x00000080;
+pub const H5FD_LOG_NUM_WRITE: c_ulonglong = 0x00000100;
+pub const H5FD_LOG_NUM_SEEK: c_ulonglong = 0x00000200;
+pub const H5FD_LOG_NUM_TRUNCATE: c_ulonglong = 0x00000400;
+pub const H5FD_LOG_NUM_IO: c_ulonglong =
+    H5FD_LOG_NUM_READ | H5FD_LOG_NUM_WRITE | H5FD_LOG_NUM_SEEK | H5FD_LOG_NUM_TRUNCATE;
+/* Flags for tracking time spent in open/stat/read/write/seek/truncate/close */
+pub const H5FD_LOG_TIME_OPEN: c_ulonglong = 0x00000800;
+pub const H5FD_LOG_TIME_STAT: c_ulonglong = 0x00001000;
+pub const H5FD_LOG_TIME_READ: c_ulonglong = 0x00002000;
+pub const H5FD_LOG_TIME_WRITE: c_ulonglong = 0x00004000;
+pub const H5FD_LOG_TIME_SEEK: c_ulonglong = 0x00008000;
+pub const H5FD_LOG_TIME_TRUNCATE: c_ulonglong = 0x00010000;
+pub const H5FD_LOG_TIME_CLOSE: c_ulonglong = 0x00020000;
+pub const H5FD_LOG_TIME_IO: c_ulonglong = H5FD_LOG_TIME_OPEN
+    | H5FD_LOG_TIME_STAT
+    | H5FD_LOG_TIME_READ
+    | H5FD_LOG_TIME_WRITE
+    | H5FD_LOG_TIME_SEEK
+    | H5FD_LOG_TIME_TRUNCATE
+    | H5FD_LOG_TIME_CLOSE;
+/* Flags for tracking allocation/release of space in file */
+pub const H5FD_LOG_ALLOC: c_ulonglong = 0x00040000;
+pub const H5FD_LOG_FREE: c_ulonglong = 0x00080000;
+pub const H5FD_LOG_ALL: c_ulonglong = H5FD_LOG_FREE
+    | H5FD_LOG_ALLOC
+    | H5FD_LOG_TIME_IO
+    | H5FD_LOG_NUM_IO
+    | H5FD_LOG_FLAVOR
+    | H5FD_LOG_FILE_IO
+    | H5FD_LOG_LOC_IO
+    | H5FD_LOG_META_IO;
+
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct H5FD_class_t {
@@ -292,28 +341,24 @@ extern "C" {
     pub fn H5FDtruncate(file: *mut H5FD_t, dxpl_id: hid_t, closing: hbool_t) -> herr_t;
 }
 
-// sec2 driver
+// drivers
 extern "C" {
     pub fn H5FD_sec2_init() -> hid_t;
-    pub fn H5FD_sec2_term();
-    pub fn H5Pset_fapl_sec2(fapl_id: hid_t) -> herr_t;
-}
-
-// core driver
-extern "C" {
     pub fn H5FD_core_init() -> hid_t;
-    pub fn H5FD_core_term();
-    pub fn H5Pset_fapl_core(fapl_id: hid_t, increment: size_t, backing_store: hbool_t) -> herr_t;
-    pub fn H5Pget_fapl_core(
-        fapl_id: hid_t, increment: *mut size_t, backing_store: *mut hbool_t,
-    ) -> herr_t;
+    pub fn H5FD_stdio_init() -> hid_t;
+    pub fn H5FD_family_init() -> hid_t;
+    pub fn H5FD_log_init() -> hid_t;
+    pub fn H5FD_multi_init() -> hid_t;
 }
 
-// stdio driver
+#[cfg(h5_have_parallel)]
 extern "C" {
-    pub fn H5FD_stdio_init() -> hid_t;
-    pub fn H5FD_stdio_term();
-    pub fn H5Pset_fapl_stdio(fapl_id: hid_t) -> herr_t;
+    pub fn H5FD_mpio_init() -> hid_t;
+}
+
+#[cfg(h5_have_direct)]
+extern "C" {
+    pub fn H5FD_direct_init() -> hid_t;
 }
 
 #[cfg(hdf5_1_10_0)]
