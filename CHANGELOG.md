@@ -32,9 +32,12 @@
 
 ### Changed
 
+- Renamed `hdf5-rs` crate (importable as `h5`) to `hdf5` (importable simply as `hdf5`).
+- Renamed `libhdf5-sys` crate to `hdf5-sys` (importable as `hdf5_sys`).
+- Renamed GitHub repository to `aldanor/hdf5-rust`.
 - Updated the bindings and tests to the latest HDF5 versions (1.10.4 and 1.8.21).
 - The build system has been reworked from the ground up:
-  - `libhdf5-lib` crate has been removed; all of the build-time logic now resides
+  - `hdf5-lib` crate has been removed; all of the build-time logic now resides
     in the build script of `hdf5-sys`.
   - The environment variables the build script reacts to are now `HDF5_DIR` and `HDF5_VERSION`.
   - `pkg-config` is now only launched on Linux.
@@ -66,7 +69,7 @@
 
 ### Removed
 
-- Removed `libhdf5-lib` crate (merged it into `hdf5-sys`, see above).
+- Removed `hdf5-lib` crate (merged it into `hdf5-sys`, see above).
 - Removed `remutex` crate, using locking primitives from `parking_lot` crate instead.
 - `Container` trait has been removed, all of its functionality merged into `Group` type.
 
@@ -81,13 +84,13 @@
   the `bin` folder of HDF5 installation, the library directory will be inferred automatically.
   The official HDF5 installers add the `bin` folder to user path, so the official MSVC releases
   should just work out of the box without having to set any environment variables.
-- The library is now split into three crates: `libhdf5-lib` (requests linkage to HDF5),
-  `hdf5-sys` (contains bindings, requires `libhdf5-lib` at build time in order to conditionally
-  enable or disable certain HDF5 functionality), and `hdf5-rs` (the user-facing crate, requires
+- The library is now split into three crates: `hdf5-lib` (requests linkage to HDF5),
+  `hdf5-sys` (contains bindings, requires `hdf5-lib` at build time in order to conditionally
+  enable or disable certain HDF5 functionality), and `hdf5` (the user-facing crate, requires
   both lower-level crates at build time).
 - Added `hdf5::hdf5_version` function.
 - The minimum required version of the HDF5 library is now 1.8.4.
-- Both `hdf5-sys` and `hdf5-rs` crates can now use version attributes at compile time to
+- Both `hdf5-sys` and `hdf5` crates can now use version attributes at compile time to
   enable/disable/change functionality. All functions and definitions that appeared in HDF5 versions
   past 1.8.4 are now conditionally enabled in `hdf5-sys`.
 - Added bindings for HDF5 functions that were added in releases 1.8.15 and 1.8.16.
