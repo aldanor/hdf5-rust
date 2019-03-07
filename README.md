@@ -84,7 +84,7 @@ threadsafe option enabled.
 
 ### HDF5 version
 
-Build scripts for both `libhdf5-sys` and `hdf5-rs` crates check the actual version of the
+Build scripts for both `hdf5-sys` and `hdf5-rs` crates check the actual version of the
 HDF5 library that they are being linked against, and some functionality may be conditionally
 enabled or disabled at compile time. While this allows supporting multiple versions of HDF5
 in a single codebase, this is something the library user should be aware of in case they

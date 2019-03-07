@@ -3,7 +3,7 @@ use std::ops::Deref;
 use std::ptr;
 use std::str::FromStr;
 
-use libhdf5_sys::h5p::{
+use hdf5_sys::h5p::{
     H5Pcopy, H5Pequal, H5Pexist, H5Pget_class, H5Pget_class_name, H5Pget_nprops, H5Piterate,
 };
 
@@ -204,7 +204,7 @@ impl PropertyList {
 
 #[cfg(test)]
 pub mod tests {
-    use libhdf5_sys::h5p::H5Pcreate;
+    use hdf5_sys::h5p::H5Pcreate;
 
     use crate::globals::{H5P_FILE_ACCESS, H5P_FILE_CREATE};
     use crate::internal_prelude::*;

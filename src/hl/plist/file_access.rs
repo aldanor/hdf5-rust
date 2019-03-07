@@ -17,15 +17,15 @@ use std::ptr;
 
 use bitflags::bitflags;
 
-use libhdf5_sys::h5ac::{
+use hdf5_sys::h5ac::{
     H5AC_cache_config_t, H5AC_METADATA_WRITE_STRATEGY__DISTRIBUTED,
     H5AC_METADATA_WRITE_STRATEGY__PROCESS_0_ONLY, H5AC__CURR_CACHE_CONFIG_VERSION,
     H5AC__MAX_TRACE_FILE_NAME_LEN,
 };
-use libhdf5_sys::h5c::{H5C_cache_decr_mode, H5C_cache_flash_incr_mode, H5C_cache_incr_mode};
-use libhdf5_sys::h5f::{H5F_close_degree_t, H5F_mem_t, H5F_FAMILY_DEFAULT};
-use libhdf5_sys::h5fd::H5FD_MEM_NTYPES;
-use libhdf5_sys::h5fd::{
+use hdf5_sys::h5c::{H5C_cache_decr_mode, H5C_cache_flash_incr_mode, H5C_cache_incr_mode};
+use hdf5_sys::h5f::{H5F_close_degree_t, H5F_mem_t, H5F_FAMILY_DEFAULT};
+use hdf5_sys::h5fd::H5FD_MEM_NTYPES;
+use hdf5_sys::h5fd::{
     H5FD_LOG_ALL, H5FD_LOG_FILE_IO, H5FD_LOG_FILE_READ, H5FD_LOG_FILE_WRITE, H5FD_LOG_FLAVOR,
     H5FD_LOG_FREE, H5FD_LOG_LOC_IO, H5FD_LOG_LOC_READ, H5FD_LOG_LOC_SEEK, H5FD_LOG_LOC_WRITE,
     H5FD_LOG_META_IO, H5FD_LOG_NUM_IO, H5FD_LOG_NUM_READ, H5FD_LOG_NUM_SEEK, H5FD_LOG_NUM_TRUNCATE,
@@ -33,7 +33,7 @@ use libhdf5_sys::h5fd::{
     H5FD_LOG_TIME_READ, H5FD_LOG_TIME_SEEK, H5FD_LOG_TIME_STAT, H5FD_LOG_TIME_TRUNCATE,
     H5FD_LOG_TIME_WRITE, H5FD_LOG_TRUNCATE,
 };
-use libhdf5_sys::h5p::{
+use hdf5_sys::h5p::{
     H5Pcreate, H5Pget_alignment, H5Pget_cache, H5Pget_driver, H5Pget_fapl_core, H5Pget_fapl_family,
     H5Pget_fapl_multi, H5Pget_fclose_degree, H5Pget_gc_references, H5Pget_mdc_config,
     H5Pget_meta_block_size, H5Pget_sieve_buf_size, H5Pget_small_data_block_size, H5Pset_alignment,
@@ -43,32 +43,32 @@ use libhdf5_sys::h5p::{
     H5Pset_small_data_block_size,
 };
 #[cfg(h5_have_direct)]
-use libhdf5_sys::h5p::{H5Pget_fapl_direct, H5Pset_fapl_direct};
+use hdf5_sys::h5p::{H5Pget_fapl_direct, H5Pset_fapl_direct};
 #[cfg(feature = "mpio")]
-use libhdf5_sys::h5p::{H5Pget_fapl_mpio, H5Pset_fapl_mpio};
+use hdf5_sys::h5p::{H5Pget_fapl_mpio, H5Pset_fapl_mpio};
 
 #[cfg(hdf5_1_10_1)]
-use libhdf5_sys::h5ac::{H5AC_cache_image_config_t, H5AC__CACHE_IMAGE__ENTRY_AGEOUT__NONE};
+use hdf5_sys::h5ac::{H5AC_cache_image_config_t, H5AC__CACHE_IMAGE__ENTRY_AGEOUT__NONE};
 #[cfg(hdf5_1_10_2)]
-use libhdf5_sys::h5f::H5F_libver_t;
+use hdf5_sys::h5f::H5F_libver_t;
 #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
-use libhdf5_sys::h5p::{
+use hdf5_sys::h5p::{
     H5Pget_all_coll_metadata_ops, H5Pget_coll_metadata_write, H5Pset_all_coll_metadata_ops,
     H5Pset_coll_metadata_write,
 };
 #[cfg(hdf5_1_8_13)]
-use libhdf5_sys::h5p::{H5Pget_core_write_tracking, H5Pset_core_write_tracking};
+use hdf5_sys::h5p::{H5Pget_core_write_tracking, H5Pset_core_write_tracking};
 #[cfg(hdf5_1_8_7)]
-use libhdf5_sys::h5p::{H5Pget_elink_file_cache_size, H5Pset_elink_file_cache_size};
+use hdf5_sys::h5p::{H5Pget_elink_file_cache_size, H5Pset_elink_file_cache_size};
 #[cfg(hdf5_1_10_1)]
-use libhdf5_sys::h5p::{
+use hdf5_sys::h5p::{
     H5Pget_evict_on_close, H5Pget_mdc_image_config, H5Pget_page_buffer_size, H5Pset_evict_on_close,
     H5Pset_mdc_image_config, H5Pset_page_buffer_size,
 };
 #[cfg(hdf5_1_10_2)]
-use libhdf5_sys::h5p::{H5Pget_libver_bounds, H5Pset_libver_bounds};
+use hdf5_sys::h5p::{H5Pget_libver_bounds, H5Pset_libver_bounds};
 #[cfg(hdf5_1_10_0)]
-use libhdf5_sys::h5p::{
+use hdf5_sys::h5p::{
     H5Pget_mdc_log_options, H5Pget_metadata_read_attempts, H5Pset_mdc_log_options,
     H5Pset_metadata_read_attempts,
 };

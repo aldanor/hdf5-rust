@@ -16,10 +16,10 @@ name = "h5"
 
 [features]
 default = []
-mpio = ["mpi-sys", "libhdf5-sys/mpio"]
+mpio = ["mpi-sys", "hdf5-sys/mpio"]
 
 [workspace]
-members = ["hdf5-types", "hdf5-derive", "libhdf5-sys"]
+members = ["hdf5-types", "hdf5-derive", "hdf5-sys"]
 exclude = ["*.yml", "ci/*"]
 
 [dependencies]
@@ -31,7 +31,7 @@ ndarray = "0.12"
 num-integer = "0.1"
 num-traits = "0.2"
 mpi-sys = { version = "0.1", optional = true }
-libhdf5-sys = { path = "libhdf5-sys", version = "0.2.0" }
+hdf5-sys = { path = "hdf5-sys", version = "0.2.0" }
 hdf5-types = { path = "hdf5-types", version = "0.2.0" }
 hdf5-derive = { path = "hdf5-derive", version = "0.2.0" }
 
@@ -43,4 +43,4 @@ scopeguard = "1.0"
 tempdir = "0.3"
 
 [build-dependencies]
-libhdf5-sys = { path = "libhdf5-sys", version = "0.2.0" }
+hdf5-sys = { path = "hdf5-sys", version = "0.2.0" }

@@ -78,7 +78,7 @@ mod internal_prelude {
     pub use libc::size_t;
     pub use std::os::raw::{c_char, c_double, c_int, c_long, c_uint, c_void};
 
-    pub use libhdf5_sys::{
+    pub use hdf5_sys::{
         h5::{haddr_t, hbool_t, herr_t, hsize_t},
         h5i::H5I_type_t::{self, *},
         h5i::{hid_t, H5I_INVALID_HID},
@@ -109,7 +109,7 @@ pub mod test;
 /// Returns the runtime version of the HDF5 library.
 pub fn hdf5_version() -> (u8, u8, u8) {
     use self::internal_prelude::c_uint;
-    use libhdf5_sys::h5::H5get_libversion;
+    use hdf5_sys::h5::H5get_libversion;
     let mut v: (c_uint, c_uint, c_uint) = (0, 0, 0);
     h5call!(H5get_libversion(&mut v.0, &mut v.1, &mut v.2))
         .map(|_| (v.0 as _, v.1 as _, v.2 as _))

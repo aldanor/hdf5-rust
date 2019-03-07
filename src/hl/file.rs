@@ -2,7 +2,7 @@ use std::fmt::{self, Debug};
 use std::ops::Deref;
 use std::path::Path;
 
-use libhdf5_sys::{
+use hdf5_sys::{
     h5f::{
         H5Fclose, H5Fcreate, H5Fflush, H5Fget_create_plist, H5Fget_filesize, H5Fget_freespace,
         H5Fget_intent, H5Fget_obj_count, H5Fget_obj_ids, H5Fopen, H5F_ACC_EXCL, H5F_ACC_RDONLY,

@@ -1,7 +1,7 @@
 use crate::globals::H5P_DATASET_CREATE;
 use crate::internal_prelude::*;
 
-use libhdf5_sys::{
+use hdf5_sys::{
     h5p::{
         H5Pcreate, H5Pget_filter2, H5Pget_nfilters, H5Pset_deflate, H5Pset_fletcher32,
         H5Pset_scaleoffset, H5Pset_shuffle, H5Pset_szip,

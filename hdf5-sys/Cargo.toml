@@ -1,5 +1,5 @@
 [package]
-name = "libhdf5-sys"
+name = "hdf5-sys"
 version = "0.2.0"
 authors = ["Ivan Smirnov <i.s.smirnov@gmail.com>"]
 keywords = ["hdf5"]

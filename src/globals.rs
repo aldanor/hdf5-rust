@@ -5,10 +5,10 @@ use std::mem;
 use lazy_static::lazy_static;
 
 #[cfg(h5_have_direct)]
-use libhdf5_sys::h5fd::H5FD_direct_init;
+use hdf5_sys::h5fd::H5FD_direct_init;
 #[cfg(h5_have_parallel)]
-use libhdf5_sys::h5fd::H5FD_mpio_init;
-use libhdf5_sys::h5fd::{
+use hdf5_sys::h5fd::H5FD_mpio_init;
+use hdf5_sys::h5fd::{
     H5FD_core_init, H5FD_family_init, H5FD_log_init, H5FD_multi_init, H5FD_sec2_init,
     H5FD_stdio_init,
 };
@@ -19,9 +19,9 @@ use crate::internal_prelude::*;
 macro_rules! link_hid {
     ($rust_name:ident, $mod_name:ident::$c_name:ident) => {
         lazy_static! {
-            pub static ref $rust_name: ::libhdf5_sys::h5i::hid_t = {
-                h5lock!(::libhdf5_sys::h5::H5open());
-                *::libhdf5_sys::$mod_name::$c_name
+            pub static ref $rust_name: ::hdf5_sys::h5i::hid_t = {
+                h5lock!(::hdf5_sys::h5::H5open());
+                *::hdf5_sys::$mod_name::$c_name
             };
         }
     };
@@ -32,9 +32,9 @@ macro_rules! link_hid {
 macro_rules! link_hid {
     ($rust_name:ident, $mod_name:ident::$c_name:ident) => {
         lazy_static! {
-            pub static ref $rust_name: ::libhdf5_sys::h5i::hid_t = {
-                h5lock!(::libhdf5_sys::h5::H5open());
-                unsafe { *(*::libhdf5_sys::$mod_name::$c_name as *const _) }
+            pub static ref $rust_name: ::hdf5_sys::h5i::hid_t = {
+                h5lock!(::hdf5_sys::h5::H5open());
+                unsafe { *(*::hdf5_sys::$mod_name::$c_name as *const _) }
             };
         }
     };
@@ -359,7 +359,7 @@ lazy_static! {
 mod tests {
     use std::mem;
 
-    use libhdf5_sys::{h5::haddr_t, h5i::H5I_INVALID_HID};
+    use hdf5_sys::{h5::haddr_t, h5i::H5I_INVALID_HID};
 
     use super::{
         H5E_DATASET, H5E_ERR_CLS, H5P_LST_LINK_ACCESS_ID, H5P_ROOT, H5R_DSET_REG_REF_BUF_SIZE,

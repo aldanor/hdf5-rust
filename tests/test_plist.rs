@@ -81,7 +81,7 @@ fn test_fcpl_common() -> h5::Result<()> {
 
 #[test]
 fn test_fcpl_sizes() -> h5::Result<()> {
-    use libhdf5_sys::h5::hsize_t;
+    use hdf5_sys::h5::hsize_t;
     let fcpl = FileCreate::try_new()?;
     assert_eq!(fcpl.sizes().sizeof_addr, mem::size_of::<hsize_t>());
     assert_eq!(fcpl.sizes().sizeof_size, mem::size_of::<hsize_t>());
