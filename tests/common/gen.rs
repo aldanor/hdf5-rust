@@ -1,8 +1,8 @@
 use std::fmt;
 use std::iter;
 
-use h5::types::{FixedAscii, FixedUnicode, VarLenArray, VarLenAscii, VarLenUnicode};
-use h5::H5Type;
+use hdf5::types::{FixedAscii, FixedUnicode, VarLenArray, VarLenAscii, VarLenUnicode};
+use hdf5::H5Type;
 use hdf5_types::Array;
 
 use ndarray::{ArrayD, SliceInfo, SliceOrIndex};

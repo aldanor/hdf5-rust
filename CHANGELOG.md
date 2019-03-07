@@ -85,7 +85,7 @@
   `hdf5-sys` (contains bindings, requires `libhdf5-lib` at build time in order to conditionally
   enable or disable certain HDF5 functionality), and `hdf5-rs` (the user-facing crate, requires
   both lower-level crates at build time).
-- Added `h5::hdf5_version` function.
+- Added `hdf5::hdf5_version` function.
 - The minimum required version of the HDF5 library is now 1.8.4.
 - Both `hdf5-sys` and `hdf5-rs` crates can now use version attributes at compile time to
   enable/disable/change functionality. All functions and definitions that appeared in HDF5 versions

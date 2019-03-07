@@ -12,7 +12,7 @@ Requires HDF5 library of version 1.8.4 or later.
 ## Example
 
 ```rust
-#[derive(h5::H5Type, Clone, PartialEq, Debug)]
+#[derive(hdf5::H5Type, Clone, PartialEq, Debug)]
 #[repr(u8)]
 pub enum Color {
     RED = 1,
@@ -20,20 +20,20 @@ pub enum Color {
     BLUE = 3,
 }
 
-#[derive(h5::H5Type, Clone, PartialEq, Debug)]
+#[derive(hdf5::H5Type, Clone, PartialEq, Debug)]
 #[repr(C)]
 pub struct Pixel {
     xy: (i64, i64),
     color: Color,
 }
 
-fn main() -> h5::Result<()> {
+fn main() -> hdf5::Result<()> {
     use self::Color::*;
     use ndarray::{arr1, arr2};
 
     {
         // write
-        let file = h5::File::open("pixels.h5", "w")?;
+        let file = hdf5::File::open("pixels.h5", "w")?;
         let colors = file.new_dataset::<Color>().create("colors", 2)?;
         colors.write(&[RED, BLUE])?;
         let group = file.create_group("dir")?;
@@ -45,7 +45,7 @@ fn main() -> h5::Result<()> {
     }
     {
         // read
-        let file = h5::File::open("pixels.h5", "r")?;
+        let file = hdf5::File::open("pixels.h5", "r")?;
         let colors = file.dataset("colors")?;
         assert_eq!(colors.read_1d::<Color>()?, arr1(&[RED, BLUE]));
         let pixels = file.dataset("dir/pixels")?;
