@@ -1,6 +1,6 @@
 [package]
 name = "hdf5-sys"
-version = "0.2.0"
+version = "0.5.0"
 authors = ["Ivan Smirnov <i.s.smirnov@gmail.com>"]
 keywords = ["hdf5"]
 license = "MIT/Apache-2.0"

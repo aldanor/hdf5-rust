@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.0-alpha.1 (unreleased)
+## 0.5.0
 
 ### Added
 
@@ -72,6 +72,13 @@
 - Removed `hdf5-lib` crate (merged it into `hdf5-sys`, see above).
 - Removed `remutex` crate, using locking primitives from `parking_lot` crate instead.
 - `Container` trait has been removed, all of its functionality merged into `Group` type.
+
+### Notes
+
+- The version number jump is due to renaming crates `hdf5-rs` and `libhdf5-sys` to `hdf5` and
+  `hdf5-sys`, respectively. Since there were already published crates with those names and
+  the crates registry is meant to be immutable even if the crates are yanked, we had to
+  bump the version so that it shadows all of the older versions.
 
 ## 0.2.0 (Apr 17, 2016)
 
