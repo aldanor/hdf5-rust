@@ -5,8 +5,15 @@
 [Documentation](https://docs.rs/crate/hdf5)
 [Changelog](https://github.com/aldanor/hdf5-rust/blob/master/CHANGELOG.md)
 
-The `hdf5` crate provides thread-safe Rust bindings and high-level wrappers for 
-the HDF5 library API.
+The `hdf5` crate (previously known as `hdf5-rs`) provides thread-safe Rust bindings and 
+high-level wrappers for the HDF5 library API. Some of the features include:
+
+- Thread-safety with non-threadsafe libhdf5 builds guaranteed via reentrant mutexes.
+- Native representation of most HDF5 types, including variable-length strings and arrays.
+- Derive-macro for automatic mapping of user structs and enums to HDF5 types.
+- Multi-dimensional array reading/writing interface via `ndarray`.
+
+Direct low-level bindings are also available and are provided in the `hdf5-sys` crate.
 
 Requires HDF5 library of version 1.8.4 or later.
 
