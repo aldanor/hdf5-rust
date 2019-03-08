@@ -1,7 +1,7 @@
 use std::fmt::{self, Debug};
 use std::ops::Deref;
 
-use libhdf5_sys::{
+use hdf5_sys::{
     h5d::H5Dopen2,
     h5g::{H5G_info_t, H5Gcreate2, H5Gget_info, H5Gopen2},
     h5l::{H5Lcreate_hard, H5Lcreate_soft, H5Ldelete, H5Lmove, H5L_SAME_LOC},

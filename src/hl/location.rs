@@ -2,7 +2,7 @@ use std::fmt::{self, Debug};
 use std::ops::Deref;
 use std::ptr;
 
-use libhdf5_sys::{
+use hdf5_sys::{
     h5f::H5Fget_name,
     h5i::{H5Iget_file_id, H5Iget_name},
     h5o::{H5Oget_comment, H5Oset_comment},

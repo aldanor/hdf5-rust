@@ -1,12 +1,12 @@
 [package]
-name = "libhdf5-sys"
-version = "0.2.0"
+name = "hdf5-sys"
+version = "0.5.0"
 authors = ["Ivan Smirnov <i.s.smirnov@gmail.com>"]
 keywords = ["hdf5"]
 license = "MIT/Apache-2.0"
 build = "build.rs"
-repository = "https://github.com/aldanor/hdf5-rs"
-homepage = "https://github.com/aldanor/hdf5-rs"
+repository = "https://github.com/aldanor/hdf5-rust"
+homepage = "https://github.com/aldanor/hdf5-rust"
 description = "Native bindings to the HDF5 library."
 edition = "2018"
 

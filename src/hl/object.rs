@@ -1,6 +1,6 @@
 use std::fmt::{self, Debug};
 
-use libhdf5_sys::h5i::H5Iget_ref;
+use hdf5_sys::h5i::H5Iget_ref;
 
 use crate::internal_prelude::*;
 
@@ -60,7 +60,7 @@ impl Object {
 pub mod tests {
     use std::ops::Deref;
 
-    use libhdf5_sys::{h5i::H5I_type_t, h5p::H5Pcreate};
+    use hdf5_sys::{h5i::H5I_type_t, h5p::H5Pcreate};
 
     use crate::globals::H5P_FILE_ACCESS;
     use crate::handle::{is_valid_id, is_valid_user_id};

@@ -6,19 +6,19 @@ use std::ops::Deref;
 use bitflags::bitflags;
 
 #[cfg(hdf5_1_10_1)]
-use libhdf5_sys::h5f::H5F_fspace_strategy_t;
-use libhdf5_sys::h5o::{
+use hdf5_sys::h5f::H5F_fspace_strategy_t;
+use hdf5_sys::h5o::{
     H5O_SHMESG_ALL_FLAG, H5O_SHMESG_ATTR_FLAG, H5O_SHMESG_DTYPE_FLAG, H5O_SHMESG_FILL_FLAG,
     H5O_SHMESG_NONE_FLAG, H5O_SHMESG_PLINE_FLAG, H5O_SHMESG_SDSPACE_FLAG,
 };
-use libhdf5_sys::h5p::{
+use hdf5_sys::h5p::{
     H5Pcreate, H5Pget_istore_k, H5Pget_shared_mesg_index, H5Pget_shared_mesg_nindexes,
     H5Pget_shared_mesg_phase_change, H5Pget_sizes, H5Pget_sym_k, H5Pget_userblock, H5Pset_istore_k,
     H5Pset_shared_mesg_index, H5Pset_shared_mesg_nindexes, H5Pset_shared_mesg_phase_change,
     H5Pset_sym_k, H5Pset_userblock,
 };
 #[cfg(hdf5_1_10_1)]
-use libhdf5_sys::h5p::{
+use hdf5_sys::h5p::{
     H5Pget_file_space_page_size, H5Pget_file_space_strategy, H5Pset_file_space_page_size,
     H5Pset_file_space_strategy,
 };

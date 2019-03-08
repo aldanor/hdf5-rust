@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.0-alpha.1 (unreleased)
+## 0.5.0
 
 ### Added
 
@@ -20,7 +20,7 @@
 - Added support for MPIO driver (HDF5 has to be built with H5_HAVE_PARALLEL and
   the crate has to be built with "mpio" feature enabled).
 - Added support for direct VFD driver (HDF5 has to be built with H5_HAVE_DIRECT).
-- Added some missing bindings to `libhdf5-sys`: driver-related FAPL bindings 
+- Added some missing bindings to `hdf5-sys`: driver-related FAPL bindings 
   in h5p/h5fd (including MPIO and direct VFD drivers), MPIO bindings in h5p/h5f/h5fd.
 - Added core reading/writing API in `Container`, with support for reading/writing scalars, 
   1-d, 2-d, and dynamic-dimensional arrays, and raw slices. As a side effect, the main crate
@@ -32,10 +32,13 @@
 
 ### Changed
 
+- Renamed `hdf5-rs` crate (importable as `h5`) to `hdf5` (importable simply as `hdf5`).
+- Renamed `libhdf5-sys` crate to `hdf5-sys` (importable as `hdf5_sys`).
+- Renamed GitHub repository to `aldanor/hdf5-rust`.
 - Updated the bindings and tests to the latest HDF5 versions (1.10.4 and 1.8.21).
 - The build system has been reworked from the ground up:
-  - `libhdf5-lib` crate has been removed; all of the build-time logic now resides
-    in the build script of `libhdf5-sys`.
+  - `hdf5-lib` crate has been removed; all of the build-time logic now resides
+    in the build script of `hdf5-sys`.
   - The environment variables the build script reacts to are now `HDF5_DIR` and `HDF5_VERSION`.
   - `pkg-config` is now only launched on Linux.
   - On macOS, the build scripts detects Homebrew installations, for both 1.8 and 1.10 versions.
@@ -44,7 +47,7 @@
   - A few definitions from `H5pubconf.h` are now exposed as cfg definitions, like
     `h5_have_parallel`, `h5_have_threadsafe` and `h5_have_direct` (this requires us to
     locate the include folder and parse the header at build time).
-- Various clean ups in `libhdf5-sys`: implemented `Default` and `Clone` where
+- Various clean ups in `hdf5-sys`: implemented `Default` and `Clone` where
   applicable, moved a few types and methods to matching parent modules.
 - Major refactor: trait-based type hierarchy has been replaced with a `Deref`-based
   hierarchy instead (53eff4f). `ID` and `FromID` traits have been removed. Traits like `Location`,
@@ -66,9 +69,16 @@
 
 ### Removed
 
-- Removed `libhdf5-lib` crate (merged it into `libhdf5-sys`, see above).
+- Removed `hdf5-lib` crate (merged it into `hdf5-sys`, see above).
 - Removed `remutex` crate, using locking primitives from `parking_lot` crate instead.
 - `Container` trait has been removed, all of its functionality merged into `Group` type.
+
+### Notes
+
+- The version number jump is due to renaming crates `hdf5-rs` and `libhdf5-sys` to `hdf5` and
+  `hdf5-sys`, respectively. Since there were already published crates with those names and
+  the crates registry is meant to be immutable even if the crates are yanked, we had to
+  bump the version so that it shadows all of the older versions.
 
 ## 0.2.0 (Apr 17, 2016)
 
@@ -81,19 +91,19 @@
   the `bin` folder of HDF5 installation, the library directory will be inferred automatically.
   The official HDF5 installers add the `bin` folder to user path, so the official MSVC releases
   should just work out of the box without having to set any environment variables.
-- The library is now split into three crates: `libhdf5-lib` (requests linkage to HDF5),
-  `libhdf5-sys` (contains bindings, requires `libhdf5-lib` at build time in order to conditionally
-  enable or disable certain HDF5 functionality), and `hdf5-rs` (the user-facing crate, requires
+- The library is now split into three crates: `hdf5-lib` (requests linkage to HDF5),
+  `hdf5-sys` (contains bindings, requires `hdf5-lib` at build time in order to conditionally
+  enable or disable certain HDF5 functionality), and `hdf5` (the user-facing crate, requires
   both lower-level crates at build time).
-- Added `h5::hdf5_version` function.
+- Added `hdf5::hdf5_version` function.
 - The minimum required version of the HDF5 library is now 1.8.4.
-- Both `libhdf5-sys` and `hdf5-rs` crates can now use version attributes at compile time to
+- Both `hdf5-sys` and `hdf5` crates can now use version attributes at compile time to
   enable/disable/change functionality. All functions and definitions that appeared in HDF5 versions
-  past 1.8.4 are now conditionally enabled in `libhdf5-sys`.
+  past 1.8.4 are now conditionally enabled in `hdf5-sys`.
 - Added bindings for HDF5 functions that were added in releases 1.8.15 and 1.8.16.
 - Static global variables in HDF5 (H5E, H5P, H5T) are now linked based on HDF5 version and not
   the target platform (`_ID_g` variables were introduced in 1.8.14). When `msvc` target is used,
-  the dllimport stub prefixes are also accounted for. The constants exposed by `libhdf5-sys` are
+  the dllimport stub prefixes are also accounted for. The constants exposed by `hdf5-sys` are
   now of reference type and need to be dereferenced upon use (for `msvc`, they have to be
   dereferenced twice).
 

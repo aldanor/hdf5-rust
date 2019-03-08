@@ -1,39 +1,36 @@
 [package]
-name = "hdf5-rs"
-version = "0.2.0"
+name = "hdf5"
+version = "0.5.0"
 authors = ["Ivan Smirnov <i.s.smirnov@gmail.com>"]
 keywords = ["hdf5"]
 license = "MIT/Apache-2.0"
 readme = "README.md"
 description = "Thread-safe Rust bindings for the HDF5 library."
-repository = "https://github.com/aldanor/hdf5-rs"
-homepage = "https://github.com/aldanor/hdf5-rs"
+repository = "https://github.com/aldanor/hdf5-rust"
+homepage = "https://github.com/aldanor/hdf5-rust"
 build = "build.rs"
 edition = "2018"
 
-[lib]
-name = "h5"
-
 [features]
 default = []
-mpio = ["mpi-sys", "libhdf5-sys/mpio"]
+mpio = ["mpi-sys", "hdf5-sys/mpio"]
 
 [workspace]
-members = ["hdf5-types", "hdf5-derive", "libhdf5-sys"]
+members = ["hdf5-types", "hdf5-derive", "hdf5-sys"]
 exclude = ["*.yml", "ci/*"]
 
 [dependencies]
 bitflags = "1.0"
-lazy_static = "1.2"
+lazy_static = "1.3"
 libc = "0.2"
 parking_lot = "0.7"
 ndarray = "0.12"
 num-integer = "0.1"
 num-traits = "0.2"
 mpi-sys = { version = "0.1", optional = true }
-libhdf5-sys = { path = "libhdf5-sys", version = "0.2.0" }
-hdf5-types = { path = "hdf5-types", version = "0.2.0" }
-hdf5-derive = { path = "hdf5-derive", version = "0.2.0" }
+hdf5-sys = { path = "hdf5-sys", version = "0.5.0" }
+hdf5-types = { path = "hdf5-types", version = "0.5.0" }
+hdf5-derive = { path = "hdf5-derive", version = "0.5.0" }
 
 [dev-dependencies]
 mashup = "0.1"
@@ -43,4 +40,4 @@ scopeguard = "1.0"
 tempdir = "0.3"
 
 [build-dependencies]
-libhdf5-sys = { path = "libhdf5-sys", version = "0.2.0" }
+hdf5-sys = { path = "hdf5-sys", version = "0.5.0" }

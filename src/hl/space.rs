@@ -5,7 +5,7 @@ use std::ptr;
 
 use ndarray::SliceOrIndex;
 
-use libhdf5_sys::h5s::{
+use hdf5_sys::h5s::{
     H5Scopy, H5Screate_simple, H5Sget_simple_extent_dims, H5Sget_simple_extent_ndims,
     H5Sselect_hyperslab, H5S_SELECT_SET,
 };

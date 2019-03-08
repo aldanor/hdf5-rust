@@ -4,7 +4,7 @@ use std::ops::Deref;
 
 use num_integer::div_floor;
 
-use libhdf5_sys::{
+use hdf5_sys::{
     h5::HADDR_UNDEF,
     h5d::{
         H5D_fill_value_t, H5D_layout_t, H5Dcreate2, H5Dcreate_anon, H5Dget_create_plist,
@@ -444,7 +444,7 @@ pub mod tests {
     use std::fs;
     use std::io::Read;
 
-    use libhdf5_sys::{h5d::H5Dwrite, h5s::H5S_ALL};
+    use hdf5_sys::{h5d::H5Dwrite, h5s::H5S_ALL};
 
     use crate::filters::{gzip_available, szip_available};
     use crate::internal_prelude::*;

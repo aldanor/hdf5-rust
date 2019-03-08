@@ -1,18 +1,26 @@
-# hdf5-rs
+# `hdf5`
 
-[![Build Status](https://img.shields.io/travis/aldanor/hdf5-rs.svg)](https://travis-ci.org/aldanor/hdf5-rs) [![Appveyor Build Status](https://img.shields.io/appveyor/ci/aldanor/hdf5-rs.svg)](https://ci.appveyor.com/project/aldanor/hdf5-rs)
+[![Build Status](https://img.shields.io/travis/aldanor/hdf5-rust.svg)](https://travis-ci.org/aldanor/hdf5-rust) [![Appveyor Build Status](https://img.shields.io/appveyor/ci/aldanor/hdf5-rust.svg)](https://ci.appveyor.com/project/aldanor/hdf5-rust)
 
-[Documentation](https://docs.rs/crate/hdf5-rs)
-[Changelog](https://github.com/aldanor/hdf5-rs/blob/master/CHANGELOG.md)
+[Documentation](https://docs.rs/crate/hdf5)
+[Changelog](https://github.com/aldanor/hdf5-rust/blob/master/CHANGELOG.md)
 
-Thread-safe Rust bindings and high-level wrappers for the HDF5 library API.
+The `hdf5` crate (previously known as `hdf5-rs`) provides thread-safe Rust bindings and 
+high-level wrappers for the HDF5 library API. Some of the features include:
+
+- Thread-safety with non-threadsafe libhdf5 builds guaranteed via reentrant mutexes.
+- Native representation of most HDF5 types, including variable-length strings and arrays.
+- Derive-macro for automatic mapping of user structs and enums to HDF5 types.
+- Multi-dimensional array reading/writing interface via `ndarray`.
+
+Direct low-level bindings are also available and are provided in the `hdf5-sys` crate.
 
 Requires HDF5 library of version 1.8.4 or later.
 
 ## Example
 
 ```rust
-#[derive(h5::H5Type, Clone, PartialEq, Debug)]
+#[derive(hdf5::H5Type, Clone, PartialEq, Debug)]
 #[repr(u8)]
 pub enum Color {
     RED = 1,
@@ -20,20 +28,20 @@ pub enum Color {
     BLUE = 3,
 }
 
-#[derive(h5::H5Type, Clone, PartialEq, Debug)]
+#[derive(hdf5::H5Type, Clone, PartialEq, Debug)]
 #[repr(C)]
 pub struct Pixel {
     xy: (i64, i64),
     color: Color,
 }
 
-fn main() -> h5::Result<()> {
+fn main() -> hdf5::Result<()> {
     use self::Color::*;
     use ndarray::{arr1, arr2};
 
     {
         // write
-        let file = h5::File::open("pixels.h5", "w")?;
+        let file = hdf5::File::open("pixels.h5", "w")?;
         let colors = file.new_dataset::<Color>().create("colors", 2)?;
         colors.write(&[RED, BLUE])?;
         let group = file.create_group("dir")?;
@@ -45,7 +53,7 @@ fn main() -> h5::Result<()> {
     }
     {
         // read
-        let file = h5::File::open("pixels.h5", "r")?;
+        let file = hdf5::File::open("pixels.h5", "r")?;
         let colors = file.dataset("colors")?;
         assert_eq!(colors.read_1d::<Color>()?, arr1(&[RED, BLUE]));
         let pixels = file.dataset("dir/pixels")?;
@@ -67,12 +75,12 @@ fn main() -> h5::Result<()> {
 
 ### Platforms
 
-`hdf5-rs` is known to run on these platforms: Linux, macOS, Windows (tested on Travis CI and 
-AppVeyor, HDF5 1.8 and 1.10, system installations and conda environments).
+`hdf5` crate is known to run on these platforms: Linux, macOS, Windows (tested on Travis 
+CI and AppVeyor, HDF5 1.8 and 1.10, system installations and conda environments).
 
 ### Rust
 
-`hdf5-rs` is tested continuously for all three official release channels, and requires 
+`hdf5` crate is tested continuously for all three official release channels, and requires 
 a modern Rust compiler (e.g. of version 1.31 or later).
 
 ### HDF5
@@ -84,7 +92,7 @@ threadsafe option enabled.
 
 ### HDF5 version
 
-Build scripts for both `libhdf5-sys` and `hdf5-rs` crates check the actual version of the
+Build scripts for both `hdf5-sys` and `hdf5` crates check the actual version of the
 HDF5 library that they are being linked against, and some functionality may be conditionally
 enabled or disabled at compile time. While this allows supporting multiple versions of HDF5
 in a single codebase, this is something the library user should be aware of in case they
@@ -127,7 +135,7 @@ unless `HDF5_VERSION` is set.
 
 ### Windows
 
-`hdf5-rs` fully supports MSVC toolchain, which allows using the
+`hdf5` crate fully supports MSVC toolchain, which allows using the
 [official releases](https://www.hdfgroup.org/downloads/index.html) of
 HDF5 and is generally the recommended way to go. That being said, previous experiments have 
 shown that all tests pass on the `gnu` target as well, one just needs to be careful with 
@@ -149,6 +157,6 @@ Few things to note when building on Windows:
 
 ## License
 
-`hdf5-rs` is primarily distributed under the terms of both the MIT license and the
+`hdf5` crate is primarily distributed under the terms of both the MIT license and the
 Apache License (Version 2.0). See [LICENSE-APACHE](LICENSE-APACHE) and
 [LICENSE-MIT](LICENSE-MIT) for details.

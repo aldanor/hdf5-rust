@@ -1,6 +1,6 @@
 [package]
 name = "hdf5-derive"
-version = "0.2.0"
+version = "0.5.0"
 authors = ["Ivan Smirnov <i.s.smirnov@gmail.com>"]
 edition = "2018"
 
@@ -11,7 +11,7 @@ proc-macro = true
 proc-macro2 = "0.4"
 quote = "0.6"
 syn = { version = "0.15", features = ["derive", "extra-traits"]}
-hdf5-types = { path = "../hdf5-types", version = "0.2.0" }
+hdf5-types = { path = "../hdf5-types", version = "0.5.0" }
 
 [dev-dependencies]
 compiletest_rs = { version = "0.3.18", features = ["stable"] }

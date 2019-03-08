@@ -5,8 +5,8 @@ use std::ops::Deref;
 use ndarray::{Array, Array1, Array2, ArrayD, ArrayView, ArrayView1};
 use ndarray::{SliceInfo, SliceOrIndex};
 
-use libhdf5_sys::h5a::{H5Aget_space, H5Aget_storage_size, H5Aget_type, H5Aread, H5Awrite};
-use libhdf5_sys::h5d::{H5Dget_space, H5Dget_storage_size, H5Dget_type, H5Dread, H5Dwrite};
+use hdf5_sys::h5a::{H5Aget_space, H5Aget_storage_size, H5Aget_type, H5Aread, H5Awrite};
+use hdf5_sys::h5d::{H5Dget_space, H5Dget_storage_size, H5Dget_type, H5Dread, H5Dwrite};
 
 use crate::internal_prelude::*;
 
