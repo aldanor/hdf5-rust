@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Added `Group::link_exists()`.
+- Re-export `silence_errors()` at the crate root.
+- Added `from_id()` unsafe method at the crate root.
+
+### Changed
+
+- Using `#[derive(H5Type)]` no longer requires adding `hdf5-types` as a dependency.
+
 ## 0.5.0
 
 ### Added
