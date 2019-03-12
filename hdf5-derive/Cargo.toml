@@ -1,6 +1,6 @@
 [package]
 name = "hdf5-derive"
-version = "0.5.0"
+version = "0.5.1"
 authors = ["Ivan Smirnov <i.s.smirnov@gmail.com>"]
 keywords = ["hdf5"]
 license = "MIT/Apache-2.0"
@@ -19,4 +19,4 @@ syn = { version = "0.15", features = ["derive", "extra-traits"]}
 
 [dev-dependencies]
 compiletest_rs = { version = "0.3.18", features = ["stable"] }
-hdf5 = { version = "0.5.0", path = ".." }
+hdf5 = { version = "0.5.1", path = ".." }
