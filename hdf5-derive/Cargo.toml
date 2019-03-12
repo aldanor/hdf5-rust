@@ -19,3 +19,4 @@ syn = { version = "0.15", features = ["derive", "extra-traits"]}
 
 [dev-dependencies]
 compiletest_rs = { version = "0.3.18", features = ["stable"] }
+hdf5 = { version = "0.5.0", path = ".." }
