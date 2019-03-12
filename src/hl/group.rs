@@ -293,6 +293,27 @@ pub mod tests {
     }
 
     #[test]
+    pub fn test_link_exists() {
+        with_tmp_file(|file| {
+            file.create_group("a/b/c").unwrap();
+            file.link_soft("/a/b", "a/soft").unwrap();
+            file.group("/a/soft/c").unwrap();
+            assert!(file.link_exists("a"));
+            assert!(file.link_exists("a/b"));
+            assert!(file.link_exists("a/b/c"));
+            assert!(file.link_exists("a/soft"));
+            assert!(file.link_exists("a/soft/c"));
+            assert!(!file.link_exists("b"));
+            assert!(!file.link_exists("soft"));
+            let group = file.group("a/soft").unwrap();
+            assert!(group.link_exists("/"));
+            assert!(group.link_exists("c"));
+            assert!(!group.link_exists("a"));
+            assert!(!group.link_exists("soft"));
+        })
+    }
+
+    #[test]
     pub fn test_relink() {
         with_tmp_file(|file| {
             file.create_group("test").unwrap();
