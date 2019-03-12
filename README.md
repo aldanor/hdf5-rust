@@ -39,6 +39,9 @@ fn main() -> hdf5::Result<()> {
     use self::Color::*;
     use ndarray::{arr1, arr2};
 
+    // so that libhdf5 doesn't print errors to stdout
+    let _ = hdf5::silence_errors();
+
     {
         // write
         let file = hdf5::File::open("pixels.h5", "w")?;
