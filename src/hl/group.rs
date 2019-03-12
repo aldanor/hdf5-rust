@@ -306,10 +306,13 @@ pub mod tests {
             assert!(!file.link_exists("b"));
             assert!(!file.link_exists("soft"));
             let group = file.group("a/soft").unwrap();
-            assert!(group.link_exists("/"));
             assert!(group.link_exists("c"));
             assert!(!group.link_exists("a"));
             assert!(!group.link_exists("soft"));
+            #[cfg(not(hdf5_1_10_0))]
+            assert!(!group.link_exists("/"));
+            #[cfg(hdf5_1_10_0)]
+            assert!(group.link_exists("/"));
         })
     }
 
