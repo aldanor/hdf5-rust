@@ -21,6 +21,7 @@ compile_error!("Enabling \"mpio\" feature requires HDF5 library built with MPI s
 
 mod export {
     pub use crate::{
+        class::from_id,
         dim::{Dimension, Ix},
         error::{silence_errors, Error, Result},
         filters::Filters,

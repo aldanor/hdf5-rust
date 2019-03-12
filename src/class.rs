@@ -70,3 +70,7 @@ pub trait ObjectClass: Sized {
         })
     }
 }
+
+pub unsafe fn from_id<T: ObjectClass>(id: hid_t) -> Result<T> {
+    T::from_id(id)
+}
