@@ -4,7 +4,7 @@ use std::ops::Deref;
 use hdf5_sys::{
     h5d::H5Dopen2,
     h5g::{H5G_info_t, H5Gcreate2, H5Gget_info, H5Gopen2},
-    h5l::{H5Lcreate_hard, H5Lcreate_soft, H5Ldelete, H5Lmove, H5L_SAME_LOC},
+    h5l::{H5Lcreate_hard, H5Lcreate_soft, H5Ldelete, H5Lexists, H5Lmove, H5L_SAME_LOC},
     h5p::{H5Pcreate, H5Pset_create_intermediate_group},
 };
 
@@ -148,6 +148,15 @@ impl Group {
         h5call!(H5Ldelete(self.id(), name.as_ptr(), H5P_DEFAULT)).and(Ok(()))
     }
 
+    /// Check if a link with a given name exists in this file or group.
+    pub fn link_exists(&self, name: &str) -> bool {
+        (|| -> Result<bool> {
+            let name = to_cstring(name)?;
+            Ok(h5call!(H5Lexists(self.id(), name.as_ptr(), H5P_DEFAULT))? > 0)
+        })()
+        .unwrap_or(false)
+    }
+
     /// Instantiates a new dataset builder.
     pub fn new_dataset<T: H5Type>(&self) -> DatasetBuilder<T> {
         DatasetBuilder::<T>::new(self)
@@ -280,6 +289,30 @@ pub mod tests {
             file.unlink("/a/bar").unwrap();
             assert_err!(file.group("/a/bar"), "unable to open group");
             assert_err!(file.group("/a/baz"), "unable to open group");
+        })
+    }
+
+    #[test]
+    pub fn test_link_exists() {
+        with_tmp_file(|file| {
+            file.create_group("a/b/c").unwrap();
+            file.link_soft("/a/b", "a/soft").unwrap();
+            file.group("/a/soft/c").unwrap();
+            assert!(file.link_exists("a"));
+            assert!(file.link_exists("a/b"));
+            assert!(file.link_exists("a/b/c"));
+            assert!(file.link_exists("a/soft"));
+            assert!(file.link_exists("a/soft/c"));
+            assert!(!file.link_exists("b"));
+            assert!(!file.link_exists("soft"));
+            let group = file.group("a/soft").unwrap();
+            assert!(group.link_exists("c"));
+            assert!(!group.link_exists("a"));
+            assert!(!group.link_exists("soft"));
+            #[cfg(not(hdf5_1_10_0))]
+            assert!(!group.link_exists("/"));
+            #[cfg(hdf5_1_10_0)]
+            assert!(group.link_exists("/"));
         })
     }
 

@@ -2,3 +2,5 @@
 
 pub mod gen;
 pub mod util;
+#[macro_use]
+pub mod macros;
