@@ -118,5 +118,4 @@ deploy:
   local-dir: target/doc
   on:
     branch: master
-    os: linux
-    condition: $TRAVIS_RUST_VERSION == "stable"
+    condition: "$TRAVIS_RUST_VERSION = stable && $TRAVIS_OS_NAME = linux"
