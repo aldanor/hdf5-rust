@@ -102,6 +102,12 @@ before_install:
 - find /usr -name '*hdf5*' || true
 - find /usr -name 'H5*.h' || true
 
+cache:
+  directories:
+    - /home/travis/.cargo
+before_cache:
+  - rm -rf /home/travis/.cargo/registry
+
 before_deploy:
   - cargo doc --no-deps
   - echo '<meta http-equiv=refresh content=0;url=hdf5/index.html>' > target/doc/index.html
