@@ -70,12 +70,6 @@ script:
 - cargo test -v --all --exclude hdf5-derive
 - cargo clean
 - cargo test -v -p hdf5-derive
-- |
-  if [ $TRAVIS_RUST_VERSION = "stable" ] && [ `uname` = "Linux" ] &&\
-     [ $TRAVIS_BRANCH = "master" ] && [ $TRAVIS_PULL_REQUEST = "false" ]; then
-    cargo clean;
-    cargo doc --no-deps;
-  fi
 before_install:
 - |
   if [ `uname` = "Darwin" ] && [ ! -z "$H5_BREW" ]; then
@@ -107,15 +101,16 @@ before_install:
   fi
 - find /usr -name '*hdf5*' || true
 - find /usr -name 'H5*.h' || true
-after_success: |
-  [ $TRAVIS_BRANCH = "master" ] &&
-  [ $TRAVIS_PULL_REQUEST = "false" ] &&
-  [ $TRAVIS_RUST_VERSION = "stable" ] &&
-  [ `uname` = "Linux" ] &&
-  echo '<meta http-equiv=refresh content=0;url=hdf5/index.html>' > target/doc/index.html &&
-  pip install ghp-import --user $USER &&
-  $HOME/.local/bin/ghp-import -n target/doc &&
-  git push -qf https://${TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git gh-pages
-env:
-  global:
-    secure: Vk/tN3N2gb2TnFcXEJDuBbJ7ydNNig9p9QSgXc9rCubZ1EzPry1vFshAijwmqSa+Zy9vE6B+00VPIsBgTOofMYK/tQARtdZq76lBy0g1wRKXySMMWsvu/XL+IjmGQuVCOFSDUrH3OgVXn7dw5jrwfVNoz8smwyvvdebCZDbPL+yYzFTv7hBfL9xRkxlpM5BI1F2FGCC2IfyOrMMZbcjJu1duQnP5fs0K0AWQEa0fsO12u/dh/RH3ioWkwUlSMojms90VKjmYNlGjVI5vkMoni8pYrVggEFmQnGxShTPsPTg1vJH6SRnMpTiRMzcyyH5zMiLyWPfLWT2QR29d8ngmm7LWfxGlnDouPLgBzG7Hvys+EnXEHTPiFaVpyNje6C9mLaMxloRN1nU7zsBsd5YOWn9PunVn82wL4IybDmCJg1lfGVDLy+IGm0qO3Q1im/7G6TcHy4DgQ0Zf02PjKcelBjvBIE05IwZwcXO7Da0guBzGiFOzdEn/PWejkDmxDRgeh3CRu9i5XBjGHmYjo1A9z8kusq1IS+vU/thRRDE159hq942HQN6xtpcKi9CzORIw8tErM6HHIhomYiXvgwIrI/FwNH5c2qEakAISw1lfcVnSTsbDah4NghAvCXfd6YN+UE/JKlrsd3fQX8L6ZM3kfTVQBWt1BlhFQ753V/Y0ZI8=
+
+before_deploy:
+  - cargo doc --no-deps
+  - echo '<meta http-equiv=refresh content=0;url=hdf5/index.html>' > target/doc/index.html
+deploy:
+  provider: pages
+  skip-cleanup: true
+  github-token: $GITHUB_TOKEN
+  local-dir: target/doc
+  on:
+    branch: master
+    os: linux
+    condition: $TRAVIS_RUST_VERSION == "stable"
