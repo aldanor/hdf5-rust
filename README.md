@@ -2,7 +2,7 @@
 
 [![Build Status](https://img.shields.io/travis/aldanor/hdf5-rust.svg)](https://travis-ci.org/aldanor/hdf5-rust) [![Appveyor Build Status](https://img.shields.io/appveyor/ci/aldanor/hdf5-rust.svg)](https://ci.appveyor.com/project/aldanor/hdf5-rust)
 
-[Documentation](https://docs.rs/crate/hdf5)
+[Documentation](https://aldanor.github.io/hdf5-rust)
 [Changelog](https://github.com/aldanor/hdf5-rust/blob/master/CHANGELOG.md)
 
 The `hdf5` crate (previously known as `hdf5-rs`) provides thread-safe Rust bindings and 
