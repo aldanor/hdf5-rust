@@ -4,7 +4,7 @@ use std::ops::Deref;
 use hdf5_sys::{
     h5d::H5Dopen2,
     h5g::{H5G_info_t, H5Gcreate2, H5Gget_info, H5Gopen2},
-    h5l::{H5Lcreate_hard, H5Lcreate_soft, H5Ldelete, H5Lmove, H5L_SAME_LOC},
+    h5l::{H5Lcreate_hard, H5Lcreate_soft, H5Ldelete, H5Lexists, H5Lmove, H5L_SAME_LOC},
     h5p::{H5Pcreate, H5Pset_create_intermediate_group},
 };
 
@@ -146,6 +146,15 @@ impl Group {
         // TODO: &mut self?
         let name = to_cstring(name)?;
         h5call!(H5Ldelete(self.id(), name.as_ptr(), H5P_DEFAULT)).and(Ok(()))
+    }
+
+    /// Check if a link with a given name exists in this file or group.
+    pub fn link_exists(&self, name: &str) -> bool {
+        (|| -> Result<bool> {
+            let name = to_cstring(name)?;
+            Ok(h5call!(H5Lexists(self.id(), name.as_ptr(), H5P_DEFAULT))? > 0)
+        })()
+        .unwrap_or(false)
     }
 
     /// Instantiates a new dataset builder.
