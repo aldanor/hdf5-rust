@@ -60,6 +60,7 @@ fn run_command(cmd: &str, args: &[&str]) -> Option<String> {
 #[allow(dead_code)]
 fn is_inc_dir<P: AsRef<Path>>(path: P) -> bool {
     path.as_ref().join("H5pubconf.h").is_file()
+    || path.as_ref().join("H5pubconf-64.h").is_file()
 }
 
 #[allow(dead_code)]
@@ -166,7 +167,8 @@ pub struct Header {
 impl Header {
     pub fn parse<P: AsRef<Path>>(inc_dir: P) -> Self {
         let inc_dir = inc_dir.as_ref();
-        let header = inc_dir.join("H5pubconf.h");
+        
+        let header = get_conf_header(inc_dir);
         println!("Parsing HDF5 config from:\n    {:?}", header);
 
         let contents = fs::read_to_string(header).unwrap();
@@ -204,6 +206,18 @@ impl Header {
             panic!("Invalid H5_VERSION in the header: {:?}");
         }
         hdr
+    }
+}
+
+fn get_conf_header<P: AsRef<Path>>(inc_dir: P) -> PathBuf {
+    let inc_dir = inc_dir.as_ref();
+
+    if inc_dir.join("H5pubconf.h").is_file() {
+        inc_dir.join("H5pubconf.h")
+    } else if inc_dir.join("H5pubconf-64.h").is_file() {
+        inc_dir.join("H5pubconf-64.h")
+    } else {
+        panic!("H5pubconf header not found in include directory");
     }
 }
 
@@ -262,6 +276,7 @@ mod unix {
         for (inc_dir, lib_dir) in &[
             ("/usr/include/hdf5/serial", "/usr/lib/x86_64-linux-gnu/hdf5/serial"),
             ("/usr/include", "/usr/lib/x86_64-linux-gnu"),
+            ("/usr/include", "/usr/lib64"),
         ] {
             if is_inc_dir(inc_dir) {
                 println!("Found HDF5 headers at:\n    {:?}", inc_dir);
