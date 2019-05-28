@@ -326,11 +326,14 @@ impl<T: H5Type> DatasetBuilder<T> {
                         "Invalid chunk: {:?} (all dimensions must be positive)",
                         dims
                     );
-                    ensure!(
-                        dims.iter().zip(shape.dims().iter()).all(|(&c, &s)| c <= s),
-                        "Invalid chunk: {:?} (must not exceed data shape in any dimension)",
-                        dims
-                    );
+
+                    if !self.resizable {
+                        ensure!(
+                            dims.iter().zip(shape.dims().iter()).all(|(&c, &s)| c <= s),
+                            "Invalid chunk: {:?} (must not exceed data shape in any dimension)",
+                            dims
+                        );
+                    }
 
                     let c_dims: Vec<hsize_t> = dims.iter().map(|&x| x as _).collect();
                     h5try!(H5Pset_chunk(id, dims.ndim() as _, c_dims.as_ptr()));
@@ -513,6 +516,19 @@ pub mod tests {
                     .chunks(),
                 Some(vec![88, 261])
             );
+        })
+    }
+
+    #[test]
+    pub fn test_chunks_resizable_zero_size() {
+        with_tmp_file(|file| {
+            let ds = file.new_dataset::<u32>().chunk((128,)).resizable(true).create("chunked_empty", (0,)).unwrap();
+            assert_eq!(ds.shape(), vec![0]);
+
+            ds.resize((10,)).unwrap();
+            assert_eq!(ds.shape(), vec![10]);
+
+            ds.as_writer().write(&vec![3; 10]).unwrap();
         })
     }
 
