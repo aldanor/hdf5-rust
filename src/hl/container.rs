@@ -523,7 +523,7 @@ impl Container {
         self.as_reader().read_2d()
     }
 
-    /// Reads the given `slice` of the dataset into a 1-dimensional array.
+    /// Reads the given `slice` of the dataset into a 2-dimensional array.
     /// The slice must yield a 2-dimensional result.
     pub fn read_slice_2d<T, S>(&self, slice: &SliceInfo<S, ndarray::Ix2>) -> Result<Array2<T>>
     where
