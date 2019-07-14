@@ -9,8 +9,8 @@ use std::str::FromStr;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{quote, ToTokens};
 use syn::{
-    parse_macro_input, AttrStyle, Attribute, Data, DeriveInput, Expr, Fields, Meta, NestedMeta,
-    Type, TypeGenerics, TypePath,
+    parse_macro_input, AttrStyle, Attribute, Data, DeriveInput, Expr, Fields, Index,
+    Meta, NestedMeta, Type, TypeGenerics, TypePath,
 };
 
 #[proc_macro_derive(H5Type)]
@@ -146,11 +146,12 @@ fn impl_trait(
                 impl_compound(ty, ty_generics, &fields, &names, &types)
             }
             Fields::Unnamed(ref fields) => {
-                let (index, fields): (Vec<usize>, Vec<_>) = fields
+                let (index, fields): (Vec<Index>, Vec<_>) = fields
                     .unnamed
                     .iter()
                     .enumerate()
                     .filter(|&(_, f)| !is_phantom_data(&f.ty))
+                    .map(|(i, f)| (Index::from(i), f))
                     .unzip();
                 if fields.is_empty() {
                     panic!("Cannot derive H5Type for empty tuple structs");
