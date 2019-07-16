@@ -165,6 +165,7 @@ impl File {
         })
     }
 
+    /// Returns a copy of the file creation property list.
     pub fn get_create_plist(&self) -> Result<FileCreate> {
         h5lock!(FileCreate::from_id(h5try!(H5Fget_create_plist(self.id()))))
     }
