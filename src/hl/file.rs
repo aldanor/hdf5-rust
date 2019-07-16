@@ -4,9 +4,10 @@ use std::path::Path;
 
 use hdf5_sys::{
     h5f::{
-        H5Fclose, H5Fcreate, H5Fflush, H5Fget_create_plist, H5Fget_filesize, H5Fget_freespace,
-        H5Fget_intent, H5Fget_obj_count, H5Fget_obj_ids, H5Fopen, H5F_ACC_EXCL, H5F_ACC_RDONLY,
-        H5F_ACC_RDWR, H5F_ACC_TRUNC, H5F_OBJ_ALL, H5F_OBJ_FILE, H5F_SCOPE_LOCAL,
+        H5Fclose, H5Fcreate, H5Fflush, H5Fget_access_plist, H5Fget_create_plist,
+        H5Fget_filesize, H5Fget_freespace, H5Fget_intent, H5Fget_obj_count, H5Fget_obj_ids,
+        H5Fopen, H5F_ACC_EXCL, H5F_ACC_RDONLY, H5F_ACC_RDWR, H5F_ACC_TRUNC, H5F_OBJ_ALL,
+        H5F_OBJ_FILE, H5F_SCOPE_LOCAL,
     },
     h5p::{
         H5Pcreate, H5Pget_userblock, H5Pset_fapl_core, H5Pset_fapl_sec2, H5Pset_fapl_stdio,
@@ -15,6 +16,7 @@ use hdf5_sys::{
 };
 
 use crate::globals::{H5P_FILE_ACCESS, H5P_FILE_CREATE};
+use crate::hl::plist::file_access::FileAccess;
 use crate::hl::plist::file_create::FileCreate;
 use crate::internal_prelude::*;
 
@@ -163,6 +165,11 @@ impl File {
             }
             self.0.decref();
         })
+    }
+
+    /// Returns a copy of the file access property list.
+    pub fn get_access_plist(&self) -> Result<FileAccess> {
+        h5lock!(FileAccess::from_id(h5try!(H5Fget_access_plist(self.id()))))
     }
 
     /// Returns a copy of the file creation property list.
