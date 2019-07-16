@@ -172,9 +172,19 @@ impl File {
         h5lock!(FileAccess::from_id(h5try!(H5Fget_access_plist(self.id()))))
     }
 
+    /// A short alias for `get_access_plist()`.
+    pub fn fapl(&self) -> Result<FileAccess> {
+        self.get_access_plist()
+    }
+
     /// Returns a copy of the file creation property list.
     pub fn get_create_plist(&self) -> Result<FileCreate> {
         h5lock!(FileCreate::from_id(h5try!(H5Fget_create_plist(self.id()))))
+    }
+
+    /// A short alias for `get_create_plist()`.
+    pub fn fcpl(&self) -> Result<FileCreate> {
+        self.get_create_plist()
     }
 }
 
