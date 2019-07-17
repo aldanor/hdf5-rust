@@ -687,11 +687,11 @@ pub mod tests {
 
         with_tmp_path(|path| {
             let mut buf1: Vec<u8> = Vec::new();
-            File::open(&path, "w").unwrap().new_dataset::<u32>().create("foo", 1).unwrap();
+            File::create(&path).unwrap().new_dataset::<u32>().create("foo", 1).unwrap();
             fs::File::open(&path).unwrap().read_to_end(&mut buf1).unwrap();
 
             let mut buf2: Vec<u8> = Vec::new();
-            File::open(&path, "w")
+            File::create(&path)
                 .unwrap()
                 .new_dataset::<u32>()
                 .track_times(false)
@@ -702,7 +702,7 @@ pub mod tests {
             assert_eq!(buf1, buf2);
 
             let mut buf2: Vec<u8> = Vec::new();
-            File::open(&path, "w")
+            File::create(&path)
                 .unwrap()
                 .new_dataset::<u32>()
                 .track_times(true)
