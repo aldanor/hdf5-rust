@@ -4,9 +4,9 @@ use std::path::Path;
 
 use hdf5_sys::{
     h5f::{
-        H5Fclose, H5Fcreate, H5Fflush, H5Fget_access_plist, H5Fget_create_plist,
-        H5Fget_filesize, H5Fget_freespace, H5Fget_intent, H5Fget_obj_count, H5Fget_obj_ids,
-        H5Fopen, H5F_ACC_EXCL, H5F_ACC_RDONLY, H5F_ACC_RDWR, H5F_ACC_TRUNC, H5F_OBJ_ALL,
+        H5Fclose, H5Fcreate, H5Fflush, H5Fget_access_plist, H5Fget_create_plist, H5Fget_filesize,
+        H5Fget_freespace, H5Fget_intent, H5Fget_obj_count, H5Fget_obj_ids, H5Fopen,
+        H5F_ACC_DEFAULT, H5F_ACC_EXCL, H5F_ACC_RDONLY, H5F_ACC_RDWR, H5F_ACC_TRUNC, H5F_OBJ_ALL,
         H5F_OBJ_FILE, H5F_SCOPE_LOCAL,
     },
     h5p::{
@@ -91,11 +91,7 @@ impl File {
 
     /// Returns true if the file was opened in a read-only mode.
     pub fn is_read_only(&self) -> bool {
-        unsafe {
-            let mode: *mut c_uint = &mut 0;
-            h5lock!(H5Fget_intent(self.id(), mode));
-            *mode != H5F_ACC_RDWR
-        }
+        h5get!(H5Fget_intent(self.id()): c_uint).unwrap_or(H5F_ACC_DEFAULT) != H5F_ACC_RDWR
     }
 
     /// Returns the userblock size in bytes (or 0 if the file handle is invalid).
