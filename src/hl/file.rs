@@ -9,10 +9,7 @@ use hdf5_sys::{
         H5F_ACC_DEFAULT, H5F_ACC_EXCL, H5F_ACC_RDONLY, H5F_ACC_RDWR, H5F_ACC_TRUNC, H5F_OBJ_ALL,
         H5F_OBJ_FILE, H5F_SCOPE_LOCAL,
     },
-    h5p::{
-        H5Pcreate, H5Pget_userblock, H5Pset_fapl_core, H5Pset_fapl_sec2, H5Pset_fapl_stdio,
-        H5Pset_userblock,
-    },
+    h5p::{H5Pcreate, H5Pset_fapl_core, H5Pset_fapl_sec2, H5Pset_fapl_stdio, H5Pset_userblock},
 };
 
 use crate::globals::{H5P_FILE_ACCESS, H5P_FILE_CREATE};
@@ -96,13 +93,7 @@ impl File {
 
     /// Returns the userblock size in bytes (or 0 if the file handle is invalid).
     pub fn userblock(&self) -> u64 {
-        h5call!(H5Fget_create_plist(self.id()))
-            .map(|fcpl_id| {
-                let userblock: *mut hsize_t = &mut 0;
-                h5lock!(H5Pget_userblock(fcpl_id, userblock));
-                unsafe { *userblock as _ }
-            })
-            .unwrap_or(0)
+        h5lock!(self.fcpl().map(|p| p.userblock()).unwrap_or(0))
     }
 
     /// Flushes the file to the storage medium.
