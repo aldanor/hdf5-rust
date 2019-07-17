@@ -98,7 +98,6 @@ impl File {
 
     /// Flushes the file to the storage medium.
     pub fn flush(&self) -> Result<()> {
-        // TODO: &mut self?
         h5call!(H5Fflush(self.id(), H5F_SCOPE_LOCAL)).and(Ok(()))
     }
 
