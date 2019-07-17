@@ -144,23 +144,23 @@ impl File {
     }
 
     /// Returns a copy of the file access property list.
-    pub fn get_access_plist(&self) -> Result<FileAccess> {
+    pub fn access_plist(&self) -> Result<FileAccess> {
         h5lock!(FileAccess::from_id(h5try!(H5Fget_access_plist(self.id()))))
     }
 
-    /// A short alias for `get_access_plist()`.
+    /// A short alias for `access_plist()`.
     pub fn fapl(&self) -> Result<FileAccess> {
-        self.get_access_plist()
+        self.access_plist()
     }
 
     /// Returns a copy of the file creation property list.
-    pub fn get_create_plist(&self) -> Result<FileCreate> {
+    pub fn create_plist(&self) -> Result<FileCreate> {
         h5lock!(FileCreate::from_id(h5try!(H5Fget_create_plist(self.id()))))
     }
 
-    /// A short alias for `get_create_plist()`.
+    /// A short alias for `create_plist()`.
     pub fn fcpl(&self) -> Result<FileCreate> {
-        self.get_create_plist()
+        self.create_plist()
     }
 }
 
