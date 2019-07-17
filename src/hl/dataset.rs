@@ -522,7 +522,12 @@ pub mod tests {
     #[test]
     pub fn test_chunks_resizable_zero_size() {
         with_tmp_file(|file| {
-            let ds = file.new_dataset::<u32>().chunk((128,)).resizable(true).create("chunked_empty", (0,)).unwrap();
+            let ds = file
+                .new_dataset::<u32>()
+                .chunk((128,))
+                .resizable(true)
+                .create("chunked_empty", (0,))
+                .unwrap();
             assert_eq!(ds.shape(), vec![0]);
 
             ds.resize((10,)).unwrap();
