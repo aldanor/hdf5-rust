@@ -1,5 +1,38 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- `File::access_plist()` or `File::fapl()` to get file access plist.
+- `File::create_plist()` or `File::fcpl()` to get file creation plist.
+
+### Changed
+
+- Changed `File` constructors, getting rid of string access modes:
+  - `File::open(path, "r")` is now `File::open(path)`
+  - `File::open(path, "r+")` is now `File::open_rw(path)`
+  - `File::open(path, "w")` is now `File::create(path)`
+  - `File::open(path, "x" | "w-")` is now `File::create_exl(path)`
+  - `File::open(path, "a")` is now `File::append(path)`
+- Also added `File::open_as(path, mode)` which accepts the mode enum.
+- Rewritten `FileBuilder`: it no longer accepts userblock, driver etc;
+  all of these parameters can be set in the corresponding FAPL / FCPL:
+  - `FileBuilder::set_access_plist()` or `FileBuilder::set_fapl()` to
+    set the active file access plist to a given one.
+  - `FileBuilder::access_plist()` or `FileBuilder::fapl()` to get a
+    mutable reference to the FAPL builder - any parameter of it can
+    then be tweaked as desired.
+  - `FileBuilder::with_access_plist()` or `FileBuilder::with_fapl()`
+    to get access to the FAPL builder in an inline way via a closure.
+  - Same as the three above for `create_plist` / `fcpl`.
+- As a result, all of the newly added FAPL / FCPL functionality is
+  fully accessible in the new `FileBuilder`. Also, driver strings
+  are gone, everything is strongly typed now.
+- It's no longer prohibited to set FCPL options when opening a file
+  and not creating it -- it will simply be silently ignored (this
+  simplifies the behavior and allows using a single file builder).
+
 ## 0.5.2
 
 ### Changed
