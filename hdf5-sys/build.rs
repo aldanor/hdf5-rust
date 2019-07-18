@@ -580,8 +580,8 @@ impl Config {
     pub fn emit_cfg_flags(&self) {
         let version = self.header.version;
         assert!(version >= Version::new(1, 8, 4), "required HDF5 version: >=1.8.4");
-        let mut vs: Vec<_> = (5..=21).map(|v| Version::new(1, 8, v)).collect(); // 1.8.5-21
-        vs.extend((0..=4).map(|v| Version::new(1, 10, v))); // 1.10.0-4
+        let mut vs: Vec<_> = (5..=21).map(|v| Version::new(1, 8, v)).collect(); // 1.8.[5-21]
+        vs.extend((0..=5).map(|v| Version::new(1, 10, v))); // 1.10.[0-5]
         for v in vs.into_iter().filter(|&v| version >= v) {
             println!("cargo:rustc-cfg=hdf5_{}_{}_{}", v.major, v.minor, v.micro);
         }
