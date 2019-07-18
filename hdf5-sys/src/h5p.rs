@@ -714,3 +714,9 @@ extern "C" {
     pub fn H5Pset_virtual_prefix(dapl_id: hid_t, prefix: *const c_char) -> herr_t;
     pub fn H5Pget_virtual_prefix(dapl_id: hid_t, prefix: *mut c_char, size: size_t) -> ssize_t;
 }
+
+#[cfg(hdf5_1_10_5)]
+extern "C" {
+    pub fn H5Pget_dset_no_attrs_hint(dcpl_id: hid_t, minimize: *mut hbool_t) -> herr_t;
+    pub fn H5Pset_dset_no_attrs_hint(dcpl_id: hid_t, minimize: hbool_t) -> herr_t;
+}
