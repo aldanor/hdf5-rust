@@ -17,7 +17,7 @@ pub fn with_tmp_path<F: Fn(PathBuf)>(func: F) {
 
 pub fn with_tmp_file<F: Fn(File)>(func: F) {
     with_tmp_path(|path| {
-        let file = File::open(&path, "w").unwrap();
+        let file = File::create(&path).unwrap();
         func(file);
     })
 }

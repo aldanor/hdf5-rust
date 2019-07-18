@@ -522,7 +522,12 @@ pub mod tests {
     #[test]
     pub fn test_chunks_resizable_zero_size() {
         with_tmp_file(|file| {
-            let ds = file.new_dataset::<u32>().chunk((128,)).resizable(true).create("chunked_empty", (0,)).unwrap();
+            let ds = file
+                .new_dataset::<u32>()
+                .chunk((128,))
+                .resizable(true)
+                .create("chunked_empty", (0,))
+                .unwrap();
             assert_eq!(ds.shape(), vec![0]);
 
             ds.resize((10,)).unwrap();
@@ -682,11 +687,11 @@ pub mod tests {
 
         with_tmp_path(|path| {
             let mut buf1: Vec<u8> = Vec::new();
-            File::open(&path, "w").unwrap().new_dataset::<u32>().create("foo", 1).unwrap();
+            File::create(&path).unwrap().new_dataset::<u32>().create("foo", 1).unwrap();
             fs::File::open(&path).unwrap().read_to_end(&mut buf1).unwrap();
 
             let mut buf2: Vec<u8> = Vec::new();
-            File::open(&path, "w")
+            File::create(&path)
                 .unwrap()
                 .new_dataset::<u32>()
                 .track_times(false)
@@ -697,7 +702,7 @@ pub mod tests {
             assert_eq!(buf1, buf2);
 
             let mut buf2: Vec<u8> = Vec::new();
-            File::open(&path, "w")
+            File::create(&path)
                 .unwrap()
                 .new_dataset::<u32>()
                 .track_times(true)

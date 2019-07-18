@@ -114,6 +114,12 @@ impl Handle {
     pub fn is_valid_id(&self) -> bool {
         is_valid_id(self.id())
     }
+
+    pub fn decref_full(&self) {
+        while self.is_valid_user_id() {
+            self.decref();
+        }
+    }
 }
 
 impl Clone for Handle {

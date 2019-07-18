@@ -9,8 +9,8 @@ use std::str::FromStr;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{quote, ToTokens};
 use syn::{
-    parse_macro_input, AttrStyle, Attribute, Data, DeriveInput, Expr, Fields, Index,
-    Meta, NestedMeta, Type, TypeGenerics, TypePath,
+    parse_macro_input, AttrStyle, Attribute, Data, DeriveInput, Expr, Fields, Index, Meta,
+    NestedMeta, Type, TypeGenerics, TypePath,
 };
 
 #[proc_macro_derive(H5Type)]

@@ -59,8 +59,7 @@ fn run_command(cmd: &str, args: &[&str]) -> Option<String> {
 
 #[allow(dead_code)]
 fn is_inc_dir<P: AsRef<Path>>(path: P) -> bool {
-    path.as_ref().join("H5pubconf.h").is_file()
-    || path.as_ref().join("H5pubconf-64.h").is_file()
+    path.as_ref().join("H5pubconf.h").is_file() || path.as_ref().join("H5pubconf-64.h").is_file()
 }
 
 #[allow(dead_code)]
@@ -167,7 +166,7 @@ pub struct Header {
 impl Header {
     pub fn parse<P: AsRef<Path>>(inc_dir: P) -> Self {
         let inc_dir = inc_dir.as_ref();
-        
+
         let header = get_conf_header(inc_dir);
         println!("Parsing HDF5 config from:\n    {:?}", header);
 
