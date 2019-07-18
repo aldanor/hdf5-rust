@@ -351,3 +351,9 @@ mod hdf5_1_10_1 {
 
 #[cfg(hdf5_1_10_1)]
 pub use self::hdf5_1_10_1::*;
+
+#[cfg(hdf5_1_10_5)]
+extern "C" {
+    pub fn H5Fget_dset_no_attrs_hint(file_id: hid_t, minimize: *mut hbool_t) -> herr_t;
+    pub fn H5Fset_dset_no_attrs_hint(file_id: hid_t, minimize: hbool_t) -> herr_t;
+}

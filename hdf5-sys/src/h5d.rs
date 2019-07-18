@@ -222,3 +222,16 @@ mod hdf5_1_10_0 {
 
 #[cfg(hdf5_1_10_0)]
 pub use self::hdf5_1_10_0::*;
+
+#[cfg(hdf5_1_10_5)]
+extern "C" {
+    pub fn H5Dget_chunk_info(
+        dset_id: hid_t, fspace_id: hid_t, index: hsize_t, offset: *mut hsize_t,
+        filter_mask: *mut c_uint, addr: *mut haddr_t, size: *mut hsize_t,
+    ) -> herr_t;
+    pub fn H5Dget_chunk_info_by_coord(
+        dset_id: hid_t, offset: *const hsize_t, filter_mask: *mut c_uint, addr: *mut haddr_t,
+        size: *mut hsize_t,
+    ) -> herr_t;
+    pub fn H5Dget_num_chunks(dset_id: hid_t, fspace_id: hid_t, nchunks: *mut hsize_t) -> herr_t;
+}
