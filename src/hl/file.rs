@@ -15,16 +15,22 @@ use crate::hl::plist::{
 };
 use crate::internal_prelude::*;
 
+/// File opening mode.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum OpenMode {
+    /// Open a file as read-only, file must exist.
     Read,
+    /// Open a file as read/write, file must exist.
     ReadWrite,
+    /// Create a file, truncate if exists.
     Create,
+    /// Create a file, fail if exists.
     CreateExcl,
+    /// Open a file as read/write if exists, create otherwise.
     Append,
 }
 
-/// Represents the HDF5 file object.
+/// HDF5 file object.
 #[repr(transparent)]
 #[derive(Clone)]
 pub struct File(Handle);
@@ -188,6 +194,7 @@ impl File {
     }
 }
 
+/// File builder allowing to customize file access/creation property lists.
 #[derive(Default, Clone, Debug)]
 pub struct FileBuilder {
     fapl: FileAccessBuilder,
