@@ -39,7 +39,7 @@ mod export {
     }
 
     pub mod file {
-        pub use crate::hl::file::{File, FileBuilder};
+        pub use crate::hl::file::{File, FileBuilder, OpenMode};
         pub use crate::hl::plist::file_access::*;
         pub use crate::hl::plist::file_create::*;
     }

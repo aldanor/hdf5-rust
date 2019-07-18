@@ -12,7 +12,7 @@ pub use self::{
     container::{Container, Reader, Writer},
     dataset::{Dataset, DatasetBuilder},
     datatype::{Conversion, Datatype},
-    file::{File, FileBuilder},
+    file::{File, FileBuilder, OpenMode},
     group::Group,
     location::Location,
     object::Object,
