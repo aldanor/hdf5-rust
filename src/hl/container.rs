@@ -133,8 +133,8 @@ impl<'a> Reader<'a> {
 
             self.read_into_buf(vec.as_mut_ptr(), Some(&fspace), Some(&mspace))?;
 
-            let arr = ArrayD::from_shape_vec(reduced_shape, vec).str_err()?;
-            arr.into_dimensionality().str_err()
+            let arr = ArrayD::from_shape_vec(reduced_shape, vec)?;
+            Ok(arr.into_dimensionality()?)
         }
     }
 
@@ -149,8 +149,8 @@ impl<'a> Reader<'a> {
             ensure!(obj_ndim == ndim, "ndim mismatch: expected {}, got {}", ndim, obj_ndim);
         }
         let vec = self.read_raw()?;
-        let arr = ArrayD::from_shape_vec(shape, vec).str_err()?;
-        arr.into_dimensionality().str_err()
+        let arr = ArrayD::from_shape_vec(shape, vec)?;
+        Ok(arr.into_dimensionality()?)
     }
 
     /// Reads a dataset/attribute into a vector in memory order.

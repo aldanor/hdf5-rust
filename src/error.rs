@@ -1,9 +1,11 @@
 use std::cell::RefCell;
+use std::error::Error as StdError;
 use std::fmt;
 use std::ops::Index;
 use std::ptr;
 
 use lazy_static::lazy_static;
+use ndarray::ShapeError;
 use num_integer::Integer;
 use num_traits::{Bounded, Zero};
 use parking_lot::Mutex;
@@ -270,7 +272,7 @@ impl fmt::Display for Error {
     }
 }
 
-impl ::std::error::Error for Error {
+impl StdError for Error {
     fn description(&self) -> &str {
         self.description()
     }
@@ -288,6 +290,12 @@ where
 {
     fn str_err(self) -> Result<T> {
         self.map_err(|e| Error::from(e.description()))
+    }
+}
+
+impl From<ShapeError> for Error {
+    fn from(err: ShapeError) -> Self {
+        format!("shape error: {}", err.description()).into()
     }
 }
 
