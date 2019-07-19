@@ -54,7 +54,7 @@ impl ObjectClass for Datatype {
     const VALID_TYPES: &'static [H5I_type_t] = &[H5I_DATATYPE];
 
     fn from_handle(handle: Handle) -> Self {
-        Datatype(handle)
+        Self(handle)
     }
 
     fn handle(&self) -> &Handle {

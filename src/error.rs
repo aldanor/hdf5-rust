@@ -54,6 +54,12 @@ impl ErrorFrame {
 #[doc(hidden)]
 pub struct SilenceErrors;
 
+impl Default for SilenceErrors {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 lazy_static! {
     static ref ERROR_HANDLER: Mutex<RefCell<usize>> = Mutex::default();
 }
@@ -65,7 +71,7 @@ extern "C" fn default_error_handler(estack: hid_t, _cdata: *mut c_void) -> herr_
 impl SilenceErrors {
     pub fn new() -> Self {
         Self::silence(true);
-        SilenceErrors
+        Self
     }
 
     fn silence(on: bool) {
@@ -210,7 +216,7 @@ impl ErrorStack {
     }
 
     pub fn detail(&self) -> Option<String> {
-        self.top().and_then(|frame| frame.detail())
+        self.top().and_then(ErrorFrame::detail)
     }
 }
 

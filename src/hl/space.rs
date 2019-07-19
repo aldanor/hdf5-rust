@@ -22,7 +22,7 @@ impl ObjectClass for Dataspace {
     const VALID_TYPES: &'static [H5I_type_t] = &[H5I_DATASPACE];
 
     fn from_handle(handle: Handle) -> Self {
-        Dataspace(handle)
+        Self(handle)
     }
 
     fn handle(&self) -> &Handle {
@@ -33,7 +33,7 @@ impl ObjectClass for Dataspace {
         if self.ndim() == 1 {
             Some(format!("({},)", self.dims()[0]))
         } else {
-            let dims = self.dims().iter().map(|d| d.to_string()).collect::<Vec<_>>().join(", ");
+            let dims = self.dims().iter().map(ToString::to_string).collect::<Vec<_>>().join(", ");
             Some(format!("({})", dims))
         }
     }

@@ -394,7 +394,7 @@ impl ObjectClass for Container {
     const VALID_TYPES: &'static [H5I_type_t] = &[H5I_DATASET, H5I_ATTR];
 
     fn from_handle(handle: Handle) -> Self {
-        Container(handle)
+        Self(handle)
     }
 
     fn handle(&self) -> &Handle {

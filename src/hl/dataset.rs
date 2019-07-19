@@ -30,7 +30,7 @@ impl ObjectClass for Dataset {
     const VALID_TYPES: &'static [H5I_type_t] = &[H5I_DATASET];
 
     fn from_handle(handle: Handle) -> Self {
-        Dataset(handle)
+        Self(handle)
     }
 
     fn handle(&self) -> &Handle {

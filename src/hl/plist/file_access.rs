@@ -91,7 +91,7 @@ impl ObjectClass for FileAccess {
     const VALID_TYPES: &'static [H5I_type_t] = &[H5I_GENPROP_LST];
 
     fn from_handle(handle: Handle) -> Self {
-        FileAccess(handle)
+        Self(handle)
     }
 
     fn handle(&self) -> &Handle {
@@ -237,7 +237,7 @@ impl Default for LogOptions {
     }
 }
 
-static FD_MEM_TYPES: &'static [H5F_mem_t] = &[
+static FD_MEM_TYPES: &[H5F_mem_t] = &[
     H5F_mem_t::H5FD_MEM_DEFAULT,
     H5F_mem_t::H5FD_MEM_SUPER,
     H5F_mem_t::H5FD_MEM_BTREE,
@@ -376,13 +376,13 @@ impl SplitDriver {
             && drv.files[1].addr == u64::max_value() / 2
             && drv.files[0].name.starts_with("%s")
             && drv.files[1].name.starts_with("%s");
-        if !is_split {
-            None
-        } else {
-            Some(SplitDriver {
+        if is_split {
+            Some(Self {
                 meta_ext: drv.files[0].name[2..].into(),
                 raw_ext: drv.files[1].name[2..].into(),
             })
+        } else {
+            None
         }
     }
 }
@@ -721,26 +721,26 @@ impl Default for MetadataCacheConfig {
             evictions_enabled: true,
             set_initial_size: true,
             initial_size: 1 << 21,
-            min_clean_fraction: min_clean_fraction as _,
+            min_clean_fraction: f64::from(min_clean_fraction),
             max_size: 1 << 25,
             min_size: 1 << 20,
             epoch_length: 50_000,
             incr_mode: CacheIncreaseMode::Threshold,
-            lower_hr_threshold: 0.9_f32 as _,
+            lower_hr_threshold: f64::from(0.9_f32),
             increment: 2.0,
             apply_max_increment: true,
             max_increment: 1 << 22,
             flash_incr_mode: FlashIncreaseMode::AddSpace,
-            flash_multiple: flash_multiple as _,
+            flash_multiple: f64::from(flash_multiple),
             flash_threshold: 0.25,
             decr_mode: CacheDecreaseMode::AgeOutWithThreshold,
-            upper_hr_threshold: 0.999_f32 as _,
-            decrement: 0.9_f32 as _,
+            upper_hr_threshold: f64::from(0.999_f32),
+            decrement: f64::from(0.9_f32),
             apply_max_decrement: true,
             max_decrement: 1 << 20,
             epochs_before_eviction: 3,
             apply_empty_reserve: true,
-            empty_reserve: 0.1_f32 as _,
+            empty_reserve: f64::from(0.1_f32),
             dirty_bytes_threshold: 1 << 18,
             metadata_write_strategy: MetadataWriteStrategy::default(),
         }
@@ -838,7 +838,7 @@ mod cache_image_config {
 
     impl Default for CacheImageConfig {
         fn default() -> Self {
-            CacheImageConfig {
+            Self {
                 generate_image: false,
                 save_resize_status: false,
                 entry_ageout: H5AC__CACHE_IMAGE__ENTRY_AGEOUT__NONE,
@@ -1264,6 +1264,7 @@ impl FileAccessBuilder {
         Ok(())
     }
 
+    #[allow(clippy::trivially_copy_pass_by_ref)]
     fn set_family(id: hid_t, drv: &FamilyDriver) -> Result<()> {
         h5try!(H5Pset_fapl_family(id, drv.member_size as _, H5P_DEFAULT));
         Ok(())
@@ -1425,7 +1426,7 @@ impl FileAccessBuilder {
                 h5try!(H5Pset_evict_on_close(id, v as _));
             }
             if let Some(v) = self.mdc_image_config {
-                h5try!(H5Pset_mdc_image_config(id, &v.clone().into() as *const _));
+                h5try!(H5Pset_mdc_image_config(id, &v.into() as *const _));
             }
         }
         if let Some(v) = self.sieve_buf_size {
