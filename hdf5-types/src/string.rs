@@ -1,4 +1,5 @@
 use std::borrow::{Borrow, Cow};
+use std::error::Error as StdError;
 use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::mem;
@@ -10,7 +11,38 @@ use std::str::{self, FromStr};
 use ascii::{AsAsciiStr, AsAsciiStrError, AsciiStr};
 
 use crate::array::Array;
-use crate::errors::Result;
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum StringError {
+    InternalNull,
+    InsufficientCapacity,
+    AsciiError(AsAsciiStrError),
+    #[doc(hidden)]
+    __Incomplete,
+}
+
+impl From<AsAsciiStrError> for StringError {
+    fn from(err: AsAsciiStrError) -> Self {
+        StringError::AsciiError(err)
+    }
+}
+
+impl StdError for StringError {
+    fn description(&self) -> &str {
+        match self {
+            StringError::InternalNull => "variable length string with internal null",
+            StringError::InsufficientCapacity => "insufficient capacity for fixed sized string",
+            StringError::AsciiError(err) => err.description(),
+            _ => "",
+        }
+    }
+}
+
+impl fmt::Display for StringError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "string error: {}", self.description())
+    }
+}
 
 // ================================================================================
 
@@ -221,12 +253,10 @@ impl VarLenAscii {
         Self::from_bytes(bytes.as_ref())
     }
 
-    pub fn from_ascii<B: ?Sized + AsRef<[u8]>>(bytes: &B) -> Result<Self> {
+    pub fn from_ascii<B: ?Sized + AsRef<[u8]>>(bytes: &B) -> Result<Self, StringError> {
         let bytes = bytes.as_ref();
         if !bytes.iter().all(|&c| c != 0) {
-            bail!("Variable length ASCII string with internal null: {:?}", unsafe {
-                str::from_utf8_unchecked(bytes)
-            });
+            return Err(StringError::InternalNull);
         }
         let s = AsciiStr::from_ascii(bytes)?;
         unsafe { Ok(Self::from_bytes(s.as_bytes())) }
@@ -239,7 +269,7 @@ impl AsAsciiStr for VarLenAscii {
         AsciiStr::from_ascii_unchecked(self.as_bytes())
     }
 
-    fn as_ascii_str(&self) -> ::std::result::Result<&AsciiStr, AsAsciiStrError> {
+    fn as_ascii_str(&self) -> Result<&AsciiStr, AsAsciiStrError> {
         AsciiStr::from_ascii(self.as_bytes())
     }
 }
@@ -322,11 +352,14 @@ impl VarLenUnicode {
 }
 
 impl FromStr for VarLenUnicode {
-    type Err = crate::errors::Error;
+    type Err = StringError;
 
-    fn from_str(s: &str) -> Result<Self> {
-        ensure!(s.chars().all(|c| c != '\0'), "Variable length unicode string with internal null");
-        unsafe { Ok(Self::from_bytes(s.as_bytes())) }
+    fn from_str(s: &str) -> Result<Self, <Self as FromStr>::Err> {
+        if s.chars().all(|c| c != '\0') {
+            unsafe { Ok(Self::from_bytes(s.as_bytes())) }
+        } else {
+            Err(StringError::InternalNull)
+        }
     }
 }
 
@@ -403,12 +436,12 @@ impl<A: Array<Item = u8>> FixedAscii<A> {
         Self::from_bytes(bytes.as_ref())
     }
 
-    pub fn from_ascii<B: ?Sized + AsRef<[u8]>>(bytes: &B) -> Result<Self> {
+    pub fn from_ascii<B: ?Sized + AsRef<[u8]>>(bytes: &B) -> Result<Self, StringError> {
         let bytes = bytes.as_ref();
-        ensure!(bytes.len() <= A::capacity(), "Insufficient capacity for fixed-size ASCII string");
-        let s = AsciiStr::from_ascii(bytes).map_err(|_| {
-            format!("Invalid ASCII string: `{}`", unsafe { str::from_utf8_unchecked(bytes) })
-        })?;
+        if bytes.len() > A::capacity() {
+            return Err(StringError::InsufficientCapacity);
+        }
+        let s = AsciiStr::from_ascii(bytes)?;
         unsafe { Ok(Self::from_bytes(s.as_bytes())) }
     }
 }
@@ -419,7 +452,7 @@ impl<A: Array<Item = u8>> AsAsciiStr for FixedAscii<A> {
         AsciiStr::from_ascii_unchecked(self.as_bytes())
     }
 
-    fn as_ascii_str(&self) -> ::std::result::Result<&AsciiStr, AsAsciiStrError> {
+    fn as_ascii_str(&self) -> Result<&AsciiStr, AsAsciiStrError> {
         AsciiStr::from_ascii(self.as_bytes())
     }
 }
@@ -507,14 +540,14 @@ impl<A> FromStr for FixedUnicode<A>
 where
     A: Array<Item = u8>,
 {
-    type Err = crate::errors::Error;
+    type Err = StringError;
 
-    fn from_str(s: &str) -> Result<Self> {
-        ensure!(
-            s.as_bytes().len() <= A::capacity(),
-            "Insufficient capacity for fixed-size unicode string"
-        );
-        unsafe { Ok(Self::from_bytes(s.as_bytes())) }
+    fn from_str(s: &str) -> Result<Self, <Self as FromStr>::Err> {
+        if s.as_bytes().len() <= A::capacity() {
+            unsafe { Ok(Self::from_bytes(s.as_bytes())) }
+        } else {
+            Err(StringError::InsufficientCapacity)
+        }
     }
 }
 

@@ -15,7 +15,3 @@ libc = "0.2"
 
 [dev-dependencies]
 quickcheck = "0.8"
-
-[dependencies.error-chain]
-version = "0.12"
-default-features = false
