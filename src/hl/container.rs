@@ -206,8 +206,8 @@ impl<'a> Reader<'a> {
     pub fn read_scalar<T: H5Type>(&self) -> Result<T> {
         let obj_ndim = self.obj.get_shape()?.ndim();
         ensure!(obj_ndim == 0, "ndim mismatch: expected scalar, got {}", obj_ndim);
-        let mut val: T = unsafe { mem::uninitialized() };
-        self.read_into_buf(&mut val as *mut _, None, None).map(|_| val)
+        let mut val = mem::MaybeUninit::<T>::uninit();
+        self.read_into_buf(val.as_mut_ptr(), None, None).map(|_| unsafe { val.assume_init() })
     }
 }
 

@@ -1554,10 +1554,10 @@ impl FileAccess {
     #[doc(hidden)]
     #[cfg(feature = "mpio")]
     fn get_mpio(&self) -> Result<MpioDriver> {
-        let mut comm: mpi_sys::MPI_Comm = unsafe { mem::uninitialized() };
-        let mut info: mpi_sys::MPI_Info = unsafe { mem::uninitialized() };
-        h5try!(H5Pget_fapl_mpio(self.id(), &mut comm as *mut _, &mut info as *mut _));
-        Ok(MpioDriver { comm, info })
+        let mut comm = mem::MaybeUninit::<mpi_sys::MPI_Comm>::uninit();
+        let mut info = mem::MaybeUninit::<mpi_sys::MPI_Info>::uninit();
+        h5try!(H5Pget_fapl_mpio(self.id(), comm.as_mut_ptr(), info.as_mut_ptr()));
+        Ok(unsafe { MpioDriver { comm: comm.assume_init(), info: info.assume_init() } })
     }
 
     #[doc(hidden)]

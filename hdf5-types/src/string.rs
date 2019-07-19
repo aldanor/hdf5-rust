@@ -375,9 +375,9 @@ impl<A: Array<Item = u8>> Clone for FixedAscii<A> {
     #[inline]
     fn clone(&self) -> Self {
         unsafe {
-            let mut buf: A = mem::uninitialized();
-            ptr::copy_nonoverlapping(self.buf.as_ptr(), buf.as_mut_ptr(), A::capacity());
-            FixedAscii { buf }
+            let mut buf = mem::MaybeUninit::<A>::uninit();
+            ptr::copy_nonoverlapping(self.buf.as_ptr(), buf.as_mut_ptr() as *mut _, A::capacity());
+            FixedAscii { buf: buf.assume_init() }
         }
     }
 }
@@ -469,9 +469,9 @@ impl<A: Array<Item = u8>> Clone for FixedUnicode<A> {
     #[inline]
     fn clone(&self) -> Self {
         unsafe {
-            let mut buf: A = mem::uninitialized();
-            ptr::copy_nonoverlapping(self.buf.as_ptr(), buf.as_mut_ptr(), A::capacity());
-            FixedUnicode { buf }
+            let mut buf = mem::MaybeUninit::<A>::uninit();
+            ptr::copy_nonoverlapping(self.buf.as_ptr(), buf.as_mut_ptr() as *mut _, A::capacity());
+            FixedUnicode { buf: buf.assume_init() }
         }
     }
 }
