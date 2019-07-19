@@ -278,21 +278,6 @@ impl StdError for Error {
     }
 }
 
-// TODO: this is a temporary shim
-#[doc(hidden)]
-pub trait ResultExt<T, E> {
-    fn str_err(self) -> Result<T>;
-}
-
-impl<T, E> ResultExt<T, E> for ::std::result::Result<T, E>
-where
-    E: ::std::error::Error,
-{
-    fn str_err(self) -> Result<T> {
-        self.map_err(|e| Error::from(e.description()))
-    }
-}
-
 impl From<ShapeError> for Error {
     fn from(err: ShapeError) -> Self {
         format!("shape error: {}", err.description()).into()

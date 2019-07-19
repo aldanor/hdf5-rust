@@ -90,7 +90,7 @@ mod internal_prelude {
     pub use crate::{
         class::ObjectClass,
         dim::Dimension,
-        error::{h5check, silence_errors, ResultExt},
+        error::{h5check, silence_errors},
         export::*,
         handle::{get_id_type, is_valid_user_id, Handle},
         hl::plist::PropertyListClass,
