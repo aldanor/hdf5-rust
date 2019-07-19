@@ -243,12 +243,15 @@ impl Error {
     }
 }
 
-impl<S> From<S> for Error
-where
-    S: Into<String>,
-{
-    fn from(desc: S) -> Self {
+impl From<&str> for Error {
+    fn from(desc: &str) -> Self {
         Error::Internal(desc.into())
+    }
+}
+
+impl From<String> for Error {
+    fn from(desc: String) -> Self {
+        Error::Internal(desc)
     }
 }
 
