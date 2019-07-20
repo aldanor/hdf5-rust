@@ -7,6 +7,7 @@
 - Added support for HDF5 1.10.5 with bindings for new functions.
 - `File::access_plist()` or `File::fapl()` to get file access plist.
 - `File::create_plist()` or `File::fcpl()` to get file creation plist.
+- Added high-level wrappers for dataset access H5P API (`plist::DatasetAccess`).
 
 ### Changed
 
