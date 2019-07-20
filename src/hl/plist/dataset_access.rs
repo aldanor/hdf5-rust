@@ -1,5 +1,10 @@
 //! Dataset access properties.
 
+/*
+Not implemented:
+- H5P{set,get}_append_flush (due to having to deal with raw C extern callbacks)
+*/
+
 use std::fmt::{self, Debug};
 use std::ops::Deref;
 
