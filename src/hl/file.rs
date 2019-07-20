@@ -40,7 +40,7 @@ impl ObjectClass for File {
     const VALID_TYPES: &'static [H5I_type_t] = &[H5I_FILE];
 
     fn from_handle(handle: Handle) -> Self {
-        File(handle)
+        Self(handle)
     }
 
     fn handle(&self) -> &Handle {
@@ -204,7 +204,7 @@ pub struct FileBuilder {
 impl FileBuilder {
     /// Creates a new file builder with default property lists.
     pub fn new() -> Self {
-        Default::default()
+        Self::default()
     }
 
     /// Opens a file as read-only, file must exist.

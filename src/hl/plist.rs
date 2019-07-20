@@ -22,7 +22,7 @@ impl ObjectClass for PropertyList {
     const VALID_TYPES: &'static [H5I_type_t] = &[H5I_GENPROP_LST];
 
     fn from_handle(handle: Handle) -> Self {
-        PropertyList(handle)
+        Self(handle)
     }
 
     fn handle(&self) -> &Handle {
@@ -150,6 +150,7 @@ impl FromStr for PropertyListClass {
     }
 }
 
+#[allow(clippy::len_without_is_empty)]
 impl PropertyList {
     /// Copies the property list.
     pub fn copy(&self) -> Self {
@@ -182,7 +183,7 @@ impl PropertyList {
         data
     }
 
-    /// Returns the number of properties in the property list.
+    /// Returns the current number of properties in the property list.
     pub fn len(&self) -> usize {
         h5get_d!(H5Pget_nprops(self.id()): size_t)
     }

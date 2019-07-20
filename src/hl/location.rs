@@ -21,7 +21,7 @@ impl ObjectClass for Location {
         &[H5I_FILE, H5I_GROUP, H5I_DATATYPE, H5I_DATASET, H5I_ATTR];
 
     fn from_handle(handle: Handle) -> Self {
-        Location(handle)
+        Self(handle)
     }
 
     fn handle(&self) -> &Handle {

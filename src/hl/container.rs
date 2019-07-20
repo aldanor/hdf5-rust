@@ -133,8 +133,8 @@ impl<'a> Reader<'a> {
 
             self.read_into_buf(vec.as_mut_ptr(), Some(&fspace), Some(&mspace))?;
 
-            let arr = ArrayD::from_shape_vec(reduced_shape, vec).str_err()?;
-            arr.into_dimensionality().str_err()
+            let arr = ArrayD::from_shape_vec(reduced_shape, vec)?;
+            Ok(arr.into_dimensionality()?)
         }
     }
 
@@ -149,8 +149,8 @@ impl<'a> Reader<'a> {
             ensure!(obj_ndim == ndim, "ndim mismatch: expected {}, got {}", ndim, obj_ndim);
         }
         let vec = self.read_raw()?;
-        let arr = ArrayD::from_shape_vec(shape, vec).str_err()?;
-        arr.into_dimensionality().str_err()
+        let arr = ArrayD::from_shape_vec(shape, vec)?;
+        Ok(arr.into_dimensionality()?)
     }
 
     /// Reads a dataset/attribute into a vector in memory order.
@@ -206,8 +206,8 @@ impl<'a> Reader<'a> {
     pub fn read_scalar<T: H5Type>(&self) -> Result<T> {
         let obj_ndim = self.obj.get_shape()?.ndim();
         ensure!(obj_ndim == 0, "ndim mismatch: expected scalar, got {}", obj_ndim);
-        let mut val: T = unsafe { mem::uninitialized() };
-        self.read_into_buf(&mut val as *mut _, None, None).map(|_| val)
+        let mut val = mem::MaybeUninit::<T>::uninit();
+        self.read_into_buf(val.as_mut_ptr(), None, None).map(|_| unsafe { val.assume_init() })
     }
 }
 
@@ -394,7 +394,7 @@ impl ObjectClass for Container {
     const VALID_TYPES: &'static [H5I_type_t] = &[H5I_DATASET, H5I_ATTR];
 
     fn from_handle(handle: Handle) -> Self {
-        Container(handle)
+        Self(handle)
     }
 
     fn handle(&self) -> &Handle {

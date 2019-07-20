@@ -21,7 +21,7 @@ impl ObjectClass for Group {
     const VALID_TYPES: &'static [H5I_type_t] = &[H5I_GROUP, H5I_FILE];
 
     fn from_handle(handle: Handle) -> Self {
-        Group(handle)
+        Self(handle)
     }
 
     fn handle(&self) -> &Handle {

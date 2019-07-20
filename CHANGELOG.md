@@ -14,7 +14,7 @@
   - `File::open(path, "r")` is now `File::open(path)`
   - `File::open(path, "r+")` is now `File::open_rw(path)`
   - `File::open(path, "w")` is now `File::create(path)`
-  - `File::open(path, "x" | "w-")` is now `File::create_exl(path)`
+  - `File::open(path, "x" | "w-")` is now `File::create_excl(path)`
   - `File::open(path, "a")` is now `File::append(path)`
 - Also added `File::open_as(path, mode)` which accepts the mode enum.
 - Rewritten `FileBuilder`: it no longer accepts userblock, driver etc;
@@ -33,6 +33,14 @@
 - It's no longer prohibited to set FCPL options when opening a file
   and not creating it -- it will simply be silently ignored (this
   simplifies the behavior and allows using a single file builder).
+- Added an explicit `hdf5_types::string::StringError` error type,
+  as a result `error-chain` dependency has been dropped.
+- `hdf5::Error` is now convertible from `ndarray::ShapeError`;
+  `hdf5::ResultExt` trait has been removed.
+  
+### Fixed
+
+- Replaced deprecated `std::mem::uninitialized` with `std::mem::MaybeUninit`.
 
 ## 0.5.2
 

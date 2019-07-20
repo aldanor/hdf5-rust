@@ -1,6 +1,5 @@
 use std::borrow::Borrow;
 use std::ffi::{CStr, CString};
-use std::mem;
 use std::ptr;
 use std::str;
 
@@ -23,7 +22,7 @@ pub fn to_cstring<S: Borrow<str>>(string: S) -> Result<CString> {
 /// Convert a fixed-length (possibly zero-terminated) char buffer to a string.
 pub fn string_from_fixed_bytes(bytes: &[c_char], len: usize) -> String {
     let len = bytes.iter().position(|&c| c == 0).unwrap_or(len);
-    let s = unsafe { str::from_utf8_unchecked(mem::transmute(&bytes[..len])) };
+    let s = unsafe { str::from_utf8_unchecked(&*(&bytes[..len] as *const _ as *const _)) };
     s.to_owned()
 }
 

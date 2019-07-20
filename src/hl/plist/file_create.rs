@@ -36,7 +36,7 @@ impl ObjectClass for FileCreate {
     const VALID_TYPES: &'static [H5I_type_t] = &[H5I_GENPROP_LST];
 
     fn from_handle(handle: Handle) -> Self {
-        FileCreate(handle)
+        Self(handle)
     }
 
     fn handle(&self) -> &Handle {

@@ -14,7 +14,7 @@ impl ObjectClass for Object {
     const VALID_TYPES: &'static [H5I_type_t] = &[];
 
     fn from_handle(handle: Handle) -> Self {
-        Object(handle)
+        Self(handle)
     }
 
     fn handle(&self) -> &Handle {
@@ -73,7 +73,7 @@ pub mod tests {
         const VALID_TYPES: &'static [H5I_type_t] = &[];
 
         fn from_handle(handle: Handle) -> Self {
-            TestObject(handle)
+            Self(handle)
         }
 
         fn handle(&self) -> &Handle {

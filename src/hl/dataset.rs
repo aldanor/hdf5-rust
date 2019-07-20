@@ -30,7 +30,7 @@ impl ObjectClass for Dataset {
     const VALID_TYPES: &'static [H5I_type_t] = &[H5I_DATASET];
 
     fn from_handle(handle: Handle) -> Self {
-        Dataset(handle)
+        Self(handle)
     }
 
     fn handle(&self) -> &Handle {
@@ -140,13 +140,11 @@ impl Dataset {
                 H5D_fill_value_t::H5D_FILL_VALUE_UNDEFINED => Ok(None),
                 _ => {
                     let datatype = Datatype::from_type::<T>()?;
-                    let mut value: T = mem::uninitialized();
-                    h5try!(H5Pget_fill_value(
-                        dcpl_id,
-                        datatype.id(),
-                        &mut value as *mut _ as *mut _
-                    ));
-                    Ok(Some(value))
+                    let mut value = mem::MaybeUninit::<T>::uninit();
+                    h5try!(
+                        H5Pget_fill_value(dcpl_id, datatype.id(), value.as_mut_ptr() as *mut _,)
+                    );
+                    Ok(Some(value.assume_init()))
                 }
             }
         })
