@@ -552,3 +552,11 @@ fn test_dapl_set_chunk_cache() -> hdf5::Result<()> {
     test_pl!(DA, chunk_cache: nslots = 20, nbytes = 300, w0 = 1.0);
     Ok(())
 }
+
+#[test]
+#[cfg(all(hdf5_1_10_0, feature = "mpio"))]
+fn test_dapl_set_all_coll_metadata_ops() -> hdf5::Result<()> {
+    test_pl!(DA, all_coll_metadata_ops: true);
+    test_pl!(DA, all_coll_metadata_ops: false);
+    Ok(())
+}

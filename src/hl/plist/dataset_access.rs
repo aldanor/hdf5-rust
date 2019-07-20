@@ -6,6 +6,8 @@ use std::ops::Deref;
 use hdf5_sys::h5p::{
     H5Pcreate, H5Pget_chunk_cache, H5Pget_efile_prefix, H5Pset_chunk_cache, H5Pset_efile_prefix,
 };
+#[cfg(all(hdf5_1_10_0, h5_have_parallel))]
+use hdf5_sys::h5p::{H5Pget_all_coll_metadata_ops, H5Pset_all_coll_metadata_ops};
 
 pub use super::file_access::ChunkCache;
 use crate::globals::H5P_DATASET_ACCESS;
@@ -43,6 +45,8 @@ impl Debug for DatasetAccess {
         formatter.field("chunk_cache", &self.chunk_cache());
         #[cfg(hdf5_1_8_17)]
         formatter.field("efile_prefix", &self.efile_prefix());
+        #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
+        formatter.field("all_coll_metadata_ops", &self.all_coll_metadata_ops());
         formatter.finish()
     }
 }
@@ -75,6 +79,8 @@ pub struct DatasetAccessBuilder {
     chunk_cache: Option<ChunkCache>,
     #[cfg(hdf5_1_8_17)]
     efile_prefix: Option<String>,
+    #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
+    all_coll_metadata_ops: Option<bool>,
 }
 
 impl DatasetAccessBuilder {
@@ -93,6 +99,8 @@ impl DatasetAccessBuilder {
             let v = plist.get_efile_prefix()?;
             builder.efile_prefix(&v);
         }
+        #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
+        builder.all_coll_metadata_ops(plist.get_all_coll_metadata_ops()?);
         Ok(builder)
     }
 
@@ -107,6 +115,12 @@ impl DatasetAccessBuilder {
         self
     }
 
+    #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
+    pub fn all_coll_metadata_ops(&mut self, is_collective: bool) -> &mut Self {
+        self.all_coll_metadata_ops = Some(is_collective);
+        self
+    }
+
     fn populate_plist(&self, id: hid_t) -> Result<()> {
         if let Some(v) = self.chunk_cache {
             h5try!(H5Pset_chunk_cache(id, v.nslots as _, v.nbytes as _, v.w0 as _));
@@ -116,6 +130,12 @@ impl DatasetAccessBuilder {
             if let Some(ref v) = self.efile_prefix {
                 let v = to_cstring(v.as_ref())?;
                 h5try!(H5Pset_efile_prefix(id, v.as_ptr()));
+            }
+        }
+        #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
+        {
+            if let Some(v) = self.all_coll_metadata_ops {
+                h5try!(H5Pset_all_coll_metadata_ops(id, v as _));
             }
         }
         Ok(())
@@ -168,5 +188,16 @@ impl DatasetAccess {
     #[cfg(hdf5_1_8_17)]
     pub fn efile_prefix(&self) -> String {
         self.get_efile_prefix().unwrap_or("".into())
+    }
+
+    #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
+    #[doc(hidden)]
+    pub fn get_all_coll_metadata_ops(&self) -> Result<bool> {
+        h5get!(H5Pget_all_coll_metadata_ops(self.id()): hbool_t).map(|x| x > 0)
+    }
+
+    #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
+    pub fn all_coll_metadata_ops(&self) -> bool {
+        self.get_all_coll_metadata_ops().unwrap_or(false)
     }
 }
