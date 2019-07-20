@@ -3,6 +3,7 @@ extern crate mashup;
 
 use std::mem;
 
+use hdf5::dataset::*;
 use hdf5::file::*;
 use hdf5::plist::*;
 
@@ -520,5 +521,59 @@ fn test_fapl_set_evict_on_close() -> hdf5::Result<()> {
 fn test_fapl_set_mdc_image_config() -> hdf5::Result<()> {
     test_pl!(FA, mdc_image_config: generate_image = true);
     test_pl!(FA, mdc_image_config: generate_image = false);
+    Ok(())
+}
+
+type DA = DatasetAccess;
+type DAB = DatasetAccessBuilder;
+
+#[test]
+fn test_dapl_common() -> hdf5::Result<()> {
+    test_pl_common!(DA, PropertyListClass::DatasetAccess, |b: &mut DAB| b
+        .chunk_cache(100, 200, 0.5)
+        .finish());
+    Ok(())
+}
+
+#[test]
+#[cfg(hdf5_1_8_17)]
+fn test_dapl_set_efile_prefix() -> hdf5::Result<()> {
+    assert_eq!(DA::try_new()?.get_efile_prefix().unwrap(), "".to_owned());
+    assert_eq!(DA::try_new()?.efile_prefix(), "".to_owned());
+    let mut b = DA::build();
+    b.efile_prefix("foo");
+    assert_eq!(b.finish()?.get_efile_prefix()?, "foo".to_owned());
+    Ok(())
+}
+
+#[test]
+fn test_dapl_set_chunk_cache() -> hdf5::Result<()> {
+    test_pl!(DA, chunk_cache: nslots = 1, nbytes = 100, w0 = 0.0);
+    test_pl!(DA, chunk_cache: nslots = 10, nbytes = 200, w0 = 0.5);
+    test_pl!(DA, chunk_cache: nslots = 20, nbytes = 300, w0 = 1.0);
+    Ok(())
+}
+
+#[test]
+#[cfg(all(hdf5_1_10_0, feature = "mpio"))]
+fn test_dapl_set_all_coll_metadata_ops() -> hdf5::Result<()> {
+    test_pl!(DA, all_coll_metadata_ops: true);
+    test_pl!(DA, all_coll_metadata_ops: false);
+    Ok(())
+}
+
+#[test]
+#[cfg(hdf5_1_10_0)]
+fn test_dapl_set_virtual_view() -> hdf5::Result<()> {
+    test_pl!(DA, virtual_view: VirtualView::FirstMissing);
+    test_pl!(DA, virtual_view: VirtualView::LastAvailable);
+    Ok(())
+}
+
+#[test]
+#[cfg(hdf5_1_10_0)]
+fn test_dapl_set_virtual_printf_gap() -> hdf5::Result<()> {
+    test_pl!(DA, virtual_printf_gap: 0);
+    test_pl!(DA, virtual_printf_gap: 123);
     Ok(())
 }

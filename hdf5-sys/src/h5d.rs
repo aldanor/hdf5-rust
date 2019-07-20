@@ -202,6 +202,12 @@ mod hdf5_1_10_0 {
         H5D_VDS_LAST_AVAILABLE = 1,
     }
 
+    impl Default for H5D_vds_view_t {
+        fn default() -> Self {
+            H5D_vds_view_t::H5D_VDS_LAST_AVAILABLE
+        }
+    }
+
     pub const H5D_CHUNK_DONT_FILTER_PARTIAL_CHUNKS: c_uint = 1;
 
     pub type H5D_append_cb_t = Option<
