@@ -544,3 +544,11 @@ fn test_dapl_set_efile_prefix() -> hdf5::Result<()> {
     assert_eq!(b.finish()?.get_efile_prefix()?, "foo".to_owned());
     Ok(())
 }
+
+#[test]
+fn test_dapl_set_chunk_cache() -> hdf5::Result<()> {
+    test_pl!(DA, chunk_cache: nslots = 1, nbytes = 100, w0 = 0.0);
+    test_pl!(DA, chunk_cache: nslots = 10, nbytes = 200, w0 = 0.5);
+    test_pl!(DA, chunk_cache: nslots = 20, nbytes = 300, w0 = 1.0);
+    Ok(())
+}
