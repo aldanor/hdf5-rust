@@ -3,11 +3,11 @@
 use std::fmt::{self, Debug};
 use std::ops::Deref;
 
-use hdf5_sys::h5p::{
-    H5Pcreate, H5Pget_chunk_cache, H5Pget_efile_prefix, H5Pset_chunk_cache, H5Pset_efile_prefix,
-};
+use hdf5_sys::h5p::{H5Pcreate, H5Pget_chunk_cache, H5Pset_chunk_cache};
 #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
 use hdf5_sys::h5p::{H5Pget_all_coll_metadata_ops, H5Pset_all_coll_metadata_ops};
+#[cfg(hdf5_1_8_17)]
+use hdf5_sys::h5p::{H5Pget_efile_prefix, H5Pset_efile_prefix};
 
 pub use super::file_access::ChunkCache;
 use crate::globals::H5P_DATASET_ACCESS;
@@ -187,7 +187,7 @@ impl DatasetAccess {
 
     #[cfg(hdf5_1_8_17)]
     pub fn efile_prefix(&self) -> String {
-        self.get_efile_prefix().unwrap_or("".into())
+        self.get_efile_prefix().ok().unwrap_or_else(|| "".into())
     }
 
     #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
