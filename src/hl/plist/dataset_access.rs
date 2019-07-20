@@ -8,6 +8,11 @@ use hdf5_sys::h5p::{H5Pcreate, H5Pget_chunk_cache, H5Pset_chunk_cache};
 use hdf5_sys::h5p::{H5Pget_all_coll_metadata_ops, H5Pset_all_coll_metadata_ops};
 #[cfg(hdf5_1_8_17)]
 use hdf5_sys::h5p::{H5Pget_efile_prefix, H5Pset_efile_prefix};
+#[cfg(hdf5_1_10_0)]
+use hdf5_sys::{
+    h5d::H5D_vds_view_t,
+    h5p::{H5Pget_virtual_view, H5Pset_virtual_view},
+};
 
 pub use super::file_access::ChunkCache;
 use crate::globals::H5P_DATASET_ACCESS;
@@ -45,6 +50,8 @@ impl Debug for DatasetAccess {
         formatter.field("chunk_cache", &self.chunk_cache());
         #[cfg(hdf5_1_8_17)]
         formatter.field("efile_prefix", &self.efile_prefix());
+        #[cfg(hdf5_1_10_0)]
+        formatter.field("virtual_view", &self.virtual_view());
         #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
         formatter.field("all_coll_metadata_ops", &self.all_coll_metadata_ops());
         formatter.finish()
@@ -73,12 +80,48 @@ impl Clone for DatasetAccess {
     }
 }
 
+#[cfg(hdf5_1_10_0)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum VirtualView {
+    FirstMissing,
+    LastAvailable,
+}
+
+#[cfg(hdf5_1_10_0)]
+impl Default for VirtualView {
+    fn default() -> Self {
+        VirtualView::LastAvailable
+    }
+}
+
+#[cfg(hdf5_1_10_0)]
+impl From<H5D_vds_view_t> for VirtualView {
+    fn from(view: H5D_vds_view_t) -> Self {
+        match view {
+            H5D_vds_view_t::H5D_VDS_FIRST_MISSING => VirtualView::FirstMissing,
+            _ => VirtualView::LastAvailable,
+        }
+    }
+}
+
+#[cfg(hdf5_1_10_0)]
+impl From<VirtualView> for H5D_vds_view_t {
+    fn from(view: VirtualView) -> Self {
+        match view {
+            VirtualView::FirstMissing => H5D_vds_view_t::H5D_VDS_FIRST_MISSING,
+            _ => H5D_vds_view_t::H5D_VDS_LAST_AVAILABLE,
+        }
+    }
+}
+
 /// Builder used to create dataset access property list.
 #[derive(Clone, Debug, Default)]
 pub struct DatasetAccessBuilder {
     chunk_cache: Option<ChunkCache>,
     #[cfg(hdf5_1_8_17)]
     efile_prefix: Option<String>,
+    #[cfg(hdf5_1_10_0)]
+    virtual_view: Option<VirtualView>,
     #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
     all_coll_metadata_ops: Option<bool>,
 }
@@ -99,6 +142,8 @@ impl DatasetAccessBuilder {
             let v = plist.get_efile_prefix()?;
             builder.efile_prefix(&v);
         }
+        #[cfg(hdf5_1_10_0)]
+        builder.virtual_view(plist.get_virtual_view()?);
         #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
         builder.all_coll_metadata_ops(plist.get_all_coll_metadata_ops()?);
         Ok(builder)
@@ -112,6 +157,12 @@ impl DatasetAccessBuilder {
     #[cfg(hdf5_1_8_17)]
     pub fn efile_prefix(&mut self, prefix: &str) -> &mut Self {
         self.efile_prefix = Some(prefix.into());
+        self
+    }
+
+    #[cfg(hdf5_1_10_0)]
+    pub fn virtual_view(&mut self, view: VirtualView) -> &mut Self {
+        self.virtual_view = Some(view);
         self
     }
 
@@ -130,6 +181,12 @@ impl DatasetAccessBuilder {
             if let Some(ref v) = self.efile_prefix {
                 let v = to_cstring(v.as_ref())?;
                 h5try!(H5Pset_efile_prefix(id, v.as_ptr()));
+            }
+        }
+        #[cfg(hdf5_1_10_0)]
+        {
+            if let Some(v) = self.virtual_view {
+                h5try!(H5Pset_virtual_view(id, v.into()));
             }
         }
         #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
@@ -188,6 +245,17 @@ impl DatasetAccess {
     #[cfg(hdf5_1_8_17)]
     pub fn efile_prefix(&self) -> String {
         self.get_efile_prefix().ok().unwrap_or_else(|| "".into())
+    }
+
+    #[cfg(hdf5_1_10_0)]
+    #[doc(hidden)]
+    pub fn get_virtual_view(&self) -> Result<VirtualView> {
+        h5get!(H5Pget_virtual_view(self.id()): H5D_vds_view_t).map(Into::into)
+    }
+
+    #[cfg(hdf5_1_10_0)]
+    pub fn virtual_view(&self) -> VirtualView {
+        self.get_virtual_view().ok().unwrap_or_else(VirtualView::default)
     }
 
     #[cfg(all(hdf5_1_10_0, h5_have_parallel))]

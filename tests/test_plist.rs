@@ -560,3 +560,11 @@ fn test_dapl_set_all_coll_metadata_ops() -> hdf5::Result<()> {
     test_pl!(DA, all_coll_metadata_ops: false);
     Ok(())
 }
+
+#[test]
+#[cfg(hdf5_1_10_0)]
+fn test_dapl_set_virtual_view() -> hdf5::Result<()> {
+    test_pl!(DA, virtual_view: VirtualView::FirstMissing);
+    test_pl!(DA, virtual_view: VirtualView::LastAvailable);
+    Ok(())
+}
