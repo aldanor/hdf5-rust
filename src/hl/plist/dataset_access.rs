@@ -3,7 +3,7 @@
 use std::fmt::{self, Debug};
 use std::ops::Deref;
 
-use hdf5_sys::h5p::H5Pcreate;
+use hdf5_sys::h5p::{H5Pcreate, H5Pget_efile_prefix, H5Pset_efile_prefix};
 
 use crate::globals::H5P_DATASET_ACCESS;
 use crate::internal_prelude::*;
@@ -37,6 +37,8 @@ impl Debug for DatasetAccess {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let _e = silence_errors();
         let mut formatter = f.debug_struct("DatasetAccess");
+        #[cfg(hdf5_1_8_17)]
+        formatter.field("efile_prefix", &self.efile_prefix());
         formatter.finish()
     }
 }
@@ -65,7 +67,10 @@ impl Clone for DatasetAccess {
 
 /// Builder used to create dataset access property list.
 #[derive(Clone, Debug, Default)]
-pub struct DatasetAccessBuilder {}
+pub struct DatasetAccessBuilder {
+    #[cfg(hdf5_1_8_17)]
+    efile_prefix: Option<String>,
+}
 
 impl DatasetAccessBuilder {
     /// Creates a new dataset access property list builder.
@@ -76,10 +81,28 @@ impl DatasetAccessBuilder {
     /// Creates a new builder from an existing property list.
     pub fn from_plist(plist: &DatasetAccess) -> Result<Self> {
         let mut builder = Self::default();
+        #[cfg(hdf5_1_8_17)]
+        {
+            let v = plist.get_efile_prefix()?;
+            builder.efile_prefix(&v);
+        }
         Ok(builder)
     }
 
+    #[cfg(hdf5_1_8_17)]
+    pub fn efile_prefix(&mut self, prefix: &str) -> &mut Self {
+        self.efile_prefix = Some(prefix.into());
+        self
+    }
+
     fn populate_plist(&self, id: hid_t) -> Result<()> {
+        #[cfg(hdf5_1_8_17)]
+        {
+            if let Some(ref v) = self.efile_prefix {
+                let v = to_cstring(v.as_ref())?;
+                h5try!(H5Pset_efile_prefix(id, v.as_ptr()));
+            }
+        }
         Ok(())
     }
 
@@ -104,5 +127,16 @@ impl DatasetAccess {
 
     pub fn build() -> DatasetAccessBuilder {
         DatasetAccessBuilder::new()
+    }
+
+    #[cfg(hdf5_1_8_17)]
+    #[doc(hidden)]
+    pub fn get_efile_prefix(&self) -> Result<String> {
+        h5lock!(get_h5_str(|m, s| H5Pget_efile_prefix(self.id(), m, s)))
+    }
+
+    #[cfg(hdf5_1_8_17)]
+    pub fn efile_prefix(&self) -> String {
+        self.get_efile_prefix().unwrap_or("".into())
     }
 }
