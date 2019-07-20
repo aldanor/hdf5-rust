@@ -568,3 +568,11 @@ fn test_dapl_set_virtual_view() -> hdf5::Result<()> {
     test_pl!(DA, virtual_view: VirtualView::LastAvailable);
     Ok(())
 }
+
+#[test]
+#[cfg(hdf5_1_10_0)]
+fn test_dapl_set_virtual_printf_gap() -> hdf5::Result<()> {
+    test_pl!(DA, virtual_printf_gap: 0);
+    test_pl!(DA, virtual_printf_gap: 123);
+    Ok(())
+}

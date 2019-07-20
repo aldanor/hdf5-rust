@@ -11,7 +11,10 @@ use hdf5_sys::h5p::{H5Pget_efile_prefix, H5Pset_efile_prefix};
 #[cfg(hdf5_1_10_0)]
 use hdf5_sys::{
     h5d::H5D_vds_view_t,
-    h5p::{H5Pget_virtual_view, H5Pset_virtual_view},
+    h5p::{
+        H5Pget_virtual_printf_gap, H5Pget_virtual_view, H5Pset_virtual_printf_gap,
+        H5Pset_virtual_view,
+    },
 };
 
 pub use super::file_access::ChunkCache;
@@ -51,7 +54,10 @@ impl Debug for DatasetAccess {
         #[cfg(hdf5_1_8_17)]
         formatter.field("efile_prefix", &self.efile_prefix());
         #[cfg(hdf5_1_10_0)]
-        formatter.field("virtual_view", &self.virtual_view());
+        {
+            formatter.field("virtual_view", &self.virtual_view());
+            formatter.field("virtual_printf_gap", &self.virtual_printf_gap());
+        }
         #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
         formatter.field("all_coll_metadata_ops", &self.all_coll_metadata_ops());
         formatter.finish()
@@ -122,6 +128,8 @@ pub struct DatasetAccessBuilder {
     efile_prefix: Option<String>,
     #[cfg(hdf5_1_10_0)]
     virtual_view: Option<VirtualView>,
+    #[cfg(hdf5_1_10_0)]
+    virtual_printf_gap: Option<usize>,
     #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
     all_coll_metadata_ops: Option<bool>,
 }
@@ -143,7 +151,10 @@ impl DatasetAccessBuilder {
             builder.efile_prefix(&v);
         }
         #[cfg(hdf5_1_10_0)]
-        builder.virtual_view(plist.get_virtual_view()?);
+        {
+            builder.virtual_view(plist.get_virtual_view()?);
+            builder.virtual_printf_gap(plist.get_virtual_printf_gap()?);
+        }
         #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
         builder.all_coll_metadata_ops(plist.get_all_coll_metadata_ops()?);
         Ok(builder)
@@ -163,6 +174,12 @@ impl DatasetAccessBuilder {
     #[cfg(hdf5_1_10_0)]
     pub fn virtual_view(&mut self, view: VirtualView) -> &mut Self {
         self.virtual_view = Some(view);
+        self
+    }
+
+    #[cfg(hdf5_1_10_0)]
+    pub fn virtual_printf_gap(&mut self, gap_size: usize) -> &mut Self {
+        self.virtual_printf_gap = Some(gap_size);
         self
     }
 
@@ -187,6 +204,9 @@ impl DatasetAccessBuilder {
         {
             if let Some(v) = self.virtual_view {
                 h5try!(H5Pset_virtual_view(id, v.into()));
+            }
+            if let Some(v) = self.virtual_printf_gap {
+                h5try!(H5Pset_virtual_printf_gap(id, v as _));
             }
         }
         #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
@@ -256,6 +276,17 @@ impl DatasetAccess {
     #[cfg(hdf5_1_10_0)]
     pub fn virtual_view(&self) -> VirtualView {
         self.get_virtual_view().ok().unwrap_or_else(VirtualView::default)
+    }
+
+    #[cfg(hdf5_1_10_0)]
+    #[doc(hidden)]
+    pub fn get_virtual_printf_gap(&self) -> Result<usize> {
+        h5get!(H5Pget_virtual_printf_gap(self.id()): hsize_t).map(|x| x as _)
+    }
+
+    #[cfg(hdf5_1_10_0)]
+    pub fn virtual_printf_gap(&self) -> usize {
+        self.get_virtual_printf_gap().unwrap_or(0)
     }
 
     #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
