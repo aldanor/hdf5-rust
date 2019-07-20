@@ -3,8 +3,8 @@ extern crate mashup;
 
 use std::mem;
 
+use hdf5::dataset::*;
 use hdf5::file::*;
-use hdf5::plist::dataset_access::DatasetAccessBuilder;
 use hdf5::plist::*;
 
 macro_rules! test_pl {

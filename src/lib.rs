@@ -35,6 +35,11 @@ mod export {
         pub use hdf5_types::*;
     }
 
+    pub mod dataset {
+        pub use crate::hl::dataset::{Chunk, Dataset, DatasetBuilder};
+        pub use crate::hl::plist::dataset_access::*;
+    }
+
     pub mod file {
         pub use crate::hl::file::{File, FileBuilder, OpenMode};
         pub use crate::hl::plist::file_access::*;
