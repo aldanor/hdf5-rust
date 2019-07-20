@@ -530,12 +530,13 @@ type DAB = DatasetAccessBuilder;
 #[test]
 fn test_dapl_common() -> hdf5::Result<()> {
     test_pl_common!(DA, PropertyListClass::DatasetAccess, |b: &mut DAB| b
-        .efile_prefix("abc")
+        .chunk_cache(100, 200, 0.5)
         .finish());
     Ok(())
 }
 
 #[test]
+#[cfg(hdf5_1_8_17)]
 fn test_dapl_set_efile_prefix() -> hdf5::Result<()> {
     assert_eq!(DA::try_new()?.get_efile_prefix().unwrap(), "".to_owned());
     assert_eq!(DA::try_new()?.efile_prefix(), "".to_owned());
