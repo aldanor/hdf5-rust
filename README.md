@@ -40,7 +40,7 @@ fn main() -> hdf5::Result<()> {
     use ndarray::{arr1, arr2};
 
     // so that libhdf5 doesn't print errors to stdout
-    let _ = hdf5::silence_errors();
+    let _e = hdf5::silence_errors();
 
     {
         // write
