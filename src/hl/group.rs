@@ -2,9 +2,13 @@ use std::fmt::{self, Debug};
 use std::ops::Deref;
 
 use hdf5_sys::{
+    h5::{hsize_t, H5_index_t, H5_iter_order_t},
     h5d::H5Dopen2,
     h5g::{H5G_info_t, H5Gcreate2, H5Gget_info, H5Gopen2},
-    h5l::{H5Lcreate_hard, H5Lcreate_soft, H5Ldelete, H5Lexists, H5Lmove, H5L_SAME_LOC},
+    h5l::{
+        H5L_info_t, H5L_iterate_t, H5Lcreate_hard, H5Lcreate_soft, H5Ldelete, H5Lexists,
+        H5Literate, H5Lmove, H5L_SAME_LOC,
+    },
     h5p::{H5Pcreate, H5Pset_create_intermediate_group},
 };
 
@@ -166,6 +170,35 @@ impl Group {
     pub fn dataset(&self, name: &str) -> Result<Dataset> {
         let name = to_cstring(name)?;
         Dataset::from_id(h5try!(H5Dopen2(self.id(), name.as_ptr(), H5P_DEFAULT)))
+    }
+
+    /// Returns names of all the members in the group, non-recursively.
+    pub fn member_names(&self) -> Result<Vec<String>> {
+        extern "C" fn members_callback(
+            _id: hid_t, name: *const c_char, _info: *const H5L_info_t, op_data: *mut c_void,
+        ) -> herr_t {
+            let other_data: &mut Vec<String> = unsafe { &mut *(op_data as *mut Vec<String>) };
+
+            other_data.push(string_from_cstr(name));
+
+            0 // Continue iteration
+        }
+
+        let callback_fn: H5L_iterate_t = Some(members_callback);
+        let iteration_position: *mut hsize_t = &mut { 0 as u64 };
+        let mut result: Vec<String> = Vec::new();
+        let other_data: *mut c_void = &mut result as *mut _ as *mut c_void;
+
+        h5call!(H5Literate(
+            self.id(),
+            H5_index_t::H5_INDEX_NAME,
+            H5_iter_order_t::H5_ITER_INC,
+            iteration_position,
+            callback_fn,
+            other_data
+        ))?;
+
+        Ok(result)
     }
 }
 
@@ -350,5 +383,21 @@ pub mod tests {
             file.new_dataset::<f32>().resizable(true).create("baz", (10, 20)).unwrap();
             file.new_dataset::<u8>().resizable(true).create_anon((10, 20)).unwrap();
         });
+    }
+
+    #[test]
+    pub fn test_get_member_names() {
+        with_tmp_file(|file| {
+            file.create_group("a").unwrap();
+            file.create_group("b").unwrap();
+            let group_a = file.group("a").unwrap();
+            let group_b = file.group("b").unwrap();
+            file.new_dataset::<u32>().no_chunk().create("a/foo", (10, 20)).unwrap();
+            file.new_dataset::<u32>().no_chunk().create("a/123", (10, 20)).unwrap();
+            file.new_dataset::<u32>().no_chunk().create("a/bar", (10, 20)).unwrap();
+            assert_eq!(group_a.member_names().unwrap(), vec!["123", "bar", "foo"]);
+            assert_eq!(group_b.member_names().unwrap().len(), 0);
+            assert_eq!(file.member_names().unwrap(), vec!["a", "b"]);
+        })
     }
 }
