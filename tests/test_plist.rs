@@ -609,3 +609,21 @@ fn test_dcpl_set_layout() -> hdf5::Result<()> {
     test_pl!(DC, layout: Layout::Virtual);
     Ok(())
 }
+
+#[cfg(hdf5_1_10_0)]
+#[test]
+fn test_dcpl_set_chunk_opts() -> hdf5::Result<()> {
+    assert!(DC::try_new()?.get_chunk_opts()?.is_none());
+    let mut b = DCB::new();
+    assert!(b.layout(Layout::Contiguous).finish()?.get_chunk_opts()?.is_none());
+    assert!(b.layout(Layout::Compact).finish()?.get_chunk_opts()?.is_none());
+    #[cfg(hdf5_1_10_0)]
+    assert!(b.layout(Layout::Virtual).finish()?.get_chunk_opts()?.is_none());
+    b.layout(Layout::Chunked);
+    assert_eq!(b.finish()?.get_chunk_opts()?, Some(ChunkOpts::empty()));
+    b.chunk_opts(ChunkOpts::empty());
+    assert_eq!(b.finish()?.get_chunk_opts()?, Some(ChunkOpts::empty()));
+    b.chunk_opts(ChunkOpts::DONT_FILTER_PARTIAL_CHUNKS);
+    assert_eq!(b.finish()?.get_chunk_opts()?, Some(ChunkOpts::DONT_FILTER_PARTIAL_CHUNKS));
+    Ok(())
+}

@@ -4,8 +4,15 @@ use std::fmt::{self, Debug};
 use std::ops::Deref;
 use std::ptr;
 
+use bitflags::bitflags;
+
 use hdf5_sys::h5d::H5D_layout_t;
 use hdf5_sys::h5p::{H5Pcreate, H5Pget_chunk, H5Pget_layout, H5Pset_chunk, H5Pset_layout};
+#[cfg(hdf5_1_10_0)]
+use hdf5_sys::{
+    h5d::H5D_CHUNK_DONT_FILTER_PARTIAL_CHUNKS,
+    h5p::{H5Pget_chunk_opts, H5Pset_chunk_opts},
+};
 
 use crate::globals::H5P_DATASET_CREATE;
 use crate::internal_prelude::*;
@@ -41,6 +48,8 @@ impl Debug for DatasetCreate {
         let mut formatter = f.debug_struct("DatasetCreate");
         formatter.field("chunk", &self.chunk());
         formatter.field("layout", &self.layout());
+        #[cfg(hdf5_1_10_0)]
+        formatter.field("chunk_opts", &self.chunk_opts());
         formatter.finish()
     }
 }
@@ -106,11 +115,20 @@ impl From<Layout> for H5D_layout_t {
     }
 }
 
+#[cfg(hdf5_1_10_0)]
+bitflags! {
+    pub struct ChunkOpts: u32 {
+        const DONT_FILTER_PARTIAL_CHUNKS = H5D_CHUNK_DONT_FILTER_PARTIAL_CHUNKS;
+    }
+}
+
 /// Builder used to create dataset creation property list.
 #[derive(Clone, Debug, Default)]
 pub struct DatasetCreateBuilder {
     chunk: Option<Vec<usize>>,
     layout: Option<Layout>,
+    #[cfg(hdf5_1_10_0)]
+    chunk_opts: Option<ChunkOpts>,
 }
 
 impl DatasetCreateBuilder {
@@ -126,6 +144,12 @@ impl DatasetCreateBuilder {
             builder.chunk(&v);
         }
         builder.layout(plist.get_layout()?);
+        #[cfg(hdf5_1_10_0)]
+        {
+            if let Some(v) = plist.get_chunk_opts()? {
+                builder.chunk_opts(v);
+            }
+        }
         Ok(builder)
     }
 
@@ -139,6 +163,12 @@ impl DatasetCreateBuilder {
         self
     }
 
+    #[cfg(hdf5_1_10_0)]
+    pub fn chunk_opts(&mut self, opts: ChunkOpts) -> &mut Self {
+        self.chunk_opts = Some(opts);
+        self
+    }
+
     fn populate_plist(&self, id: hid_t) -> Result<()> {
         if let Some(v) = self.layout {
             h5try!(H5Pset_layout(id, v.into()));
@@ -146,6 +176,12 @@ impl DatasetCreateBuilder {
         if let Some(ref v) = self.chunk {
             let v = v.iter().map(|&x| x as _).collect::<Vec<_>>();
             h5try!(H5Pset_chunk(id, v.len() as _, v.as_ptr()));
+        }
+        #[cfg(hdf5_1_10_0)]
+        {
+            if let Some(v) = self.chunk_opts {
+                h5try!(H5Pset_chunk_opts(id, v.bits() as _));
+            }
         }
         Ok(())
     }
@@ -198,5 +234,21 @@ impl DatasetCreate {
 
     pub fn layout(&self) -> Layout {
         self.get_layout().unwrap_or_default()
+    }
+
+    #[cfg(hdf5_1_10_0)]
+    #[doc(hidden)]
+    pub fn get_chunk_opts(&self) -> Result<Option<ChunkOpts>> {
+        if let Layout::Chunked = self.get_layout()? {
+            let opts = h5get!(H5Pget_chunk_opts(self.id()): c_uint)?;
+            Ok(Some(ChunkOpts::from_bits_truncate(opts as _)))
+        } else {
+            Ok(None)
+        }
+    }
+
+    #[cfg(hdf5_1_10_0)]
+    pub fn chunk_opts(&self) -> Option<ChunkOpts> {
+        self.get_chunk_opts().unwrap_or_default()
     }
 }
