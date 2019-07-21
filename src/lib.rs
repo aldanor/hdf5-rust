@@ -28,6 +28,9 @@ mod export {
         },
     };
 
+    #[doc(hidden)]
+    pub use crate::error::h5check;
+
     pub use hdf5_derive::H5Type;
     pub use hdf5_types::H5Type;
 
@@ -76,7 +79,8 @@ mod error;
 mod filters;
 mod globals;
 mod handle;
-mod sync;
+#[doc(hidden)]
+pub mod sync;
 mod util;
 
 mod hl;
