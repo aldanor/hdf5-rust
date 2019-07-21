@@ -4,7 +4,8 @@ use std::fmt::{self, Debug};
 use std::ops::Deref;
 use std::ptr;
 
-use hdf5_sys::h5p::{H5Pcreate, H5Pget_chunk, H5Pset_chunk};
+use hdf5_sys::h5d::H5D_layout_t;
+use hdf5_sys::h5p::{H5Pcreate, H5Pget_chunk, H5Pget_layout, H5Pset_chunk, H5Pset_layout};
 
 use crate::globals::H5P_DATASET_CREATE;
 use crate::internal_prelude::*;
@@ -39,6 +40,7 @@ impl Debug for DatasetCreate {
         let _e = silence_errors();
         let mut formatter = f.debug_struct("DatasetCreate");
         formatter.field("chunk", &self.chunk());
+        formatter.field("layout", &self.layout());
         formatter.finish()
     }
 }
@@ -65,10 +67,50 @@ impl Clone for DatasetCreate {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Layout {
+    Compact,
+    Contiguous,
+    Chunked,
+    #[cfg(hdf5_1_10_0)]
+    Virtual,
+}
+
+impl Default for Layout {
+    fn default() -> Self {
+        Layout::Contiguous
+    }
+}
+
+impl From<H5D_layout_t> for Layout {
+    fn from(layout: H5D_layout_t) -> Self {
+        match layout {
+            H5D_layout_t::H5D_COMPACT => Layout::Compact,
+            H5D_layout_t::H5D_CHUNKED => Layout::Chunked,
+            #[cfg(hdf5_1_10_0)]
+            H5D_layout_t::H5D_VIRTUAL => Layout::Virtual,
+            _ => Layout::Contiguous,
+        }
+    }
+}
+
+impl From<Layout> for H5D_layout_t {
+    fn from(layout: Layout) -> Self {
+        match layout {
+            Layout::Compact => H5D_layout_t::H5D_COMPACT,
+            Layout::Chunked => H5D_layout_t::H5D_CHUNKED,
+            #[cfg(hdf5_1_10_0)]
+            Layout::Virtual => H5D_layout_t::H5D_VIRTUAL,
+            _ => H5D_layout_t::H5D_CONTIGUOUS,
+        }
+    }
+}
+
 /// Builder used to create dataset creation property list.
 #[derive(Clone, Debug, Default)]
 pub struct DatasetCreateBuilder {
     chunk: Option<Vec<usize>>,
+    layout: Option<Layout>,
 }
 
 impl DatasetCreateBuilder {
@@ -83,6 +125,7 @@ impl DatasetCreateBuilder {
         if let Some(v) = plist.get_chunk()? {
             builder.chunk(&v);
         }
+        builder.layout(plist.get_layout()?);
         Ok(builder)
     }
 
@@ -91,7 +134,15 @@ impl DatasetCreateBuilder {
         self
     }
 
+    pub fn layout(&mut self, layout: Layout) -> &mut Self {
+        self.layout = Some(layout);
+        self
+    }
+
     fn populate_plist(&self, id: hid_t) -> Result<()> {
+        if let Some(v) = self.layout {
+            h5try!(H5Pset_layout(id, v.into()));
+        }
         if let Some(ref v) = self.chunk {
             let v = v.iter().map(|&x| x as _).collect::<Vec<_>>();
             h5try!(H5Pset_chunk(id, v.len() as _, v.as_ptr()));
@@ -136,5 +187,16 @@ impl DatasetCreate {
 
     pub fn chunk(&self) -> Option<Vec<usize>> {
         self.get_chunk().unwrap_or_default()
+    }
+
+    #[doc(hidden)]
+    pub fn get_layout(&self) -> Result<Layout> {
+        let layout = h5lock!(H5Pget_layout(self.id()));
+        h5check(layout as c_int)?;
+        Ok(layout.into())
+    }
+
+    pub fn layout(&self) -> Layout {
+        self.get_layout().unwrap_or_default()
     }
 }

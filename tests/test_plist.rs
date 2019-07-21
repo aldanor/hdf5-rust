@@ -581,7 +581,7 @@ type DCB = DatasetCreateBuilder;
 #[test]
 fn test_dcpl_common() -> hdf5::Result<()> {
     test_pl_common!(DC, PropertyListClass::DatasetCreate, |b: &mut DCB| b
-        .chunk(&[1, 2, 3])
+        .layout(Layout::Compact)
         .finish());
     Ok(())
 }
@@ -596,5 +596,16 @@ fn test_dcpl_set_chunk() -> hdf5::Result<()> {
     #[cfg(hdf5_1_10_0)]
     assert!(DCB::new().layout(Layout::Virtual).finish()?.get_chunk()?.is_none());
     assert_eq!(DCB::new().layout(Layout::Chunked).finish()?.get_chunk()?, Some(vec![]));
+    Ok(())
+}
+
+#[test]
+fn test_dcpl_set_layout() -> hdf5::Result<()> {
+    check_matches!(DC::try_new()?.get_layout()?, (), Layout::Contiguous);
+    test_pl!(DC, layout: Layout::Contiguous);
+    test_pl!(DC, layout: Layout::Compact);
+    test_pl!(DC, layout: Layout::Chunked);
+    #[cfg(hdf5_1_10_0)]
+    test_pl!(DC, layout: Layout::Virtual);
     Ok(())
 }
