@@ -49,6 +49,8 @@ macro_rules! test_pl_common {
         assert_eq!(pl_default.class()?, $plc);
         assert_eq!(pl_default, pl_default);
 
+        assert!(format!("{:?}", pl_default).starts_with(&format!("{:?}", $plc)));
+
         let mut b = $cls::build();
         let pl = $func(&mut b)?;
         assert_eq!(pl.class()?, $plc);
