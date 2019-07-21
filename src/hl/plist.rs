@@ -12,6 +12,7 @@ use hdf5_sys::h5p::{
 use crate::internal_prelude::*;
 
 pub mod dataset_access;
+pub mod dataset_create;
 pub mod file_access;
 pub mod file_create;
 

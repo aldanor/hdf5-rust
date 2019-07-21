@@ -49,6 +49,7 @@ mod export {
         pub use crate::hl::dataset::ChunkInfo;
         pub use crate::hl::dataset::{Chunk, Dataset, DatasetBuilder};
         pub use crate::hl::plist::dataset_access::*;
+        pub use crate::hl::plist::dataset_create::*;
     }
 
     pub mod datatype {
@@ -63,6 +64,7 @@ mod export {
 
     pub mod plist {
         pub use crate::hl::plist::dataset_access::DatasetAccess;
+        pub use crate::hl::plist::dataset_create::DatasetCreate;
         pub use crate::hl::plist::file_access::FileAccess;
         pub use crate::hl::plist::file_create::FileCreate;
         pub use crate::hl::plist::{PropertyList, PropertyListClass};
@@ -70,6 +72,11 @@ mod export {
         pub mod dataset_access {
             pub use crate::hl::plist::dataset_access::*;
         }
+
+        pub mod dataset_create {
+            pub use crate::hl::plist::dataset_create::*;
+        }
+
         pub mod file_access {
             pub use crate::hl::plist::file_access::*;
         }
