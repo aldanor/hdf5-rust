@@ -627,3 +627,29 @@ fn test_dcpl_set_chunk_opts() -> hdf5::Result<()> {
     assert_eq!(b.finish()?.get_chunk_opts()?, Some(ChunkOpts::DONT_FILTER_PARTIAL_CHUNKS));
     Ok(())
 }
+
+#[test]
+fn test_dcpl_set_alloc_time() -> hdf5::Result<()> {
+    check_matches!(DC::try_new()?.get_alloc_time()?, (), AllocTime::Late);
+    let mut b = DCB::new();
+    b.alloc_time(None);
+    b.layout(Layout::Contiguous);
+    check_matches!(b.finish()?.get_alloc_time()?, (), AllocTime::Late);
+    b.layout(Layout::Compact);
+    check_matches!(b.finish()?.get_alloc_time()?, (), AllocTime::Early);
+    b.layout(Layout::Chunked);
+    check_matches!(b.finish()?.get_alloc_time()?, (), AllocTime::Incr);
+    #[cfg(hdf5_1_10_0)]
+    {
+        b.layout(Layout::Virtual);
+        check_matches!(b.finish()?.get_alloc_time()?, (), AllocTime::Incr);
+    }
+    b.layout(Layout::Contiguous);
+    b.alloc_time(Some(AllocTime::Late));
+    check_matches!(b.finish()?.get_alloc_time()?, (), AllocTime::Late);
+    b.alloc_time(Some(AllocTime::Incr));
+    check_matches!(b.finish()?.get_alloc_time()?, (), AllocTime::Incr);
+    b.alloc_time(Some(AllocTime::Early));
+    check_matches!(b.finish()?.get_alloc_time()?, (), AllocTime::Early);
+    Ok(())
+}

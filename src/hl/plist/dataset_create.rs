@@ -6,8 +6,11 @@ use std::ptr;
 
 use bitflags::bitflags;
 
-use hdf5_sys::h5d::H5D_layout_t;
-use hdf5_sys::h5p::{H5Pcreate, H5Pget_chunk, H5Pget_layout, H5Pset_chunk, H5Pset_layout};
+use hdf5_sys::h5d::{H5D_alloc_time_t, H5D_layout_t};
+use hdf5_sys::h5p::{
+    H5Pcreate, H5Pget_alloc_time, H5Pget_chunk, H5Pget_layout, H5Pset_alloc_time, H5Pset_chunk,
+    H5Pset_layout,
+};
 #[cfg(hdf5_1_10_0)]
 use hdf5_sys::{
     h5d::H5D_CHUNK_DONT_FILTER_PARTIAL_CHUNKS,
@@ -46,6 +49,7 @@ impl Debug for DatasetCreate {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let _e = silence_errors();
         let mut formatter = f.debug_struct("DatasetCreate");
+        formatter.field("alloc_time", &self.alloc_time());
         formatter.field("chunk", &self.chunk());
         formatter.field("layout", &self.layout());
         #[cfg(hdf5_1_10_0)]
@@ -122,9 +126,37 @@ bitflags! {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum AllocTime {
+    Early,
+    Incr,
+    Late,
+}
+
+impl From<H5D_alloc_time_t> for AllocTime {
+    fn from(alloc_time: H5D_alloc_time_t) -> Self {
+        match alloc_time {
+            H5D_alloc_time_t::H5D_ALLOC_TIME_EARLY => AllocTime::Early,
+            H5D_alloc_time_t::H5D_ALLOC_TIME_INCR => AllocTime::Incr,
+            _ => AllocTime::Late,
+        }
+    }
+}
+
+impl From<AllocTime> for H5D_alloc_time_t {
+    fn from(alloc_time: AllocTime) -> Self {
+        match alloc_time {
+            AllocTime::Early => H5D_alloc_time_t::H5D_ALLOC_TIME_EARLY,
+            AllocTime::Incr => H5D_alloc_time_t::H5D_ALLOC_TIME_INCR,
+            _ => H5D_alloc_time_t::H5D_ALLOC_TIME_LATE,
+        }
+    }
+}
+
 /// Builder used to create dataset creation property list.
 #[derive(Clone, Debug, Default)]
 pub struct DatasetCreateBuilder {
+    alloc_time: Option<Option<AllocTime>>,
     chunk: Option<Vec<usize>>,
     layout: Option<Layout>,
     #[cfg(hdf5_1_10_0)]
@@ -140,6 +172,7 @@ impl DatasetCreateBuilder {
     /// Creates a new builder from an existing property list.
     pub fn from_plist(plist: &DatasetCreate) -> Result<Self> {
         let mut builder = Self::default();
+        builder.alloc_time(Some(plist.get_alloc_time()?));
         if let Some(v) = plist.get_chunk()? {
             builder.chunk(&v);
         }
@@ -151,6 +184,11 @@ impl DatasetCreateBuilder {
             }
         }
         Ok(builder)
+    }
+
+    pub fn alloc_time(&mut self, alloc_time: Option<AllocTime>) -> &mut Self {
+        self.alloc_time = Some(alloc_time);
+        self
     }
 
     pub fn chunk(&mut self, dims: &[usize]) -> &mut Self {
@@ -170,6 +208,10 @@ impl DatasetCreateBuilder {
     }
 
     fn populate_plist(&self, id: hid_t) -> Result<()> {
+        if let Some(v) = self.alloc_time {
+            let v = v.map(Into::into).unwrap_or(H5D_alloc_time_t::H5D_ALLOC_TIME_DEFAULT);
+            h5try!(H5Pset_alloc_time(id, v));
+        }
         if let Some(v) = self.layout {
             h5try!(H5Pset_layout(id, v.into()));
         }
@@ -207,6 +249,15 @@ impl DatasetCreate {
 
     pub fn build() -> DatasetCreateBuilder {
         DatasetCreateBuilder::new()
+    }
+
+    #[doc(hidden)]
+    pub fn get_alloc_time(&self) -> Result<AllocTime> {
+        h5get!(H5Pget_alloc_time(self.id()): H5D_alloc_time_t).map(Into::into)
+    }
+
+    pub fn alloc_time(&self) -> AllocTime {
+        self.get_alloc_time().unwrap_or(AllocTime::Late)
     }
 
     #[doc(hidden)]
