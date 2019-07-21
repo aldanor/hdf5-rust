@@ -232,7 +232,7 @@ mod hdf5_1_10_0 {
         }
     }
 
-    pub const H5D_CHUNK_DONT_FILTER_PARTIAL_CHUNKS: c_uint = 1;
+    pub const H5D_CHUNK_DONT_FILTER_PARTIAL_CHUNKS: c_uint = 0x0002;
 
     pub type H5D_append_cb_t = Option<
         unsafe extern "C" fn(
