@@ -574,3 +574,27 @@ fn test_dapl_set_virtual_printf_gap() -> hdf5::Result<()> {
     test_pl!(DA, virtual_printf_gap: 123);
     Ok(())
 }
+
+type DC = DatasetCreate;
+type DCB = DatasetCreateBuilder;
+
+#[test]
+fn test_dcpl_common() -> hdf5::Result<()> {
+    test_pl_common!(DC, PropertyListClass::DatasetCreate, |b: &mut DCB| b
+        .chunk(&[1, 2, 3])
+        .finish());
+    Ok(())
+}
+
+#[test]
+fn test_dcpl_set_chunk() -> hdf5::Result<()> {
+    assert!(DC::try_new()?.get_chunk()?.is_none());
+    assert_eq!(DCB::new().chunk(&[3, 7]).finish()?.get_chunk()?, Some(vec![3, 7]));
+    assert_eq!(DCB::new().chunk(&[3, 7]).finish()?.chunk(), Some(vec![3, 7]));
+    assert!(DCB::new().layout(Layout::Contiguous).finish()?.get_chunk()?.is_none());
+    assert!(DCB::new().layout(Layout::Compact).finish()?.get_chunk()?.is_none());
+    #[cfg(hdf5_1_10_0)]
+    assert!(DCB::new().layout(Layout::Virtual).finish()?.get_chunk()?.is_none());
+    assert_eq!(DCB::new().layout(Layout::Chunked).finish()?.get_chunk()?, Some(vec![]));
+    Ok(())
+}
