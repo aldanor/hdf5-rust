@@ -25,6 +25,12 @@ pub enum H5D_layout_t {
     H5D_NLAYOUTS = 3,
 }
 
+impl Default for H5D_layout_t {
+    fn default() -> Self {
+        H5D_layout_t::H5D_CONTIGUOUS
+    }
+}
+
 pub type H5D_chunk_index_t = c_uint;
 
 pub const H5D_CHUNK_BTREE: H5D_chunk_index_t = 0;
@@ -38,6 +44,12 @@ pub enum H5D_alloc_time_t {
     H5D_ALLOC_TIME_EARLY = 1,
     H5D_ALLOC_TIME_LATE = 2,
     H5D_ALLOC_TIME_INCR = 3,
+}
+
+impl Default for H5D_alloc_time_t {
+    fn default() -> Self {
+        H5D_alloc_time_t::H5D_ALLOC_TIME_DEFAULT
+    }
 }
 
 #[repr(C)]
