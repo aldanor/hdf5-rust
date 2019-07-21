@@ -44,6 +44,20 @@ pub const H5O_HDR_ALL_FLAGS: c_uint = H5O_HDR_CHUNK0_SIZE
 pub const H5O_SHMESG_MAX_NINDEXES: c_uint = 8;
 pub const H5O_SHMESG_MAX_LIST_SIZE: c_uint = 5000;
 
+#[cfg(hdf5_1_10_3)]
+pub const H5O_INFO_BASIC: c_uint = 0x0001;
+#[cfg(hdf5_1_10_3)]
+pub const H5O_INFO_TIME: c_uint = 0x0002;
+#[cfg(hdf5_1_10_3)]
+pub const H5O_INFO_NUM_ATTRS: c_uint = 0x0004;
+#[cfg(hdf5_1_10_3)]
+pub const H5O_INFO_HDR: c_uint = 0x0008;
+#[cfg(hdf5_1_10_3)]
+pub const H5O_INFO_META_SIZE: c_uint = 0x0010;
+#[cfg(hdf5_1_10_3)]
+pub const H5O_INFO_ALL: c_uint =
+    H5O_INFO_BASIC | H5O_INFO_TIME | H5O_INFO_NUM_ATTRS | H5O_INFO_HDR | H5O_INFO_META_SIZE;
+
 #[repr(C)]
 #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
 pub enum H5O_type_t {
