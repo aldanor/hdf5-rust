@@ -168,3 +168,34 @@ impl_h5get!(a: A);
 impl_h5get!(a: A, b: B);
 impl_h5get!(a: A, b: B, c: C);
 impl_h5get!(a: A, b: B, c: C, d: D);
+
+macro_rules! h5err {
+    ($msg:expr, $major:expr, $minor:expr) => {
+        let line = line!();
+        let file = $crate::util::to_cstring(file!()).unwrap_or_default();
+        let modpath = $crate::util::to_cstring(module_path!()).unwrap_or_default();
+        let msg = to_cstring($msg).unwrap_or_default();
+        #[allow(unused_unsafe)]
+        unsafe {
+            ::hdf5_sys::h5e::H5Epush2(
+                ::hdf5_sys::h5e::H5E_DEFAULT,
+                file.as_ptr(),
+                modpath.as_ptr(),
+                line as _,
+                *$crate::globals::H5E_ERR_CLS,
+                *$major,
+                *$minor,
+                msg.as_ptr(),
+            );
+        }
+    };
+}
+
+macro_rules! h5maybe_err {
+    ($retcode:expr, $msg:expr, $major:expr, $minor:expr) => {{
+        if $crate::error::is_err_code($retcode) {
+            h5err!($msg, $major, $minor);
+        }
+        $retcode
+    }};
+}
