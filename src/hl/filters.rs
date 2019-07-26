@@ -37,6 +37,8 @@ pub enum Filter {
     SZip(SZip, u8),
     NBit,
     ScaleOffset(ScaleOffset, i8),
+    #[cfg(feature = "lzf")]
+    LZF,
     User(H5Z_filter_t, Vec<c_uint>),
 }
 
@@ -56,6 +58,8 @@ impl Filter {
             Filter::SZip(_, _) => H5Z_FILTER_SZIP,
             Filter::NBit => H5Z_FILTER_NBIT,
             Filter::ScaleOffset(_, _) => H5Z_FILTER_SCALEOFFSET,
+            #[cfg(feature = "lzf")]
+            Filter::LZF => lzf::LZF_FILTER_ID,
             Filter::User(id, _) => *id,
         }
     }
@@ -107,6 +111,11 @@ impl Filter {
 
     pub fn scale_offset(mode: ScaleOffset, factor: i8) -> Self {
         Filter::ScaleOffset(mode, factor)
+    }
+
+    #[cfg(feature = "lzf")]
+    pub fn lzf() -> Self {
+        Filter::LZF
     }
 
     pub fn user(id: H5Z_filter_t, cdata: &[c_uint]) -> Self {
@@ -166,6 +175,12 @@ impl Filter {
         Ok(Self::scale_offset(scale_mode, cdata[1] as _))
     }
 
+    #[cfg(feature = "lzf")]
+    fn parse_lzf(cdata: &[c_uint]) -> Result<Self> {
+        ensure!(cdata.len() == 0, "expected length 0 cdata for lzf filter");
+        Ok(Self::lzf())
+    }
+
     pub fn from_raw(filter_id: H5Z_filter_t, cdata: &[c_uint]) -> Result<Self> {
         ensure!(filter_id > 0, "invalid filter id: {}", filter_id);
         match filter_id {
@@ -175,6 +190,8 @@ impl Filter {
             H5Z_FILTER_SZIP => Self::parse_szip(cdata),
             H5Z_FILTER_NBIT => Self::parse_nbit(cdata),
             H5Z_FILTER_SCALEOFFSET => Self::parse_scaleoffset(cdata),
+            #[cfg(feature = "lzf")]
+            lzf::LZF_FILTER_ID => Self::parse_lzf(cdata),
             _ => Ok(Self::user(filter_id, cdata)),
         }
     }
@@ -211,6 +228,11 @@ impl Filter {
         H5Pset_scaleoffset(plist_id, scale_type, offset as _)
     }
 
+    #[cfg(feature = "lzf")]
+    unsafe fn apply_lzf(plist_id: hid_t) -> herr_t {
+        Self::apply_user(plist_id, lzf::LZF_FILTER_ID, &[])
+    }
+
     unsafe fn apply_user(plist_id: hid_t, filter_id: H5Z_filter_t, cdata: &[c_uint]) -> herr_t {
         // We're setting custom filters to optional, same way h5py does it, since
         // the only mention of H5Z_FLAG_MANDATORY in the HDF5 source itself is
@@ -229,6 +251,8 @@ impl Filter {
             Filter::SZip(coding, px_per_block) => Self::apply_szip(id, *coding, *px_per_block),
             Filter::NBit => Self::apply_nbit(id),
             Filter::ScaleOffset(mode, offset) => Self::apply_scaleoffset(id, *mode, *offset),
+            #[cfg(feature = "lzf")]
+            Filter::LZF => Self::apply_lzf(id),
             Filter::User(filter_id, ref cdata) => Self::apply_user(id, *filter_id, cdata),
         });
         Ok(())

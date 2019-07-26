@@ -240,6 +240,12 @@ impl DatasetCreateBuilder {
         self
     }
 
+    #[cfg(feature = "lzf")]
+    pub fn lzf(&mut self) -> &mut Self {
+        self.filters.push(Filter::lzf());
+        self
+    }
+
     pub fn add_filter(&mut self, id: H5Z_filter_t, cdata: &[c_uint]) -> &mut Self {
         self.filters.push(Filter::user(id, cdata));
         self
