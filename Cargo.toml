@@ -14,7 +14,7 @@ edition = "2018"
 [features]
 default = []
 mpio = ["mpi-sys", "hdf5-sys/mpio"]
-lzf = ["cc"]
+lzf = ["cc", "errno"]
 
 [workspace]
 members = [".", "hdf5-types", "hdf5-derive", "hdf5-sys", "hdf5-src"]
@@ -29,9 +29,10 @@ ndarray = ">=0.13,<0.15"
 num-integer = "0.1"
 num-traits = "0.2"
 mpi-sys = { version = "0.1", optional = true }
-hdf5-sys = { path = "hdf5-sys", version = "0.7.1" }  # !V
-hdf5-types = { path = "hdf5-types", version = "0.7.1" }  # !V
-hdf5-derive = { path = "hdf5-derive", version = "0.7.1" }  # !V
+errno = { version = "0.2", optional = true }
+hdf5-sys = { path = "hdf5-sys", version = "0.7.0" }  # !V
+hdf5-types = { path = "hdf5-types", version = "0.7.0" }  # !V
+hdf5-derive = { path = "hdf5-derive", version = "0.7.0" }  # !V
 
 [dev-dependencies]
 paste = "1.0"

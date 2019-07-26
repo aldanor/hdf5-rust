@@ -14,6 +14,9 @@ use hdf5_sys::h5z::{
 
 use crate::internal_prelude::*;
 
+#[cfg(feature = "lzf")]
+mod lzf;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SZip {
     Entropy,
