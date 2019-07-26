@@ -1,5 +1,16 @@
 use std::env;
 
+#[cfg(feature = "lzf")]
+fn build_lzf() {
+    cc::Build::new()
+        .warnings(false)
+        .opt_level(3)
+        .file("ext/lzf/lzf_c.c")
+        .file("ext/lzf/lzf_d.c")
+        .include("ext/lzf")
+        .compile("lzf");
+}
+
 fn main() {
     for (key, _) in env::vars() {
         let key = match key.as_str() {
@@ -16,4 +27,6 @@ fn main() {
         };
         println!("cargo:rustc-cfg={}", key);
     }
+    #[cfg(feature = "lzf")]
+    build_lzf();
 }
