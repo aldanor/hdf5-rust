@@ -15,6 +15,7 @@ edition = "2018"
 default = []
 mpio = ["mpi-sys", "hdf5-sys/mpio"]
 lzf = ["cc", "errno"]
+blosc = ["cmake"]
 
 [workspace]
 members = [".", "hdf5-types", "hdf5-derive", "hdf5-sys", "hdf5-src"]
@@ -44,6 +45,7 @@ tempfile = "3.2"
 
 [build-dependencies]
 cc = { version = "1.0", optional = true }
+cmake = { version = "0.1", optional = true }
 
 [package.metadata.docs.rs]
 features = ["hdf5-sys/static", "hdf5-sys/zlib"]
