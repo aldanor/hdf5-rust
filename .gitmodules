@@ -1,3 +1,6 @@
 [submodule "hdf5"]
 	path = hdf5-src/ext/hdf5
 	url = https://github.com/HDFGroup/hdf5.git
+[submodule "ext/c-blosc"]
+	path = ext/c-blosc
+	url = https://github.com/Blosc/c-blosc.git
