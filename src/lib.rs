@@ -106,8 +106,8 @@ mod internal_prelude {
         hl::plist::PropertyListClass,
         sync::sync,
         util::{
-            get_h5_str, string_from_cstr, string_from_fixed_bytes, string_to_fixed_bytes,
-            to_cstring,
+            get_h5_str, h5_free_memory, string_from_cstr, string_from_fixed_bytes,
+            string_to_fixed_bytes, to_cstring,
         },
     };
 
