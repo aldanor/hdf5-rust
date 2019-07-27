@@ -17,7 +17,7 @@ use hdf5_sys::h5e::{
 
 use crate::internal_prelude::*;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ErrorFrame {
     desc: String,
     func: String,
@@ -103,7 +103,7 @@ pub fn silence_errors() -> SilenceErrors {
     SilenceErrors::new()
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ErrorStack {
     frames: Vec<ErrorFrame>,
     description: Option<String>,
