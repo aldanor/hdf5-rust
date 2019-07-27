@@ -8,8 +8,8 @@ use bitflags::bitflags;
 
 use hdf5_sys::h5d::{H5D_alloc_time_t, H5D_layout_t};
 use hdf5_sys::h5p::{
-    H5Pcreate, H5Pget_alloc_time, H5Pget_chunk, H5Pget_layout, H5Pset_alloc_time, H5Pset_chunk,
-    H5Pset_layout,
+    H5Pall_filters_avail, H5Pcreate, H5Pget_alloc_time, H5Pget_chunk, H5Pget_layout,
+    H5Pset_alloc_time, H5Pset_chunk, H5Pset_layout,
 };
 #[cfg(hdf5_1_10_0)]
 use hdf5_sys::{
@@ -249,6 +249,10 @@ impl DatasetCreate {
 
     pub fn build() -> DatasetCreateBuilder {
         DatasetCreateBuilder::new()
+    }
+
+    pub fn all_filters_avail(&self) -> bool {
+        h5lock!(H5Pall_filters_avail(self.id())) > 0
     }
 
     #[doc(hidden)]
