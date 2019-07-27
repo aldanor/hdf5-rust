@@ -653,3 +653,24 @@ fn test_dcpl_set_alloc_time() -> hdf5::Result<()> {
     check_matches!(b.finish()?.get_alloc_time()?, (), AllocTime::Early);
     Ok(())
 }
+
+#[test]
+fn test_dcpl_external() -> hdf5::Result<()> {
+    assert_eq!(DC::try_new()?.get_external()?, vec![]);
+    let pl = DCB::new()
+        .external("bar", 0, 1)
+        .external("baz", 34, 100)
+        .external("foo", 12, 0)
+        .finish()?;
+    let expected = vec![
+        ExternalFile { name: "bar".to_owned(), offset: 0, size: 1 },
+        ExternalFile { name: "baz".to_owned(), offset: 34, size: 100 },
+        ExternalFile { name: "foo".to_owned(), offset: 12, size: 0 },
+    ];
+    assert_eq!(pl.get_external()?, expected);
+    assert_eq!(pl.external(), expected);
+    assert_eq!(DCB::from_plist(&pl)?.finish()?.get_external()?, expected);
+    let _e = hdf5::silence_errors();
+    assert!(DCB::new().external("a", 1, 0).external("b", 1, 2).finish().is_err());
+    Ok(())
+}

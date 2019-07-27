@@ -7,9 +7,11 @@ use std::ptr;
 use bitflags::bitflags;
 
 use hdf5_sys::h5d::{H5D_alloc_time_t, H5D_layout_t};
+use hdf5_sys::h5f::H5F_UNLIMITED;
 use hdf5_sys::h5p::{
-    H5Pall_filters_avail, H5Pcreate, H5Pget_alloc_time, H5Pget_chunk, H5Pget_layout,
-    H5Pset_alloc_time, H5Pset_chunk, H5Pset_layout,
+    H5Pall_filters_avail, H5Pcreate, H5Pget_alloc_time, H5Pget_chunk, H5Pget_external,
+    H5Pget_external_count, H5Pget_layout, H5Pset_alloc_time, H5Pset_chunk, H5Pset_external,
+    H5Pset_layout,
 };
 #[cfg(hdf5_1_10_0)]
 use hdf5_sys::{
@@ -54,6 +56,7 @@ impl Debug for DatasetCreate {
         formatter.field("layout", &self.layout());
         #[cfg(hdf5_1_10_0)]
         formatter.field("chunk_opts", &self.chunk_opts());
+        formatter.field("external", &self.external());
         formatter.finish()
     }
 }
@@ -153,6 +156,13 @@ impl From<AllocTime> for H5D_alloc_time_t {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ExternalFile {
+    pub name: String,
+    pub offset: usize,
+    pub size: usize,
+}
+
 /// Builder used to create dataset creation property list.
 #[derive(Clone, Debug, Default)]
 pub struct DatasetCreateBuilder {
@@ -161,6 +171,7 @@ pub struct DatasetCreateBuilder {
     layout: Option<Layout>,
     #[cfg(hdf5_1_10_0)]
     chunk_opts: Option<ChunkOpts>,
+    external: Vec<ExternalFile>,
 }
 
 impl DatasetCreateBuilder {
@@ -182,6 +193,9 @@ impl DatasetCreateBuilder {
             if let Some(v) = plist.get_chunk_opts()? {
                 builder.chunk_opts(v);
             }
+        }
+        for external in &plist.get_external()? {
+            builder.external(&external.name, external.offset, external.size);
         }
         Ok(builder)
     }
@@ -207,6 +221,11 @@ impl DatasetCreateBuilder {
         self
     }
 
+    pub fn external(&mut self, name: &str, offset: usize, size: usize) -> &mut Self {
+        self.external.push(ExternalFile { name: name.to_owned(), offset, size });
+        self
+    }
+
     fn populate_plist(&self, id: hid_t) -> Result<()> {
         if let Some(v) = self.alloc_time {
             let v = v.map(Into::into).unwrap_or(H5D_alloc_time_t::H5D_ALLOC_TIME_DEFAULT);
@@ -224,6 +243,11 @@ impl DatasetCreateBuilder {
             if let Some(v) = self.chunk_opts {
                 h5try!(H5Pset_chunk_opts(id, v.bits() as _));
             }
+        }
+        for external in &self.external {
+            let name = to_cstring(external.name.as_str())?;
+            let size = if external.size != 0 { external.size as _ } else { H5F_UNLIMITED as _ };
+            h5try!(H5Pset_external(id, name.as_ptr(), external.offset as _, size));
         }
         Ok(())
     }
@@ -305,5 +329,37 @@ impl DatasetCreate {
     #[cfg(hdf5_1_10_0)]
     pub fn chunk_opts(&self) -> Option<ChunkOpts> {
         self.get_chunk_opts().unwrap_or_default()
+    }
+
+    #[doc(hidden)]
+    pub fn get_external(&self) -> Result<Vec<ExternalFile>> {
+        h5lock!({
+            let mut external = Vec::new();
+            let count = h5try!(H5Pget_external_count(self.id()));
+            const NAME_LEN: usize = 1024;
+            let mut name = vec![0 as c_char; NAME_LEN + 1];
+            for idx in 0..count {
+                let mut offset: libc::off_t = 0;
+                let mut size: hsize_t = 0;
+                h5try!(H5Pget_external(
+                    self.id(),
+                    idx as _,
+                    NAME_LEN as _,
+                    name.as_mut_ptr(),
+                    &mut offset as *mut _,
+                    &mut size as *mut _,
+                ));
+                external.push(ExternalFile {
+                    name: string_from_cstr(name.as_ptr()),
+                    offset: offset as _,
+                    size: if size >= H5F_UNLIMITED { 0 } else { size as _ },
+                })
+            }
+            Ok(external)
+        })
+    }
+
+    pub fn external(&self) -> Vec<ExternalFile> {
+        self.get_external().unwrap_or_default()
     }
 }
