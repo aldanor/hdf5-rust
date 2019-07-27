@@ -107,6 +107,14 @@ pub struct FilterInfo {
     pub decode_enabled: bool,
 }
 
+pub(crate) fn register_filters() -> Result<()> {
+    #[cfg(feature = "lzf")]
+    lzf::register_lzf()?;
+    #[cfg(feature = "blosc")]
+    blosc::register_blosc()?;
+    Ok(())
+}
+
 impl Filter {
     pub fn id(&self) -> H5Z_filter_t {
         match self {
