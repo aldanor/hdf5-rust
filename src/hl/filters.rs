@@ -14,6 +14,8 @@ use hdf5_sys::h5z::{
 
 use crate::internal_prelude::*;
 
+#[cfg(feature = "blosc")]
+mod blosc;
 #[cfg(feature = "lzf")]
 mod lzf;
 
