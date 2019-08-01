@@ -123,6 +123,18 @@ pub fn hdf5_version() -> (u8, u8, u8) {
         .unwrap_or((0, 0, 0))
 }
 
+/// Returns true if the runtime version of the HDF5 library is threadsafe.
+pub fn hdf5_threadsafe() -> bool {
+    use self::internal_prelude::hbool_t;
+    use hdf5_sys::h5::H5is_library_threadsafe;
+    let mut threadsafe : hbool_t = 0;
+    if h5call!(H5is_library_threadsafe(&mut threadsafe)).unwrap_or(-1) >= 0{
+        threadsafe == 1
+    } else {
+        false
+    }
+}
+
 #[cfg(test)]
 pub mod tests {
     use super::hdf5_version;
