@@ -128,8 +128,8 @@ pub fn hdf5_threadsafe() -> bool {
     extern crate hdf5_sys;
     use self::internal_prelude::hbool_t;
     use hdf5_sys::h5::H5is_library_threadsafe;
-    let mut threadsafe : hbool_t = 0;
-    if h5call!(H5is_library_threadsafe(&mut threadsafe)).unwrap_or(-1) >= 0{
+    let mut threadsafe: hbool_t = 0;
+    if h5call!(H5is_library_threadsafe(&mut threadsafe)).unwrap_or(-1) >= 0 {
         threadsafe == 1
     } else {
         false
