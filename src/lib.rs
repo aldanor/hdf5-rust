@@ -125,7 +125,6 @@ pub fn hdf5_version() -> (u8, u8, u8) {
 
 /// Returns true if the runtime version of the HDF5 library is threadsafe.
 pub fn hdf5_threadsafe() -> bool {
-    extern crate hdf5_sys;
     use self::internal_prelude::hbool_t;
     use hdf5_sys::h5::H5is_library_threadsafe;
     let mut threadsafe : hbool_t = 0;
