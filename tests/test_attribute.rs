@@ -16,9 +16,13 @@ where
 
     for i in 0..1000 {
         let value = T::gen(&mut rng);
-        let attr = ds.create_attr::<T>(format!("attr_{}", i).as_str())?;
+        let name = format!("attr_{}", i);
+        assert_eq!(false, ds.attr_exists(name.as_str())?);
+        let attr = ds.create_attr::<T>(name.as_str())?;
+
         attr.write_scalar(&value)?;
         assert_eq!(value, attr.read_scalar::<T>()?);
+        assert_eq!(true, ds.attr_exists(name.as_str())?);
     }
     Ok(())
 }

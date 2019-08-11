@@ -6,7 +6,7 @@ use num_integer::div_floor;
 
 use hdf5_sys::{
     h5::HADDR_UNDEF,
-    h5a::{H5Acreate2, H5Aopen},
+    h5a::{H5Acreate2, H5Aexists, H5Aopen},
     h5d::{
         H5D_fill_value_t, H5D_layout_t, H5Dcreate2, H5Dcreate_anon, H5Dget_create_plist,
         H5Dget_offset, H5Dset_extent, H5D_FILL_TIME_ALLOC,
@@ -188,6 +188,12 @@ impl Dataset {
     pub fn attr(&self, name: &str) -> Result<Attribute> {
         let name = to_cstring(name)?;
         Attribute::from_id(h5try!(H5Aopen(self.id(), name.as_ptr(), H5P_DEFAULT)))
+    }
+
+    /// Checks if the attribute exists.
+    pub fn attr_exists(&self, name: &str) -> Result<bool> {
+        let name = to_cstring(name)?;
+        Ok(h5try!(H5Aexists(self.id(), name.as_ptr())) > 0)
     }
 }
 
