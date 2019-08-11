@@ -6,6 +6,7 @@ use num_integer::div_floor;
 
 use hdf5_sys::{
     h5::HADDR_UNDEF,
+    h5a::{H5Acreate2, H5Aopen},
     h5d::{
         H5D_fill_value_t, H5D_layout_t, H5Dcreate2, H5Dcreate_anon, H5Dget_create_plist,
         H5Dget_offset, H5Dset_extent, H5D_FILL_TIME_ALLOC,
@@ -18,6 +19,7 @@ use hdf5_sys::{
 };
 
 use crate::globals::H5P_LINK_CREATE;
+use crate::hl::Attribute;
 use crate::internal_prelude::*;
 
 /// Represents the HDF5 dataset object.
@@ -161,6 +163,31 @@ impl Dataset {
         }
         h5try!(H5Dset_extent(self.id(), dims.as_ptr()));
         Ok(())
+    }
+
+    /// Creates a new attribute.
+    pub fn create_attr<T: H5Type>(&self, name: &str) -> Result<Attribute> {
+        let type_descriptor = <T as H5Type>::type_descriptor().to_c_repr();
+        let name = to_cstring(name)?;
+        h5lock!({
+            let datatype = Datatype::from_descriptor(&type_descriptor)?;
+            let dataspace = Dataspace::try_new((), true)?;
+
+            Attribute::from_id(h5try!(H5Acreate2(
+                self.id(),
+                name.as_ptr(),
+                datatype.id(),
+                dataspace.id(),
+                H5P_DEFAULT,
+                H5P_DEFAULT
+            )))
+        })
+    }
+
+    /// Retrieves an existing attribute.
+    pub fn attr(&self, name: &str) -> Result<Attribute> {
+        let name = to_cstring(name)?;
+        Attribute::from_id(h5try!(H5Aopen(self.id(), name.as_ptr(), H5P_DEFAULT)))
     }
 }
 
