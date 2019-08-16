@@ -674,3 +674,50 @@ fn test_dcpl_external() -> hdf5::Result<()> {
     assert!(DCB::new().external("a", 1, 0).external("b", 1, 2).finish().is_err());
     Ok(())
 }
+
+#[cfg(hdf5_1_10_0)]
+#[test]
+fn test_dcpl_virtual_map() -> hdf5::Result<()> {
+    use hdf5::Hyperslab;
+    use ndarray::s;
+
+    let _e = hdf5::silence_errors();
+
+    let pl = DC::try_new()?;
+    assert!(pl.get_virtual_map().is_err());
+    assert_eq!(pl.virtual_map(), vec![]);
+
+    let pl = DCB::new().layout(Layout::Virtual).finish()?;
+    assert_eq!(pl.get_virtual_map()?, vec![]);
+    assert_eq!(pl.virtual_map(), vec![]);
+
+    let pl = DCB::new()
+        .layout(Layout::Virtual)
+        .virtual_map("foo", "bar", (3, 4..), (.., 1..), (10..=20, 10), (..3, 7..))
+        .virtual_map("x", "y", 100, 91.., 12, Hyperslab::new(s![2..;3]).set_block(0)?)
+        .finish()?;
+    let expected = vec![
+        VirtualMapping {
+            src_filename: "foo".into(),
+            src_dataset: "bar".into(),
+            src_extents: (3, 4..).into(),
+            src_selection: (..3, 1..4).into(),
+            vds_extents: (10..=20, 10).into(),
+            vds_selection: (..3, 7..10).into(),
+        },
+        VirtualMapping {
+            src_filename: "x".into(),
+            src_dataset: "y".into(),
+            src_extents: 100.into(),
+            src_selection: (91..100).into(),
+            vds_extents: 12.into(),
+            vds_selection: Hyperslab::new(s![2..11;3]).set_block(0)?.into(),
+        },
+    ];
+    assert_eq!(pl.get_virtual_map()?, expected);
+    assert_eq!(pl.virtual_map(), expected);
+
+    assert_eq!(DCB::from_plist(&pl)?.finish()?.get_virtual_map()?, expected);
+
+    Ok(())
+}

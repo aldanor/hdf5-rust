@@ -17,7 +17,10 @@ use hdf5_sys::h5z::H5Z_filter_t;
 #[cfg(hdf5_1_10_0)]
 use hdf5_sys::{
     h5d::H5D_CHUNK_DONT_FILTER_PARTIAL_CHUNKS,
-    h5p::{H5Pget_chunk_opts, H5Pset_chunk_opts},
+    h5p::{
+        H5Pget_chunk_opts, H5Pget_virtual_count, H5Pget_virtual_dsetname, H5Pget_virtual_filename,
+        H5Pget_virtual_srcspace, H5Pget_virtual_vspace, H5Pset_chunk_opts, H5Pset_virtual,
+    },
 };
 
 use crate::globals::H5P_DATASET_CREATE;
@@ -62,6 +65,8 @@ impl Debug for DatasetCreate {
         #[cfg(hdf5_1_10_0)]
         formatter.field("chunk_opts", &self.chunk_opts());
         formatter.field("external", &self.external());
+        #[cfg(hdf5_1_10_0)]
+        formatter.field("virtual_map", &self.virtual_map());
         formatter.finish()
     }
 }
@@ -168,6 +173,17 @@ pub struct ExternalFile {
     pub size: usize,
 }
 
+#[cfg(hdf5_1_10_0)]
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct VirtualMapping {
+    pub src_filename: String,
+    pub src_dataset: String,
+    pub src_extents: Extents,
+    pub src_selection: Selection,
+    pub vds_extents: Extents,
+    pub vds_selection: Selection,
+}
+
 /// Builder used to create dataset creation property list.
 #[derive(Clone, Debug, Default)]
 pub struct DatasetCreateBuilder {
@@ -178,6 +194,8 @@ pub struct DatasetCreateBuilder {
     #[cfg(hdf5_1_10_0)]
     chunk_opts: Option<ChunkOpts>,
     external: Vec<ExternalFile>,
+    #[cfg(hdf5_1_10_0)]
+    virtual_map: Vec<VirtualMapping>,
 }
 
 impl DatasetCreateBuilder {
@@ -194,11 +212,24 @@ impl DatasetCreateBuilder {
         if let Some(v) = plist.get_chunk()? {
             builder.chunk(&v);
         }
-        builder.layout(plist.get_layout()?);
+        let layout = plist.get_layout()?;
+        builder.layout(layout);
         #[cfg(hdf5_1_10_0)]
         {
             if let Some(v) = plist.get_chunk_opts()? {
                 builder.chunk_opts(v);
+            }
+            if layout == Layout::Virtual {
+                for mapping in &plist.get_virtual_map()? {
+                    builder.virtual_map(
+                        &mapping.src_filename,
+                        &mapping.src_dataset,
+                        &mapping.src_extents,
+                        &mapping.src_selection,
+                        &mapping.vds_extents,
+                        &mapping.vds_selection,
+                    );
+                }
             }
         }
         for external in &plist.get_external()? {
@@ -342,6 +373,30 @@ impl DatasetCreateBuilder {
         self
     }
 
+    #[cfg(hdf5_1_10_0)]
+    pub fn virtual_map<F, D, E1, S1, E2, S2>(
+        &mut self, src_filename: F, src_dataset: D, src_extents: E1, src_selection: S1,
+        vds_extents: E2, vds_selection: S2,
+    ) -> &mut Self
+    where
+        F: AsRef<str>,
+        D: AsRef<str>,
+        E1: Into<Extents>,
+        S1: Into<Selection>,
+        E2: Into<Extents>,
+        S2: Into<Selection>,
+    {
+        self.virtual_map.push(VirtualMapping {
+            src_filename: src_filename.as_ref().into(),
+            src_dataset: src_dataset.as_ref().into(),
+            src_extents: src_extents.into(),
+            src_selection: src_selection.into(),
+            vds_extents: vds_extents.into(),
+            vds_selection: vds_selection.into(),
+        });
+        self
+    }
+
     fn populate_plist(&self, id: hid_t) -> Result<()> {
         for filter in &self.filters {
             filter.apply_to_plist(id)?;
@@ -361,6 +416,19 @@ impl DatasetCreateBuilder {
         {
             if let Some(v) = self.chunk_opts {
                 h5try!(H5Pset_chunk_opts(id, v.bits() as _));
+            }
+            for v in &self.virtual_map {
+                let src_filename = to_cstring(v.src_filename.as_str())?;
+                let src_dataset = to_cstring(v.src_dataset.as_str())?;
+                let src_space = Dataspace::try_new(&v.src_extents)?.select(&v.src_selection)?;
+                let vds_space = Dataspace::try_new(&v.vds_extents)?.select(&v.vds_selection)?;
+                h5try!(H5Pset_virtual(
+                    id,
+                    vds_space.id(),
+                    src_filename.as_ptr(),
+                    src_dataset.as_ptr(),
+                    src_space.id()
+                ));
             }
         }
         for external in &self.external {
@@ -489,5 +557,46 @@ impl DatasetCreate {
 
     pub fn external(&self) -> Vec<ExternalFile> {
         self.get_external().unwrap_or_default()
+    }
+
+    #[cfg(hdf5_1_10_0)]
+    #[doc(hidden)]
+    pub fn get_virtual_map(&self) -> Result<Vec<VirtualMapping>> {
+        sync(|| unsafe {
+            let id = self.id();
+            let n_virtual = h5get!(H5Pget_virtual_count(id): size_t)? as _;
+            let mut virtual_map = Vec::with_capacity(n_virtual);
+
+            for i in 0..n_virtual {
+                let src_filename = get_h5_str(|s, n| H5Pget_virtual_filename(id, i, s, n))?;
+                let src_dataset = get_h5_str(|s, n| H5Pget_virtual_dsetname(id, i, s, n))?;
+
+                let src_space_id = h5check(H5Pget_virtual_srcspace(id, i))?;
+                let src_space = Dataspace::from_id(src_space_id)?;
+                let src_extents = src_space.extents()?;
+                let src_selection = src_space.get_selection()?;
+
+                let vds_space_id = h5check(H5Pget_virtual_vspace(id, i))?;
+                let vds_space = Dataspace::from_id(vds_space_id)?;
+                let vds_extents = vds_space.extents()?;
+                let vds_selection = vds_space.get_selection()?;
+
+                virtual_map.push(VirtualMapping {
+                    src_filename,
+                    src_dataset,
+                    src_extents,
+                    src_selection,
+                    vds_extents,
+                    vds_selection,
+                })
+            }
+
+            Ok(virtual_map)
+        })
+    }
+
+    #[cfg(hdf5_1_10_0)]
+    pub fn virtual_map(&self) -> Vec<VirtualMapping> {
+        self.get_virtual_map().unwrap_or_default()
     }
 }
