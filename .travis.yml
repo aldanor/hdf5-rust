@@ -96,7 +96,7 @@ before_install:
     hash -r;
     conda config --set always_yes yes --set changeps1 no;
     conda info -a;
-    conda create -q -n testenv hdf5=${H5_CONDA};
+    conda create -q -n testenv -c anaconda hdf5=${H5_CONDA};
     export HDF5_DIR="$HOME/miniconda/envs/testenv";
     export RUSTFLAGS="-C link-args=-Wl,-rpath,$HOME/miniconda/envs/testenv/lib";
   fi
