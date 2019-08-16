@@ -114,7 +114,7 @@ mod internal_prelude {
 pub mod test;
 
 /// Returns the runtime version of the HDF5 library.
-pub fn hdf5_version() -> (u8, u8, u8) {
+pub fn library_version() -> (u8, u8, u8) {
     use self::internal_prelude::c_uint;
     use hdf5_sys::h5::H5get_libversion;
     let mut v: (c_uint, c_uint, c_uint) = (0, 0, 0);
@@ -133,10 +133,10 @@ pub fn is_library_threadsafe() -> bool {
 
 #[cfg(test)]
 pub mod tests {
-    use super::hdf5_version;
+    use crate::library_version;
 
     #[test]
-    pub fn test_hdf5_version() {
-        assert!(hdf5_version() >= (1, 8, 4));
+    pub fn test_library_version() {
+        assert!(library_version() >= (1, 8, 4));
     }
 }
