@@ -13,6 +13,7 @@ use hdf5_sys::h5p::{
     H5Pget_external_count, H5Pget_layout, H5Pset_alloc_time, H5Pset_chunk, H5Pset_external,
     H5Pset_layout,
 };
+use hdf5_sys::h5z::H5Z_filter_t;
 #[cfg(hdf5_1_10_0)]
 use hdf5_sys::{
     h5d::H5D_CHUNK_DONT_FILTER_PARTIAL_CHUNKS,
@@ -20,6 +21,7 @@ use hdf5_sys::{
 };
 
 use crate::globals::H5P_DATASET_CREATE;
+use crate::hl::filters::{Filter, SZip, ScaleOffset};
 use crate::internal_prelude::*;
 
 /// Dataset creation properties.
@@ -51,6 +53,7 @@ impl Debug for DatasetCreate {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let _e = silence_errors();
         let mut formatter = f.debug_struct("DatasetCreate");
+        formatter.field("filters", &self.filters());
         formatter.field("alloc_time", &self.alloc_time());
         formatter.field("chunk", &self.chunk());
         formatter.field("layout", &self.layout());
@@ -166,6 +169,7 @@ pub struct ExternalFile {
 /// Builder used to create dataset creation property list.
 #[derive(Clone, Debug, Default)]
 pub struct DatasetCreateBuilder {
+    filters: Vec<Filter>,
     alloc_time: Option<Option<AllocTime>>,
     chunk: Option<Vec<usize>>,
     layout: Option<Layout>,
@@ -183,6 +187,7 @@ impl DatasetCreateBuilder {
     /// Creates a new builder from an existing property list.
     pub fn from_plist(plist: &DatasetCreate) -> Result<Self> {
         let mut builder = Self::default();
+        builder.set_filters(&plist.get_filters()?);
         builder.alloc_time(Some(plist.get_alloc_time()?));
         if let Some(v) = plist.get_chunk()? {
             builder.chunk(&v);
@@ -198,6 +203,46 @@ impl DatasetCreateBuilder {
             builder.external(&external.name, external.offset, external.size);
         }
         Ok(builder)
+    }
+
+    pub fn set_filters(&mut self, filters: &[Filter]) -> &mut Self {
+        self.filters = filters.to_owned();
+        self
+    }
+
+    pub fn deflate(&mut self, level: u8) -> &mut Self {
+        self.filters.push(Filter::deflate(level));
+        self
+    }
+
+    pub fn shuffle(&mut self) -> &mut Self {
+        self.filters.push(Filter::shuffle());
+        self
+    }
+
+    pub fn fletcher32(&mut self) -> &mut Self {
+        self.filters.push(Filter::fletcher32());
+        self
+    }
+
+    pub fn szip(&mut self, coding: SZip, px_per_block: u8) -> &mut Self {
+        self.filters.push(Filter::szip(coding, px_per_block));
+        self
+    }
+
+    pub fn nbit(&mut self) -> &mut Self {
+        self.filters.push(Filter::nbit());
+        self
+    }
+
+    pub fn scale_offset(&mut self, mode: ScaleOffset, factor: i8) -> &mut Self {
+        self.filters.push(Filter::scale_offset(mode, factor));
+        self
+    }
+
+    pub fn add_filter(&mut self, id: H5Z_filter_t, cdata: &[c_uint]) -> &mut Self {
+        self.filters.push(Filter::user(id, cdata));
+        self
     }
 
     pub fn alloc_time(&mut self, alloc_time: Option<AllocTime>) -> &mut Self {
@@ -227,6 +272,9 @@ impl DatasetCreateBuilder {
     }
 
     fn populate_plist(&self, id: hid_t) -> Result<()> {
+        for filter in &self.filters {
+            filter.apply_to_plist(id)?;
+        }
         if let Some(v) = self.alloc_time {
             let v = v.map(Into::into).unwrap_or(H5D_alloc_time_t::H5D_ALLOC_TIME_DEFAULT);
             h5try!(H5Pset_alloc_time(id, v));
@@ -277,6 +325,15 @@ impl DatasetCreate {
 
     pub fn all_filters_avail(&self) -> bool {
         h5lock!(H5Pall_filters_avail(self.id())) > 0
+    }
+
+    #[doc(hidden)]
+    pub fn get_filters(&self) -> Result<Vec<Filter>> {
+        Filter::extract_pipeline(self.id())
+    }
+
+    pub fn filters(&self) -> Vec<Filter> {
+        self.get_filters().unwrap_or_default()
     }
 
     #[doc(hidden)]
