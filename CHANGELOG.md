@@ -8,6 +8,7 @@
 - `File::access_plist()` or `File::fapl()` to get file access plist.
 - `File::create_plist()` or `File::fcpl()` to get file creation plist.
 - Added high-level wrappers for dataset access H5P API (`plist::DatasetAccess`).
+- Added `hdf5::is_library_threadsafe()` function.
 
 ### Changed
 
@@ -38,7 +39,8 @@
   as a result `error-chain` dependency has been dropped.
 - `hdf5::Error` is now convertible from `ndarray::ShapeError`;
   `hdf5::ResultExt` trait has been removed.
-  
+- Renamed `hdf5::hdf5_version()` to `hdf5::library_version()`.
+
 ### Fixed
 
 - Replaced deprecated `std::mem::uninitialized` with `std::mem::MaybeUninit`.
