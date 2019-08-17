@@ -1,6 +1,7 @@
 pub mod container;
 pub mod dataset;
 pub mod datatype;
+pub mod extents;
 pub mod file;
 #[allow(unused)] // temporarily
 pub mod filters;
