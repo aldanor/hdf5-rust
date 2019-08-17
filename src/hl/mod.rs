@@ -1,5 +1,6 @@
 pub mod container;
 pub mod dataset;
+pub mod dataspace;
 pub mod datatype;
 pub mod extents;
 pub mod file;
