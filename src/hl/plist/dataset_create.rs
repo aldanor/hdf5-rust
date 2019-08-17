@@ -21,6 +21,8 @@ use hdf5_sys::{
 };
 
 use crate::globals::H5P_DATASET_CREATE;
+#[cfg(feature = "blosc")]
+use crate::hl::filters::{Blosc, BloscShuffle};
 use crate::hl::filters::{Filter, SZip, ScaleOffset};
 use crate::internal_prelude::*;
 
@@ -243,6 +245,69 @@ impl DatasetCreateBuilder {
     #[cfg(feature = "lzf")]
     pub fn lzf(&mut self) -> &mut Self {
         self.filters.push(Filter::lzf());
+        self
+    }
+
+    #[cfg(feature = "blosc")]
+    pub fn blosc<T>(&mut self, complib: Blosc, clevel: u8, shuffle: T) -> &mut Self
+    where
+        T: Into<BloscShuffle>,
+    {
+        self.filters.push(Filter::blosc(complib, clevel, shuffle));
+        self
+    }
+
+    #[cfg(feature = "blosc")]
+    pub fn blosc_blosclz<T>(&mut self, clevel: u8, shuffle: T) -> &mut Self
+    where
+        T: Into<BloscShuffle>,
+    {
+        self.filters.push(Filter::blosc_blosclz(clevel, shuffle));
+        self
+    }
+
+    #[cfg(feature = "blosc")]
+    pub fn blosc_lz4<T>(&mut self, clevel: u8, shuffle: T) -> &mut Self
+    where
+        T: Into<BloscShuffle>,
+    {
+        self.filters.push(Filter::blosc_lz4(clevel, shuffle));
+        self
+    }
+
+    #[cfg(feature = "blosc")]
+    pub fn blosc_lz4hc<T>(&mut self, clevel: u8, shuffle: T) -> &mut Self
+    where
+        T: Into<BloscShuffle>,
+    {
+        self.filters.push(Filter::blosc_lz4hc(clevel, shuffle));
+        self
+    }
+
+    #[cfg(feature = "blosc")]
+    pub fn blosc_snappy<T>(&mut self, clevel: u8, shuffle: T) -> &mut Self
+    where
+        T: Into<BloscShuffle>,
+    {
+        self.filters.push(Filter::blosc_snappy(clevel, shuffle));
+        self
+    }
+
+    #[cfg(feature = "blosc")]
+    pub fn blosc_zlib<T>(&mut self, clevel: u8, shuffle: T) -> &mut Self
+    where
+        T: Into<BloscShuffle>,
+    {
+        self.filters.push(Filter::blosc_zlib(clevel, shuffle));
+        self
+    }
+
+    #[cfg(feature = "blosc")]
+    pub fn blosc_zstd<T>(&mut self, clevel: u8, shuffle: T) -> &mut Self
+    where
+        T: Into<BloscShuffle>,
+    {
+        self.filters.push(Filter::blosc_zstd(clevel, shuffle));
         self
     }
 

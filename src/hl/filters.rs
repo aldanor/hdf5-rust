@@ -31,6 +31,60 @@ pub enum ScaleOffset {
     FloatDScale,
 }
 
+#[cfg(feature = "blosc")]
+mod blosc_impl {
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum Blosc {
+        BloscLZ,
+        LZ4,
+        LZ4HC,
+        Snappy,
+        ZLib,
+        ZStd,
+    }
+
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum BloscShuffle {
+        None,
+        Byte,
+        Bit,
+    }
+
+    impl Default for BloscShuffle {
+        fn default() -> Self {
+            BloscShuffle::Byte
+        }
+    }
+
+    impl From<bool> for BloscShuffle {
+        fn from(shuffle: bool) -> Self {
+            if shuffle {
+                BloscShuffle::Byte
+            } else {
+                BloscShuffle::None
+            }
+        }
+    }
+
+    impl Default for Blosc {
+        fn default() -> Self {
+            Blosc::BloscLZ
+        }
+    }
+
+    pub fn blosc_get_nthreads() -> u8 {
+        h5lock!(super::blosc::blosc_get_nthreads()).max(0).min(255) as _
+    }
+
+    pub fn blosc_set_nthreads(nthreads: u8) -> u8 {
+        let nthreads = h5lock!(super::blosc::blosc_set_nthreads(nthreads as _));
+        nthreads.max(0).min(255) as _
+    }
+}
+
+#[cfg(feature = "blosc")]
+pub use blosc_impl::*;
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Filter {
     Deflate(u8),
@@ -41,6 +95,8 @@ pub enum Filter {
     ScaleOffset(ScaleOffset, i8),
     #[cfg(feature = "lzf")]
     LZF,
+    #[cfg(feature = "blosc")]
+    Blosc(Blosc, u8, BloscShuffle),
     User(H5Z_filter_t, Vec<c_uint>),
 }
 
@@ -62,6 +118,8 @@ impl Filter {
             Filter::ScaleOffset(_, _) => H5Z_FILTER_SCALEOFFSET,
             #[cfg(feature = "lzf")]
             Filter::LZF => lzf::LZF_FILTER_ID,
+            #[cfg(feature = "blosc")]
+            Filter::Blosc(_, _, _) => blosc::BLOSC_FILTER_ID,
             Filter::User(id, _) => *id,
         }
     }
@@ -118,6 +176,62 @@ impl Filter {
     #[cfg(feature = "lzf")]
     pub fn lzf() -> Self {
         Filter::LZF
+    }
+
+    #[cfg(feature = "blosc")]
+    pub fn blosc<T>(complib: Blosc, clevel: u8, shuffle: T) -> Self
+    where
+        T: Into<BloscShuffle>,
+    {
+        Filter::Blosc(complib, clevel, shuffle.into())
+    }
+
+    #[cfg(feature = "blosc")]
+    pub fn blosc_blosclz<T>(clevel: u8, shuffle: T) -> Self
+    where
+        T: Into<BloscShuffle>,
+    {
+        Self::blosc(Blosc::BloscLZ, clevel, shuffle)
+    }
+
+    #[cfg(feature = "blosc")]
+    pub fn blosc_lz4<T>(clevel: u8, shuffle: T) -> Self
+    where
+        T: Into<BloscShuffle>,
+    {
+        Self::blosc(Blosc::LZ4, clevel, shuffle)
+    }
+
+    #[cfg(feature = "blosc")]
+    pub fn blosc_lz4hc<T>(clevel: u8, shuffle: T) -> Self
+    where
+        T: Into<BloscShuffle>,
+    {
+        Self::blosc(Blosc::LZ4HC, clevel, shuffle)
+    }
+
+    #[cfg(feature = "blosc")]
+    pub fn blosc_snappy<T>(clevel: u8, shuffle: T) -> Self
+    where
+        T: Into<BloscShuffle>,
+    {
+        Self::blosc(Blosc::Snappy, clevel, shuffle)
+    }
+
+    #[cfg(feature = "blosc")]
+    pub fn blosc_zlib<T>(clevel: u8, shuffle: T) -> Self
+    where
+        T: Into<BloscShuffle>,
+    {
+        Self::blosc(Blosc::ZLib, clevel, shuffle)
+    }
+
+    #[cfg(feature = "blosc")]
+    pub fn blosc_zstd<T>(clevel: u8, shuffle: T) -> Self
+    where
+        T: Into<BloscShuffle>,
+    {
+        Self::blosc(Blosc::ZStd, clevel, shuffle)
     }
 
     pub fn user(id: H5Z_filter_t, cdata: &[c_uint]) -> Self {
@@ -183,6 +297,38 @@ impl Filter {
         Ok(Self::lzf())
     }
 
+    #[cfg(feature = "blosc")]
+    fn parse_blosc(cdata: &[c_uint]) -> Result<Self> {
+        ensure!(cdata.len() >= 5, "expected at least length 5 cdata for blosc filter");
+        ensure!(cdata.len() <= 7, "expected at most length 7 cdata for blosc filter");
+        ensure!(cdata[4] <= 9, "invalid blosc clevel: {}", cdata[4]);
+        let clevel = cdata[4] as u8;
+        let shuffle = if cdata.len() >= 6 {
+            match cdata[5] {
+                blosc::BLOSC_NOSHUFFLE => BloscShuffle::None,
+                blosc::BLOSC_SHUFFLE => BloscShuffle::Byte,
+                blosc::BLOSC_BITSHUFFLE => BloscShuffle::Bit,
+                _ => fail!("invalid blosc shuffle: {}", cdata[5]),
+            }
+        } else {
+            BloscShuffle::Byte
+        };
+        let complib = if cdata.len() >= 7 {
+            match cdata[6] {
+                blosc::BLOSC_BLOSCLZ => Blosc::BloscLZ,
+                blosc::BLOSC_LZ4 => Blosc::LZ4,
+                blosc::BLOSC_LZ4HC => Blosc::LZ4HC,
+                blosc::BLOSC_SNAPPY => Blosc::Snappy,
+                blosc::BLOSC_ZLIB => Blosc::ZLib,
+                blosc::BLOSC_ZSTD => Blosc::ZStd,
+                _ => fail!("invalid blosc complib: {}", cdata[6]),
+            }
+        } else {
+            Blosc::BloscLZ
+        };
+        Ok(Self::blosc(complib, clevel, shuffle))
+    }
+
     pub fn from_raw(filter_id: H5Z_filter_t, cdata: &[c_uint]) -> Result<Self> {
         ensure!(filter_id > 0, "invalid filter id: {}", filter_id);
         match filter_id {
@@ -194,6 +340,8 @@ impl Filter {
             H5Z_FILTER_SCALEOFFSET => Self::parse_scaleoffset(cdata),
             #[cfg(feature = "lzf")]
             lzf::LZF_FILTER_ID => Self::parse_lzf(cdata),
+            #[cfg(feature = "blosc")]
+            blosc::BLOSC_FILTER_ID => Self::parse_blosc(cdata),
             _ => Ok(Self::user(filter_id, cdata)),
         }
     }
@@ -235,6 +383,28 @@ impl Filter {
         Self::apply_user(plist_id, lzf::LZF_FILTER_ID, &[])
     }
 
+    #[cfg(feature = "blosc")]
+    unsafe fn apply_blosc(
+        plist_id: hid_t, complib: Blosc, clevel: u8, shuffle: BloscShuffle,
+    ) -> herr_t {
+        let mut cdata = vec![0 as c_uint; 7];
+        cdata[4] = clevel as _;
+        cdata[5] = match shuffle {
+            BloscShuffle::None => blosc::BLOSC_NOSHUFFLE,
+            BloscShuffle::Byte => blosc::BLOSC_SHUFFLE,
+            BloscShuffle::Bit => blosc::BLOSC_BITSHUFFLE,
+        };
+        cdata[6] = match complib {
+            Blosc::BloscLZ => blosc::BLOSC_BLOSCLZ,
+            Blosc::LZ4 => blosc::BLOSC_LZ4,
+            Blosc::LZ4HC => blosc::BLOSC_LZ4HC,
+            Blosc::Snappy => blosc::BLOSC_SNAPPY,
+            Blosc::ZLib => blosc::BLOSC_ZLIB,
+            Blosc::ZStd => blosc::BLOSC_ZSTD,
+        };
+        Self::apply_user(plist_id, blosc::BLOSC_FILTER_ID, &cdata)
+    }
+
     unsafe fn apply_user(plist_id: hid_t, filter_id: H5Z_filter_t, cdata: &[c_uint]) -> herr_t {
         // We're setting custom filters to optional, same way h5py does it, since
         // the only mention of H5Z_FLAG_MANDATORY in the HDF5 source itself is
@@ -255,6 +425,10 @@ impl Filter {
             Filter::ScaleOffset(mode, offset) => Self::apply_scaleoffset(id, *mode, *offset),
             #[cfg(feature = "lzf")]
             Filter::LZF => Self::apply_lzf(id),
+            #[cfg(feature = "blosc")]
+            Filter::Blosc(complib, clevel, shuffle) => {
+                Self::apply_blosc(id, *complib, *clevel, *shuffle)
+            }
             Filter::User(filter_id, ref cdata) => Self::apply_user(id, *filter_id, cdata),
         });
         Ok(())
