@@ -18,5 +18,5 @@ quote = "^1.0.2"
 syn = { version = "^1.0.5", features = ["derive", "extra-traits"]}
 
 [dev-dependencies]
-compiletest_rs = { version = "0.3.22", features = ["stable"] }
+trybuild = "1.0"
 hdf5 = { version = ">=0.5", path = ".." }

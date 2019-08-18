@@ -1,0 +1,7 @@
+error: proc-macro derive panicked
+ --> $DIR/unit-struct.rs:4:10
+  |
+4 | #[derive(H5Type)]
+  |          ^^^^^^
+  |
+  = help: message: Cannot derive H5Type for unit structs
