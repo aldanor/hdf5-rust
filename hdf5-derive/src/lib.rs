@@ -98,17 +98,27 @@ fn is_phantom_data(ty: &Type) -> bool {
 
 fn find_repr(attrs: &[Attribute], expected: &[&str]) -> Option<Ident> {
     for attr in attrs.iter() {
-        if attr.style == AttrStyle::Outer {
-            if let Ok(Meta::List(ref list)) = attr.parse_meta() {
-                if list.ident == "repr" {
-                    for item in list.nested.iter() {
-                        if let NestedMeta::Meta(Meta::Word(ref ident)) = *item {
-                            if expected.iter().any(|&s| *ident == s) {
-                                return Some(Ident::new(&ident.to_string(), Span::call_site()));
-                            }
-                        }
-                    }
-                }
+        if attr.style != AttrStyle::Outer {
+            continue;
+        }
+        let list = match attr.parse_meta() {
+            Ok(Meta::List(list)) => list,
+            _ => continue,
+        };
+        if !list.path.get_ident().map_or(false, |ident| ident == "repr") {
+            continue;
+        }
+        for item in list.nested.iter() {
+            let path = match item {
+                NestedMeta::Meta(Meta::Path(ref path)) => path,
+                _ => continue,
+            };
+            let ident = match path.get_ident() {
+                Some(ident) => ident,
+                _ => continue,
+            };
+            if expected.iter().any(|&s| ident == s) {
+                return Some(Ident::new(&ident.to_string(), Span::call_site()));
             }
         }
     }
