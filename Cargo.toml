@@ -35,7 +35,7 @@ hdf5-derive = { path = "hdf5-derive", version = "0.6.0" }  # !V
 [dev-dependencies]
 mashup = "0.1"
 rand = { version = "0.7", features = ["small_rng"] }
-regex = "1.1"
+regex = "1.3"
 scopeguard = "1.0"
 tempdir = "0.3"
 
