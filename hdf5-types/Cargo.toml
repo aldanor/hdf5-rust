@@ -14,4 +14,4 @@ ascii = "1.0"
 libc = "0.2"
 
 [dev-dependencies]
-quickcheck = "0.8"
+quickcheck = { version = "0.9", default-features = false }
