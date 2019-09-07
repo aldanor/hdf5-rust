@@ -10,7 +10,7 @@ homepage = "https://github.com/aldanor/hdf5-rust"
 edition = "2018"
 
 [dependencies]
-ascii = "0.9"
+ascii = "1.0"
 libc = "0.2"
 
 [dev-dependencies]

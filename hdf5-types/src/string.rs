@@ -5,7 +5,7 @@ use std::hash::{Hash, Hasher};
 use std::mem;
 use std::ops::{Deref, Index, RangeFull};
 use std::ptr;
-use std::slice;
+use std::slice::{self, SliceIndex};
 use std::str::{self, FromStr};
 
 use ascii::{AsAsciiStr, AsAsciiStrError, AsciiStr};
@@ -264,13 +264,24 @@ impl VarLenAscii {
 }
 
 impl AsAsciiStr for VarLenAscii {
+    type Inner = u8;
+
+    #[inline]
+    fn slice_ascii<R>(&self, range: R) -> Result<&AsciiStr, AsAsciiStrError>
+    where
+        R: SliceIndex<[u8], Output = [u8]>,
+    {
+        self.as_bytes().slice_ascii(range)
+    }
+
+    #[inline]
+    fn as_ascii_str(&self) -> Result<&AsciiStr, AsAsciiStrError> {
+        AsciiStr::from_ascii(self.as_bytes())
+    }
+
     #[inline]
     unsafe fn as_ascii_str_unchecked(&self) -> &AsciiStr {
         AsciiStr::from_ascii_unchecked(self.as_bytes())
-    }
-
-    fn as_ascii_str(&self) -> Result<&AsciiStr, AsAsciiStrError> {
-        AsciiStr::from_ascii(self.as_bytes())
     }
 }
 
@@ -447,13 +458,24 @@ impl<A: Array<Item = u8>> FixedAscii<A> {
 }
 
 impl<A: Array<Item = u8>> AsAsciiStr for FixedAscii<A> {
+    type Inner = u8;
+
+    #[inline]
+    fn slice_ascii<R>(&self, range: R) -> Result<&AsciiStr, AsAsciiStrError>
+    where
+        R: SliceIndex<[u8], Output = [u8]>,
+    {
+        self.as_bytes().slice_ascii(range)
+    }
+
+    #[inline]
+    fn as_ascii_str(&self) -> Result<&AsciiStr, AsAsciiStrError> {
+        AsciiStr::from_ascii(self.as_bytes())
+    }
+
     #[inline]
     unsafe fn as_ascii_str_unchecked(&self) -> &AsciiStr {
         AsciiStr::from_ascii_unchecked(self.as_bytes())
-    }
-
-    fn as_ascii_str(&self) -> Result<&AsciiStr, AsAsciiStrError> {
-        AsciiStr::from_ascii(self.as_bytes())
     }
 }
 
