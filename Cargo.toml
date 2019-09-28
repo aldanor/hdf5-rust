@@ -24,7 +24,7 @@ bitflags = "1.2"
 lazy_static = "1.4"
 libc = "0.2"
 parking_lot = "0.10"
-ndarray = "0.12"
+ndarray = "0.13"
 num-integer = "0.1"
 num-traits = "0.2"
 mpi-sys = { version = "0.1", optional = true }

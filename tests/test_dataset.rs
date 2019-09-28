@@ -60,7 +60,7 @@ where
         let slice = gen_slice(rng, shape);
 
         // Do a sliced HDF5 read
-        let sliced_read = dsr.read_slice(&slice).unwrap();
+        let sliced_read: ArrayD<T> = dsr.read_slice(&slice).unwrap();
 
         // Slice the full dataset
         let sliced_dataset = arr.slice(slice.as_ref());
