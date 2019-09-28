@@ -20,7 +20,7 @@ members = ["hdf5-types", "hdf5-derive", "hdf5-sys"]
 exclude = ["*.yml", "ci/*"]
 
 [dependencies]
-bitflags = "1.1"
+bitflags = "1.2"
 lazy_static = "1.4"
 libc = "0.2"
 parking_lot = "0.10"
