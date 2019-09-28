@@ -44,7 +44,7 @@ fn main() -> hdf5::Result<()> {
 
     {
         // write
-        let file = hdf5::File::create("pixels.h5")?;
+        let file = hdf5::File::open("pixels.h5", "w")?;
         let colors = file.new_dataset::<Color>().create("colors", 2)?;
         colors.write(&[RED, BLUE])?;
         let group = file.create_group("dir")?;
@@ -56,7 +56,7 @@ fn main() -> hdf5::Result<()> {
     }
     {
         // read
-        let file = hdf5::File::open("pixels.h5")?;
+        let file = hdf5::File::open("pixels.h5", "r")?;
         let colors = file.dataset("colors")?;
         assert_eq!(colors.read_1d::<Color>()?, arr1(&[RED, BLUE]));
         let pixels = file.dataset("dir/pixels")?;
