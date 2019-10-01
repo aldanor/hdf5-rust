@@ -104,6 +104,7 @@ mod internal_prelude {
         export::*,
         handle::{get_id_type, is_valid_user_id, Handle},
         hl::plist::PropertyListClass,
+        sync::sync,
         util::{
             get_h5_str, string_from_cstr, string_from_fixed_bytes, string_to_fixed_bytes,
             to_cstring,
