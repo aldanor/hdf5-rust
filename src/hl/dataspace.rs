@@ -3,12 +3,13 @@ use std::ops::Deref;
 use std::ptr;
 
 use hdf5_sys::h5s::{
-    H5S_class_t, H5Scopy, H5Screate, H5Screate_simple, H5Sdecode, H5Sencode,
+    H5S_class_t, H5Scopy, H5Screate, H5Screate_simple, H5Sdecode, H5Sencode, H5Sget_select_npoints,
     H5Sget_simple_extent_dims, H5Sget_simple_extent_ndims, H5Sget_simple_extent_npoints,
     H5Sget_simple_extent_type, H5Sselect_valid, H5S_UNLIMITED,
 };
 
 use crate::hl::extents::{Extent, Extents, Ix};
+use crate::hl::selection::RawSelection;
 use crate::internal_prelude::*;
 
 /// Represents the HDF5 dataspace object.
@@ -161,6 +162,36 @@ impl Dataspace {
             H5S_class_t::H5S_SIMPLE => get_simple_extents(self.id()).map(Extents::Simple),
             extent_type => fail!("Invalid extents type: {}", extent_type as c_int),
         })
+    }
+
+    pub fn selection_size(&self) -> usize {
+        h5call!(H5Sget_select_npoints(self.id())).ok().map_or(0, |x| x as _)
+    }
+
+    #[doc(hidden)]
+    pub fn select_raw<S: Into<RawSelection>>(&self, raw_sel: S) -> Result<Self> {
+        let raw_sel = raw_sel.into();
+        sync(|| unsafe {
+            let space = self.copy();
+            raw_sel.apply_to_dataspace(space.id())?;
+            ensure!(space.is_valid(), "Invalid selection, out of extents");
+            Ok(space)
+        })
+    }
+
+    pub fn select<S: Into<Selection>>(&self, selection: S) -> Result<Self> {
+        let raw_sel = selection.into().into_raw(&self.shape())?;
+        self.select_raw(raw_sel)
+    }
+
+    #[doc(hidden)]
+    pub fn get_raw_selection(&self) -> Result<RawSelection> {
+        sync(|| unsafe { RawSelection::extract_from_dataspace(self.id()) })
+    }
+
+    pub fn get_selection(&self) -> Result<Selection> {
+        let raw_sel = self.get_raw_selection()?;
+        Selection::from_raw(raw_sel)
     }
 }
 
