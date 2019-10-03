@@ -93,7 +93,7 @@ impl ChunkInfo {
 impl Dataset {
     /// Returns whether this dataset is resizable along some axis.
     pub fn is_resizable(&self) -> bool {
-        h5lock!(self.space().ok().map_or(false, |s| s.resizable()))
+        h5lock!(self.space().ok().map_or(false, |s| s.is_resizable()))
     }
 
     /// Returns whether this dataset has a chunked layout.
@@ -344,7 +344,10 @@ impl<T: H5Type> DatasetBuilder<T> {
         self
     }
 
-    fn make_dcpl<D: Dimension>(&self, datatype: &Datatype, shape: D) -> Result<PropertyList> {
+    fn make_dcpl(&self, datatype: &Datatype, extents: &Extents) -> Result<PropertyList> {
+        let ndim = extents.ndim();
+        let resizable = extents.is_resizable();
+        let shape = extents.dims();
         h5lock!({
             let dcpl = self.filters.to_dcpl(datatype)?;
             let id = dcpl.id();
@@ -360,7 +363,7 @@ impl<T: H5Type> DatasetBuilder<T> {
                     !self.filters.has_filters(),
                     "Chunking must be enabled when filters are present"
                 );
-                ensure!(!self.resizable, "Chunking must be enabled for resizable datasets");
+                ensure!(!resizable, "Chunking must be enabled for resizable datasets");
             } else {
                 let no_chunk = if let Chunk::Auto = self.chunk {
                     !self.filters.has_filters() && !self.resizable
@@ -368,7 +371,7 @@ impl<T: H5Type> DatasetBuilder<T> {
                     false
                 };
                 if !no_chunk {
-                    ensure!(shape.ndim() > 0, "Chunking cannot be enabled for scalar datasets");
+                    ensure!(ndim > 0, "Chunking cannot be enabled for 0-dim datasets");
 
                     let dims = match self.chunk {
                         Chunk::Manual(ref c) => c.clone(),
@@ -376,9 +379,9 @@ impl<T: H5Type> DatasetBuilder<T> {
                     };
 
                     ensure!(
-                        dims.ndim() == shape.ndim(),
+                        dims.ndim() == ndim,
                         "Invalid chunk ndim: expected {}, got {}",
-                        shape.ndim(),
+                        ndim,
                         dims.ndim()
                     );
                     ensure!(
@@ -387,9 +390,9 @@ impl<T: H5Type> DatasetBuilder<T> {
                         dims
                     );
 
-                    if !self.resizable {
+                    if !resizable {
                         ensure!(
-                            dims.iter().zip(shape.dims().iter()).all(|(&c, &s)| c <= s),
+                            dims.iter().zip(shape.iter()).all(|(&c, &s)| c <= s),
                             "Invalid chunk: {:?} (must not exceed data shape in any dimension)",
                             dims
                         );
@@ -414,18 +417,22 @@ impl<T: H5Type> DatasetBuilder<T> {
         })
     }
 
-    fn finalize<D: Dimension>(&self, name: Option<&str>, shape: D) -> Result<Dataset> {
+    fn finalize<S: Into<Extents>>(&self, name: Option<&str>, extents: S) -> Result<Dataset> {
         let type_descriptor = if self.packed {
             <T as H5Type>::type_descriptor().to_packed_repr()
         } else {
             <T as H5Type>::type_descriptor().to_c_repr()
         };
+        let mut extents = extents.into();
+        if self.resizable {
+            extents = extents.resizable();
+        }
         h5lock!({
             let datatype = Datatype::from_descriptor(&type_descriptor)?;
             let parent = try_ref_clone!(self.parent);
 
-            let dataspace = Dataspace::try_new(&shape, self.resizable)?;
-            let dcpl = self.make_dcpl(&datatype, &shape)?;
+            let dcpl = self.make_dcpl(&datatype, &extents)?;
+            let dataspace = Dataspace::try_new(extents)?;
 
             if let Some(name) = name {
                 let lcpl = Self::make_lcpl()?;
@@ -452,31 +459,34 @@ impl<T: H5Type> DatasetBuilder<T> {
     }
 
     /// Create the dataset and link it into the file structure.
-    pub fn create<D: Dimension>(&self, name: &str, shape: D) -> Result<Dataset> {
+    pub fn create<S: Into<Extents>>(&self, name: &str, shape: S) -> Result<Dataset> {
         self.finalize(Some(name), shape)
     }
 
     /// Create an anonymous dataset without linking it.
-    pub fn create_anon<D: Dimension>(&self, shape: D) -> Result<Dataset> {
+    pub fn create_anon<S: Into<Extents>>(&self, shape: S) -> Result<Dataset> {
         self.finalize(None, shape)
     }
 }
 
-fn infer_chunk_size<D: Dimension>(shape: &D, typesize: usize) -> Vec<Ix> {
+fn infer_chunk_size(shape: &[Ix], typesize: usize) -> Vec<Ix> {
     // This algorithm is borrowed from h5py, though the idea originally comes from PyTables.
 
     const CHUNK_BASE: f64 = (16 * 1024) as _;
     const CHUNK_MIN: f64 = (8 * 1024) as _;
     const CHUNK_MAX: f64 = (1024 * 1024) as _;
 
-    if shape.ndim() == 0 {
+    let ndim = shape.len();
+    let size: usize = shape.iter().product();
+
+    if ndim == 0 {
         return vec![];
-    } else if shape.size() == 0 {
+    } else if size == 0 {
         return vec![1];
     }
 
-    let mut chunks = shape.dims();
-    let total = (typesize * shape.size()) as f64;
+    let mut chunks = shape.to_vec();
+    let total = (typesize * size) as f64;
     let mut target: f64 = CHUNK_BASE * (total / (1024.0 * 1024.0)).log10().exp2();
 
     if target > CHUNK_MAX {
@@ -494,7 +504,7 @@ fn infer_chunk_size<D: Dimension>(shape: &D, typesize: usize) -> Vec<Ix> {
         if (bytes < target * 1.5 && bytes < CHUNK_MAX) || size == 1 {
             break;
         }
-        let axis = i % shape.ndim();
+        let axis = i % ndim;
         chunks[axis] = div_floor(chunks[axis] + 1, 2);
     }
 
@@ -515,27 +525,27 @@ pub mod tests {
 
     #[test]
     pub fn test_infer_chunk_size() {
-        assert_eq!(infer_chunk_size(&(), 1), vec![]);
-        assert_eq!(infer_chunk_size(&0, 1), vec![1]);
-        assert_eq!(infer_chunk_size(&(1,), 1), vec![1]);
+        assert_eq!(infer_chunk_size(&[], 1), vec![]);
+        assert_eq!(infer_chunk_size(&[0], 1), vec![1]);
+        assert_eq!(infer_chunk_size(&[1], 1), vec![1]);
 
         // generated regression tests vs h5py implementation
-        assert_eq!(infer_chunk_size(&(65682868,), 1), vec![64144]);
-        assert_eq!(infer_chunk_size(&(56755037,), 2), vec![27713]);
-        assert_eq!(infer_chunk_size(&(56882283,), 4), vec![27775]);
-        assert_eq!(infer_chunk_size(&(21081789,), 8), vec![10294]);
-        assert_eq!(infer_chunk_size(&(5735, 6266), 1), vec![180, 392]);
-        assert_eq!(infer_chunk_size(&(467, 4427), 2), vec![30, 554]);
-        assert_eq!(infer_chunk_size(&(5579, 8323), 4), vec![88, 261]);
-        assert_eq!(infer_chunk_size(&(1686, 770), 8), vec![106, 49]);
-        assert_eq!(infer_chunk_size(&(344, 414, 294), 1), vec![22, 52, 37]);
-        assert_eq!(infer_chunk_size(&(386, 192, 444), 2), vec![25, 24, 56]);
-        assert_eq!(infer_chunk_size(&(277, 161, 460), 4), vec![18, 21, 58]);
-        assert_eq!(infer_chunk_size(&(314, 22, 253), 8), vec![40, 3, 32]);
-        assert_eq!(infer_chunk_size(&(89, 49, 91, 59), 1), vec![12, 13, 23, 15]);
-        assert_eq!(infer_chunk_size(&(42, 92, 60, 80), 2), vec![6, 12, 15, 20]);
-        assert_eq!(infer_chunk_size(&(15, 62, 62, 47), 4), vec![4, 16, 16, 12]);
-        assert_eq!(infer_chunk_size(&(62, 51, 55, 64), 8), vec![8, 7, 7, 16]);
+        assert_eq!(infer_chunk_size(&[65682868], 1), vec![64144]);
+        assert_eq!(infer_chunk_size(&[56755037], 2), vec![27713]);
+        assert_eq!(infer_chunk_size(&[56882283], 4), vec![27775]);
+        assert_eq!(infer_chunk_size(&[21081789], 8), vec![10294]);
+        assert_eq!(infer_chunk_size(&[5735, 6266], 1), vec![180, 392]);
+        assert_eq!(infer_chunk_size(&[467, 4427], 2), vec![30, 554]);
+        assert_eq!(infer_chunk_size(&[5579, 8323], 4), vec![88, 261]);
+        assert_eq!(infer_chunk_size(&[1686, 770], 8), vec![106, 49]);
+        assert_eq!(infer_chunk_size(&[344, 414, 294], 1), vec![22, 52, 37]);
+        assert_eq!(infer_chunk_size(&[386, 192, 444], 2), vec![25, 24, 56]);
+        assert_eq!(infer_chunk_size(&[277, 161, 460], 4), vec![18, 21, 58]);
+        assert_eq!(infer_chunk_size(&[314, 22, 253], 8), vec![40, 3, 32]);
+        assert_eq!(infer_chunk_size(&[89, 49, 91, 59], 1), vec![12, 13, 23, 15]);
+        assert_eq!(infer_chunk_size(&[42, 92, 60, 80], 2), vec![6, 12, 15, 20]);
+        assert_eq!(infer_chunk_size(&[15, 62, 62, 47], 4), vec![4, 16, 16, 12]);
+        assert_eq!(infer_chunk_size(&[62, 51, 55, 64], 8), vec![8, 7, 7, 16]);
     }
 
     #[test]
@@ -610,11 +620,11 @@ pub mod tests {
             );
             assert_err!(
                 b.clone().chunk_infer().create_anon(()),
-                "Chunking cannot be enabled for scalar datasets"
+                "Chunking cannot be enabled for 0-dim datasets"
             );
             assert_err!(
                 b.clone().chunk((1, 2)).create_anon(()),
-                "Chunking cannot be enabled for scalar datasets"
+                "Chunking cannot be enabled for 0-dim datasets"
             );
             assert_err!(
                 b.clone().chunk((1, 2)).create_anon(1),

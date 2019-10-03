@@ -11,16 +11,15 @@ pub mod location;
 pub mod object;
 pub mod plist;
 pub mod selection;
-pub mod space;
 
 pub use self::{
     container::{Container, Reader, Writer},
     dataset::{Dataset, DatasetBuilder},
+    dataspace::Dataspace,
     datatype::{Conversion, Datatype},
     file::{File, FileBuilder, OpenMode},
     group::Group,
     location::Location,
     object::Object,
     plist::PropertyList,
-    space::Dataspace,
 };
