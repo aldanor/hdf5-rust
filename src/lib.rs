@@ -29,6 +29,7 @@ mod export {
         error::{silence_errors, Error, Result},
         filters::Filters,
         hl::extents::{Extent, Extents, SimpleExtents},
+        hl::selection::{Hyperslab, Selection, SliceOrIndex},
         hl::{
             Container, Conversion, Dataset, DatasetBuilder, Dataspace, Datatype, File, FileBuilder,
             Group, Location, Object, PropertyList, Reader, Writer,

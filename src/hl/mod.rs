@@ -10,6 +10,7 @@ pub mod group;
 pub mod location;
 pub mod object;
 pub mod plist;
+pub mod selection;
 pub mod space;
 
 pub use self::{
