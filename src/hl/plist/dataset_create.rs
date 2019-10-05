@@ -268,8 +268,8 @@ impl DatasetCreateBuilder {
         self
     }
 
-    pub fn scale_offset(&mut self, mode: ScaleOffset, factor: i8) -> &mut Self {
-        self.filters.push(Filter::scale_offset(mode, factor));
+    pub fn scale_offset(&mut self, mode: ScaleOffset) -> &mut Self {
+        self.filters.push(Filter::scale_offset(mode));
         self
     }
 

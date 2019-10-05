@@ -5,10 +5,10 @@ use hdf5_sys::h5p::{
     H5Pset_scaleoffset, H5Pset_shuffle, H5Pset_szip,
 };
 use hdf5_sys::h5z::{
-    H5Z_SO_scale_type_t, H5Z_filter_t, H5Zfilter_avail, H5Zget_filter_info,
-    H5Z_FILTER_CONFIG_DECODE_ENABLED, H5Z_FILTER_CONFIG_ENCODE_ENABLED, H5Z_FILTER_DEFLATE,
-    H5Z_FILTER_FLETCHER32, H5Z_FILTER_NBIT, H5Z_FILTER_SCALEOFFSET, H5Z_FILTER_SHUFFLE,
-    H5Z_FILTER_SZIP, H5Z_FLAG_OPTIONAL, H5_SZIP_EC_OPTION_MASK, H5_SZIP_MAX_PIXELS_PER_BLOCK,
+    H5Z_filter_t, H5Zfilter_avail, H5Zget_filter_info, H5Z_FILTER_CONFIG_DECODE_ENABLED,
+    H5Z_FILTER_CONFIG_ENCODE_ENABLED, H5Z_FILTER_DEFLATE, H5Z_FILTER_FLETCHER32, H5Z_FILTER_NBIT,
+    H5Z_FILTER_SCALEOFFSET, H5Z_FILTER_SHUFFLE, H5Z_FILTER_SZIP, H5Z_FLAG_OPTIONAL,
+    H5Z_SO_FLOAT_DSCALE, H5Z_SO_INT, H5_SZIP_EC_OPTION_MASK, H5_SZIP_MAX_PIXELS_PER_BLOCK,
     H5_SZIP_NN_OPTION_MASK,
 };
 
@@ -27,8 +27,8 @@ pub enum SZip {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ScaleOffset {
-    Integer,
-    FloatDScale,
+    Integer(u16),
+    FloatDScale(u8),
 }
 
 #[cfg(feature = "blosc")]
@@ -92,7 +92,7 @@ pub enum Filter {
     Fletcher32,
     SZip(SZip, u8),
     NBit,
-    ScaleOffset(ScaleOffset, i8),
+    ScaleOffset(ScaleOffset),
     #[cfg(feature = "lzf")]
     LZF,
     #[cfg(feature = "blosc")]
@@ -143,7 +143,7 @@ impl Filter {
             Filter::Fletcher32 => H5Z_FILTER_FLETCHER32,
             Filter::SZip(_, _) => H5Z_FILTER_SZIP,
             Filter::NBit => H5Z_FILTER_NBIT,
-            Filter::ScaleOffset(_, _) => H5Z_FILTER_SCALEOFFSET,
+            Filter::ScaleOffset(_) => H5Z_FILTER_SCALEOFFSET,
             #[cfg(feature = "lzf")]
             Filter::LZF => lzf::LZF_FILTER_ID,
             #[cfg(feature = "blosc")]
@@ -197,8 +197,8 @@ impl Filter {
         Filter::NBit
     }
 
-    pub fn scale_offset(mode: ScaleOffset, factor: i8) -> Self {
-        Filter::ScaleOffset(mode, factor)
+    pub fn scale_offset(mode: ScaleOffset) -> Self {
+        Filter::ScaleOffset(mode)
     }
 
     #[cfg(feature = "lzf")]
@@ -309,14 +309,16 @@ impl Filter {
     fn parse_scaleoffset(cdata: &[c_uint]) -> Result<Self> {
         ensure!(cdata.len() == 2, "expected length 2 cdata for scaleoffset filter");
         let scale_type = cdata[0];
-        let scale_mode = if scale_type == (H5Z_SO_scale_type_t::H5Z_SO_INT as c_uint) {
-            ScaleOffset::Integer
-        } else if scale_type == (H5Z_SO_scale_type_t::H5Z_SO_FLOAT_DSCALE as c_uint) {
-            ScaleOffset::FloatDScale
+        let mode = if scale_type == (H5Z_SO_INT as c_uint) {
+            ensure!(cdata[1] <= u16::max_value() as _, "invalid int scale-offset: {}", cdata[1]);
+            ScaleOffset::Integer(cdata[1] as _)
+        } else if scale_type == (H5Z_SO_FLOAT_DSCALE as c_uint) {
+            ensure!(cdata[1] <= u8::max_value() as _, "invalid float scale-offset: {}", cdata[1]);
+            ScaleOffset::FloatDScale(cdata[1] as _)
         } else {
             fail!("invalid scale type for scaleoffset filter: {}", cdata[0])
         };
-        Ok(Self::scale_offset(scale_mode, cdata[1] as _))
+        Ok(Self::scale_offset(mode))
     }
 
     #[cfg(feature = "lzf")]
@@ -398,12 +400,12 @@ impl Filter {
         H5Pset_nbit(plist_id)
     }
 
-    unsafe fn apply_scaleoffset(plist_id: hid_t, mode: ScaleOffset, offset: i8) -> herr_t {
-        let scale_type = match mode {
-            ScaleOffset::Integer => H5Z_SO_scale_type_t::H5Z_SO_INT,
-            ScaleOffset::FloatDScale => H5Z_SO_scale_type_t::H5Z_SO_FLOAT_DSCALE,
+    unsafe fn apply_scaleoffset(plist_id: hid_t, mode: ScaleOffset) -> herr_t {
+        let (scale_type, factor) = match mode {
+            ScaleOffset::Integer(bits) => (H5Z_SO_INT, bits as _),
+            ScaleOffset::FloatDScale(factor) => (H5Z_SO_FLOAT_DSCALE, factor as _),
         };
-        H5Pset_scaleoffset(plist_id, scale_type, offset as _)
+        H5Pset_scaleoffset(plist_id, scale_type, factor)
     }
 
     #[cfg(feature = "lzf")]
@@ -450,7 +452,7 @@ impl Filter {
             Filter::Fletcher32 => Self::apply_fletcher32(id),
             Filter::SZip(coding, px_per_block) => Self::apply_szip(id, *coding, *px_per_block),
             Filter::NBit => Self::apply_nbit(id),
-            Filter::ScaleOffset(mode, offset) => Self::apply_scaleoffset(id, *mode, *offset),
+            Filter::ScaleOffset(mode) => Self::apply_scaleoffset(id, *mode),
             #[cfg(feature = "lzf")]
             Filter::LZF => Self::apply_lzf(id),
             #[cfg(feature = "blosc")]
