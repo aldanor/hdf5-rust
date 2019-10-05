@@ -1,9 +1,11 @@
+use std::collections::HashMap;
 use std::ptr;
 
 use hdf5_sys::h5p::{
     H5Pget_filter2, H5Pget_nfilters, H5Pset_deflate, H5Pset_filter, H5Pset_fletcher32, H5Pset_nbit,
     H5Pset_scaleoffset, H5Pset_shuffle, H5Pset_szip,
 };
+use hdf5_sys::h5t::H5T_class_t;
 use hdf5_sys::h5z::{
     H5Z_filter_t, H5Zfilter_avail, H5Zget_filter_info, H5Z_FILTER_CONFIG_DECODE_ENABLED,
     H5Z_FILTER_CONFIG_ENCODE_ENABLED, H5Z_FILTER_DEFLATE, H5Z_FILTER_FLETCHER32, H5Z_FILTER_NBIT,
@@ -11,6 +13,7 @@ use hdf5_sys::h5z::{
     H5Z_SO_FLOAT_DSCALE, H5Z_SO_INT, H5_SZIP_EC_OPTION_MASK, H5_SZIP_MAX_PIXELS_PER_BLOCK,
     H5_SZIP_NN_OPTION_MASK,
 };
+use hdf5_types::TypeDescriptor;
 
 use crate::internal_prelude::*;
 
@@ -492,4 +495,52 @@ impl Filter {
             Ok(filters)
         })
     }
+}
+
+pub(crate) fn validate_filters(filters: &[Filter], type_class: H5T_class_t) -> Result<()> {
+    const COMP_FILTER_IDS: &[H5Z_filter_t] = &[H5Z_FILTER_DEFLATE, H5Z_FILTER_SZIP, 32000, 32001];
+
+    let mut map: HashMap<H5Z_filter_t, &Filter> = HashMap::new();
+    let mut comp_filter: Option<&Filter> = None;
+
+    for filter in filters {
+        let id = filter.id();
+
+        if let Some(f) = map.get(&id) {
+            fail!("Duplicate filters: {:?} and {:?}", f, filter);
+        } else if COMP_FILTER_IDS.contains(&id) {
+            if let Some(comp_filter) = comp_filter {
+                fail!("Multiple compression filters: {:?} and {:?}", comp_filter, filter);
+            }
+            comp_filter = Some(&filter);
+        } else if id == H5Z_FILTER_FLETCHER32 && map.contains_key(&H5Z_FILTER_SCALEOFFSET) {
+            fail!("Lossy scale-offset filter before fletcher2 checksum filter");
+        } else if let Filter::ScaleOffset(mode) = filter {
+            match type_class {
+                H5T_class_t::H5T_INTEGER | H5T_class_t::H5T_ENUM => {
+                    if let ScaleOffset::FloatDScale(_) = mode {
+                        fail!("Invalid scale-offset mode for integer type: {:?}", mode);
+                    }
+                }
+                H5T_class_t::H5T_FLOAT => {
+                    if let ScaleOffset::Integer(_) = mode {
+                        fail!("Invalid scale-offset mode for float type: {:?}", mode);
+                    }
+                }
+                _ => fail!("Can only use scale-offset with ints/floats, got: {:?}", type_class),
+            }
+        } else if let Filter::SZip(_, _) = filter {
+            // https://github.com/h5py/h5py/issues/953
+            if map.contains_key(&H5Z_FILTER_FLETCHER32) {
+                fail!("Fletcher32 filter must be placed after szip filter");
+            }
+        } else if let Filter::Shuffle = filter {
+            if let Some(comp_filter) = comp_filter {
+                fail!("Shuffle filter placed after compression filter: {:?}", comp_filter);
+            }
+        }
+        map.insert(id, &filter);
+    }
+
+    Ok(())
 }
