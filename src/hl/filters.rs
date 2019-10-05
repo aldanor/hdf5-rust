@@ -115,6 +115,26 @@ pub(crate) fn register_filters() -> Result<()> {
     Ok(())
 }
 
+/// Returns `true` if gzip filter is available.
+pub fn gzip_available() -> bool {
+    h5lock!(H5Zfilter_avail(H5Z_FILTER_DEFLATE) == 1)
+}
+
+/// Returns `true` if szip filter is available.
+pub fn szip_available() -> bool {
+    h5lock!(H5Zfilter_avail(H5Z_FILTER_SZIP) == 1)
+}
+
+/// Returns `true` if LZF filter is available.
+pub fn lzf_available() -> bool {
+    h5lock!(H5Zfilter_avail(32000) == 1)
+}
+
+/// Returns `true` if Blosc filter is available.
+pub fn blosc_available() -> bool {
+    h5lock!(H5Zfilter_avail(32001) == 1)
+}
+
 impl Filter {
     pub fn id(&self) -> H5Z_filter_t {
         match self {
