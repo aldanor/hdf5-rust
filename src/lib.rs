@@ -65,10 +65,10 @@ mod export {
     }
 
     pub mod plist {
-        pub use crate::hl::plist::dataset_access::DatasetAccess;
-        pub use crate::hl::plist::dataset_create::DatasetCreate;
-        pub use crate::hl::plist::file_access::FileAccess;
-        pub use crate::hl::plist::file_create::FileCreate;
+        pub use crate::hl::plist::dataset_access::{DatasetAccess, DatasetAccessBuilder};
+        pub use crate::hl::plist::dataset_create::{DatasetCreate, DatasetCreateBuilder};
+        pub use crate::hl::plist::file_access::{FileAccess, FileAccessBuilder};
+        pub use crate::hl::plist::file_create::{FileCreate, FileCreateBuilder};
         pub use crate::hl::plist::{PropertyList, PropertyListClass};
 
         pub mod dataset_access {
