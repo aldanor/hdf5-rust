@@ -69,21 +69,23 @@ mod export {
         pub use crate::hl::plist::dataset_create::{DatasetCreate, DatasetCreateBuilder};
         pub use crate::hl::plist::file_access::{FileAccess, FileAccessBuilder};
         pub use crate::hl::plist::file_create::{FileCreate, FileCreateBuilder};
+        pub use crate::hl::plist::link_create::{LinkCreate, LinkCreateBuilder};
         pub use crate::hl::plist::{PropertyList, PropertyListClass};
 
         pub mod dataset_access {
             pub use crate::hl::plist::dataset_access::*;
         }
-
         pub mod dataset_create {
             pub use crate::hl::plist::dataset_create::*;
         }
-
         pub mod file_access {
             pub use crate::hl::plist::file_access::*;
         }
         pub mod file_create {
             pub use crate::hl::plist::file_create::*;
+        }
+        pub mod link_create {
+            pub use crate::hl::plist::link_create::*;
         }
     }
 }
