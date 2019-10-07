@@ -721,3 +721,63 @@ fn test_dcpl_virtual_map() -> hdf5::Result<()> {
 
     Ok(())
 }
+
+type LC = LinkCreate;
+type LCB = LinkCreateBuilder;
+
+#[test]
+fn test_lcpl_common() -> hdf5::Result<()> {
+    test_pl_common!(LC, PropertyListClass::LinkCreate, |b: &mut LCB| b
+        .create_intermediate_group(true)
+        .finish());
+    Ok(())
+}
+
+#[test]
+fn test_lcpl_create_intermediate_group() -> hdf5::Result<()> {
+    assert_eq!(LC::try_new()?.get_create_intermediate_group()?, false);
+    assert_eq!(
+        LCB::new().create_intermediate_group(false).finish()?.get_create_intermediate_group()?,
+        false
+    );
+    assert_eq!(
+        LCB::new().create_intermediate_group(false).finish()?.create_intermediate_group(),
+        false
+    );
+    assert_eq!(
+        LCB::new().create_intermediate_group(true).finish()?.get_create_intermediate_group()?,
+        true
+    );
+    assert_eq!(
+        LCB::new().create_intermediate_group(true).finish()?.create_intermediate_group(),
+        true
+    );
+    let pl = LCB::new().create_intermediate_group(true).finish()?;
+    assert_eq!(LCB::from_plist(&pl)?.finish()?.get_create_intermediate_group()?, true);
+    Ok(())
+}
+
+#[test]
+fn test_lcpl_char_encoding() -> hdf5::Result<()> {
+    use hdf5::plist::link_create::CharEncoding;
+    assert_eq!(LC::try_new()?.get_char_encoding()?, CharEncoding::Ascii);
+    assert_eq!(
+        LCB::new().char_encoding(CharEncoding::Ascii).finish()?.get_char_encoding()?,
+        CharEncoding::Ascii
+    );
+    assert_eq!(
+        LCB::new().char_encoding(CharEncoding::Ascii).finish()?.char_encoding(),
+        CharEncoding::Ascii
+    );
+    assert_eq!(
+        LCB::new().char_encoding(CharEncoding::Utf8).finish()?.get_char_encoding()?,
+        CharEncoding::Utf8
+    );
+    assert_eq!(
+        LCB::new().char_encoding(CharEncoding::Utf8).finish()?.char_encoding(),
+        CharEncoding::Utf8
+    );
+    let pl = LCB::new().char_encoding(CharEncoding::Utf8).finish()?;
+    assert_eq!(LCB::from_plist(&pl)?.finish()?.get_char_encoding()?, CharEncoding::Utf8);
+    Ok(())
+}
