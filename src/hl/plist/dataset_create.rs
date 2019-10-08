@@ -184,6 +184,31 @@ pub struct VirtualMapping {
     pub vds_selection: Selection,
 }
 
+#[cfg(hdf5_1_10_0)]
+impl VirtualMapping {
+    pub fn new<F, D, E1, S1, E2, S2>(
+        src_filename: F, src_dataset: D, src_extents: E1, src_selection: S1, vds_extents: E2,
+        vds_selection: S2,
+    ) -> Self
+    where
+        F: AsRef<str>,
+        D: AsRef<str>,
+        E1: Into<Extents>,
+        S1: Into<Selection>,
+        E2: Into<Extents>,
+        S2: Into<Selection>,
+    {
+        Self {
+            src_filename: src_filename.as_ref().into(),
+            src_dataset: src_dataset.as_ref().into(),
+            src_extents: src_extents.into(),
+            src_selection: src_selection.into(),
+            vds_extents: vds_extents.into(),
+            vds_selection: vds_selection.into(),
+        }
+    }
+}
+
 /// Builder used to create dataset creation property list.
 #[derive(Clone, Debug, Default)]
 pub struct DatasetCreateBuilder {
