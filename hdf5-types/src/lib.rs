@@ -13,10 +13,12 @@
 extern crate quickcheck;
 
 mod array;
+pub mod dyn_value;
 mod h5type;
 mod string;
 
 pub use self::array::{Array, VarLenArray};
+pub use self::dyn_value::{DynValue, OwnedDynValue};
 pub use self::h5type::{
     CompoundField, CompoundType, EnumMember, EnumType, FloatSize, H5Type, IntSize, TypeDescriptor,
 };
