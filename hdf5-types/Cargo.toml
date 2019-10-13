@@ -18,3 +18,4 @@ libc = "0.2"
 
 [dev-dependencies]
 quickcheck = { version = "1.0", default-features = false }
+unindent = "0.1"
