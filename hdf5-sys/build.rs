@@ -167,7 +167,7 @@ pub struct Header {
 impl Header {
     pub fn parse<P: AsRef<Path>>(inc_dir: P) -> Self {
         let inc_dir = inc_dir.as_ref();
-        
+
         let header = get_conf_header(inc_dir);
         println!("Parsing HDF5 config from:\n    {:?}", header);
 
@@ -343,7 +343,7 @@ mod windows {
 
     use serde::de::Error;
     use serde::{Deserialize, Deserializer};
-    use serde_derive::Deserialize;
+    use serde_derive::{Deserialize as DeriveDeserialize};
     use winreg::enums::HKEY_LOCAL_MACHINE;
     use winreg::RegKey;
 
@@ -357,7 +357,7 @@ mod windows {
         }
     }
 
-    #[derive(Clone, Deserialize)]
+    #[derive(Clone, DeriveDeserialize)]
     struct App {
         #[serde(rename = "DisplayName")]
         name: String,
