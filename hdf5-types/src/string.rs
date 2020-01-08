@@ -27,20 +27,20 @@ impl From<AsAsciiStrError> for StringError {
     }
 }
 
-impl StdError for StringError {
-    fn description(&self) -> &str {
-        match self {
-            StringError::InternalNull => "variable length string with internal null",
-            StringError::InsufficientCapacity => "insufficient capacity for fixed sized string",
-            StringError::AsciiError(err) => err.description(),
-            _ => "",
-        }
-    }
-}
+impl StdError for StringError {}
 
 impl fmt::Display for StringError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "string error: {}", self.description())
+        match self {
+            StringError::InternalNull => {
+                write!(f, "string error: variable length string with internal null")
+            }
+            StringError::InsufficientCapacity => {
+                write!(f, "string error: insufficient capacity for fixed sized string")
+            }
+            StringError::AsciiError(err) => write!(f, "string error: {}", err),
+            _ => write!(f, ""),
+        }
     }
 }
 

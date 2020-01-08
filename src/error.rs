@@ -277,15 +277,11 @@ impl fmt::Display for Error {
     }
 }
 
-impl StdError for Error {
-    fn description(&self) -> &str {
-        self.description()
-    }
-}
+impl StdError for Error {}
 
 impl From<ShapeError> for Error {
     fn from(err: ShapeError) -> Self {
-        format!("shape error: {}", err.description()).into()
+        format!("shape error: {}", err.to_string()).into()
     }
 }
 
