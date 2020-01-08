@@ -240,23 +240,15 @@ pub struct DatasetBuilder<T> {
 impl<T: H5Type> DatasetBuilder<T> {
     /// Create a new dataset builder and bind it to the parent container.
     pub fn new(parent: &Group) -> Self {
-        h5lock!({
-            // Store the reference to the parent handle and try to increase its reference count.
-            let handle = Handle::try_new(parent.id());
-            if let Ok(ref handle) = handle {
-                handle.incref();
-            }
-
-            Self {
-                packed: false,
-                filters: Filters::default(),
-                chunk: Chunk::Auto,
-                parent: handle,
-                track_times: false,
-                resizable: false,
-                fill_value: None,
-            }
-        })
+        Self {
+            packed: false,
+            filters: Filters::default(),
+            chunk: Chunk::Auto,
+            parent: parent.try_borrow(),
+            track_times: false,
+            resizable: false,
+            fill_value: None,
+        }
     }
 
     pub fn packed(&mut self, packed: bool) -> &mut Self {
