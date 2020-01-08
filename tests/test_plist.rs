@@ -127,6 +127,15 @@ fn test_fcpl_set_shared_mesg_indexes() -> hdf5::Result<()> {
 }
 
 #[test]
+fn test_fcpl_obj_track_times() -> hdf5::Result<()> {
+    assert_eq!(FC::try_new()?.get_obj_track_times()?, true);
+    assert_eq!(FC::try_new()?.obj_track_times(), true);
+    test_pl!(FC, obj_track_times: true);
+    test_pl!(FC, obj_track_times: false);
+    Ok(())
+}
+
+#[test]
 #[cfg(hdf5_1_10_1)]
 fn test_fcpl_set_file_space_page_size() -> hdf5::Result<()> {
     test_pl!(FC, file_space_page_size: 512);

@@ -12,10 +12,10 @@ use hdf5_sys::h5o::{
     H5O_SHMESG_NONE_FLAG, H5O_SHMESG_PLINE_FLAG, H5O_SHMESG_SDSPACE_FLAG,
 };
 use hdf5_sys::h5p::{
-    H5Pcreate, H5Pget_istore_k, H5Pget_shared_mesg_index, H5Pget_shared_mesg_nindexes,
-    H5Pget_shared_mesg_phase_change, H5Pget_sizes, H5Pget_sym_k, H5Pget_userblock, H5Pset_istore_k,
-    H5Pset_shared_mesg_index, H5Pset_shared_mesg_nindexes, H5Pset_shared_mesg_phase_change,
-    H5Pset_sym_k, H5Pset_userblock,
+    H5Pcreate, H5Pget_istore_k, H5Pget_obj_track_times, H5Pget_shared_mesg_index,
+    H5Pget_shared_mesg_nindexes, H5Pget_shared_mesg_phase_change, H5Pget_sizes, H5Pget_sym_k,
+    H5Pget_userblock, H5Pset_istore_k, H5Pset_obj_track_times, H5Pset_shared_mesg_index,
+    H5Pset_shared_mesg_nindexes, H5Pset_shared_mesg_phase_change, H5Pset_sym_k, H5Pset_userblock,
 };
 #[cfg(hdf5_1_10_1)]
 use hdf5_sys::h5p::{
@@ -62,7 +62,8 @@ impl Debug for FileCreate {
             .field("sym_k", &self.sym_k())
             .field("istore_k", &self.istore_k())
             .field("shared_mesg_phase_change", &self.shared_mesg_phase_change())
-            .field("shared_mesg_indexes", &self.shared_mesg_indexes());
+            .field("shared_mesg_indexes", &self.shared_mesg_indexes())
+            .field("obj_track_times", &self.obj_track_times());
         #[cfg(hdf5_1_10_1)]
         {
             formatter
@@ -219,6 +220,7 @@ pub struct FileCreateBuilder {
     istore_k: Option<u32>,
     shared_mesg_phase_change: Option<PhaseChangeInfo>,
     shared_mesg_indexes: Option<Vec<SharedMessageIndex>>,
+    obj_track_times: Option<bool>,
     #[cfg(hdf5_1_10_1)]
     file_space_page_size: Option<u64>,
     #[cfg(hdf5_1_10_1)]
@@ -241,6 +243,7 @@ impl FileCreateBuilder {
         let v = plist.get_shared_mesg_phase_change()?;
         builder.shared_mesg_phase_change(v.max_list, v.min_btree);
         builder.shared_mesg_indexes(&plist.get_shared_mesg_indexes()?);
+        builder.obj_track_times(plist.get_obj_track_times()?);
         #[cfg(hdf5_1_10_1)]
         {
             builder.file_space_page_size(plist.get_file_space_page_size()?);
@@ -305,6 +308,14 @@ impl FileCreateBuilder {
         self
     }
 
+    /// Sets a property that governs the recording of times associated with an object.
+    ///
+    /// If true, time data will be recorded; if false, time data will not be recorded.
+    pub fn obj_track_times(&mut self, track_times: bool) -> &mut Self {
+        self.obj_track_times = Some(track_times);
+        self
+    }
+
     #[cfg(hdf5_1_10_1)]
     /// Sets the file space page size.
     ///
@@ -350,6 +361,9 @@ impl FileCreateBuilder {
                     v.min_message_size as _,
                 ));
             }
+        }
+        if let Some(v) = self.obj_track_times {
+            h5try!(H5Pset_obj_track_times(id, v as _));
         }
         #[cfg(hdf5_1_10_1)]
         {
@@ -509,6 +523,16 @@ impl FileCreate {
     /// Retrieves configuration settings for shared message indexes.
     pub fn shared_mesg_indexes(&self) -> Vec<SharedMessageIndex> {
         self.get_shared_mesg_indexes().unwrap_or_else(|_| Vec::new())
+    }
+
+    #[doc(hidden)]
+    pub fn get_obj_track_times(&self) -> Result<bool> {
+        h5get!(H5Pget_obj_track_times(self.id()): hbool_t).map(|x| x > 0)
+    }
+
+    /// Returns true if the time data is recorded.
+    pub fn obj_track_times(&self) -> bool {
+        self.get_obj_track_times().unwrap_or(true)
     }
 
     /// Retrieves the file space page size.
