@@ -722,6 +722,15 @@ fn test_dcpl_virtual_map() -> hdf5::Result<()> {
     Ok(())
 }
 
+#[test]
+fn test_dcpl_obj_track_times() -> hdf5::Result<()> {
+    assert_eq!(DC::try_new()?.get_obj_track_times()?, true);
+    assert_eq!(DC::try_new()?.obj_track_times(), true);
+    test_pl!(DC, obj_track_times: true);
+    test_pl!(DC, obj_track_times: false);
+    Ok(())
+}
+
 type LC = LinkCreate;
 type LCB = LinkCreateBuilder;
 

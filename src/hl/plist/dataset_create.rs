@@ -10,8 +10,8 @@ use hdf5_sys::h5d::{H5D_alloc_time_t, H5D_layout_t};
 use hdf5_sys::h5f::H5F_UNLIMITED;
 use hdf5_sys::h5p::{
     H5Pall_filters_avail, H5Pcreate, H5Pget_alloc_time, H5Pget_chunk, H5Pget_external,
-    H5Pget_external_count, H5Pget_layout, H5Pset_alloc_time, H5Pset_chunk, H5Pset_external,
-    H5Pset_layout,
+    H5Pget_external_count, H5Pget_layout, H5Pget_obj_track_times, H5Pset_alloc_time, H5Pset_chunk,
+    H5Pset_external, H5Pset_layout, H5Pset_obj_track_times,
 };
 use hdf5_sys::h5z::H5Z_filter_t;
 #[cfg(hdf5_1_10_0)]
@@ -67,6 +67,7 @@ impl Debug for DatasetCreate {
         formatter.field("external", &self.external());
         #[cfg(hdf5_1_10_0)]
         formatter.field("virtual_map", &self.virtual_map());
+        formatter.field("obj_track_times", &self.obj_track_times());
         formatter.finish()
     }
 }
@@ -221,6 +222,7 @@ pub struct DatasetCreateBuilder {
     external: Vec<ExternalFile>,
     #[cfg(hdf5_1_10_0)]
     virtual_map: Vec<VirtualMapping>,
+    obj_track_times: Option<bool>,
 }
 
 impl DatasetCreateBuilder {
@@ -260,6 +262,7 @@ impl DatasetCreateBuilder {
         for external in &plist.get_external()? {
             builder.external(&external.name, external.offset, external.size);
         }
+        builder.obj_track_times(plist.get_obj_track_times()?);
         Ok(builder)
     }
 
@@ -422,6 +425,11 @@ impl DatasetCreateBuilder {
         self
     }
 
+    pub fn obj_track_times(&mut self, track_times: bool) -> &mut Self {
+        self.obj_track_times = Some(track_times);
+        self
+    }
+
     fn populate_plist(&self, id: hid_t) -> Result<()> {
         for filter in &self.filters {
             filter.apply_to_plist(id)?;
@@ -460,6 +468,9 @@ impl DatasetCreateBuilder {
             let name = to_cstring(external.name.as_str())?;
             let size = if external.size != 0 { external.size as _ } else { H5F_UNLIMITED as _ };
             h5try!(H5Pset_external(id, name.as_ptr(), external.offset as _, size));
+        }
+        if let Some(v) = self.obj_track_times {
+            h5try!(H5Pset_obj_track_times(id, v as _));
         }
         Ok(())
     }
@@ -623,5 +634,14 @@ impl DatasetCreate {
     #[cfg(hdf5_1_10_0)]
     pub fn virtual_map(&self) -> Vec<VirtualMapping> {
         self.get_virtual_map().unwrap_or_default()
+    }
+
+    #[doc(hidden)]
+    pub fn get_obj_track_times(&self) -> Result<bool> {
+        h5get!(H5Pget_obj_track_times(self.id()): hbool_t).map(|x| x > 0)
+    }
+
+    pub fn obj_track_times(&self) -> bool {
+        self.get_obj_track_times().unwrap_or(true)
     }
 }
