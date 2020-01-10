@@ -758,6 +758,19 @@ fn test_dcpl_virtual_map() -> hdf5::Result<()> {
 
     assert_eq!(DCB::from_plist(&pl)?.finish()?.get_virtual_map()?, expected);
 
+    let mut b = DCB::new()
+        .virtual_map("foo", "bar", (3, 4..), (.., 1..), (10..=20, 10), (..3, 7..))
+        .clone();
+
+    // layout is set to virtual if virtual map is given
+    assert_eq!(b.layout(Layout::Contiguous).finish()?.layout(), Layout::Virtual);
+    assert_eq!(b.layout(Layout::Compact).finish()?.layout(), Layout::Virtual);
+    assert_eq!(b.layout(Layout::Chunked).finish()?.layout(), Layout::Virtual);
+
+    // chunks are ignored in virtual mode
+    assert_eq!(b.chunk((1, 2, 3, 4)).finish()?.layout(), Layout::Virtual);
+    assert_eq!(b.chunk((1, 2, 3, 4)).finish()?.chunk(), None);
+
     Ok(())
 }
 
