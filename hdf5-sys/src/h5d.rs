@@ -70,6 +70,12 @@ pub enum H5D_fill_time_t {
     H5D_FILL_TIME_IFSET = 2,
 }
 
+impl Default for H5D_fill_time_t {
+    fn default() -> Self {
+        H5D_fill_time_t::H5D_FILL_TIME_IFSET
+    }
+}
+
 #[repr(C)]
 #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
 pub enum H5D_fill_value_t {
@@ -77,6 +83,12 @@ pub enum H5D_fill_value_t {
     H5D_FILL_VALUE_UNDEFINED = 0,
     H5D_FILL_VALUE_DEFAULT = 1,
     H5D_FILL_VALUE_USER_DEFINED = 2,
+}
+
+impl Default for H5D_fill_value_t {
+    fn default() -> Self {
+        H5D_fill_value_t::H5D_FILL_VALUE_DEFAULT
+    }
 }
 
 #[repr(C)]
