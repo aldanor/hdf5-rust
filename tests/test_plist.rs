@@ -630,6 +630,7 @@ fn test_dcpl_set_chunk() -> hdf5::Result<()> {
     assert_eq!(b.layout(Layout::Compact).finish()?.layout(), Layout::Chunked);
     #[cfg(hdf5_1_10_0)]
     assert_eq!(b.layout(Layout::Virtual).finish()?.layout(), Layout::Chunked);
+    assert!(b.no_chunk().finish()?.chunk().is_none());
     assert!(DCB::new().layout(Layout::Contiguous).finish()?.get_chunk()?.is_none());
     assert!(DCB::new().layout(Layout::Compact).finish()?.get_chunk()?.is_none());
     #[cfg(hdf5_1_10_0)]

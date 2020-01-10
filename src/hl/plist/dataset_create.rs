@@ -402,6 +402,11 @@ impl DatasetCreateBuilder {
         self
     }
 
+    pub fn no_chunk(&mut self) -> &mut Self {
+        self.chunk = None;
+        self
+    }
+
     pub fn layout(&mut self, layout: Layout) -> &mut Self {
         self.layout = Some(layout);
         self
