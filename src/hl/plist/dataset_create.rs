@@ -392,6 +392,11 @@ impl DatasetCreateBuilder {
         self
     }
 
+    pub fn clear_filters(&mut self) -> &mut Self {
+        self.filters.clear();
+        self
+    }
+
     pub fn alloc_time(&mut self, alloc_time: Option<AllocTime>) -> &mut Self {
         self.alloc_time = Some(alloc_time);
         self
