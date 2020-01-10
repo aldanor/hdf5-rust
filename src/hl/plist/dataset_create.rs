@@ -28,6 +28,7 @@ use crate::globals::H5P_DATASET_CREATE;
 #[cfg(feature = "blosc")]
 use crate::hl::filters::{Blosc, BloscShuffle};
 use crate::hl::filters::{Filter, SZip, ScaleOffset};
+pub use crate::hl::plist::common::AttrPhaseChange;
 use crate::internal_prelude::*;
 
 /// Dataset creation properties.
@@ -209,18 +210,6 @@ impl VirtualMapping {
             vds_extents: vds_extents.into(),
             vds_selection: vds_selection.into(),
         }
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct AttrPhaseChange {
-    pub max_compact: u32,
-    pub min_dense: u32,
-}
-
-impl Default for AttrPhaseChange {
-    fn default() -> Self {
-        Self { max_compact: 8, min_dense: 6 }
     }
 }
 

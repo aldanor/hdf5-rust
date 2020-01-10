@@ -136,6 +136,20 @@ fn test_fcpl_obj_track_times() -> hdf5::Result<()> {
 }
 
 #[test]
+fn test_fcpl_attr_phase_change() -> hdf5::Result<()> {
+    assert_eq!(FC::try_new()?.get_attr_phase_change()?, AttrPhaseChange::default());
+    assert_eq!(FC::try_new()?.attr_phase_change(), AttrPhaseChange::default());
+    let pl = FCB::new().attr_phase_change(34, 21).finish()?;
+    let expected = AttrPhaseChange { max_compact: 34, min_dense: 21 };
+    assert_eq!(pl.get_attr_phase_change()?, expected);
+    assert_eq!(pl.attr_phase_change(), expected);
+    assert_eq!(FCB::from_plist(&pl)?.finish()?.get_attr_phase_change()?, expected);
+    let _e = hdf5::silence_errors();
+    assert!(FCB::new().attr_phase_change(12, 34).finish().is_err());
+    Ok(())
+}
+
+#[test]
 #[cfg(hdf5_1_10_1)]
 fn test_fcpl_set_file_space_page_size() -> hdf5::Result<()> {
     test_pl!(FC, file_space_page_size: 512);

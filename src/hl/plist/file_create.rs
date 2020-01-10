@@ -12,10 +12,11 @@ use hdf5_sys::h5o::{
     H5O_SHMESG_NONE_FLAG, H5O_SHMESG_PLINE_FLAG, H5O_SHMESG_SDSPACE_FLAG,
 };
 use hdf5_sys::h5p::{
-    H5Pcreate, H5Pget_istore_k, H5Pget_obj_track_times, H5Pget_shared_mesg_index,
-    H5Pget_shared_mesg_nindexes, H5Pget_shared_mesg_phase_change, H5Pget_sizes, H5Pget_sym_k,
-    H5Pget_userblock, H5Pset_istore_k, H5Pset_obj_track_times, H5Pset_shared_mesg_index,
-    H5Pset_shared_mesg_nindexes, H5Pset_shared_mesg_phase_change, H5Pset_sym_k, H5Pset_userblock,
+    H5Pcreate, H5Pget_attr_phase_change, H5Pget_istore_k, H5Pget_obj_track_times,
+    H5Pget_shared_mesg_index, H5Pget_shared_mesg_nindexes, H5Pget_shared_mesg_phase_change,
+    H5Pget_sizes, H5Pget_sym_k, H5Pget_userblock, H5Pset_attr_phase_change, H5Pset_istore_k,
+    H5Pset_obj_track_times, H5Pset_shared_mesg_index, H5Pset_shared_mesg_nindexes,
+    H5Pset_shared_mesg_phase_change, H5Pset_sym_k, H5Pset_userblock,
 };
 #[cfg(hdf5_1_10_1)]
 use hdf5_sys::h5p::{
@@ -24,6 +25,7 @@ use hdf5_sys::h5p::{
 };
 
 use crate::globals::H5P_FILE_CREATE;
+pub use crate::hl::plist::common::AttrPhaseChange;
 use crate::internal_prelude::*;
 
 /// File creation properties.
@@ -56,19 +58,18 @@ impl Debug for FileCreate {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let _e = silence_errors();
         let mut formatter = f.debug_struct("FileCreate");
-        formatter
-            .field("userblock", &self.userblock())
-            .field("sizes", &self.sizes())
-            .field("sym_k", &self.sym_k())
-            .field("istore_k", &self.istore_k())
-            .field("shared_mesg_phase_change", &self.shared_mesg_phase_change())
-            .field("shared_mesg_indexes", &self.shared_mesg_indexes())
-            .field("obj_track_times", &self.obj_track_times());
+        formatter.field("userblock", &self.userblock());
+        formatter.field("sizes", &self.sizes());
+        formatter.field("sym_k", &self.sym_k());
+        formatter.field("istore_k", &self.istore_k());
+        formatter.field("shared_mesg_phase_change", &self.shared_mesg_phase_change());
+        formatter.field("shared_mesg_indexes", &self.shared_mesg_indexes());
+        formatter.field("obj_track_times", &self.obj_track_times());
+        formatter.field("attr_phase_change", &self.attr_phase_change());
         #[cfg(hdf5_1_10_1)]
         {
-            formatter
-                .field("file_space_page_size", &self.file_space_page_size())
-                .field("file_space_strategy", &self.file_space_strategy());
+            formatter.field("file_space_page_size", &self.file_space_page_size());
+            formatter.field("file_space_strategy", &self.file_space_strategy());
         }
         formatter.finish()
     }
@@ -221,6 +222,7 @@ pub struct FileCreateBuilder {
     shared_mesg_phase_change: Option<PhaseChangeInfo>,
     shared_mesg_indexes: Option<Vec<SharedMessageIndex>>,
     obj_track_times: Option<bool>,
+    attr_phase_change: Option<AttrPhaseChange>,
     #[cfg(hdf5_1_10_1)]
     file_space_page_size: Option<u64>,
     #[cfg(hdf5_1_10_1)]
@@ -244,6 +246,8 @@ impl FileCreateBuilder {
         builder.shared_mesg_phase_change(v.max_list, v.min_btree);
         builder.shared_mesg_indexes(&plist.get_shared_mesg_indexes()?);
         builder.obj_track_times(plist.get_obj_track_times()?);
+        let apc = plist.get_attr_phase_change()?;
+        builder.attr_phase_change(apc.max_compact, apc.min_dense);
         #[cfg(hdf5_1_10_1)]
         {
             builder.file_space_page_size(plist.get_file_space_page_size()?);
@@ -316,6 +320,14 @@ impl FileCreateBuilder {
         self
     }
 
+    /// Sets attribute storage phase change thresholds.
+    ///
+    /// For further details, see [`AttrPhaseChange`](enum.AttrPhaseChange.html).
+    pub fn attr_phase_change(&mut self, max_compact: u32, min_dense: u32) -> &mut Self {
+        self.attr_phase_change = Some(AttrPhaseChange { max_compact, min_dense });
+        self
+    }
+
     #[cfg(hdf5_1_10_1)]
     /// Sets the file space page size.
     ///
@@ -364,6 +376,9 @@ impl FileCreateBuilder {
         }
         if let Some(v) = self.obj_track_times {
             h5try!(H5Pset_obj_track_times(id, v as _));
+        }
+        if let Some(v) = self.attr_phase_change {
+            h5try!(H5Pset_attr_phase_change(id, v.max_compact as _, v.min_dense as _));
         }
         #[cfg(hdf5_1_10_1)]
         {
@@ -533,6 +548,17 @@ impl FileCreate {
     /// Returns true if the time data is recorded.
     pub fn obj_track_times(&self) -> bool {
         self.get_obj_track_times().unwrap_or(true)
+    }
+
+    #[doc(hidden)]
+    pub fn get_attr_phase_change(&self) -> Result<AttrPhaseChange> {
+        h5get!(H5Pget_attr_phase_change(self.id()): c_uint, c_uint)
+            .map(|(mc, md)| AttrPhaseChange { max_compact: mc as _, min_dense: md as _ })
+    }
+
+    /// Returns attribute storage phase change thresholds.
+    pub fn attr_phase_change(&self) -> AttrPhaseChange {
+        self.get_attr_phase_change().unwrap_or_default()
     }
 
     /// Retrieves the file space page size.
