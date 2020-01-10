@@ -624,7 +624,12 @@ fn test_dcpl_common() -> hdf5::Result<()> {
 fn test_dcpl_set_chunk() -> hdf5::Result<()> {
     assert!(DC::try_new()?.get_chunk()?.is_none());
     assert_eq!(DCB::new().chunk(&[3, 7]).finish()?.get_chunk()?, Some(vec![3, 7]));
-    assert_eq!(DCB::new().chunk(&[3, 7]).finish()?.chunk(), Some(vec![3, 7]));
+    assert_eq!(DCB::new().chunk((3, 7)).finish()?.chunk(), Some(vec![3, 7]));
+    let mut b = DCB::new().chunk([3, 7]).clone();
+    assert_eq!(b.layout(Layout::Contiguous).finish()?.layout(), Layout::Chunked);
+    assert_eq!(b.layout(Layout::Compact).finish()?.layout(), Layout::Chunked);
+    #[cfg(hdf5_1_10_0)]
+    assert_eq!(b.layout(Layout::Virtual).finish()?.layout(), Layout::Chunked);
     assert!(DCB::new().layout(Layout::Contiguous).finish()?.get_chunk()?.is_none());
     assert!(DCB::new().layout(Layout::Compact).finish()?.get_chunk()?.is_none());
     #[cfg(hdf5_1_10_0)]

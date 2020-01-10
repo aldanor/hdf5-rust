@@ -24,6 +24,7 @@ use hdf5_sys::{
     },
 };
 
+use crate::dim::Dimension;
 use crate::globals::H5P_DATASET_CREATE;
 #[cfg(feature = "blosc")]
 use crate::hl::filters::{Blosc, BloscShuffle};
@@ -396,8 +397,8 @@ impl DatasetCreateBuilder {
         self
     }
 
-    pub fn chunk(&mut self, dims: &[usize]) -> &mut Self {
-        self.chunk = Some(dims.to_vec());
+    pub fn chunk<D: Dimension>(&mut self, chunk: D) -> &mut Self {
+        self.chunk = Some(chunk.dims().to_vec());
         self
     }
 
