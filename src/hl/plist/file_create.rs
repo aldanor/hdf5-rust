@@ -12,11 +12,12 @@ use hdf5_sys::h5o::{
     H5O_SHMESG_NONE_FLAG, H5O_SHMESG_PLINE_FLAG, H5O_SHMESG_SDSPACE_FLAG,
 };
 use hdf5_sys::h5p::{
-    H5Pcreate, H5Pget_attr_phase_change, H5Pget_istore_k, H5Pget_obj_track_times,
-    H5Pget_shared_mesg_index, H5Pget_shared_mesg_nindexes, H5Pget_shared_mesg_phase_change,
-    H5Pget_sizes, H5Pget_sym_k, H5Pget_userblock, H5Pset_attr_phase_change, H5Pset_istore_k,
-    H5Pset_obj_track_times, H5Pset_shared_mesg_index, H5Pset_shared_mesg_nindexes,
-    H5Pset_shared_mesg_phase_change, H5Pset_sym_k, H5Pset_userblock,
+    H5Pcreate, H5Pget_attr_creation_order, H5Pget_attr_phase_change, H5Pget_istore_k,
+    H5Pget_obj_track_times, H5Pget_shared_mesg_index, H5Pget_shared_mesg_nindexes,
+    H5Pget_shared_mesg_phase_change, H5Pget_sizes, H5Pget_sym_k, H5Pget_userblock,
+    H5Pset_attr_creation_order, H5Pset_attr_phase_change, H5Pset_istore_k, H5Pset_obj_track_times,
+    H5Pset_shared_mesg_index, H5Pset_shared_mesg_nindexes, H5Pset_shared_mesg_phase_change,
+    H5Pset_sym_k, H5Pset_userblock,
 };
 #[cfg(hdf5_1_10_1)]
 use hdf5_sys::h5p::{
@@ -25,7 +26,7 @@ use hdf5_sys::h5p::{
 };
 
 use crate::globals::H5P_FILE_CREATE;
-pub use crate::hl::plist::common::AttrPhaseChange;
+pub use crate::hl::plist::common::{AttrCreationOrder, AttrPhaseChange};
 use crate::internal_prelude::*;
 
 /// File creation properties.
@@ -66,6 +67,7 @@ impl Debug for FileCreate {
         formatter.field("shared_mesg_indexes", &self.shared_mesg_indexes());
         formatter.field("obj_track_times", &self.obj_track_times());
         formatter.field("attr_phase_change", &self.attr_phase_change());
+        formatter.field("attr_creation_order", &self.attr_creation_order());
         #[cfg(hdf5_1_10_1)]
         {
             formatter.field("file_space_page_size", &self.file_space_page_size());
@@ -223,6 +225,7 @@ pub struct FileCreateBuilder {
     shared_mesg_indexes: Option<Vec<SharedMessageIndex>>,
     obj_track_times: Option<bool>,
     attr_phase_change: Option<AttrPhaseChange>,
+    attr_creation_order: Option<AttrCreationOrder>,
     #[cfg(hdf5_1_10_1)]
     file_space_page_size: Option<u64>,
     #[cfg(hdf5_1_10_1)]
@@ -248,6 +251,7 @@ impl FileCreateBuilder {
         builder.obj_track_times(plist.get_obj_track_times()?);
         let apc = plist.get_attr_phase_change()?;
         builder.attr_phase_change(apc.max_compact, apc.min_dense);
+        builder.attr_creation_order(plist.get_attr_creation_order()?);
         #[cfg(hdf5_1_10_1)]
         {
             builder.file_space_page_size(plist.get_file_space_page_size()?);
@@ -328,6 +332,14 @@ impl FileCreateBuilder {
         self
     }
 
+    /// Sets flags for tracking and indexing attribute creation order.
+    ///
+    /// For further details, see [`AttrCreationOrder`](struct.AttrCreationOrder.html).
+    pub fn attr_creation_order(&mut self, attr_creation_order: AttrCreationOrder) -> &mut Self {
+        self.attr_creation_order = Some(attr_creation_order);
+        self
+    }
+
     #[cfg(hdf5_1_10_1)]
     /// Sets the file space page size.
     ///
@@ -379,6 +391,9 @@ impl FileCreateBuilder {
         }
         if let Some(v) = self.attr_phase_change {
             h5try!(H5Pset_attr_phase_change(id, v.max_compact as _, v.min_dense as _));
+        }
+        if let Some(v) = self.attr_creation_order {
+            h5try!(H5Pset_attr_creation_order(id, v.bits() as _));
         }
         #[cfg(hdf5_1_10_1)]
         {
@@ -559,6 +574,17 @@ impl FileCreate {
     /// Returns attribute storage phase change thresholds.
     pub fn attr_phase_change(&self) -> AttrPhaseChange {
         self.get_attr_phase_change().unwrap_or_default()
+    }
+
+    #[doc(hidden)]
+    pub fn get_attr_creation_order(&self) -> Result<AttrCreationOrder> {
+        h5get!(H5Pget_attr_creation_order(self.id()): c_uint)
+            .map(AttrCreationOrder::from_bits_truncate)
+    }
+
+    /// Returns flags for tracking and indexing attribute creation order.
+    pub fn attr_creation_order(&self) -> AttrCreationOrder {
+        self.get_attr_creation_order().unwrap_or_default()
     }
 
     /// Retrieves the file space page size.

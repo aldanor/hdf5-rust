@@ -150,6 +150,17 @@ fn test_fcpl_attr_phase_change() -> hdf5::Result<()> {
 }
 
 #[test]
+fn test_fcpl_attr_creation_order() -> hdf5::Result<()> {
+    assert_eq!(FC::try_new()?.get_attr_creation_order()?.bits(), 0);
+    assert_eq!(FC::try_new()?.attr_creation_order().bits(), 0);
+    test_pl!(FC, attr_creation_order: AttrCreationOrder::TRACKED);
+    test_pl!(FC, attr_creation_order: AttrCreationOrder::TRACKED | AttrCreationOrder::INDEXED);
+    let _e = hdf5::silence_errors();
+    assert!(FCB::new().attr_creation_order(AttrCreationOrder::INDEXED).finish().is_err());
+    Ok(())
+}
+
+#[test]
 #[cfg(hdf5_1_10_1)]
 fn test_fcpl_set_file_space_page_size() -> hdf5::Result<()> {
     test_pl!(FC, file_space_page_size: 512);
