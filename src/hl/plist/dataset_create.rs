@@ -6,13 +6,14 @@ use std::ptr;
 
 use bitflags::bitflags;
 
-use hdf5_sys::h5d::{H5D_alloc_time_t, H5D_layout_t};
+use hdf5_sys::h5d::{H5D_alloc_time_t, H5D_fill_time_t, H5D_layout_t};
 use hdf5_sys::h5f::H5F_UNLIMITED;
 use hdf5_sys::h5p::{
     H5Pall_filters_avail, H5Pcreate, H5Pget_alloc_time, H5Pget_attr_creation_order,
-    H5Pget_attr_phase_change, H5Pget_chunk, H5Pget_external, H5Pget_external_count, H5Pget_layout,
-    H5Pget_obj_track_times, H5Pset_alloc_time, H5Pset_attr_creation_order,
-    H5Pset_attr_phase_change, H5Pset_chunk, H5Pset_external, H5Pset_layout, H5Pset_obj_track_times,
+    H5Pget_attr_phase_change, H5Pget_chunk, H5Pget_external, H5Pget_external_count,
+    H5Pget_fill_time, H5Pget_layout, H5Pget_obj_track_times, H5Pset_alloc_time,
+    H5Pset_attr_creation_order, H5Pset_attr_phase_change, H5Pset_chunk, H5Pset_external,
+    H5Pset_fill_time, H5Pset_layout, H5Pset_obj_track_times,
 };
 use hdf5_sys::h5z::H5Z_filter_t;
 #[cfg(hdf5_1_10_0)]
@@ -63,6 +64,7 @@ impl Debug for DatasetCreate {
         let mut formatter = f.debug_struct("DatasetCreate");
         formatter.field("filters", &self.filters());
         formatter.field("alloc_time", &self.alloc_time());
+        formatter.field("fill_time", &self.fill_time());
         formatter.field("chunk", &self.chunk());
         formatter.field("layout", &self.layout());
         #[cfg(hdf5_1_10_0)]
@@ -179,6 +181,39 @@ impl From<AllocTime> for H5D_alloc_time_t {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum FillTime {
+    IfSet,
+    Alloc,
+    Never,
+}
+
+impl Default for FillTime {
+    fn default() -> Self {
+        FillTime::IfSet
+    }
+}
+
+impl From<H5D_fill_time_t> for FillTime {
+    fn from(fill_time: H5D_fill_time_t) -> Self {
+        match fill_time {
+            H5D_fill_time_t::H5D_FILL_TIME_IFSET => FillTime::IfSet,
+            H5D_fill_time_t::H5D_FILL_TIME_ALLOC => FillTime::Alloc,
+            _ => FillTime::Never,
+        }
+    }
+}
+
+impl From<FillTime> for H5D_fill_time_t {
+    fn from(fill_time: FillTime) -> Self {
+        match fill_time {
+            FillTime::IfSet => H5D_fill_time_t::H5D_FILL_TIME_IFSET,
+            FillTime::Alloc => H5D_fill_time_t::H5D_FILL_TIME_ALLOC,
+            _ => H5D_fill_time_t::H5D_FILL_TIME_NEVER,
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ExternalFile {
     pub name: String,
@@ -227,6 +262,7 @@ impl VirtualMapping {
 pub struct DatasetCreateBuilder {
     filters: Vec<Filter>,
     alloc_time: Option<Option<AllocTime>>,
+    fill_time: Option<FillTime>,
     chunk: Option<Vec<usize>>,
     layout: Option<Layout>,
     #[cfg(hdf5_1_10_0)]
@@ -250,6 +286,7 @@ impl DatasetCreateBuilder {
         let mut builder = Self::default();
         builder.set_filters(&plist.get_filters()?);
         builder.alloc_time(Some(plist.get_alloc_time()?));
+        builder.fill_time(plist.get_fill_time()?);
         if let Some(v) = plist.get_chunk()? {
             builder.chunk(&v);
         }
@@ -402,6 +439,11 @@ impl DatasetCreateBuilder {
         self
     }
 
+    pub fn fill_time(&mut self, fill_time: FillTime) -> &mut Self {
+        self.fill_time = Some(fill_time);
+        self
+    }
+
     pub fn chunk<D: Dimension>(&mut self, chunk: D) -> &mut Self {
         self.chunk = Some(chunk.dims().to_vec());
         self
@@ -474,6 +516,9 @@ impl DatasetCreateBuilder {
         if let Some(v) = self.alloc_time {
             let v = v.map(Into::into).unwrap_or(H5D_alloc_time_t::H5D_ALLOC_TIME_DEFAULT);
             h5try!(H5Pset_alloc_time(id, v));
+        }
+        if let Some(v) = self.fill_time {
+            h5try!(H5Pset_fill_time(id, v.into()));
         }
         if let Some(v) = self.layout {
             h5try!(H5Pset_layout(id, v.into()));
@@ -561,6 +606,15 @@ impl DatasetCreate {
 
     pub fn alloc_time(&self) -> AllocTime {
         self.get_alloc_time().unwrap_or(AllocTime::Late)
+    }
+
+    #[doc(hidden)]
+    pub fn get_fill_time(&self) -> Result<FillTime> {
+        h5get!(H5Pget_fill_time(self.id()): H5D_fill_time_t).map(Into::into)
+    }
+
+    pub fn fill_time(&self) -> FillTime {
+        self.get_fill_time().unwrap_or_default()
     }
 
     #[doc(hidden)]

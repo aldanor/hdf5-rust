@@ -695,6 +695,16 @@ fn test_dcpl_set_alloc_time() -> hdf5::Result<()> {
 }
 
 #[test]
+fn test_dcpl_fill_time() -> hdf5::Result<()> {
+    check_matches!(DC::try_new()?.get_fill_time()?, (), FillTime::IfSet);
+    check_matches!(DC::try_new()?.fill_time(), (), FillTime::IfSet);
+    test_pl!(DC, fill_time: FillTime::IfSet);
+    test_pl!(DC, fill_time: FillTime::Alloc);
+    test_pl!(DC, fill_time: FillTime::Never);
+    Ok(())
+}
+
+#[test]
 fn test_dcpl_external() -> hdf5::Result<()> {
     assert_eq!(DC::try_new()?.get_external()?, vec![]);
     let pl = DCB::new()
