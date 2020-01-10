@@ -17,6 +17,7 @@ use hdf5_sys::h5p::{
     H5Pset_attr_phase_change, H5Pset_chunk, H5Pset_external, H5Pset_fill_time, H5Pset_fill_value,
     H5Pset_layout, H5Pset_obj_track_times,
 };
+use hdf5_sys::h5t::H5Tget_class;
 use hdf5_sys::h5z::H5Z_filter_t;
 #[cfg(hdf5_1_10_0)]
 use hdf5_sys::{
@@ -31,9 +32,9 @@ use hdf5_types::{OwnedDynValue, TypeDescriptor};
 use crate::dim::Dimension;
 use crate::globals::H5P_DATASET_CREATE;
 use crate::hl::datatype::Datatype;
+use crate::hl::filters::{validate_filters, Filter, SZip, ScaleOffset};
 #[cfg(feature = "blosc")]
 use crate::hl::filters::{Blosc, BloscShuffle};
-use crate::hl::filters::{Filter, SZip, ScaleOffset};
 pub use crate::hl::plist::common::{AttrCreationOrder, AttrPhaseChange};
 use crate::internal_prelude::*;
 
@@ -617,6 +618,10 @@ impl DatasetCreateBuilder {
             h5try!(H5Pset_attr_creation_order(id, v.bits() as _));
         }
         Ok(())
+    }
+
+    pub(crate) fn validate_filters(&self, datatype_id: hid_t) -> Result<()> {
+        validate_filters(&self.filters, h5lock!(H5Tget_class(datatype_id)))
     }
 
     pub fn apply(&self, plist: &mut DatasetCreate) -> Result<()> {
