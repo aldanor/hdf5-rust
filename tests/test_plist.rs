@@ -768,6 +768,17 @@ fn test_dcpl_attr_phase_change() -> hdf5::Result<()> {
     Ok(())
 }
 
+#[test]
+fn test_dcpl_attr_creation_order() -> hdf5::Result<()> {
+    assert_eq!(DC::try_new()?.get_attr_creation_order()?.bits(), 0);
+    assert_eq!(DC::try_new()?.attr_creation_order().bits(), 0);
+    test_pl!(DC, attr_creation_order: AttrCreationOrder::TRACKED);
+    test_pl!(DC, attr_creation_order: AttrCreationOrder::TRACKED | AttrCreationOrder::INDEXED);
+    let _e = hdf5::silence_errors();
+    assert!(DCB::new().attr_creation_order(AttrCreationOrder::INDEXED).finish().is_err());
+    Ok(())
+}
+
 type LC = LinkCreate;
 type LCB = LinkCreateBuilder;
 

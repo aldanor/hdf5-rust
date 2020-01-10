@@ -9,10 +9,10 @@ use bitflags::bitflags;
 use hdf5_sys::h5d::{H5D_alloc_time_t, H5D_layout_t};
 use hdf5_sys::h5f::H5F_UNLIMITED;
 use hdf5_sys::h5p::{
-    H5Pall_filters_avail, H5Pcreate, H5Pget_alloc_time, H5Pget_attr_phase_change, H5Pget_chunk,
-    H5Pget_external, H5Pget_external_count, H5Pget_layout, H5Pget_obj_track_times,
-    H5Pset_alloc_time, H5Pset_attr_phase_change, H5Pset_chunk, H5Pset_external, H5Pset_layout,
-    H5Pset_obj_track_times,
+    H5Pall_filters_avail, H5Pcreate, H5Pget_alloc_time, H5Pget_attr_creation_order,
+    H5Pget_attr_phase_change, H5Pget_chunk, H5Pget_external, H5Pget_external_count, H5Pget_layout,
+    H5Pget_obj_track_times, H5Pset_alloc_time, H5Pset_attr_creation_order,
+    H5Pset_attr_phase_change, H5Pset_chunk, H5Pset_external, H5Pset_layout, H5Pset_obj_track_times,
 };
 use hdf5_sys::h5z::H5Z_filter_t;
 #[cfg(hdf5_1_10_0)]
@@ -28,7 +28,7 @@ use crate::globals::H5P_DATASET_CREATE;
 #[cfg(feature = "blosc")]
 use crate::hl::filters::{Blosc, BloscShuffle};
 use crate::hl::filters::{Filter, SZip, ScaleOffset};
-pub use crate::hl::plist::common::AttrPhaseChange;
+pub use crate::hl::plist::common::{AttrCreationOrder, AttrPhaseChange};
 use crate::internal_prelude::*;
 
 /// Dataset creation properties.
@@ -71,6 +71,7 @@ impl Debug for DatasetCreate {
         formatter.field("virtual_map", &self.virtual_map());
         formatter.field("obj_track_times", &self.obj_track_times());
         formatter.field("attr_phase_change", &self.attr_phase_change());
+        formatter.field("attr_creation_order", &self.attr_creation_order());
         formatter.finish()
     }
 }
@@ -227,6 +228,7 @@ pub struct DatasetCreateBuilder {
     virtual_map: Vec<VirtualMapping>,
     obj_track_times: Option<bool>,
     attr_phase_change: Option<AttrPhaseChange>,
+    attr_creation_order: Option<AttrCreationOrder>,
 }
 
 impl DatasetCreateBuilder {
@@ -269,6 +271,7 @@ impl DatasetCreateBuilder {
         builder.obj_track_times(plist.get_obj_track_times()?);
         let apc = plist.get_attr_phase_change()?;
         builder.attr_phase_change(apc.max_compact, apc.min_dense);
+        builder.attr_creation_order(plist.get_attr_creation_order()?);
         Ok(builder)
     }
 
@@ -441,6 +444,11 @@ impl DatasetCreateBuilder {
         self
     }
 
+    pub fn attr_creation_order(&mut self, attr_creation_order: AttrCreationOrder) -> &mut Self {
+        self.attr_creation_order = Some(attr_creation_order);
+        self
+    }
+
     fn populate_plist(&self, id: hid_t) -> Result<()> {
         for filter in &self.filters {
             filter.apply_to_plist(id)?;
@@ -485,6 +493,9 @@ impl DatasetCreateBuilder {
         }
         if let Some(v) = self.attr_phase_change {
             h5try!(H5Pset_attr_phase_change(id, v.max_compact as _, v.min_dense as _));
+        }
+        if let Some(v) = self.attr_creation_order {
+            h5try!(H5Pset_attr_creation_order(id, v.bits() as _));
         }
         Ok(())
     }
@@ -667,5 +678,15 @@ impl DatasetCreate {
 
     pub fn attr_phase_change(&self) -> AttrPhaseChange {
         self.get_attr_phase_change().unwrap_or_default()
+    }
+
+    #[doc(hidden)]
+    pub fn get_attr_creation_order(&self) -> Result<AttrCreationOrder> {
+        h5get!(H5Pget_attr_creation_order(self.id()): c_uint)
+            .map(AttrCreationOrder::from_bits_truncate)
+    }
+
+    pub fn attr_creation_order(&self) -> AttrCreationOrder {
+        self.get_attr_creation_order().unwrap_or_default()
     }
 }

@@ -1,3 +1,7 @@
+use hdf5_sys::h5p::{H5P_CRT_ORDER_INDEXED, H5P_CRT_ORDER_TRACKED};
+
+use bitflags::bitflags;
+
 /// Attribute storage phase change thresholds.
 ///
 /// These thresholds determine the point at which attribute storage changes from
@@ -21,5 +25,23 @@ pub struct AttrPhaseChange {
 impl Default for AttrPhaseChange {
     fn default() -> Self {
         Self { max_compact: 8, min_dense: 6 }
+    }
+}
+
+bitflags! {
+    /// Flags for tracking and indexing attribute creation order of an object.
+    ///
+    /// Default behavior is that attribute creation order is neither tracked nor indexed.
+    ///
+    /// Note that if a creation order index is to be built, it must be specified in
+    /// the object creation property list. HDF5 currently provides no mechanism to turn
+    /// on attribute creation order tracking at object creation time and to build the
+    /// index later.
+    #[derive(Default)]
+    pub struct AttrCreationOrder: u32 {
+        /// Attribute creation order is tracked but not necessarily indexed.
+        const TRACKED = H5P_CRT_ORDER_TRACKED as _;
+        /// Attribute creation order is indexed (requires to be tracked).
+        const INDEXED = H5P_CRT_ORDER_INDEXED as _;
     }
 }
