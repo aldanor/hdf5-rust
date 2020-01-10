@@ -740,6 +740,20 @@ fn test_dcpl_obj_track_times() -> hdf5::Result<()> {
     Ok(())
 }
 
+#[test]
+fn test_dcpl_attr_phase_change() -> hdf5::Result<()> {
+    assert_eq!(DC::try_new()?.get_attr_phase_change()?, AttrPhaseChange::default());
+    assert_eq!(DC::try_new()?.attr_phase_change(), AttrPhaseChange::default());
+    let pl = DCB::new().attr_phase_change(34, 21).finish()?;
+    let expected = AttrPhaseChange { max_compact: 34, min_dense: 21 };
+    assert_eq!(pl.get_attr_phase_change()?, expected);
+    assert_eq!(pl.attr_phase_change(), expected);
+    assert_eq!(DCB::from_plist(&pl)?.finish()?.get_attr_phase_change()?, expected);
+    let _e = hdf5::silence_errors();
+    assert!(DCB::new().attr_phase_change(12, 34).finish().is_err());
+    Ok(())
+}
+
 type LC = LinkCreate;
 type LCB = LinkCreateBuilder;
 
