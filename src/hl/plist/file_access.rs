@@ -224,17 +224,17 @@ bitflags! {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+impl Default for LogFlags {
+    fn default() -> Self {
+        LogFlags::LOC_IO
+    }
+}
+
+#[derive(Clone, Default, Debug, PartialEq, Eq)]
 pub struct LogOptions {
     logfile: Option<String>,
     flags: LogFlags,
     buf_size: usize,
-}
-
-impl Default for LogOptions {
-    fn default() -> Self {
-        Self { logfile: None, flags: LogFlags::LOC_IO, buf_size: 0 }
-    }
 }
 
 static FD_MEM_TYPES: &[H5F_mem_t] = &[

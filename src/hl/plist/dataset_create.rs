@@ -144,6 +144,13 @@ bitflags! {
     }
 }
 
+#[cfg(hdf5_1_10_0)]
+impl Default for ChunkOpts {
+    fn default() -> Self {
+        ChunkOpts::DONT_FILTER_PARTIAL_CHUNKS
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum AllocTime {
     Early,
