@@ -721,6 +721,12 @@ impl OwnedDynValue {
     }
 }
 
+impl<T: H5Type> From<T> for OwnedDynValue {
+    fn from(value: T) -> Self {
+        Self::new(value)
+    }
+}
+
 impl Drop for OwnedDynValue {
     fn drop(&mut self) {
         self.get().dyn_drop()
@@ -931,6 +937,13 @@ mod tests {
         fn type_descriptor() -> TypeDescriptor {
             td_big_struct()
         }
+    }
+
+    #[test]
+    fn test_dyn_value_from() {
+        assert_eq!(OwnedDynValue::from(-42i16), OwnedDynValue::new(-42i16));
+        let s = big_struct_2();
+        assert_eq!(OwnedDynValue::from(s.clone()), OwnedDynValue::new(s.clone()));
     }
 
     #[test]
