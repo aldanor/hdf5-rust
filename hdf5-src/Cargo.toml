@@ -1,0 +1,38 @@
+[package]
+name = "hdf5-src"
+version = "0.6.1"  # !V
+authors = ["Ivan Smirnov <i.s.smirnov@gmail.com>"]
+keywords = ["hdf5"]
+license-file = "ext/hdf5/COPYING"
+build = "build.rs"
+repository = "https://github.com/aldanor/hdf5-rust"
+homepage = "https://github.com/aldanor/hdf5-rust"
+description = "Build script for compiling hdf5 from source"
+edition = "2018"
+links = "hdf5src"
+exclude = [
+    "ext/hdf5/bin/**",
+    "ext/hdf5/c++/**",
+    "ext/hdf5/examples/**",
+    "ext/hdf5/fortran/**",
+    "ext/hdf5/java/**",
+    "ext/hdf5/release_docs/**",
+    "ext/hdf5/test/**",
+    "ext/hdf5/testpar/**",
+    "ext/hdf5/tools/**",
+    "ext/hdf5/hl/test/**",
+    "ext/hdf5/hl/tools/**",
+    "ext/hdf5/hl/examples/**",
+]
+
+[features]
+hl = []
+zlib = ["libz-sys"]
+deprecated = []
+threadsafe = []
+
+[dependencies]
+libz-sys = { version = "1.0.25", features = ["static"], optional = true }
+
+[build-dependencies]
+cmake = "0.1.44"

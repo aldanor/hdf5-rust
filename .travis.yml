@@ -63,7 +63,7 @@ script:
   fi
 - cargo clean
 - cargo build -vv
-- cargo test -v --all
+- cargo test -v --all --exclude hdf5-src
 before_install:
 - |
   if [ `uname` = "Darwin" ] && [ ! -z "$H5_BREW" ]; then

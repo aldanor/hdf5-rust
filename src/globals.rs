@@ -15,7 +15,7 @@ use hdf5_sys::h5fd::{
 
 use crate::internal_prelude::*;
 
-#[cfg(not(target_env = "msvc"))]
+#[cfg(not(h5_dll_indirection))]
 macro_rules! link_hid {
     ($rust_name:ident, $mod_name:ident::$c_name:ident) => {
         lazy_static! {
@@ -28,7 +28,7 @@ macro_rules! link_hid {
 }
 
 // God damn dllimport...
-#[cfg(target_env = "msvc")]
+#[cfg(h5_dll_indirection)]
 macro_rules! link_hid {
     ($rust_name:ident, $mod_name:ident::$c_name:ident) => {
         lazy_static! {

@@ -84,7 +84,7 @@ extern "C" {
 
 pub use self::globals::*;
 
-#[cfg(not(target_env = "msvc"))]
+#[cfg(not(all(target_env = "msvc", not(feature = "static"))))]
 mod globals {
     pub use crate::h5i::hid_t as id_t;
 
@@ -241,7 +241,7 @@ mod globals {
     extern_static!(H5E_BADSIZE, H5E_BADSIZE_g);
 }
 
-#[cfg(target_env = "msvc")]
+#[cfg(all(target_env = "msvc", not(feature = "static")))]
 mod globals {
     // dllimport hack
     pub type id_t = usize;

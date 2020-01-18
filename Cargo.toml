@@ -16,7 +16,7 @@ default = []
 mpio = ["mpi-sys", "hdf5-sys/mpio"]
 
 [workspace]
-members = ["hdf5-types", "hdf5-derive", "hdf5-sys"]
+members = ["hdf5-types", "hdf5-derive", "hdf5-sys", "hdf5-src"]
 exclude = ["*.yml", "ci/*"]
 
 [dependencies]
@@ -39,6 +39,3 @@ rand = { version = "0.7", features = ["small_rng"] }
 regex = "1.3"
 scopeguard = "1.0"
 tempdir = "0.3"
-
-[build-dependencies]
-hdf5-sys = { path = "hdf5-sys", version = "0.6.1" }  # !V
