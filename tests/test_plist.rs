@@ -1,4 +1,5 @@
 use std::mem;
+use std::str::FromStr;
 
 use hdf5::dataset::*;
 use hdf5::file::*;
@@ -701,6 +702,53 @@ fn test_dcpl_fill_time() -> hdf5::Result<()> {
     test_pl!(DC, fill_time: FillTime::IfSet);
     test_pl!(DC, fill_time: FillTime::Alloc);
     test_pl!(DC, fill_time: FillTime::Never);
+    Ok(())
+}
+
+#[test]
+fn test_dcpl_fill_value() -> hdf5::Result<()> {
+    use hdf5_derive::H5Type;
+    use hdf5_types::{FixedAscii, FixedUnicode, VarLenArray, VarLenAscii, VarLenUnicode};
+
+    check_matches!(DC::try_new()?.get_fill_value_defined()?, (), FillValue::Default);
+    check_matches!(DC::try_new()?.fill_value_defined(), (), FillValue::Default);
+    assert_eq!(DC::try_new()?.get_fill_value_as::<f64>()?, Some(0.0));
+    assert_eq!(DC::try_new()?.fill_value_as::<bool>(), Some(false));
+
+    let _e = hdf5::silence_errors();
+
+    let mut b = DCB::new();
+    b.fill_value(1.23);
+    let pl = b.finish()?;
+    assert_eq!(pl.fill_value_defined(), FillValue::UserDefined);
+    assert_eq!(pl.fill_value_as::<f64>(), Some(1.23));
+    assert_eq!(pl.fill_value_as::<i16>(), Some(1));
+    assert!(pl.get_fill_value_as::<bool>().is_err());
+
+    #[derive(H5Type, Clone, Debug, PartialEq, Eq)]
+    #[repr(C)]
+    struct Data {
+        a: FixedAscii<[u8; 5]>,
+        b: FixedUnicode<[u8; 5]>,
+        c: [i16; 2],
+        d: VarLenAscii,
+        e: VarLenUnicode,
+        f: VarLenArray<bool>,
+    }
+
+    let data = Data {
+        a: FixedAscii::from_ascii(b"12345").unwrap(),
+        b: FixedUnicode::from_str("abcd").unwrap(),
+        c: [123i16, -1i16],
+        d: VarLenAscii::from_ascii(b"xy").unwrap(),
+        e: VarLenUnicode::from_str("pqrst").unwrap(),
+        f: VarLenArray::from_slice([true, false].as_ref()),
+    };
+    b.fill_value(data.clone());
+    assert_eq!(b.finish()?.fill_value_defined(), FillValue::UserDefined);
+    assert_eq!(b.finish()?.fill_value_as::<Data>(), Some(data));
+    assert!(b.finish()?.get_fill_value_as::<i16>().is_err());
+
     Ok(())
 }
 

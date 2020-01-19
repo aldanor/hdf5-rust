@@ -1,19 +1,21 @@
 //! Dataset creation properties.
 
 use std::fmt::{self, Debug};
+use std::mem;
 use std::ops::Deref;
 use std::ptr;
 
 use bitflags::bitflags;
 
-use hdf5_sys::h5d::{H5D_alloc_time_t, H5D_fill_time_t, H5D_layout_t};
+use hdf5_sys::h5d::{H5D_alloc_time_t, H5D_fill_time_t, H5D_fill_value_t, H5D_layout_t};
 use hdf5_sys::h5f::H5F_UNLIMITED;
 use hdf5_sys::h5p::{
-    H5Pall_filters_avail, H5Pcreate, H5Pget_alloc_time, H5Pget_attr_creation_order,
-    H5Pget_attr_phase_change, H5Pget_chunk, H5Pget_external, H5Pget_external_count,
-    H5Pget_fill_time, H5Pget_layout, H5Pget_obj_track_times, H5Pset_alloc_time,
-    H5Pset_attr_creation_order, H5Pset_attr_phase_change, H5Pset_chunk, H5Pset_external,
-    H5Pset_fill_time, H5Pset_layout, H5Pset_obj_track_times,
+    H5Pall_filters_avail, H5Pcreate, H5Pfill_value_defined, H5Pget_alloc_time,
+    H5Pget_attr_creation_order, H5Pget_attr_phase_change, H5Pget_chunk, H5Pget_external,
+    H5Pget_external_count, H5Pget_fill_time, H5Pget_fill_value, H5Pget_layout,
+    H5Pget_obj_track_times, H5Pset_alloc_time, H5Pset_attr_creation_order,
+    H5Pset_attr_phase_change, H5Pset_chunk, H5Pset_external, H5Pset_fill_time, H5Pset_fill_value,
+    H5Pset_layout, H5Pset_obj_track_times,
 };
 use hdf5_sys::h5z::H5Z_filter_t;
 #[cfg(hdf5_1_10_0)]
@@ -24,9 +26,11 @@ use hdf5_sys::{
         H5Pget_virtual_srcspace, H5Pget_virtual_vspace, H5Pset_chunk_opts, H5Pset_virtual,
     },
 };
+use hdf5_types::{OwnedDynValue, TypeDescriptor};
 
 use crate::dim::Dimension;
 use crate::globals::H5P_DATASET_CREATE;
+use crate::hl::datatype::Datatype;
 #[cfg(feature = "blosc")]
 use crate::hl::filters::{Blosc, BloscShuffle};
 use crate::hl::filters::{Filter, SZip, ScaleOffset};
@@ -65,6 +69,7 @@ impl Debug for DatasetCreate {
         formatter.field("filters", &self.filters());
         formatter.field("alloc_time", &self.alloc_time());
         formatter.field("fill_time", &self.fill_time());
+        formatter.field("fill_value", &self.fill_value_defined());
         formatter.field("chunk", &self.chunk());
         formatter.field("layout", &self.layout());
         #[cfg(hdf5_1_10_0)]
@@ -214,6 +219,39 @@ impl From<FillTime> for H5D_fill_time_t {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum FillValue {
+    Undefined,
+    Default,
+    UserDefined,
+}
+
+impl Default for FillValue {
+    fn default() -> Self {
+        FillValue::Default
+    }
+}
+
+impl From<H5D_fill_value_t> for FillValue {
+    fn from(fill_value: H5D_fill_value_t) -> Self {
+        match fill_value {
+            H5D_fill_value_t::H5D_FILL_VALUE_DEFAULT => FillValue::Default,
+            H5D_fill_value_t::H5D_FILL_VALUE_USER_DEFINED => FillValue::UserDefined,
+            _ => FillValue::Undefined,
+        }
+    }
+}
+
+impl From<FillValue> for H5D_fill_value_t {
+    fn from(fill_value: FillValue) -> Self {
+        match fill_value {
+            FillValue::Default => H5D_fill_value_t::H5D_FILL_VALUE_DEFAULT,
+            FillValue::UserDefined => H5D_fill_value_t::H5D_FILL_VALUE_USER_DEFINED,
+            _ => H5D_fill_value_t::H5D_FILL_VALUE_UNDEFINED,
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ExternalFile {
     pub name: String,
@@ -263,6 +301,7 @@ pub struct DatasetCreateBuilder {
     filters: Vec<Filter>,
     alloc_time: Option<Option<AllocTime>>,
     fill_time: Option<FillTime>,
+    fill_value: Option<OwnedDynValue>,
     chunk: Option<Vec<usize>>,
     layout: Option<Layout>,
     #[cfg(hdf5_1_10_0)]
@@ -282,6 +321,9 @@ impl DatasetCreateBuilder {
     }
 
     /// Creates a new builder from an existing property list.
+    ///
+    /// **Note**: the fill value is not copied over (due to its type not being
+    /// exposed in the property list API).
     pub fn from_plist(plist: &DatasetCreate) -> Result<Self> {
         let mut builder = Self::default();
         builder.set_filters(&plist.get_filters()?);
@@ -444,6 +486,16 @@ impl DatasetCreateBuilder {
         self
     }
 
+    pub fn fill_value<T: Into<OwnedDynValue>>(&mut self, fill_value: T) -> &mut Self {
+        self.fill_value = Some(fill_value.into());
+        self
+    }
+
+    pub fn no_fill_value(&mut self) -> &mut Self {
+        self.fill_value = None;
+        self
+    }
+
     pub fn chunk<D: Dimension>(&mut self, chunk: D) -> &mut Self {
         self.chunk = Some(chunk.dims().to_vec());
         self
@@ -519,6 +571,10 @@ impl DatasetCreateBuilder {
         }
         if let Some(v) = self.fill_time {
             h5try!(H5Pset_fill_time(id, v.into()));
+        }
+        if let Some(ref v) = self.fill_value {
+            let dtype = Datatype::from_descriptor(v.type_descriptor())?;
+            h5try!(H5Pset_fill_value(id, dtype.id(), v.get_buf().as_ptr() as *const _));
         }
         if let Some(v) = self.layout {
             h5try!(H5Pset_layout(id, v.into()));
@@ -615,6 +671,51 @@ impl DatasetCreate {
 
     pub fn fill_time(&self) -> FillTime {
         self.get_fill_time().unwrap_or_default()
+    }
+
+    #[doc(hidden)]
+    pub fn get_fill_value_defined(&self) -> Result<FillValue> {
+        h5get!(H5Pfill_value_defined(self.id()): H5D_fill_value_t).map(Into::into)
+    }
+
+    pub fn fill_value_defined(&self) -> FillValue {
+        self.get_fill_value_defined().unwrap_or(FillValue::Undefined)
+    }
+
+    #[doc(hidden)]
+    pub fn get_fill_value(&self, tp: &TypeDescriptor) -> Result<Option<OwnedDynValue>> {
+        match self.get_fill_value_defined()? {
+            FillValue::Default | FillValue::UserDefined => {
+                let dtype = Datatype::from_descriptor(&tp)?;
+                let mut buf: Vec<u8> = Vec::with_capacity(tp.size());
+                unsafe {
+                    buf.set_len(tp.size());
+                }
+                h5try!(H5Pget_fill_value(self.id(), dtype.id(), buf.as_mut_ptr() as *mut _));
+                Ok(Some(unsafe { OwnedDynValue::from_raw(tp.clone(), buf) }))
+            }
+            _ => Ok(None),
+        }
+    }
+
+    pub fn fill_value(&self, tp: &TypeDescriptor) -> Option<OwnedDynValue> {
+        self.get_fill_value(tp).unwrap_or_default()
+    }
+
+    #[doc(hidden)]
+    pub fn get_fill_value_as<T: H5Type>(&self) -> Result<Option<T>> {
+        let dtype = Datatype::from_type::<T>()?;
+        Ok(self.get_fill_value(&dtype.to_descriptor()?)?.map(|value| unsafe {
+            let mut out: T = mem::zeroed();
+            let buf = value.get_buf();
+            ptr::copy_nonoverlapping(buf.as_ptr(), &mut out as *mut _ as *mut _, buf.len());
+            mem::forget(value);
+            out
+        }))
+    }
+
+    pub fn fill_value_as<T: H5Type>(&self) -> Option<T> {
+        self.get_fill_value_as::<T>().unwrap_or_default()
     }
 
     #[doc(hidden)]
