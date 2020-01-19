@@ -719,6 +719,20 @@ impl OwnedDynValue {
     pub fn get(&self) -> DynValue {
         DynValue::new(&self.tp, &self.buf)
     }
+
+    pub fn type_descriptor(&self) -> &TypeDescriptor {
+        &self.tp
+    }
+
+    #[doc(hidden)]
+    pub unsafe fn get_buf(&self) -> &[u8] {
+        &self.buf
+    }
+
+    #[doc(hidden)]
+    pub unsafe fn from_raw(tp: TypeDescriptor, buf: Vec<u8>) -> Self {
+        Self { tp, buf }
+    }
 }
 
 impl<T: H5Type> From<T> for OwnedDynValue {
