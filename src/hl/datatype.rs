@@ -9,7 +9,7 @@ use hdf5_sys::h5t::{
     H5Tget_array_ndims, H5Tget_class, H5Tget_cset, H5Tget_member_name, H5Tget_member_offset,
     H5Tget_member_type, H5Tget_member_value, H5Tget_nmembers, H5Tget_sign, H5Tget_size,
     H5Tget_super, H5Tinsert, H5Tis_variable_str, H5Tset_cset, H5Tset_size, H5Tset_strpad,
-    H5Tvlen_create, H5T_VARIABLE,
+    H5Tvlen_create, H5T_VARIABLE, H5Tget_order, H5T_order_t
 };
 use hdf5_types::{
     CompoundField, CompoundType, EnumMember, EnumType, FloatSize, H5Type, IntSize, TypeDescriptor,
@@ -361,5 +361,9 @@ impl Datatype {
         });
 
         Self::from_id(datatype_id?)
+    }
+
+    pub fn byte_order(&self) -> H5T_order_t {
+        h5lock!(H5Tget_order(self.id()))
     }
 }
