@@ -8,7 +8,7 @@ use hdf5_sys::{
     h5::HADDR_UNDEF,
     h5d::{
         H5D_fill_value_t, H5D_layout_t, H5Dcreate2, H5Dcreate_anon, H5Dget_create_plist,
-        H5Dget_offset, H5Dset_extent, H5D_FILL_TIME_ALLOC,
+        H5Dget_offset, H5Dset_extent, H5D_FILL_TIME_ALLOC, H5Dget_num_chunks
     },
     h5p::{
         H5Pcreate, H5Pfill_value_defined, H5Pget_chunk, H5Pget_fill_value, H5Pget_layout,
@@ -93,6 +93,23 @@ impl Dataset {
                     None
                 }
             })
+        })
+    }
+
+    /// Returns number of chunks if the dataset is chunked.
+    pub fn num_chunks(&self) -> Option<u64> {
+        h5lock!({
+            if self.is_chunked() {
+                self.space()
+                    .map(|s| {
+                        let mut n: u64 = 0;
+                        h5call!(H5Dget_num_chunks(self.id(), s.id(), &mut n))
+                            .map(|_| n)
+                            .ok()
+                    }).ok().flatten()
+            } else {
+                None
+            }
         })
     }
 
