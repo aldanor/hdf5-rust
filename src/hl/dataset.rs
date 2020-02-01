@@ -7,8 +7,8 @@ use num_integer::div_floor;
 use hdf5_sys::{
     h5::HADDR_UNDEF,
     h5d::{
-        H5D_fill_value_t, H5D_layout_t, H5Dcreate2, H5Dcreate_anon, H5Dget_create_plist,
-        H5Dget_offset, H5Dset_extent, H5D_FILL_TIME_ALLOC,
+        H5D_fill_value_t, H5D_layout_t, H5Dcreate2, H5Dcreate_anon, H5Dget_chunk_info,
+        H5Dget_create_plist, H5Dget_num_chunks, H5Dget_offset, H5Dset_extent, H5D_FILL_TIME_ALLOC,
     },
     h5p::{
         H5Pcreate, H5Pfill_value_defined, H5Pget_chunk, H5Pget_fill_value, H5Pget_layout,
@@ -62,6 +62,20 @@ pub enum Chunk {
     Manual(Vec<Ix>),
 }
 
+#[derive(Clone)]
+pub struct ChunkInfo {
+    /// Vector with same size as dataset rank with index of first element in Chunk.
+    pub offset: Vec<u64>,
+
+    pub filter_mask: u32,
+
+    /// Chunk address in file.
+    pub addr: u64,
+
+    /// Chunk size in bytes.
+    pub size: u64,
+}
+
 impl Dataset {
     /// Returns whether this dataset is resizable along some axis.
     pub fn is_resizable(&self) -> bool {
@@ -93,6 +107,39 @@ impl Dataset {
                     None
                 }
             })
+        })
+    }
+
+    // Return ChunkInfo for chunk number if the dataset is chunked.
+    pub fn chunk_info(&self, chunk_no: u64) -> Option<ChunkInfo> {
+        h5lock!({
+            if self.is_chunked() {
+                self.space()
+                    .map(|s| {
+                        let mut offset = Vec::with_capacity(self.ndim());
+                        offset.set_len(self.ndim());
+
+                        let mut filter_mask: u32 = 0;
+                        let mut addr: u64 = 0;
+                        let mut size: u64 = 0;
+
+                        h5call!(H5Dget_chunk_info(
+                            self.id(),
+                            s.id(),
+                            chunk_no,
+                            offset.as_mut_ptr(),
+                            &mut filter_mask,
+                            &mut addr,
+                            &mut size
+                        ))
+                        .map(|_| ChunkInfo { offset, filter_mask, addr, size })
+                        .ok()
+                    })
+                    .ok()
+                    .flatten()
+            } else {
+                None
+            }
         })
     }
 
