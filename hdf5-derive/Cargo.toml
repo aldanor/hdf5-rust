@@ -1,6 +1,6 @@
 [package]
 name = "hdf5-derive"
-version = "0.5.2"  # !V
+version = "0.6.0"  # !V
 authors = ["Ivan Smirnov <i.s.smirnov@gmail.com>"]
 keywords = ["hdf5"]
 license = "MIT/Apache-2.0"
