@@ -9,6 +9,10 @@
 - `File::create_plist()` or `File::fcpl()` to get file creation plist.
 - Added high-level wrappers for dataset access H5P API (`plist::DatasetAccess`).
 - Added `hdf5::is_library_threadsafe()` function.
+- Added `Group::member_names()`.
+- Added `Datatype::byte_order()`.
+- Added `Dataset::num_chunks()` (1.10.5+).
+- Added `Dataset::chunk_info()` (1.10.5+).
 
 ### Changed
 
@@ -44,6 +48,7 @@
 ### Fixed
 
 - Replaced deprecated `std::mem::uninitialized` with `std::mem::MaybeUninit`.
+- Fixed a serde-related problem with building `hdf5-sys` on Windows.
 
 ## 0.5.2
 
