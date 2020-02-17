@@ -342,7 +342,7 @@ mod windows {
 
     use serde::de::Error;
     use serde::{Deserialize, Deserializer};
-    use serde_derive::Deserialize;
+    use serde_derive::Deserialize as DeriveDeserialize;
     use winreg::enums::HKEY_LOCAL_MACHINE;
     use winreg::RegKey;
 
@@ -356,7 +356,7 @@ mod windows {
         }
     }
 
-    #[derive(Clone, Deserialize)]
+    #[derive(Clone, DeriveDeserialize)]
     struct App {
         #[serde(rename = "DisplayName")]
         name: String,
