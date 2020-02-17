@@ -4,12 +4,12 @@ use std::fmt::{self, Debug, Display};
 use std::ops::Deref;
 
 use hdf5_sys::h5t::{
-    H5T_cdata_t, H5T_class_t, H5T_cset_t, H5T_str_t, H5Tarray_create2, H5Tcompiler_conv, H5Tcopy,
-    H5Tcreate, H5Tenum_create, H5Tenum_insert, H5Tequal, H5Tfind, H5Tget_array_dims2,
-    H5Tget_array_ndims, H5Tget_class, H5Tget_cset, H5Tget_member_name, H5Tget_member_offset,
-    H5Tget_member_type, H5Tget_member_value, H5Tget_nmembers, H5Tget_sign, H5Tget_size,
-    H5Tget_super, H5Tinsert, H5Tis_variable_str, H5Tset_cset, H5Tset_size, H5Tset_strpad,
-    H5Tvlen_create, H5T_VARIABLE,
+    H5T_cdata_t, H5T_class_t, H5T_cset_t, H5T_order_t, H5T_str_t, H5Tarray_create2,
+    H5Tcompiler_conv, H5Tcopy, H5Tcreate, H5Tenum_create, H5Tenum_insert, H5Tequal, H5Tfind,
+    H5Tget_array_dims2, H5Tget_array_ndims, H5Tget_class, H5Tget_cset, H5Tget_member_name,
+    H5Tget_member_offset, H5Tget_member_type, H5Tget_member_value, H5Tget_nmembers, H5Tget_order,
+    H5Tget_sign, H5Tget_size, H5Tget_super, H5Tinsert, H5Tis_variable_str, H5Tset_cset,
+    H5Tset_size, H5Tset_strpad, H5Tvlen_create, H5T_VARIABLE,
 };
 use hdf5_types::{
     CompoundField, CompoundType, EnumMember, EnumType, FloatSize, H5Type, IntSize, TypeDescriptor,
@@ -119,10 +119,49 @@ impl Default for Conversion {
     }
 }
 
+#[derive(Copy, Debug, Clone, PartialEq, Eq)]
+pub enum ByteOrder {
+    LittleEndian,
+    BigEndian,
+    Vax,
+    Mixed,
+    None,
+}
+
+#[cfg(hdf5_1_8_6)]
+impl From<H5T_order_t> for ByteOrder {
+    fn from(order: H5T_order_t) -> Self {
+        match order {
+            H5T_order_t::H5T_ORDER_LE => ByteOrder::LittleEndian,
+            H5T_order_t::H5T_ORDER_BE => ByteOrder::BigEndian,
+            H5T_order_t::H5T_ORDER_VAX => ByteOrder::Vax,
+            H5T_order_t::H5T_ORDER_MIXED => ByteOrder::Mixed,
+            _ => ByteOrder::None,
+        }
+    }
+}
+
+#[cfg(not(hdf5_1_8_6))]
+impl From<H5T_order_t> for ByteOrder {
+    fn from(order: H5T_order_t) -> Self {
+        match order {
+            H5T_order_t::H5T_ORDER_LE => ByteOrder::LittleEndian,
+            H5T_order_t::H5T_ORDER_BE => ByteOrder::BigEndian,
+            H5T_order_t::H5T_ORDER_VAX => ByteOrder::Vax,
+            _ => ByteOrder::None,
+        }
+    }
+}
+
 impl Datatype {
     /// Get the total size of the datatype in bytes.
     pub fn size(&self) -> usize {
         h5call!(H5Tget_size(self.id())).unwrap_or(0) as usize
+    }
+
+    /// Get the byte order of the datatype.
+    pub fn byte_order(&self) -> ByteOrder {
+        h5lock!(H5Tget_order(self.id())).into()
     }
 
     pub fn conv_path<D>(&self, dst: D) -> Option<Conversion>

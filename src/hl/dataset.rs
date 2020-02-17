@@ -4,6 +4,8 @@ use std::ops::Deref;
 
 use num_integer::div_floor;
 
+#[cfg(hdf5_1_10_5)]
+use hdf5_sys::h5d::{H5Dget_chunk_info, H5Dget_num_chunks};
 use hdf5_sys::{
     h5::HADDR_UNDEF,
     h5d::{
@@ -62,6 +64,32 @@ pub enum Chunk {
     Manual(Vec<Ix>),
 }
 
+#[cfg(hdf5_1_10_5)]
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ChunkInfo {
+    /// Array with a size equal to the dataset’s rank whose elements contain 0-based
+    /// logical positions of the chunk’s first element in each dimension.
+    pub offset: Vec<u64>,
+    /// Filter mask that indicates which filters were used with the chunk when written.
+    /// A zero value indicates that all enabled filters are applied on the chunk.
+    /// A filter is skipped if the bit corresponding to the filter’s position in
+    /// the pipeline (0 ≤ position < 32) is turned on.
+    pub filter_mask: u32,
+    /// Chunk address in the file.
+    pub addr: u64,
+    /// Chunk size in bytes.
+    pub size: u64,
+}
+
+#[cfg(hdf5_1_10_5)]
+impl ChunkInfo {
+    pub(crate) fn new(ndim: usize) -> Self {
+        let mut offset = Vec::with_capacity(ndim);
+        unsafe { offset.set_len(ndim) };
+        Self { offset, filter_mask: 0, addr: 0, size: 0 }
+    }
+}
+
 impl Dataset {
     /// Returns whether this dataset is resizable along some axis.
     pub fn is_resizable(&self) -> bool {
@@ -75,6 +103,40 @@ impl Dataset {
                 .ok()
                 .map_or(false, |dcpl_id| H5Pget_layout(dcpl_id) == H5D_layout_t::H5D_CHUNKED)
         })
+    }
+
+    #[cfg(hdf5_1_10_5)]
+    /// Returns number of chunks if the dataset is chunked.
+    pub fn num_chunks(&self) -> Option<usize> {
+        if !self.is_chunked() {
+            return None;
+        }
+        h5lock!(self.space().map_or(None, |s| {
+            let mut n: hsize_t = 0;
+            h5check(H5Dget_num_chunks(self.id(), s.id(), &mut n)).map(|_| n as _).ok()
+        }))
+    }
+
+    #[cfg(hdf5_1_10_5)]
+    /// Retrieves the chunk information for the chunk specified by its index.
+    pub fn chunk_info(&self, index: usize) -> Option<ChunkInfo> {
+        if !self.is_chunked() {
+            return None;
+        }
+        h5lock!(self.space().map_or(None, |s| {
+            let mut chunk_info = ChunkInfo::new(self.ndim());
+            h5check(H5Dget_chunk_info(
+                self.id(),
+                s.id(),
+                index as _,
+                chunk_info.offset.as_mut_ptr(),
+                &mut chunk_info.filter_mask,
+                &mut chunk_info.addr,
+                &mut chunk_info.size,
+            ))
+            .map(|_| chunk_info)
+            .ok()
+        }))
     }
 
     /// Returns the chunk shape if the dataset is chunked.
