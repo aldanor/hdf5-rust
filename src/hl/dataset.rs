@@ -5,12 +5,12 @@ use std::ops::Deref;
 use num_integer::div_floor;
 
 #[cfg(hdf5_1_10_5)]
-use hdf5_sys::h5d::H5Dget_chunk_info;
+use hdf5_sys::h5d::{H5Dget_chunk_info, H5Dget_num_chunks};
 use hdf5_sys::{
     h5::HADDR_UNDEF,
     h5d::{
         H5D_fill_value_t, H5D_layout_t, H5Dcreate2, H5Dcreate_anon, H5Dget_create_plist,
-        H5Dget_num_chunks, H5Dget_offset, H5Dset_extent, H5D_FILL_TIME_ALLOC,
+        H5Dget_offset, H5Dset_extent, H5D_FILL_TIME_ALLOC,
     },
     h5p::{
         H5Pcreate, H5Pfill_value_defined, H5Pget_chunk, H5Pget_fill_value, H5Pget_layout,
@@ -105,6 +105,7 @@ impl Dataset {
         })
     }
 
+    #[cfg(hdf5_1_10_5)]
     /// Returns number of chunks if the dataset is chunked.
     pub fn num_chunks(&self) -> Option<usize> {
         if !self.is_chunked() {
