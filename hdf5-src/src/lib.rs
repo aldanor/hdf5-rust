@@ -1,1 +1,1 @@
-//! Dummy crate for building `hdf5` from source
+//! Dummy crate for building HDF5 C library from source.

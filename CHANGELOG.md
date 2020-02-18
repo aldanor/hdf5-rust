@@ -4,6 +4,8 @@
 
 ### Added
 
+- HDF5 C library can now be built and statically linked to `hdf5-sys`
+  crate by enabling `hdf5-sys/static` feature (CMake required).
 - Implement `Default` for `H5D_layout_t`, `H5D_alloc_time_t`, `H5T_cset_t`,
   `H5D_fill_time_t`, `H5D_fill_value_t` (based on what their values are set
   to in default property lists).
