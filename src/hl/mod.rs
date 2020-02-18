@@ -11,7 +11,7 @@ pub mod space;
 pub use self::{
     container::{Container, Reader, Writer},
     dataset::{Dataset, DatasetBuilder},
-    datatype::{Conversion, Datatype},
+    datatype::{ByteOrder, Conversion, Datatype},
     file::{File, FileBuilder, OpenMode},
     group::Group,
     location::Location,
@@ -19,3 +19,7 @@ pub use self::{
     plist::PropertyList,
     space::Dataspace,
 };
+
+#[cfg(hdf5_1_10_5)]
+pub use self::dataset::ChunkInfo;
+

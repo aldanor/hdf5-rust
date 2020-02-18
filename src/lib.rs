@@ -23,10 +23,13 @@ mod export {
         error::{silence_errors, Error, Result},
         filters::Filters,
         hl::{
-            Container, Conversion, Dataset, DatasetBuilder, Dataspace, Datatype, File, FileBuilder,
+            ByteOrder, Container, Conversion, Dataset, DatasetBuilder, Dataspace, Datatype, File, FileBuilder,
             Group, Location, Object, PropertyList, Reader, Writer,
         },
     };
+
+    #[cfg(hdf5_1_10_5)]
+    pub use crate::hl::ChunkInfo;
 
     pub use hdf5_derive::H5Type;
     pub use hdf5_types::H5Type;
