@@ -70,9 +70,6 @@ before_install:
     brew update >/dev/null;
     brew tap homebrew/science;
     brew install hdf5@${H5_BREW};
-    # https://github.com/laumann/compiletest-rs/issues/179
-    export DYLD_LIBRARY_PATH="/usr/lib:/usr/local/lib";
-    brew unlink jpeg giflib libpng libtiff
   fi
 - |
   if [ ! -z "$H5_CONDA" ]; then
@@ -80,8 +77,6 @@ before_install:
       wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh;
       # note: this is only required for older HDF5 installations on OS X
       export DYLD_FALLBACK_LIBRARY_PATH="$HOME/miniconda/envs/testenv/lib";
-      # https://github.com/laumann/compiletest-rs/issues/179
-      export DYLD_LIBRARY_PATH="$HOME/miniconda/envs/testenv/lib";
     else
       wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
     fi
