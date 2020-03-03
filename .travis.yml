@@ -68,7 +68,6 @@ before_install:
 - |
   if [ `uname` = "Darwin" ] && [ ! -z "$H5_BREW" ]; then
     brew update >/dev/null;
-    brew tap homebrew/science;
     brew install hdf5@${H5_BREW};
   fi
 - |
