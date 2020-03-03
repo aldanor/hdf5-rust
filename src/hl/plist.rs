@@ -198,7 +198,7 @@ impl PropertyList {
                 return Err(Error::query().unwrap_or_else(|| "invalid property class".into()));
             }
             let name = string_from_cstr(buf);
-            libc::free(buf as _);
+            h5_free_memory(buf as _);
             PropertyListClass::from_str(&name)
         })
     }

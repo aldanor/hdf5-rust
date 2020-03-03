@@ -29,6 +29,16 @@ impl<'a, T: Dimension> Dimension for &'a T {
     }
 }
 
+impl Dimension for [Ix] {
+    fn ndim(&self) -> usize {
+        self.len()
+    }
+
+    fn dims(&self) -> Vec<Ix> {
+        self.to_vec()
+    }
+}
+
 impl Dimension for Vec<Ix> {
     fn ndim(&self) -> usize {
         self.len()
@@ -52,8 +62,8 @@ macro_rules! impl_tuple {
         }
     );
 
-    ($head:ty, $($tail:ty,)*) => (
-        impl Dimension for ($head, $($tail,)*) {
+    (@impl <$tp:ty>, $head:ty, $($tail:ty,)*) => (
+        impl Dimension for $tp {
             #[inline]
             fn ndim(&self) -> usize {
                 count_ty!($head, $($tail,)*)
@@ -66,9 +76,13 @@ macro_rules! impl_tuple {
                 }.iter().cloned().collect()
             }
         }
+    );
 
+    ($head:ty, $($tail:ty,)*) => (
+        impl_tuple! { @impl <($head, $($tail,)*)>, $head, $($tail,)* }
+        impl_tuple! { @impl <[Ix; count_ty!($head, $($tail,)*)]>, $head, $($tail,)* }
         impl_tuple! { $($tail,)* }
-    )
+    );
 }
 
 impl_tuple! { Ix, Ix, Ix, Ix, Ix, Ix, Ix, Ix, Ix, Ix, Ix, Ix, }

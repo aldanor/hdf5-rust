@@ -1,0 +1,7 @@
+error: proc-macro derive panicked
+ --> $DIR/struct-c-repr.rs:4:10
+  |
+4 | #[derive(H5Type)]
+  |          ^^^^^^
+  |
+  = help: message: H5Type requires #[repr(C)] for structs

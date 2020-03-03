@@ -6,19 +6,21 @@ pub use self::H5Z_cb_return_t::*;
 
 use crate::internal_prelude::*;
 
-pub const H5Z_FILTER_ERROR: hid_t = -1;
-pub const H5Z_FILTER_NONE: hid_t = 0;
-pub const H5Z_FILTER_DEFLATE: hid_t = 1;
-pub const H5Z_FILTER_SHUFFLE: hid_t = 2;
-pub const H5Z_FILTER_FLETCHER32: hid_t = 3;
-pub const H5Z_FILTER_SZIP: hid_t = 4;
-pub const H5Z_FILTER_NBIT: hid_t = 5;
-pub const H5Z_FILTER_SCALEOFFSET: hid_t = 6;
-pub const H5Z_FILTER_RESERVED: hid_t = 256;
+pub type H5Z_filter_t = c_int;
 
-pub const H5Z_FILTER_MAX: c_uint = 65535;
+pub const H5Z_FILTER_ERROR: H5Z_filter_t = -1;
+pub const H5Z_FILTER_NONE: H5Z_filter_t = 0;
+pub const H5Z_FILTER_DEFLATE: H5Z_filter_t = 1;
+pub const H5Z_FILTER_SHUFFLE: H5Z_filter_t = 2;
+pub const H5Z_FILTER_FLETCHER32: H5Z_filter_t = 3;
+pub const H5Z_FILTER_SZIP: H5Z_filter_t = 4;
+pub const H5Z_FILTER_NBIT: H5Z_filter_t = 5;
+pub const H5Z_FILTER_SCALEOFFSET: H5Z_filter_t = 6;
+pub const H5Z_FILTER_RESERVED: H5Z_filter_t = 256;
 
-pub const H5Z_FILTER_ALL: c_uint = 0;
+pub const H5Z_FILTER_MAX: H5Z_filter_t = 65535;
+
+pub const H5Z_FILTER_ALL: H5Z_filter_t = 0;
 
 pub const H5Z_MAX_NFILTERS: c_uint = 32;
 
@@ -56,8 +58,6 @@ pub const H5Z_CLASS_T_VERS: c_uint = 1;
 
 pub const H5Z_FILTER_CONFIG_ENCODE_ENABLED: c_uint = 0x0001;
 pub const H5Z_FILTER_CONFIG_DECODE_ENABLED: c_uint = 0x0002;
-
-pub type H5Z_filter_t = hid_t;
 
 #[repr(C)]
 #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]

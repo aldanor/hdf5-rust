@@ -13,10 +13,10 @@ edition = "2018"
 proc-macro = true
 
 [dependencies]
-proc-macro2 = "0.4"
-quote = "0.6"
-syn = { version = "0.15", features = ["derive", "extra-traits"]}
+proc-macro2 = "1.0"
+quote = "^1.0.2"
+syn = { version = "^1.0.5", features = ["derive", "extra-traits"]}
 
 [dev-dependencies]
-compiletest_rs = { version = "0.3.22", features = ["stable"] }
+trybuild = "1.0"
 hdf5 = { version = ">=0.5", path = ".." }

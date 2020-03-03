@@ -17,7 +17,7 @@ use hdf5_sys::h5e::{
 
 use crate::internal_prelude::*;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ErrorFrame {
     desc: String,
     func: String,
@@ -103,7 +103,7 @@ pub fn silence_errors() -> SilenceErrors {
     SilenceErrors::new()
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ErrorStack {
     frames: Vec<ErrorFrame>,
     description: Option<String>,
@@ -277,26 +277,30 @@ impl fmt::Display for Error {
     }
 }
 
-impl StdError for Error {
-    fn description(&self) -> &str {
-        self.description()
-    }
-}
+impl StdError for Error {}
 
 impl From<ShapeError> for Error {
     fn from(err: ShapeError) -> Self {
-        format!("shape error: {}", err.description()).into()
+        format!("shape error: {}", err.to_string()).into()
+    }
+}
+
+pub(crate) fn is_err_code<T>(value: T) -> bool
+where
+    T: Integer + Zero + Bounded + Copy,
+{
+    if T::min_value() < T::zero() {
+        value < T::zero()
+    } else {
+        value == T::zero()
     }
 }
 
 pub fn h5check<T>(value: T) -> Result<T>
 where
-    T: Integer + Zero + Bounded,
+    T: Integer + Zero + Bounded + Copy,
 {
-    let maybe_error =
-        if T::min_value() < T::zero() { value < T::zero() } else { value == T::zero() };
-
-    if maybe_error {
+    if is_err_code(value) {
         Error::query().map_or_else(|| Ok(value), Err)
     } else {
         Ok(value)

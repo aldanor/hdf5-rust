@@ -84,8 +84,9 @@ macro_rules! assert_err_re {
     };
 }
 
-/// Run a potentially unsafe expression in a closure synchronized by a global reentrant mutex.
+/// Run code containing HDF5 calls in a closure synchronized by a global reentrant mutex.
 #[macro_export]
+#[doc(hidden)]
 macro_rules! h5lock {
     ($expr:expr) => {{
         #[cfg_attr(feature = "cargo-clippy", allow(clippy::redundant_closure))]
@@ -96,18 +97,21 @@ macro_rules! h5lock {
     }};
 }
 
-/// Convert result of HDF5 call to Result; execution is guarded by a global reentrant mutex.
+/// Convert result of an HDF5 call to `hdf5::Result` (guarded by a global reentrant mutex).
 #[macro_export]
+#[doc(hidden)]
 macro_rules! h5call {
     ($expr:expr) => {
-        h5lock!($crate::error::h5check($expr))
+        $crate::h5lock!($crate::h5check($expr))
     };
 }
 
-/// `h5try!(..)` is equivalent to try!(h5call!(..)).
+/// `h5try!(..)` is a convenience shortcut for `try!(h5call!(..))`.
+#[macro_export]
+#[doc(hidden)]
 macro_rules! h5try {
     ($expr:expr) => {
-        match h5call!($expr) {
+        match $crate::h5call!($expr) {
             Ok(value) => value,
             Err(err) => return Err(From::from(err)),
         }
@@ -164,3 +168,34 @@ impl_h5get!(a: A);
 impl_h5get!(a: A, b: B);
 impl_h5get!(a: A, b: B, c: C);
 impl_h5get!(a: A, b: B, c: C, d: D);
+
+macro_rules! h5err {
+    ($msg:expr, $major:expr, $minor:expr) => {
+        let line = line!();
+        let file = $crate::util::to_cstring(file!()).unwrap_or_default();
+        let modpath = $crate::util::to_cstring(module_path!()).unwrap_or_default();
+        let msg = to_cstring($msg).unwrap_or_default();
+        #[allow(unused_unsafe)]
+        unsafe {
+            ::hdf5_sys::h5e::H5Epush2(
+                ::hdf5_sys::h5e::H5E_DEFAULT,
+                file.as_ptr(),
+                modpath.as_ptr(),
+                line as _,
+                *$crate::globals::H5E_ERR_CLS,
+                *$major,
+                *$minor,
+                msg.as_ptr(),
+            );
+        }
+    };
+}
+
+macro_rules! h5maybe_err {
+    ($retcode:expr, $msg:expr, $major:expr, $minor:expr) => {{
+        if $crate::error::is_err_code($retcode) {
+            h5err!($msg, $major, $minor);
+        }
+        $retcode
+    }};
+}

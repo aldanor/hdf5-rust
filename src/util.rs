@@ -41,6 +41,19 @@ pub fn string_to_fixed_bytes(s: &str, buf: &mut [c_char]) {
     }
 }
 
+#[cfg(hdf5_1_8_13)]
+pub fn h5_free_memory(mem: *mut c_void) {
+    use hdf5_sys::h5::H5free_memory;
+    unsafe { H5free_memory(mem) };
+}
+
+#[cfg(not(hdf5_1_8_13))]
+pub fn h5_free_memory(mem: *mut c_void) {
+    // this may fail in debug builds of HDF5
+    use libc::free;
+    unsafe { free(mem) };
+}
+
 #[doc(hidden)]
 pub fn get_h5_str<T, F>(func: F) -> Result<String>
 where

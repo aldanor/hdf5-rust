@@ -1,3 +1,4 @@
+use std::fmt::{self, Display};
 use std::mem;
 use std::os::raw::c_void;
 use std::ptr;
@@ -152,6 +153,32 @@ pub enum TypeDescriptor {
     VarLenArray(Box<TypeDescriptor>),
     VarLenAscii,
     VarLenUnicode,
+}
+
+impl Display for TypeDescriptor {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            TypeDescriptor::Integer(IntSize::U1) => write!(f, "int8"),
+            TypeDescriptor::Integer(IntSize::U2) => write!(f, "int16"),
+            TypeDescriptor::Integer(IntSize::U4) => write!(f, "int32"),
+            TypeDescriptor::Integer(IntSize::U8) => write!(f, "int64"),
+            TypeDescriptor::Unsigned(IntSize::U1) => write!(f, "uint8"),
+            TypeDescriptor::Unsigned(IntSize::U2) => write!(f, "uint16"),
+            TypeDescriptor::Unsigned(IntSize::U4) => write!(f, "uint32"),
+            TypeDescriptor::Unsigned(IntSize::U8) => write!(f, "uint64"),
+            TypeDescriptor::Float(FloatSize::U4) => write!(f, "float32"),
+            TypeDescriptor::Float(FloatSize::U8) => write!(f, "float64"),
+            TypeDescriptor::Boolean => write!(f, "bool"),
+            TypeDescriptor::Enum(ref tp) => write!(f, "enum ({})", tp.base_type()),
+            TypeDescriptor::Compound(ref tp) => write!(f, "compound ({} fields)", tp.fields.len()),
+            TypeDescriptor::FixedArray(ref tp, n) => write!(f, "[{}; {}]", tp, n),
+            TypeDescriptor::FixedAscii(n) => write!(f, "string (len {})", n),
+            TypeDescriptor::FixedUnicode(n) => write!(f, "unicode (len {})", n),
+            TypeDescriptor::VarLenArray(ref tp) => write!(f, "[{}] (var len)", tp),
+            TypeDescriptor::VarLenAscii => write!(f, "string (var len)"),
+            TypeDescriptor::VarLenUnicode => write!(f, "unicode (var len)"),
+        }
+    }
 }
 
 impl TypeDescriptor {

@@ -97,6 +97,12 @@ pub enum H5T_cset_t {
     H5T_CSET_RESERVED_15 = 15,
 }
 
+impl Default for H5T_cset_t {
+    fn default() -> Self {
+        H5T_cset_t::H5T_CSET_ASCII
+    }
+}
+
 pub const H5T_NCSET: H5T_cset_t = H5T_CSET_RESERVED_2;
 
 #[repr(C)]

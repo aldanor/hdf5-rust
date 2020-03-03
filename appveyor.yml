@@ -12,7 +12,7 @@ init:
 
 environment:
   matrix:
-    - CHANNEL: 1.36.0
+    - CHANNEL: 1.37.0
       H5_VERSION: 1.8.21
       H5_SOURCE: msi
     - CHANNEL: beta

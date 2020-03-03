@@ -5,7 +5,7 @@ use std::hash::{Hash, Hasher};
 use std::mem;
 use std::ops::{Deref, Index, RangeFull};
 use std::ptr;
-use std::slice;
+use std::slice::{self, SliceIndex};
 use std::str::{self, FromStr};
 
 use ascii::{AsAsciiStr, AsAsciiStrError, AsciiStr};
@@ -27,20 +27,20 @@ impl From<AsAsciiStrError> for StringError {
     }
 }
 
-impl StdError for StringError {
-    fn description(&self) -> &str {
-        match self {
-            StringError::InternalNull => "variable length string with internal null",
-            StringError::InsufficientCapacity => "insufficient capacity for fixed sized string",
-            StringError::AsciiError(err) => err.description(),
-            _ => "",
-        }
-    }
-}
+impl StdError for StringError {}
 
 impl fmt::Display for StringError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "string error: {}", self.description())
+        match self {
+            StringError::InternalNull => {
+                write!(f, "string error: variable length string with internal null")
+            }
+            StringError::InsufficientCapacity => {
+                write!(f, "string error: insufficient capacity for fixed sized string")
+            }
+            StringError::AsciiError(err) => write!(f, "string error: {}", err),
+            _ => write!(f, ""),
+        }
     }
 }
 
@@ -264,13 +264,24 @@ impl VarLenAscii {
 }
 
 impl AsAsciiStr for VarLenAscii {
+    type Inner = u8;
+
+    #[inline]
+    fn slice_ascii<R>(&self, range: R) -> Result<&AsciiStr, AsAsciiStrError>
+    where
+        R: SliceIndex<[u8], Output = [u8]>,
+    {
+        self.as_bytes().slice_ascii(range)
+    }
+
+    #[inline]
+    fn as_ascii_str(&self) -> Result<&AsciiStr, AsAsciiStrError> {
+        AsciiStr::from_ascii(self.as_bytes())
+    }
+
     #[inline]
     unsafe fn as_ascii_str_unchecked(&self) -> &AsciiStr {
         AsciiStr::from_ascii_unchecked(self.as_bytes())
-    }
-
-    fn as_ascii_str(&self) -> Result<&AsciiStr, AsAsciiStrError> {
-        AsciiStr::from_ascii(self.as_bytes())
     }
 }
 
@@ -447,13 +458,24 @@ impl<A: Array<Item = u8>> FixedAscii<A> {
 }
 
 impl<A: Array<Item = u8>> AsAsciiStr for FixedAscii<A> {
+    type Inner = u8;
+
+    #[inline]
+    fn slice_ascii<R>(&self, range: R) -> Result<&AsciiStr, AsAsciiStrError>
+    where
+        R: SliceIndex<[u8], Output = [u8]>,
+    {
+        self.as_bytes().slice_ascii(range)
+    }
+
+    #[inline]
+    fn as_ascii_str(&self) -> Result<&AsciiStr, AsAsciiStrError> {
+        AsciiStr::from_ascii(self.as_bytes())
+    }
+
     #[inline]
     unsafe fn as_ascii_str_unchecked(&self) -> &AsciiStr {
         AsciiStr::from_ascii_unchecked(self.as_bytes())
-    }
-
-    fn as_ascii_str(&self) -> Result<&AsciiStr, AsAsciiStrError> {
-        AsciiStr::from_ascii(self.as_bytes())
     }
 }
 

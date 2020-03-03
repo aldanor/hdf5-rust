@@ -241,7 +241,7 @@ impl Datatype {
                         h5try!(H5Tget_member_value(id, idx, &mut value as *mut _ as *mut _));
                         let name = H5Tget_member_name(id, idx);
                         members.push(EnumMember { name: string_from_cstr(name), value });
-                        libc::free(name as *mut _);
+                        h5_free_memory(name as *mut _);
                     }
                     let base_dt = Self::from_id(H5Tget_super(id))?;
                     let (size, signed) = match base_dt.to_descriptor()? {
@@ -271,7 +271,7 @@ impl Datatype {
                             offset: offset as _,
                             index: idx as _,
                         });
-                        libc::free(name as *mut _);
+                        h5_free_memory(name as *mut _);
                     }
                     Ok(TD::Compound(CompoundType { fields, size }))
                 }

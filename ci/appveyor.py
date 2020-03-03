@@ -87,7 +87,7 @@ def run_tests():
         env['HDF5_VERSION'] = env['H5_VERSION']
         print('Pinning HDF5 version to', env['HDF5_VERSION'])
     run_command('cargo', 'build', '-vv', env=env)
-    run_command('cargo', 'test', '-v', '--all', '--exclude', 'hdf5-derive', env=env)
+    run_command('cargo', 'test', '-v', '--all', env=env)
 
 
 def main():

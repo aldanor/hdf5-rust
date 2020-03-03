@@ -40,7 +40,7 @@ fn main() -> hdf5::Result<()> {
     use ndarray::{arr1, arr2};
 
     // so that libhdf5 doesn't print errors to stdout
-    let _ = hdf5::silence_errors();
+    let _e = hdf5::silence_errors();
 
     {
         // write
@@ -84,7 +84,7 @@ CI and AppVeyor, HDF5 1.8 and 1.10, system installations and conda environments)
 ### Rust
 
 `hdf5` crate is tested continuously for all three official release channels, and requires 
-a modern Rust compiler (e.g. of version 1.31 or later).
+a modern Rust compiler (e.g. of version 1.37 or later).
 
 ### HDF5
 
