@@ -1,5 +1,35 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Implement `Default` for `H5D_layout_t`, `H5D_alloc_time_t`, `H5T_cset_t`,
+  `H5D_fill_time_t`, `H5D_fill_value_t` (based on what their values are set
+  to in default property lists).
+- Derive `Debug` for `ErrorFrame` and `ErrorStack`.
+- Implement `Display` for `TypeDescriptor`.
+- Implement `Dimension` for `[Ix]`, `&[Ix]`, `[Ix; N]` and `&[Ix; N]`.
+
+### Changed
+
+- `h5check!`, `h5lock!`, `h5try!`, `h5call!` and `h5check()` are now public.
+- Switch to using 1.0 versions of `syn`, `quote` and `proc-macro2` (which
+  required a bit of a rewrite of `hdf5-derive`).
+- Bump `ascii` to 1.0, update `hdf5-types` to be compatible.
+- Bump other dependencies to their latest versions (`parking_lot` to 0.10,
+  `ndarray` to 0.13, `bitflags` to 1.2, `lazy_static` to 1.4).
+- Remove implementations of deprecated `Error::description()`.
+- Switch to `trybuild` instead of `compiletest_rs` for derive-macro testing;
+  enable full tests (including hdf5-derive) on both AppVeyor and Travis.
+
+### Fixed
+
+- Use `H5_free_memory()` instead of `libc::free()` to free HDF5-allocated
+  resources if possible (1.8.13+); this fixes some deallocation errors.
+- Fix wrong `H5D_DONT_FILTER_PARTIAL_CHUNKS` constant value.
+- `H5Z_filter_t` is changed to `c_int` (was wrongfully set to `hid_t`).
+
 ## 0.6.0
 
 ### Added
