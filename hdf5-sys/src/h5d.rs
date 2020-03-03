@@ -253,6 +253,17 @@ mod hdf5_1_10_0 {
 #[cfg(hdf5_1_10_0)]
 pub use self::hdf5_1_10_0::*;
 
+#[cfg(hdf5_1_10_3)]
+extern "C" {
+    pub fn H5Dread_chunk(
+        dset_id: hid_t, dxpl_id: hid_t, offset: *const hsize_t, filters: *mut u32, buf: *mut c_void,
+    ) -> herr_t;
+    pub fn H5Dwrite_chunk(
+        dset_id: hid_t, dxpl_id: hid_t, filters: u32, offset: *const hsize_t, data_size: size_t,
+        buf: *const c_void,
+    ) -> herr_t;
+}
+
 #[cfg(hdf5_1_10_5)]
 extern "C" {
     pub fn H5Dget_chunk_info(
