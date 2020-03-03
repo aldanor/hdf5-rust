@@ -45,6 +45,10 @@ mod export {
         pub use crate::hl::plist::dataset_access::*;
     }
 
+    pub mod datatype {
+        pub use crate::hl::datatype::{ByteOrder, Conversion, Datatype};
+    }
+
     pub mod file {
         pub use crate::hl::file::{File, FileBuilder, OpenMode};
         pub use crate::hl::plist::file_access::*;
