@@ -1,4 +1,3 @@
-sudo: false
 language: rust
 notifications:
   email:
@@ -7,17 +6,16 @@ addons:
   apt:
     packages:
       - pkg-config
+os: linux
 
-matrix:
+jobs:
   include:
     - name: xenial-stable-conda-1.10.4
-      os: linux
       dist: xenial
       rust: 1.37.0
       env:
         - H5_CONDA=1.10.4
     - name: xenial-beta-apt-1.8.13
-      os: linux
       dist: xenial
       rust: beta
       addons:
@@ -27,7 +25,6 @@ matrix:
       env:
         - HDF5_VERSION=1.8.16
     - name: trusty-nightly-apt-1.8.11
-      os: linux
       dist: trusty
       rust: nightly
       addons:
@@ -115,9 +112,9 @@ before_deploy:
   - echo '<meta http-equiv=refresh content=0;url=hdf5/index.html>' > target/doc/index.html
 deploy:
   provider: pages
-  skip-cleanup: true
-  github-token: $GITHUB_TOKEN
-  local-dir: target/doc
+  cleanup: true
+  token: $GITHUB_TOKEN
+  local_dir: target/doc
   on:
     branch: master
     condition: "$TRAVIS_RUST_VERSION = stable && $TRAVIS_OS_NAME = linux"
