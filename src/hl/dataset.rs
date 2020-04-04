@@ -234,6 +234,7 @@ pub struct DatasetBuilder<T> {
     parent: Result<Handle>,
     track_times: bool,
     resizable: bool,
+    resizable_idx: Option<Vec<bool>>,
     fill_value: Option<T>,
 }
 
@@ -254,6 +255,7 @@ impl<T: H5Type> DatasetBuilder<T> {
                 parent: handle,
                 track_times: false,
                 resizable: false,
+                resizable_idx: None,
                 fill_value: None,
             }
         })
@@ -308,6 +310,13 @@ impl<T: H5Type> DatasetBuilder<T> {
     /// Make the dataset resizable along all axes (requires chunking).
     pub fn resizable(&mut self, resizable: bool) -> &mut Self {
         self.resizable = resizable;
+        self
+    }
+
+    /// Make the dataset resizable along some axes (requires chunking).
+    pub fn resizable_idx(&mut self, resizable_idx: &[bool]) -> &mut Self {
+        self.resizable = true;
+        self.resizable_idx = Some(resizable_idx.to_vec());
         self
     }
 
@@ -424,7 +433,20 @@ impl<T: H5Type> DatasetBuilder<T> {
             let datatype = Datatype::from_descriptor(&type_descriptor)?;
             let parent = try_ref_clone!(self.parent);
 
-            let dataspace = Dataspace::try_new(&shape, self.resizable)?;
+            let resize_idx_;
+            let resize_idx: Option<&[bool]> = if self.resizable {
+                match &self.resizable_idx {
+                    Some(x) => Some(x.as_slice()),
+                    None => {
+                        resize_idx_ = shape.dims().iter().map(|_| true).collect::<Vec<_>>();
+                        Some(resize_idx_.as_slice())
+                    }
+                }
+            } else {
+                None
+            };
+
+            let dataspace = Dataspace::try_new(&shape, resize_idx)?;
             let dcpl = self.make_dcpl(&datatype, &shape)?;
 
             if let Some(name) = name {

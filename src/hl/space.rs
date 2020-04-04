@@ -112,14 +112,24 @@ impl Dataspace {
         }
     }
 
-    pub fn try_new<D: Dimension>(d: D, resizable: bool) -> Result<Self> {
+    pub fn try_new<D: Dimension>(d: D, resizable: Option<&[bool]>) -> Result<Self> {
         let rank = d.ndim();
-        let mut dims: Vec<hsize_t> = vec![];
-        let mut max_dims: Vec<hsize_t> = vec![];
-        for dim in &d.dims() {
-            dims.push(*dim as _);
-            max_dims.push(if resizable { H5S_UNLIMITED } else { *dim as _ });
-        }
+        let dims: Vec<hsize_t> = d.dims().iter().map(|&dim| dim as _).collect();
+        let max_dims_;
+        let max_dims: &[hsize_t] = if let Some(resizable) = resizable {
+            ensure!(
+                resizable.len() == rank,
+                "Dimensionality of resizable indices must be similar to rank of DataSpace"
+            );
+            max_dims_ = dims
+                .iter()
+                .zip(resizable)
+                .map(|(&dim, &resizable)| if resizable { H5S_UNLIMITED } else { dim })
+                .collect::<Vec<_>>();
+            &max_dims_
+        } else {
+            &dims
+        };
         Self::from_id(h5try!(H5Screate_simple(rank as _, dims.as_ptr(), max_dims.as_ptr())))
     }
 
@@ -190,10 +200,16 @@ pub mod tests {
 
     #[test]
     pub fn test_debug() {
-        assert_eq!(format!("{:?}", Dataspace::try_new((), true).unwrap()), "<HDF5 dataspace: ()>");
-        assert_eq!(format!("{:?}", Dataspace::try_new(3, true).unwrap()), "<HDF5 dataspace: (3,)>");
         assert_eq!(
-            format!("{:?}", Dataspace::try_new((1, 2), true).unwrap()),
+            format!("{:?}", Dataspace::try_new((), Some(&[])).unwrap()),
+            "<HDF5 dataspace: ()>"
+        );
+        assert_eq!(
+            format!("{:?}", Dataspace::try_new(3, Some(&[true])).unwrap()),
+            "<HDF5 dataspace: (3,)>"
+        );
+        assert_eq!(
+            format!("{:?}", Dataspace::try_new((1, 2), Some(&[true, true])).unwrap()),
             "<HDF5 dataspace: (1, 2)>"
         );
     }
@@ -202,14 +218,14 @@ pub mod tests {
     pub fn test_dataspace() {
         let _e = silence_errors();
         assert_err!(
-            Dataspace::try_new(H5S_UNLIMITED as Ix, true),
+            Dataspace::try_new(H5S_UNLIMITED as Ix, Some(&[true])),
             "current dimension must have a specific size"
         );
 
-        let d = Dataspace::try_new((5, 6), true).unwrap();
+        let d = Dataspace::try_new((5, 6), Some(&[true, true])).unwrap();
         assert_eq!((d.ndim(), d.dims(), d.size()), (2, vec![5, 6], 30));
 
-        assert_eq!(Dataspace::try_new((), true).unwrap().dims(), vec![]);
+        assert_eq!(Dataspace::try_new((), Some(&[])).unwrap().dims(), vec![]);
 
         assert_err!(Dataspace::from_id(H5I_INVALID_HID), "Invalid dataspace id");
 
@@ -218,12 +234,21 @@ pub mod tests {
         assert_ne!(dc.id(), d.id());
         assert_eq!((d.ndim(), d.dims(), d.size()), (dc.ndim(), dc.dims(), dc.size()));
 
-        assert_eq!(Dataspace::try_new((5, 6), false).unwrap().maxdims(), vec![5, 6]);
-        assert_eq!(Dataspace::try_new((5, 6), false).unwrap().resizable(), false);
+        assert_eq!(Dataspace::try_new((5, 6), None).unwrap().maxdims(), vec![5, 6]);
+        assert_eq!(Dataspace::try_new((5, 6), None).unwrap().resizable(), false);
         assert_eq!(
-            Dataspace::try_new((5, 6), true).unwrap().maxdims(),
+            Dataspace::try_new((5, 6), Some(&[true, true])).unwrap().maxdims(),
             vec![H5S_UNLIMITED as _, H5S_UNLIMITED as _]
         );
-        assert_eq!(Dataspace::try_new((5, 6), true).unwrap().resizable(), true);
+        assert_eq!(
+            Dataspace::try_new((5, 6), Some(&[true, false])).unwrap().maxdims(),
+            vec![H5S_UNLIMITED as _, 6]
+        );
+        assert_err!(
+            Dataspace::try_new((5, 6), Some(&[true, false, true])),
+            "Dimensionality of resizable indices must be similar to rank of DataSpace"
+        );
+        assert!(Dataspace::try_new((5, 6), Some(&[true, true])).unwrap().resizable());
+        assert!(Dataspace::try_new((5, 6), Some(&[false, true])).unwrap().resizable());
     }
 }

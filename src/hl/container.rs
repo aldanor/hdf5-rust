@@ -127,7 +127,7 @@ impl<'a> Reader<'a> {
                 );
             }
 
-            let mspace = Dataspace::try_new(&out_shape, false)?;
+            let mspace = Dataspace::try_new(&out_shape, None)?;
             let size = out_shape.iter().product();
             let mut vec = Vec::with_capacity(size);
 
@@ -310,7 +310,7 @@ impl<'a> Writer<'a> {
                 }
             }
 
-            let mspace = Dataspace::try_new(&slice_shape, false)?;
+            let mspace = Dataspace::try_new(&slice_shape, None)?;
 
             // FIXME - we can handle non-standard input arrays by creating a memory space
             // that reflects the same slicing/ordering that this ArrayView represents.
