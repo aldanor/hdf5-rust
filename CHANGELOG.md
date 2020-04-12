@@ -24,7 +24,7 @@
 - Remove implementations of deprecated `Error::description()`.
 - Switch to `trybuild` instead of `compiletest_rs` for derive-macro testing;
   enable full tests (including hdf5-derive) on both AppVeyor and Travis.
-- Update the minimum Rust version to 1.37 (because of ndarray).
+- Update the minimum Rust version to 1.40 (because of `ndarray` and `libloading`).
 
 ### Fixed
 
