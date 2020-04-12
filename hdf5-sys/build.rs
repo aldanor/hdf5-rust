@@ -2,7 +2,6 @@ use std::env;
 use std::error::Error;
 use std::fmt::{self, Debug, Display};
 use std::fs;
-use std::io;
 use std::os::raw::{c_int, c_uint};
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -79,7 +78,7 @@ impl Display for RuntimeError {
 }
 
 #[allow(non_snake_case, non_camel_case_types)]
-fn get_runtime_version_single<P: AsRef<Path>>(path: P) -> io::Result<Version> {
+fn get_runtime_version_single<P: AsRef<Path>>(path: P) -> Result<Version, Box<dyn Error>> {
     let lib = libloading::Library::new(path.as_ref())?;
 
     type H5open_t = unsafe extern "C" fn() -> c_int;
@@ -91,12 +90,9 @@ fn get_runtime_version_single<P: AsRef<Path>>(path: P) -> io::Result<Version> {
     let mut v: (c_uint, c_uint, c_uint) = (0, 0, 0);
     unsafe {
         if H5open() != 0 {
-            Err(io::Error::new(io::ErrorKind::Other, Box::new(RuntimeError("H5open()".into()))))
+            Err("H5open()".into())
         } else if H5get_libversion(&mut v.0, &mut v.1, &mut v.2) != 0 {
-            Err(io::Error::new(
-                io::ErrorKind::Other,
-                Box::new(RuntimeError("H5get_libversion()".into())),
-            ))
+            Err("H5get_libversion()".into())
         } else {
             Ok(Version::new(v.0 as _, v.1 as _, v.2 as _))
         }
