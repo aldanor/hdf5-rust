@@ -207,7 +207,7 @@ pub enum FileSpaceStrategy {
 #[cfg(hdf5_1_10_1)]
 impl Default for FileSpaceStrategy {
     fn default() -> Self {
-        FileSpaceStrategy::FreeSpaceManager { paged: false, persist: false, threshold: 1 }
+        Self::FreeSpaceManager { paged: false, persist: false, threshold: 1 }
     }
 }
 
@@ -458,21 +458,24 @@ impl FileCreate {
     #[doc(hidden)]
     #[cfg(hdf5_1_10_1)]
     pub fn get_file_space_strategy(&self) -> Result<FileSpaceStrategy> {
-        use self::H5F_fspace_strategy_t::*;
         let (strategy, persist, threshold) =
             h5get!(H5Pget_file_space_strategy(self.id()): H5F_fspace_strategy_t, hbool_t, hsize_t)?;
         Ok(match strategy {
-            H5F_FSPACE_STRATEGY_FSM_AGGR => FileSpaceStrategy::FreeSpaceManager {
-                paged: false,
-                persist: persist != 0,
-                threshold: threshold as _,
-            },
-            H5F_FSPACE_STRATEGY_PAGE => FileSpaceStrategy::FreeSpaceManager {
-                paged: true,
-                persist: persist != 0,
-                threshold: threshold as _,
-            },
-            H5F_FSPACE_STRATEGY_AGGR => FileSpaceStrategy::PageAggregation,
+            H5F_fspace_strategy_t::H5F_FSPACE_STRATEGY_FSM_AGGR => {
+                FileSpaceStrategy::FreeSpaceManager {
+                    paged: false,
+                    persist: persist != 0,
+                    threshold: threshold as _,
+                }
+            }
+            H5F_fspace_strategy_t::H5F_FSPACE_STRATEGY_PAGE => {
+                FileSpaceStrategy::FreeSpaceManager {
+                    paged: true,
+                    persist: persist != 0,
+                    threshold: threshold as _,
+                }
+            }
+            H5F_fspace_strategy_t::H5F_FSPACE_STRATEGY_AGGR => FileSpaceStrategy::PageAggregation,
             _ => FileSpaceStrategy::None,
         })
     }

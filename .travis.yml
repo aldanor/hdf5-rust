@@ -12,7 +12,7 @@ jobs:
   include:
     - name: xenial-stable-conda-1.10.4
       dist: xenial
-      rust: 1.37.0
+      rust: 1.40.0
       env:
         - H5_CONDA=1.10.4
     - name: xenial-beta-apt-1.8.13

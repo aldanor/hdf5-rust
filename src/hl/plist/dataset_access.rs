@@ -101,7 +101,7 @@ pub enum VirtualView {
 #[cfg(hdf5_1_10_0)]
 impl Default for VirtualView {
     fn default() -> Self {
-        VirtualView::LastAvailable
+        Self::LastAvailable
     }
 }
 
@@ -109,17 +109,17 @@ impl Default for VirtualView {
 impl From<H5D_vds_view_t> for VirtualView {
     fn from(view: H5D_vds_view_t) -> Self {
         match view {
-            H5D_vds_view_t::H5D_VDS_FIRST_MISSING => VirtualView::FirstMissing,
-            _ => VirtualView::LastAvailable,
+            H5D_vds_view_t::H5D_VDS_FIRST_MISSING => Self::FirstMissing,
+            _ => Self::LastAvailable,
         }
     }
 }
 
 #[cfg(hdf5_1_10_0)]
-impl From<VirtualView> for H5D_vds_view_t {
-    fn from(view: VirtualView) -> Self {
-        match view {
-            VirtualView::FirstMissing => H5D_vds_view_t::H5D_VDS_FIRST_MISSING,
+impl Into<H5D_vds_view_t> for VirtualView {
+    fn into(self) -> H5D_vds_view_t {
+        match self {
+            Self::FirstMissing => H5D_vds_view_t::H5D_VDS_FIRST_MISSING,
             _ => H5D_vds_view_t::H5D_VDS_LAST_AVAILABLE,
         }
     }

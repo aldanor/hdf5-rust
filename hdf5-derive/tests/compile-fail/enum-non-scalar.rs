@@ -5,5 +5,7 @@ use hdf5_derive::H5Type;
 //~^ ERROR proc-macro derive
 //~^^ HELP H5Type can only be derived for enums with scalar discriminants
 enum Foo {
-    Bar
+    Bar,
 }
+
+fn main() {}

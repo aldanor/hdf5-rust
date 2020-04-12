@@ -1,4 +1,4 @@
-use std::fmt::{self, Debug};
+use std::fmt::{self, Debug, Display};
 use std::ops::Deref;
 use std::ptr;
 use std::str::FromStr;
@@ -94,34 +94,32 @@ pub enum PropertyListClass {
     StringCreate,
 }
 
-impl PropertyListClass {
-    /// Converts the property list class to a string, e.g. "file create".
-    pub fn to_string(self) -> String {
-        match self {
-            PropertyListClass::AttributeCreate => "attribute create",
-            PropertyListClass::DatasetAccess => "dataset access",
-            PropertyListClass::DatasetCreate => "dataset create",
-            PropertyListClass::DataTransfer => "data transfer",
-            PropertyListClass::DatatypeAccess => "datatype access",
-            PropertyListClass::DatatypeCreate => "datatype create",
-            PropertyListClass::FileAccess => "file access",
-            PropertyListClass::FileCreate => "file create",
-            PropertyListClass::FileMount => "file mount",
-            PropertyListClass::GroupAccess => "group access",
-            PropertyListClass::GroupCreate => "group create",
-            PropertyListClass::LinkAccess => "link access",
-            PropertyListClass::LinkCreate => "link create",
-            PropertyListClass::ObjectCopy => "object copy",
-            PropertyListClass::ObjectCreate => "object create",
-            PropertyListClass::StringCreate => "string create",
-        }
-        .to_owned()
+impl Display for PropertyListClass {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str(match self {
+            Self::AttributeCreate => "attribute create",
+            Self::DatasetAccess => "dataset access",
+            Self::DatasetCreate => "dataset create",
+            Self::DataTransfer => "data transfer",
+            Self::DatatypeAccess => "datatype access",
+            Self::DatatypeCreate => "datatype create",
+            Self::FileAccess => "file access",
+            Self::FileCreate => "file create",
+            Self::FileMount => "file mount",
+            Self::GroupAccess => "group access",
+            Self::GroupCreate => "group create",
+            Self::LinkAccess => "link access",
+            Self::LinkCreate => "link create",
+            Self::ObjectCopy => "object copy",
+            Self::ObjectCreate => "object create",
+            Self::StringCreate => "string create",
+        })
     }
 }
 
 impl Into<String> for PropertyListClass {
     fn into(self) -> String {
-        self.to_string()
+        format!("{}", self)
     }
 }
 
@@ -130,22 +128,22 @@ impl FromStr for PropertyListClass {
 
     fn from_str(s: &str) -> Result<Self> {
         match s {
-            "attribute create" => Ok(PropertyListClass::AttributeCreate),
-            "dataset access" => Ok(PropertyListClass::DatasetAccess),
-            "dataset create" => Ok(PropertyListClass::DatasetCreate),
-            "data transfer" => Ok(PropertyListClass::DataTransfer),
-            "datatype access" => Ok(PropertyListClass::DatatypeAccess),
-            "datatype create" => Ok(PropertyListClass::DatatypeCreate),
-            "file access" => Ok(PropertyListClass::FileAccess),
-            "file create" => Ok(PropertyListClass::FileCreate),
-            "file mount" => Ok(PropertyListClass::FileMount),
-            "group access" => Ok(PropertyListClass::GroupAccess),
-            "group create" => Ok(PropertyListClass::GroupCreate),
-            "link access" => Ok(PropertyListClass::LinkAccess),
-            "link create" => Ok(PropertyListClass::LinkCreate),
-            "object copy" => Ok(PropertyListClass::ObjectCopy),
-            "object create" => Ok(PropertyListClass::ObjectCreate),
-            "string create" => Ok(PropertyListClass::StringCreate),
+            "attribute create" => Ok(Self::AttributeCreate),
+            "dataset access" => Ok(Self::DatasetAccess),
+            "dataset create" => Ok(Self::DatasetCreate),
+            "data transfer" => Ok(Self::DataTransfer),
+            "datatype access" => Ok(Self::DatatypeAccess),
+            "datatype create" => Ok(Self::DatatypeCreate),
+            "file access" => Ok(Self::FileAccess),
+            "file create" => Ok(Self::FileCreate),
+            "file mount" => Ok(Self::FileMount),
+            "group access" => Ok(Self::GroupAccess),
+            "group create" => Ok(Self::GroupCreate),
+            "link access" => Ok(Self::LinkAccess),
+            "link create" => Ok(Self::LinkCreate),
+            "object copy" => Ok(Self::ObjectCopy),
+            "object create" => Ok(Self::ObjectCreate),
+            "string create" => Ok(Self::StringCreate),
             _ => fail!(format!("invalid property list class: {}", s)),
         }
     }

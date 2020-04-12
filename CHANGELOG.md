@@ -14,15 +14,17 @@
 ### Changed
 
 - `h5check!`, `h5lock!`, `h5try!`, `h5call!` and `h5check()` are now public.
+- `globals` module containing HDF5 runtime constants is now also public.
 - Switch to using 1.0 versions of `syn`, `quote` and `proc-macro2` (which
   required a bit of a rewrite of `hdf5-derive`).
 - Bump `ascii` to 1.0, update `hdf5-types` to be compatible.
 - Bump other dependencies to their latest versions (`parking_lot` to 0.10,
-  `ndarray` to 0.13, `bitflags` to 1.2, `lazy_static` to 1.4).
+  `ndarray` to 0.13, `bitflags` to 1.2, `lazy_static` to 1.4,
+  `libloading` to 0.6, `winreg` to 0.7).
 - Remove implementations of deprecated `Error::description()`.
 - Switch to `trybuild` instead of `compiletest_rs` for derive-macro testing;
   enable full tests (including hdf5-derive) on both AppVeyor and Travis.
-- Update the minimum Rust version to 1.37 (because of ndarray).
+- Update the minimum Rust version to 1.40 (because of `ndarray` and `libloading`).
 
 ### Fixed
 

@@ -114,13 +114,13 @@ impl Filters {
         self
     }
 
-    /// Disable scale_offset compression.
+    /// Disable scale-offset compression.
     pub fn no_scale_offset(&mut self) -> &mut Self {
         self.scale_offset = None;
         self
     }
 
-    /// Get the current settings for scale_offset filter.
+    /// Get the current settings for scale-offset filter.
     pub fn get_scale_offset(&self) -> Option<u32> {
         self.scale_offset
     }
@@ -234,7 +234,7 @@ impl Filters {
         .and(filters.validate().and(Ok(filters)))
     }
 
-    fn ensure_available(&self, name: &str, code: H5Z_filter_t) -> Result<()> {
+    fn ensure_available(name: &str, code: H5Z_filter_t) -> Result<()> {
         ensure!(h5lock!(H5Zfilter_avail(code) == 1), "Filter not available: {}", name);
 
         let flags: *mut c_uint = &mut 0;
@@ -263,13 +263,13 @@ impl Filters {
 
             // fletcher32
             if self.fletcher32 {
-                self.ensure_available("fletcher32", H5Z_FILTER_FLETCHER32)?;
+                Self::ensure_available("fletcher32", H5Z_FILTER_FLETCHER32)?;
                 H5Pset_fletcher32(id);
             }
 
             // scale-offset
             if let Some(offset) = self.scale_offset {
-                self.ensure_available("scaleoffset", H5Z_FILTER_SCALEOFFSET)?;
+                Self::ensure_available("scaleoffset", H5Z_FILTER_SCALEOFFSET)?;
                 match H5Tget_class(datatype.id()) {
                     H5T_INTEGER => {
                         H5Pset_scaleoffset(id, H5Z_SO_INT, offset as _);
@@ -289,16 +289,16 @@ impl Filters {
 
             // shuffle
             if self.shuffle {
-                self.ensure_available("shuffle", H5Z_FILTER_SHUFFLE)?;
+                Self::ensure_available("shuffle", H5Z_FILTER_SHUFFLE)?;
                 h5try!(H5Pset_shuffle(id));
             }
 
             // compression
             if let Some(level) = self.gzip {
-                self.ensure_available("gzip", H5Z_FILTER_DEFLATE)?;
+                Self::ensure_available("gzip", H5Z_FILTER_DEFLATE)?;
                 h5try!(H5Pset_deflate(id, c_uint::from(level)));
             } else if let Some((nn, pixels_per_block)) = self.szip {
-                self.ensure_available("szip", H5Z_FILTER_SZIP)?;
+                Self::ensure_available("szip", H5Z_FILTER_SZIP)?;
                 let options = if nn { H5_SZIP_NN_OPTION_MASK } else { H5_SZIP_EC_OPTION_MASK };
                 h5try!(H5Pset_szip(id, options, c_uint::from(pixels_per_block)));
             }
