@@ -83,7 +83,8 @@ mod class;
 mod dim;
 mod error;
 mod filters;
-mod globals;
+#[doc(hidden)]
+pub mod globals;
 mod handle;
 #[doc(hidden)]
 pub mod sync;

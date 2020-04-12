@@ -14,6 +14,7 @@
 ### Changed
 
 - `h5check!`, `h5lock!`, `h5try!`, `h5call!` and `h5check()` are now public.
+- `globals` module containing HDF5 runtime constants is now also public.
 - Switch to using 1.0 versions of `syn`, `quote` and `proc-macro2` (which
   required a bit of a rewrite of `hdf5-derive`).
 - Bump `ascii` to 1.0, update `hdf5-types` to be compatible.
