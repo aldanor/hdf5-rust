@@ -28,4 +28,4 @@ pkg-config = "0.3"
 [target.'cfg(windows)'.build-dependencies]
 serde = "1.0"
 serde_derive = "1.0"
-winreg = { version = "0.6", features = ["serialization-serde"]}
+winreg = { version = "0.7", features = ["serialization-serde"]}
