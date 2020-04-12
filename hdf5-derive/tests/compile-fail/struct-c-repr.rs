@@ -4,4 +4,8 @@ use hdf5_derive::H5Type;
 #[derive(H5Type)]
 //~^ ERROR proc-macro derive
 //~^^ HELP H5Type requires #[repr(C)] for structs
-struct Foo { bar: i64 }
+struct Foo {
+    bar: i64,
+}
+
+fn main() {}

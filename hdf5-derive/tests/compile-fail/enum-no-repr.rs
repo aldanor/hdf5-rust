@@ -8,3 +8,5 @@ enum Foo {
     X = 1,
     Y = 2,
 }
+
+fn main() {}

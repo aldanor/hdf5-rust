@@ -9,3 +9,5 @@ use std::marker::PhantomData;
 struct Foo<T> {
     t: PhantomData<T>,
 }
+
+fn main() {}

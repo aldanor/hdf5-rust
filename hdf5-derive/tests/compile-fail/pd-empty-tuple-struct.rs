@@ -7,3 +7,5 @@ use std::marker::PhantomData;
 //~^ ERROR proc-macro derive
 //~^^ HELP Cannot derive H5Type for empty tuple structs
 struct Foo<T>(PhantomData<T>);
+
+fn main() {}
