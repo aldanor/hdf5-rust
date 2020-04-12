@@ -492,17 +492,17 @@ pub enum FileCloseDegree {
 
 impl Default for FileCloseDegree {
     fn default() -> Self {
-        FileCloseDegree::Default
+        Self::Default
     }
 }
 
 impl From<H5F_close_degree_t> for FileCloseDegree {
     fn from(cd: H5F_close_degree_t) -> Self {
         match cd {
-            H5F_close_degree_t::H5F_CLOSE_WEAK => FileCloseDegree::Weak,
-            H5F_close_degree_t::H5F_CLOSE_SEMI => FileCloseDegree::Semi,
-            H5F_close_degree_t::H5F_CLOSE_STRONG => FileCloseDegree::Strong,
-            _ => FileCloseDegree::Default,
+            H5F_close_degree_t::H5F_CLOSE_WEAK => Self::Weak,
+            H5F_close_degree_t::H5F_CLOSE_SEMI => Self::Semi,
+            H5F_close_degree_t::H5F_CLOSE_STRONG => Self::Strong,
+            _ => Self::Default,
         }
     }
 }
@@ -510,9 +510,9 @@ impl From<H5F_close_degree_t> for FileCloseDegree {
 impl Into<H5F_close_degree_t> for FileCloseDegree {
     fn into(self) -> H5F_close_degree_t {
         match self {
-            FileCloseDegree::Weak => H5F_close_degree_t::H5F_CLOSE_WEAK,
-            FileCloseDegree::Semi => H5F_close_degree_t::H5F_CLOSE_SEMI,
-            FileCloseDegree::Strong => H5F_close_degree_t::H5F_CLOSE_STRONG,
+            Self::Weak => H5F_close_degree_t::H5F_CLOSE_WEAK,
+            Self::Semi => H5F_close_degree_t::H5F_CLOSE_SEMI,
+            Self::Strong => H5F_close_degree_t::H5F_CLOSE_STRONG,
             _ => H5F_close_degree_t::H5F_CLOSE_DEFAULT,
         }
     }
@@ -566,20 +566,18 @@ pub enum CacheIncreaseMode {
 
 impl From<H5C_cache_incr_mode> for CacheIncreaseMode {
     fn from(mode: H5C_cache_incr_mode) -> Self {
-        use self::{CacheIncreaseMode::*, H5C_cache_incr_mode::*};
         match mode {
-            H5C_incr__threshold => Threshold,
-            _ => Off,
+            H5C_cache_incr_mode::H5C_incr__threshold => Self::Threshold,
+            _ => Self::Off,
         }
     }
 }
 
 impl Into<H5C_cache_incr_mode> for CacheIncreaseMode {
     fn into(self) -> H5C_cache_incr_mode {
-        use self::{CacheIncreaseMode::*, H5C_cache_incr_mode::*};
         match self {
-            Threshold => H5C_incr__threshold,
-            _ => H5C_incr__off,
+            Self::Threshold => H5C_cache_incr_mode::H5C_incr__threshold,
+            _ => H5C_cache_incr_mode::H5C_incr__off,
         }
     }
 }
@@ -592,20 +590,18 @@ pub enum FlashIncreaseMode {
 
 impl From<H5C_cache_flash_incr_mode> for FlashIncreaseMode {
     fn from(mode: H5C_cache_flash_incr_mode) -> Self {
-        use self::{FlashIncreaseMode::*, H5C_cache_flash_incr_mode::*};
         match mode {
-            H5C_flash_incr__add_space => AddSpace,
-            _ => Off,
+            H5C_cache_flash_incr_mode::H5C_flash_incr__add_space => Self::AddSpace,
+            _ => Self::Off,
         }
     }
 }
 
 impl Into<H5C_cache_flash_incr_mode> for FlashIncreaseMode {
     fn into(self) -> H5C_cache_flash_incr_mode {
-        use self::{FlashIncreaseMode::*, H5C_cache_flash_incr_mode::*};
         match self {
-            AddSpace => H5C_flash_incr__add_space,
-            _ => H5C_flash_incr__off,
+            Self::AddSpace => H5C_cache_flash_incr_mode::H5C_flash_incr__add_space,
+            _ => H5C_cache_flash_incr_mode::H5C_flash_incr__off,
         }
     }
 }
@@ -620,24 +616,22 @@ pub enum CacheDecreaseMode {
 
 impl From<H5C_cache_decr_mode> for CacheDecreaseMode {
     fn from(mode: H5C_cache_decr_mode) -> Self {
-        use self::{CacheDecreaseMode::*, H5C_cache_decr_mode::*};
         match mode {
-            H5C_decr__threshold => Threshold,
-            H5C_decr__age_out => AgeOut,
-            H5C_decr__age_out_with_threshold => AgeOutWithThreshold,
-            _ => Off,
+            H5C_cache_decr_mode::H5C_decr__threshold => Self::Threshold,
+            H5C_cache_decr_mode::H5C_decr__age_out => Self::AgeOut,
+            H5C_cache_decr_mode::H5C_decr__age_out_with_threshold => Self::AgeOutWithThreshold,
+            _ => Self::Off,
         }
     }
 }
 
 impl Into<H5C_cache_decr_mode> for CacheDecreaseMode {
     fn into(self) -> H5C_cache_decr_mode {
-        use self::{CacheDecreaseMode::*, H5C_cache_decr_mode::*};
         match self {
-            Threshold => H5C_decr__threshold,
-            AgeOut => H5C_decr__age_out,
-            AgeOutWithThreshold => H5C_decr__age_out_with_threshold,
-            _ => H5C_decr__off,
+            Self::Threshold => H5C_cache_decr_mode::H5C_decr__threshold,
+            Self::AgeOut => H5C_cache_decr_mode::H5C_decr__age_out,
+            Self::AgeOutWithThreshold => H5C_cache_decr_mode::H5C_decr__age_out_with_threshold,
+            _ => H5C_cache_decr_mode::H5C_decr__off,
         }
     }
 }
@@ -650,25 +644,23 @@ pub enum MetadataWriteStrategy {
 
 impl Default for MetadataWriteStrategy {
     fn default() -> Self {
-        MetadataWriteStrategy::Distributed
+        Self::Distributed
     }
 }
 
 impl From<c_int> for MetadataWriteStrategy {
     fn from(strategy: c_int) -> Self {
-        use self::MetadataWriteStrategy::*;
         match strategy {
-            H5AC_METADATA_WRITE_STRATEGY__DISTRIBUTED => Distributed,
-            _ => ProcessZeroOnly,
+            H5AC_METADATA_WRITE_STRATEGY__DISTRIBUTED => Self::Distributed,
+            _ => Self::ProcessZeroOnly,
         }
     }
 }
 
 impl Into<c_int> for MetadataWriteStrategy {
     fn into(self) -> c_int {
-        use self::MetadataWriteStrategy::*;
         match self {
-            Distributed => H5AC_METADATA_WRITE_STRATEGY__DISTRIBUTED,
+            Self::Distributed => H5AC_METADATA_WRITE_STRATEGY__DISTRIBUTED,
             _ => H5AC_METADATA_WRITE_STRATEGY__PROCESS_0_ONLY,
         }
     }
@@ -899,32 +891,30 @@ mod libver {
 
     impl LibraryVersion {
         pub fn is_earliest(self) -> bool {
-            self == LibraryVersion::Earliest
+            self == Self::Earliest
         }
 
         pub const fn latest() -> Self {
-            LibraryVersion::V110
+            Self::V110
         }
     }
 
     impl Into<H5F_libver_t> for LibraryVersion {
         fn into(self) -> H5F_libver_t {
-            use self::{H5F_libver_t::*, LibraryVersion::*};
             match self {
-                V18 => H5F_LIBVER_V18,
-                V110 => H5F_LIBVER_V110,
-                _ => H5F_LIBVER_EARLIEST,
+                Self::V18 => H5F_libver_t::H5F_LIBVER_V18,
+                Self::V110 => H5F_libver_t::H5F_LIBVER_V110,
+                _ => H5F_libver_t::H5F_LIBVER_EARLIEST,
             }
         }
     }
 
     impl From<H5F_libver_t> for LibraryVersion {
         fn from(libver: H5F_libver_t) -> Self {
-            use self::{H5F_libver_t::*, LibraryVersion::*};
             match libver {
-                H5F_LIBVER_V18 => V18,
-                H5F_LIBVER_V110 => V110,
-                _ => Earliest,
+                H5F_libver_t::H5F_LIBVER_V18 => Self::V18,
+                H5F_libver_t::H5F_LIBVER_V110 => Self::V110,
+                _ => Self::Earliest,
             }
         }
     }

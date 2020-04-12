@@ -10,6 +10,12 @@
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::cast_precision_loss))]
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::similar_names))]
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::missing_const_for_fn))]
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::missing_safety_doc))]
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::missing_errors_doc))]
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::cognitive_complexity))]
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::must_use_candidate))]
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::wildcard_imports))]
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::struct_excessive_bools))]
 #![cfg_attr(all(feature = "cargo-clippy", test), allow(clippy::cyclomatic_complexity))]
 #![cfg_attr(not(test), allow(dead_code))]
 

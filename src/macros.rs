@@ -118,7 +118,7 @@ macro_rules! h5try {
     };
 }
 
-pub(crate) trait H5Get: Copy + Default {
+pub trait H5Get: Copy + Default {
     type Func;
 
     fn h5get(func: Self::Func, id: hid_t) -> Result<Self>;

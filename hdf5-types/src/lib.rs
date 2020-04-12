@@ -1,5 +1,6 @@
 #![recursion_limit = "1024"]
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::transmute_bytes_to_str))]
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::missing_safety_doc))]
 
 #[cfg(test)]
 #[macro_use]

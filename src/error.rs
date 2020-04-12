@@ -237,36 +237,36 @@ impl Error {
     pub fn query() -> Option<Self> {
         match ErrorStack::query() {
             Err(err) => Some(err),
-            Ok(Some(stack)) => Some(Error::HDF5(stack)),
+            Ok(Some(stack)) => Some(Self::HDF5(stack)),
             Ok(None) => None,
         }
     }
 
     pub fn description(&self) -> &str {
         match *self {
-            Error::Internal(ref desc) => desc.as_ref(),
-            Error::HDF5(ref stack) => stack.description(),
+            Self::Internal(ref desc) => desc.as_ref(),
+            Self::HDF5(ref stack) => stack.description(),
         }
     }
 }
 
 impl From<&str> for Error {
     fn from(desc: &str) -> Self {
-        Error::Internal(desc.into())
+        Self::Internal(desc.into())
     }
 }
 
 impl From<String> for Error {
     fn from(desc: String) -> Self {
-        Error::Internal(desc)
+        Self::Internal(desc)
     }
 }
 
 impl fmt::Debug for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Error::Internal(ref desc) => f.write_str(desc),
-            Error::HDF5(ref stack) => f.write_str(stack.description()),
+            Self::Internal(ref desc) => f.write_str(desc),
+            Self::HDF5(ref stack) => f.write_str(stack.description()),
         }
     }
 }
@@ -285,7 +285,7 @@ impl From<ShapeError> for Error {
     }
 }
 
-pub(crate) fn is_err_code<T>(value: T) -> bool
+pub fn is_err_code<T>(value: T) -> bool
 where
     T: Integer + Zero + Bounded + Copy,
 {

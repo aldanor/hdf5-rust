@@ -4,7 +4,7 @@ use std::fmt::{self, Debug, Display};
 use std::ops::Deref;
 
 use hdf5_sys::h5t::{
-    H5T_cdata_t, H5T_class_t, H5T_cset_t, H5T_order_t, H5T_str_t, H5Tarray_create2,
+    H5T_cdata_t, H5T_class_t, H5T_cset_t, H5T_order_t, H5T_sign_t, H5T_str_t, H5Tarray_create2,
     H5Tcompiler_conv, H5Tcopy, H5Tcreate, H5Tenum_create, H5Tenum_insert, H5Tequal, H5Tfind,
     H5Tget_array_dims2, H5Tget_array_ndims, H5Tget_class, H5Tget_cset, H5Tget_member_name,
     H5Tget_member_offset, H5Tget_member_type, H5Tget_member_value, H5Tget_nmembers, H5Tget_order,
@@ -106,16 +106,16 @@ impl PartialOrd<Conversion> for Option<Conversion> {
 impl Display for Conversion {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_str(match self {
-            Conversion::NoOp => "no-op",
-            Conversion::Hard => "hard",
-            Conversion::Soft => "soft",
+            Self::NoOp => "no-op",
+            Self::Hard => "hard",
+            Self::Soft => "soft",
         })
     }
 }
 
 impl Default for Conversion {
     fn default() -> Self {
-        Conversion::NoOp
+        Self::NoOp
     }
 }
 
@@ -132,11 +132,11 @@ pub enum ByteOrder {
 impl From<H5T_order_t> for ByteOrder {
     fn from(order: H5T_order_t) -> Self {
         match order {
-            H5T_order_t::H5T_ORDER_LE => ByteOrder::LittleEndian,
-            H5T_order_t::H5T_ORDER_BE => ByteOrder::BigEndian,
-            H5T_order_t::H5T_ORDER_VAX => ByteOrder::Vax,
-            H5T_order_t::H5T_ORDER_MIXED => ByteOrder::Mixed,
-            _ => ByteOrder::None,
+            H5T_order_t::H5T_ORDER_LE => Self::LittleEndian,
+            H5T_order_t::H5T_ORDER_BE => Self::BigEndian,
+            H5T_order_t::H5T_ORDER_VAX => Self::Vax,
+            H5T_order_t::H5T_ORDER_MIXED => Self::Mixed,
+            _ => Self::None,
         }
     }
 }
@@ -145,10 +145,10 @@ impl From<H5T_order_t> for ByteOrder {
 impl From<H5T_order_t> for ByteOrder {
     fn from(order: H5T_order_t) -> Self {
         match order {
-            H5T_order_t::H5T_ORDER_LE => ByteOrder::LittleEndian,
-            H5T_order_t::H5T_ORDER_BE => ByteOrder::BigEndian,
-            H5T_order_t::H5T_ORDER_VAX => ByteOrder::Vax,
-            _ => ByteOrder::None,
+            H5T_order_t::H5T_ORDER_LE => Self::LittleEndian,
+            H5T_order_t::H5T_ORDER_BE => Self::BigEndian,
+            H5T_order_t::H5T_ORDER_VAX => Self::Vax,
+            _ => Self::None,
         }
     }
 }
@@ -176,13 +176,10 @@ impl Datatype {
             if H5Tfind(self.id(), dst.id(), &mut (&mut cdata as *mut _)) == noop {
                 Some(Conversion::NoOp)
             } else {
-                let res = H5Tcompiler_conv(self.id(), dst.id());
-                if res == 0 {
-                    Some(Conversion::Soft)
-                } else if res > 0 {
-                    Some(Conversion::Hard)
-                } else {
-                    None
+                match H5Tcompiler_conv(self.id(), dst.id()) {
+                    0 => Some(Conversion::Soft),
+                    r if r > 0 => Some(Conversion::Hard),
+                    _ => None,
                 }
             }
         })
@@ -214,27 +211,26 @@ impl Datatype {
     }
 
     pub fn to_descriptor(&self) -> Result<TypeDescriptor> {
-        use hdf5_sys::h5t::{H5T_class_t::*, H5T_sign_t::*};
         use hdf5_types::TypeDescriptor as TD;
 
         h5lock!({
             let id = self.id();
             let size = h5try!(H5Tget_size(id)) as usize;
             match H5Tget_class(id) {
-                H5T_INTEGER => {
+                H5T_class_t::H5T_INTEGER => {
                     let signed = match H5Tget_sign(id) {
-                        H5T_SGN_NONE => false,
-                        H5T_SGN_2 => true,
+                        H5T_sign_t::H5T_SGN_NONE => false,
+                        H5T_sign_t::H5T_SGN_2 => true,
                         _ => return Err("Invalid sign of integer datatype".into()),
                     };
                     let size = IntSize::from_int(size).ok_or("Invalid size of integer datatype")?;
                     Ok(if signed { TD::Integer(size) } else { TD::Unsigned(size) })
                 }
-                H5T_FLOAT => {
+                H5T_class_t::H5T_FLOAT => {
                     let size = FloatSize::from_int(size).ok_or("Invalid size of float datatype")?;
                     Ok(TD::Float(size))
                 }
-                H5T_ENUM => {
+                H5T_class_t::H5T_ENUM => {
                     let mut members: Vec<EnumMember> = Vec::new();
                     for idx in 0..h5try!(H5Tget_nmembers(id)) as _ {
                         let mut value: u64 = 0;
@@ -259,7 +255,7 @@ impl Datatype {
                         Ok(TD::Enum(EnumType { size, signed, members }))
                     }
                 }
-                H5T_COMPOUND => {
+                H5T_class_t::H5T_COMPOUND => {
                     let mut fields: Vec<CompoundField> = Vec::new();
                     for idx in 0..h5try!(H5Tget_nmembers(id)) as _ {
                         let name = H5Tget_member_name(id, idx);
@@ -275,7 +271,7 @@ impl Datatype {
                     }
                     Ok(TD::Compound(CompoundType { fields, size }))
                 }
-                H5T_ARRAY => {
+                H5T_class_t::H5T_ARRAY => {
                     let base_dt = Self::from_id(H5Tget_super(id))?;
                     let ndims = h5try!(H5Tget_array_ndims(id));
                     if ndims == 1 {
@@ -286,7 +282,7 @@ impl Datatype {
                         Err("Multi-dimensional array datatypes are not supported".into())
                     }
                 }
-                H5T_STRING => {
+                H5T_class_t::H5T_STRING => {
                     let is_variable = h5try!(H5Tis_variable_str(id)) == 1;
                     let encoding = h5lock!(H5Tget_cset(id));
                     match (is_variable, encoding) {
@@ -297,7 +293,7 @@ impl Datatype {
                         _ => Err("Invalid encoding for string datatype".into()),
                     }
                 }
-                H5T_VLEN => {
+                H5T_class_t::H5T_VLEN => {
                     let base_dt = Self::from_id(H5Tget_super(id))?;
                     Ok(TD::VarLenArray(Box::new(base_dt.to_descriptor()?)))
                 }

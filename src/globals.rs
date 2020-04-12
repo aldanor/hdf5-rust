@@ -316,8 +316,8 @@ link_hid!(H5E_BADSIZE, h5e::H5E_BADSIZE);
 
 // H5R constants
 lazy_static! {
-    pub static ref H5R_OBJ_REF_BUF_SIZE: usize = { mem::size_of::<haddr_t>() };
-    pub static ref H5R_DSET_REG_REF_BUF_SIZE: usize = { mem::size_of::<haddr_t>() + 4 };
+    pub static ref H5R_OBJ_REF_BUF_SIZE: usize = mem::size_of::<haddr_t>();
+    pub static ref H5R_DSET_REG_REF_BUF_SIZE: usize = mem::size_of::<haddr_t>() + 4;
 }
 
 // File drivers

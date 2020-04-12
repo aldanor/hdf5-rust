@@ -32,7 +32,7 @@ impl Version {
         })
     }
 
-    pub fn is_valid(&self) -> bool {
+    pub fn is_valid(self) -> bool {
         self.major == 1 && ((self.minor == 8 && self.micro >= 4) || (self.minor == 10))
     }
 }
@@ -202,7 +202,7 @@ impl Header {
         }
 
         if !hdr.version.is_valid() {
-            panic!("Invalid H5_VERSION in the header: {:?}");
+            panic!("Invalid H5_VERSION in the header: {:?}", hdr.version);
         }
         hdr
     }
