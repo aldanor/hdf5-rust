@@ -619,11 +619,14 @@ impl DatasetCreateBuilder {
         Ok(())
     }
 
+    pub fn apply(&self, plist: &mut DatasetCreate) -> Result<()> {
+        h5lock!(self.populate_plist(plist.id()))
+    }
+
     pub fn finish(&self) -> Result<DatasetCreate> {
         h5lock!({
-            let plist = DatasetCreate::try_new()?;
-            self.populate_plist(plist.id())?;
-            Ok(plist)
+            let mut plist = DatasetCreate::try_new()?;
+            self.apply(&mut plist).map(|_| plist)
         })
     }
 }

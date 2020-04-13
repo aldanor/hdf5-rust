@@ -223,11 +223,14 @@ impl DatasetAccessBuilder {
         Ok(())
     }
 
+    pub fn apply(&self, plist: &mut DatasetAccess) -> Result<()> {
+        h5lock!(self.populate_plist(plist.id()))
+    }
+
     pub fn finish(&self) -> Result<DatasetAccess> {
         h5lock!({
-            let plist = DatasetAccess::try_new()?;
-            self.populate_plist(plist.id())?;
-            Ok(plist)
+            let mut plist = DatasetAccess::try_new()?;
+            self.apply(&mut plist).map(|_| plist)
         })
     }
 }
