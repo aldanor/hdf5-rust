@@ -7,8 +7,8 @@ use hdf5_sys::{
     h5d::H5Dopen2,
     h5g::{H5G_info_t, H5Gcreate2, H5Gget_info, H5Gopen2},
     h5l::{
-        H5L_info_t, H5L_iterate_t, H5Lcreate_hard, H5Lcreate_soft, H5Ldelete, H5Lexists,
-        H5Literate, H5Lmove, H5L_SAME_LOC,
+        H5L_info_t, H5L_iterate_t, H5Lcreate_external, H5Lcreate_hard, H5Lcreate_soft, H5Ldelete,
+        H5Lexists, H5Literate, H5Lmove, H5L_SAME_LOC,
     },
     h5p::{H5Pcreate, H5Pset_create_intermediate_group},
 };
@@ -126,6 +126,25 @@ impl Group {
             dst.as_ptr(),
             H5P_DEFAULT,
             H5P_DEFAULT
+        ))
+        .and(Ok(()))
+    }
+
+    /// Creates an external link.
+    /// Note: `dst` is relative to the current object, `src` is relative to the root of the source file
+    /// `src_file_path` is relative to the current file path
+    pub fn link_external(&self, src_file_name: &str, src: &str, dst: &str) -> Result<()> {
+        // TODO: &mut self?
+        let src = to_cstring(src)?;
+        let src_file_name = to_cstring(src_file_name)?;
+        let dst = to_cstring(dst)?;
+        h5call!(H5Lcreate_external(
+            src_file_name.as_ptr(),
+            src.as_ptr(),
+            self.id(),
+            dst.as_ptr(),
+            H5P_DEFAULT,
+            H5P_DEFAULT,
         ))
         .and(Ok(()))
     }
@@ -410,6 +429,24 @@ pub mod tests {
             assert_eq!(group_a.member_names().unwrap(), vec!["123", "bar", "foo"]);
             assert_eq!(group_b.member_names().unwrap().len(), 0);
             assert_eq!(file.member_names().unwrap(), vec!["a", "b"]);
+        })
+    }
+
+    #[test]
+    pub fn test_external_link() {
+        with_tmp_dir(|dir| {
+            let file1 = dir.join("foo.h5");
+            let file1 = File::create(file1).unwrap();
+            let dset = file1.new_dataset::<i32>().create("foo", ()).unwrap();
+            dset.write_scalar(&13).unwrap();
+
+            let file2 = dir.join("bar.h5");
+            let file2 = File::create(file2).unwrap();
+            file2.link_external("foo.h5", "foo", "bar").unwrap();
+            assert_eq!(file2.dataset("bar").unwrap().read_scalar::<i32>().unwrap(), 13);
+
+            file1.unlink("foo").unwrap();
+            assert!(file2.dataset("bar").is_err());
         })
     }
 }
