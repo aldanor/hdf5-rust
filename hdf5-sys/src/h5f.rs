@@ -139,6 +139,8 @@ extern "C" {
     )]
     pub fn H5Fset_latest_format(file_id: hid_t, latest_format: hbool_t) -> herr_t;
     pub fn H5Fis_hdf5(filename: *const c_char) -> htri_t;
+    #[cfg(hdf5_1_12_0)]
+    pub fn H5Fis_accessible(container_name: *const c_char, fapl_id: hid_t) -> htri_t;
     pub fn H5Fcreate(
         filename: *const c_char, flags: c_uint, create_plist: hid_t, access_plist: hid_t,
     ) -> hid_t;
@@ -146,9 +148,13 @@ extern "C" {
     pub fn H5Freopen(file_id: hid_t) -> hid_t;
     pub fn H5Fflush(object_id: hid_t, scope: H5F_scope_t) -> herr_t;
     pub fn H5Fclose(file_id: hid_t) -> herr_t;
+    #[cfg(hdf5_1_12_0)]
+    pub fn H5Fdelete(filename: *const c_char, fapl_id: hid_t) -> herr_t;
     pub fn H5Fget_create_plist(file_id: hid_t) -> hid_t;
     pub fn H5Fget_access_plist(file_id: hid_t) -> hid_t;
     pub fn H5Fget_intent(file_id: hid_t, intent: *mut c_uint) -> herr_t;
+    #[cfg(hdf5_1_12_0)]
+    pub fn H5Fget_fileno(file_id: hid_t, fileno: *mut c_ulong) -> herr_t;
     pub fn H5Fget_obj_count(file_id: hid_t, types: c_uint) -> ssize_t;
     pub fn H5Fget_obj_ids(
         file_id: hid_t, types: c_uint, max_objs: size_t, obj_id_list: *mut hid_t,

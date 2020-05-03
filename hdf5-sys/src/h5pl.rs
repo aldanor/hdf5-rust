@@ -9,7 +9,10 @@ mod hdf5_1_8_15 {
     pub enum H5PL_type_t {
         H5PL_TYPE_ERROR = -1,
         H5PL_TYPE_FILTER = 0,
-        H5PL_TYPE_NONE = 1,
+        #[cfg(hdf5_1_12_0)]
+        H5PL_VOL,
+        #[cfg(hdf5_1_12_0)]
+        H5PL_TYPE_NONE,
     }
 
     pub use self::H5PL_type_t::*;

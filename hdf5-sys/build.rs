@@ -25,7 +25,7 @@ impl Version {
     }
 
     pub fn parse(s: &str) -> Option<Self> {
-        let re = Regex::new(r"^(1)\.(8|10)\.(\d\d?)(_\d+)?(-patch\d+)?$").ok()?;
+        let re = Regex::new(r"^(1)\.(8|10|12)\.(\d\d?)(_\d+)?(-patch\d+)?$").ok()?;
         let captures = re.captures(s)?;
         Some(Self {
             major: captures.get(1).and_then(|c| c.as_str().parse::<u8>().ok())?,
@@ -35,7 +35,10 @@ impl Version {
     }
 
     pub fn is_valid(self) -> bool {
-        self.major == 1 && ((self.minor == 8 && self.micro >= 4) || (self.minor == 10))
+        self.major == 1
+            && ((self.minor == 8 && self.micro >= 4)
+                || (self.minor == 10)
+                || (self.minor == 12 && self.micro == 0))
     }
 }
 
@@ -592,6 +595,7 @@ impl Config {
         assert!(version >= Version::new(1, 8, 4), "required HDF5 version: >=1.8.4");
         let mut vs: Vec<_> = (5..=21).map(|v| Version::new(1, 8, v)).collect(); // 1.8.[5-21]
         vs.extend((0..=5).map(|v| Version::new(1, 10, v))); // 1.10.[0-5]
+        vs.push(Version::new(1, 12, 0)); // 1.12.0
         for v in vs.into_iter().filter(|&v| version >= v) {
             println!("cargo:rustc-cfg=hdf5_{}_{}_{}", v.major, v.minor, v.micro);
             println!("cargo:version_{}_{}_{}=1", v.major, v.minor, v.micro);

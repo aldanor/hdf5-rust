@@ -123,6 +123,22 @@ mod globals {
     extern_static!(H5P_LST_OBJECT_COPY, H5P_LST_OBJECT_COPY_ID_g);
     extern_static!(H5P_LST_LINK_CREATE, H5P_LST_LINK_CREATE_ID_g);
     extern_static!(H5P_LST_LINK_ACCESS, H5P_LST_LINK_ACCESS_ID_g);
+
+    #[cfg(hdf5_1_12_0)]
+    #[allow(clippy::module_inception)]
+    pub mod globals {
+        use super::*;
+        extern_static!(H5P_MAP_CREATE, H5P_CLS_MAP_CREATE_ID_g);
+        extern_static!(H5P_MAP_ACCESS, H5P_CLS_MAP_ACCESS_ID_g);
+        extern_static!(H5P_VOL_INITIALIZE, H5P_CLS_VOL_INITIALIZE_ID_g);
+        extern_static!(H5P_REFERENCE_ACCESS, H5P_CLS_REFERENCE_ACCESS_ID_g);
+        extern_static!(H5P_MAP_CREATE_DEFAULT, H5P_LST_MAP_CREATE_ID_g);
+        extern_static!(H5P_MAP_ACCESS_DEFAULT, H5P_LST_MAP_ACCESS_ID_g);
+        extern_static!(H5P_VOL_INITIALIZE_DEFAULT, H5P_LST_VOL_INITIALIZE_ID_g);
+        extern_static!(H5P_REFERENCE_ACCESS_DEFAULT, H5P_LST_REFERENCE_ACCESS_ID_g);
+    }
+    #[cfg(hdf5_1_12_0)]
+    pub use globals::*;
 }
 
 #[cfg(all(not(hdf5_1_8_14), all(target_env = "msvc", not(feature = "static"))))]
@@ -205,6 +221,22 @@ mod globals {
     extern_static!(H5P_LST_OBJECT_COPY, __imp_H5P_LST_OBJECT_COPY_ID_g);
     extern_static!(H5P_LST_LINK_CREATE, __imp_H5P_LST_LINK_CREATE_ID_g);
     extern_static!(H5P_LST_LINK_ACCESS, __imp_H5P_LST_LINK_ACCESS_ID_g);
+
+    #[cfg(hdf5_1_12_0)]
+    #[allow(clippy::module_inception)]
+    pub mod globals {
+        use super::*;
+        extern_static!(H5P_MAP_CREATE, __imp_H5P_CLS_MAP_CREATE_ID_g);
+        extern_static!(H5P_MAP_ACCESS, __imp_H5P_CLS_MAP_ACCESS_ID_g);
+        extern_static!(H5P_VOL_INITIALIZE, __imp_H5P_CLS_VOL_INITIALIZE_ID_g);
+        extern_static!(H5P_REFERENCE_ACCESS, __imp_H5P_CLS_REFERENCE_ACCESS_ID_g);
+        extern_static!(H5P_MAP_CREATE_DEFAULT, __imp_H5P_LST_MAP_CREATE_ID_g);
+        extern_static!(H5P_MAP_ACCESS_DEFAULT, __imp_H5P_LST_MAP_ACCESS_ID_g);
+        extern_static!(H5P_VOL_INITIALIZE_DEFAULT, __imp_H5P_LST_VOL_INITIALIZE_ID_g);
+        extern_static!(H5P_REFERENCE_ACCESS_DEFAULT, __imp_H5P_LST_REFERENCE_ACCESS_ID_g);
+    }
+    #[cfg(hdf5_1_12_0)]
+    pub use globals::*;
 }
 
 extern "C" {
@@ -656,7 +688,13 @@ extern "C" {
     pub fn H5Pset_virtual_view(plist_id: hid_t, view: H5D_vds_view_t) -> herr_t;
     pub fn H5Pget_chunk_opts(plist_id: hid_t, opts: *mut c_uint) -> herr_t;
     pub fn H5Pset_chunk_opts(plist_id: hid_t, opts: c_uint) -> herr_t;
-    pub fn H5Pencode(plist_id: hid_t, buf: *mut c_void, nalloc: *mut size_t) -> herr_t;
+    #[cfg_attr(hdf5_1_12_0, deprecated(note = "deprecated in HDF5 1.12.0, use H5Pencode2()"))]
+    #[cfg_attr(not(hdf5_1_12_0), link_name = "H5Pencode")]
+    pub fn H5Pencode1(plist_id: hid_t, buf: *mut c_void, nalloc: *mut size_t) -> herr_t;
+    #[cfg(hdf5_1_12_0)]
+    pub fn H5Pencode2(
+        plist_id: hid_t, buf: *mut c_void, nalloc: *mut size_t, fapl_id: hid_t,
+    ) -> herr_t;
     pub fn H5Pdecode(buf: *const c_void) -> hid_t;
     #[cfg_attr(
         hdf5_1_10_1,
@@ -673,6 +711,11 @@ extern "C" {
         plist_id: hid_t, strategy: *mut H5F_file_space_type_t, threshold: *mut hsize_t,
     ) -> herr_t;
 }
+
+#[cfg(all(hdf5_1_10_0, not(hdf5_1_12_0)))]
+pub use self::H5Pencode1 as H5Pencode;
+#[cfg(hdf5_1_12_0)]
+pub use self::H5Pencode2 as H5Pencode;
 
 #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
 extern "C" {
@@ -719,4 +762,11 @@ extern "C" {
 extern "C" {
     pub fn H5Pget_dset_no_attrs_hint(dcpl_id: hid_t, minimize: *mut hbool_t) -> herr_t;
     pub fn H5Pset_dset_no_attrs_hint(dcpl_id: hid_t, minimize: hbool_t) -> herr_t;
+}
+
+#[cfg(hdf5_1_12_0)]
+extern "C" {
+    pub fn H5Pget_vol_id(plist_id: hid_t, vol_id: *mut hid_t) -> herr_t;
+    pub fn H5Pget_vol_info(plist_id: hid_t, vol_info: *mut *mut c_void) -> herr_t;
+    pub fn H5Pset_vol(plist_id: hid_t, new_vol_id: hid_t, new_vol_id: *const c_void) -> herr_t;
 }
