@@ -45,7 +45,7 @@ pub type H5P_iterate_t =
 
 pub use self::globals::*;
 
-#[cfg(all(not(hdf5_1_8_14), not(target_env = "msvc")))]
+#[cfg(all(not(hdf5_1_8_14), not(all(target_env = "msvc", not(feature = "static")))))]
 mod globals {
     pub use crate::h5i::hid_t as id_t;
 
@@ -85,7 +85,7 @@ mod globals {
     extern_static!(H5P_LST_LINK_ACCESS, H5P_LST_LINK_ACCESS_g);
 }
 
-#[cfg(all(hdf5_1_8_14, not(target_env = "msvc")))]
+#[cfg(all(hdf5_1_8_14, not(all(target_env = "msvc", not(feature = "static")))))]
 mod globals {
     pub use crate::h5i::hid_t as id_t;
 
@@ -125,7 +125,7 @@ mod globals {
     extern_static!(H5P_LST_LINK_ACCESS, H5P_LST_LINK_ACCESS_ID_g);
 }
 
-#[cfg(all(not(hdf5_1_8_14), target_env = "msvc"))]
+#[cfg(all(not(hdf5_1_8_14), all(target_env = "msvc", not(feature = "static"))))]
 mod globals {
     // dllimport hack
     pub type id_t = usize;
@@ -166,7 +166,7 @@ mod globals {
     extern_static!(H5P_LST_LINK_ACCESS, __imp_H5P_LST_LINK_ACCESS_g);
 }
 
-#[cfg(all(hdf5_1_8_14, target_env = "msvc"))]
+#[cfg(all(hdf5_1_8_14, all(target_env = "msvc", not(feature = "static"))))]
 mod globals {
     // dllimport hack
     pub type id_t = usize;

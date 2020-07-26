@@ -5,9 +5,12 @@ use std::fs;
 use std::os::raw::{c_int, c_uint};
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::str;
 
 use regex::Regex;
+
+fn feature_enabled(feature: &str) -> bool {
+    env::var(format!("CARGO_FEATURE_{}", feature)).is_ok()
+}
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub struct Version {
@@ -450,7 +453,7 @@ mod windows {
 impl LibrarySearcher {
     pub fn new_from_env() -> Self {
         let mut config = Self::default();
-        if let Ok(var) = env::var("HDF5_DIR") {
+        if let Some(var) = env::var_os("HDF5_DIR") {
             println!("Setting HDF5 root from environment variable:");
             println!("    HDF5_DIR = {:?}", var);
             let root = PathBuf::from(var);
@@ -571,6 +574,17 @@ impl Config {
         }
         println!("cargo:rerun-if-env-changed=HDF5_DIR");
         println!("cargo:rerun-if-env-changed=HDF5_VERSION");
+
+        if cfg!(target_env = "msvc") {
+            println!("cargo:msvc_dll_indirection=1");
+        }
+        println!("cargo:include={}", self.inc_dir.to_str().unwrap());
+
+        println!("cargo:library=hdf5");
+
+        if feature_enabled("HL") {
+            println!("cargo:hl_library=hdf5_hl");
+        }
     }
 
     pub fn emit_cfg_flags(&self) {
@@ -580,27 +594,68 @@ impl Config {
         vs.extend((0..=5).map(|v| Version::new(1, 10, v))); // 1.10.[0-5]
         for v in vs.into_iter().filter(|&v| version >= v) {
             println!("cargo:rustc-cfg=hdf5_{}_{}_{}", v.major, v.minor, v.micro);
+            println!("cargo:version_{}_{}_{}=1", v.major, v.minor, v.micro);
         }
         if self.header.have_stdbool_h {
             println!("cargo:rustc-cfg=h5_have_stdbool_h");
+            println!("cargo:have_stdbool=1");
         }
         if self.header.have_direct {
             println!("cargo:rustc-cfg=h5_have_direct");
+            println!("cargo:have_direct=1");
         }
         if self.header.have_parallel {
             println!("cargo:rustc-cfg=h5_have_parallel");
+            println!("cargo:have_parallel=1");
         }
         if self.header.have_threadsafe {
             println!("cargo:rustc-cfg=h5_have_threadsafe");
+            println!("cargo:have_threadsafe=1");
         }
     }
 }
 
 fn main() {
-    let mut searcher = LibrarySearcher::new_from_env();
-    searcher.try_locate_hdf5_library();
-    let config = searcher.finalize();
-    println!("{:#?}", config);
-    config.emit_link_flags();
+    if feature_enabled("STATIC") && !std::env::var_os("HDF5_DIR").is_some() {
+        get_build_and_emit();
+    } else {
+        let mut searcher = LibrarySearcher::new_from_env();
+        searcher.try_locate_hdf5_library();
+        let config = searcher.finalize();
+        println!("{:#?}", config);
+        config.emit_link_flags();
+        config.emit_cfg_flags();
+    }
+}
+
+fn get_build_and_emit() {
+    println!("cargo:rerun-if-changed=build.rs");
+
+    if feature_enabled("ZLIB") {
+        let zlib_lib = env::var("DEP_HDF5SRC_ZLIB").unwrap();
+        println!("cargo:zlib={}", &zlib_lib);
+        let zlib_lib_header = env::var("DEP_HDF5SRC_ZLIB").unwrap();
+        println!("cargo:zlib={}", &zlib_lib_header);
+        println!("cargo:rustc-link-lib=static={}", &zlib_lib);
+    }
+
+    if feature_enabled("HL") {
+        let hdf5_hl_lib = env::var("DEP_HDF5SRC_HL_LIBRARY").unwrap();
+        println!("cargo:rustc-link-lib=static={}", &hdf5_hl_lib);
+        println!("cargo:hl_library={}", &hdf5_hl_lib);
+    }
+
+    let hdf5_root = env::var("DEP_HDF5SRC_ROOT").unwrap();
+    println!("cargo:root={}", &hdf5_root);
+    let hdf5_incdir = env::var("DEP_HDF5SRC_INCLUDE").unwrap();
+    println!("cargo:include={}", &hdf5_incdir);
+    let hdf5_lib = env::var("DEP_HDF5SRC_LIBRARY").unwrap();
+    println!("cargo:library={}", &hdf5_lib);
+
+    println!("cargo:rustc-link-search=native={}/lib", &hdf5_root);
+    println!("cargo:rustc-link-lib=static={}", &hdf5_lib);
+
+    let header = Header::parse(&hdf5_incdir);
+    let config = Config { header, inc_dir: "".into(), link_paths: Vec::new() };
     config.emit_cfg_flags();
 }

@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+    branches:
+      - master
+  schedule:
+    - cron: '0 0 15 * *'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  static_tests:
+    name: Build and test statically
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - build: linux
+            os: ubuntu-18.04
+            rust: stable
+          - build: windows (msvc)
+            os: windows-2019
+            rust: stable
+          - build: windows (gnu)
+            os: windows-2019
+            rust: stable-gnu
+          - build: macos
+            os: macos-latest
+            rust: stable
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      with:
+          submodules: true
+
+    - name: Install rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: ${{ matrix.rust }}
+        profile: minimal
+        override: true
+
+    - name: Build
+      run: cargo build --verbose --workspace --features "hdf5-sys/static,hdf5-sys/zlib"
+
+    - name: Test
+      run: cargo test --verbose --workspace --features "hdf5-sys/static,hdf5-sys/zlib" --exclude hdf5-derive

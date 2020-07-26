@@ -3,20 +3,30 @@ name = "hdf5-sys"
 version = "0.6.1"  # !V
 authors = ["Ivan Smirnov <i.s.smirnov@gmail.com>"]
 keywords = ["hdf5"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 build = "build.rs"
 repository = "https://github.com/aldanor/hdf5-rust"
 homepage = "https://github.com/aldanor/hdf5-rust"
 description = "Native bindings to the HDF5 library."
 edition = "2018"
+links = "hdf5"
+readme = "README.md"
 
 [dependencies]
 libc = "0.2"
 mpi-sys = { version = "0.1", optional = true }
+libz-sys = { version = "1.0.25", optional = true }
+hdf5-src = { path = "../hdf5-src", version = "0.6.1", optional = true }  # !V
 
+# Please see README for further explanation of these feature flags
 [features]
 default = []
 mpio = ["mpi-sys"]
+hl = ["hdf5-src/hl"]
+threadsafe = ["hdf5-src/threadsafe"]
+zlib = ["libz-sys", "hdf5-src/zlib"]
+static = ["hdf5-src"]
+deprecated = ["hdf5-src/deprecated"]
 
 [build-dependencies]
 libloading = "0.6"

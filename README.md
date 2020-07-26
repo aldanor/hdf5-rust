@@ -91,6 +91,9 @@ a modern Rust compiler (e.g. of version 1.40 or later).
 Required HDF5 version is 1.8.4 or newer. The library doesn't have to be built with
 threadsafe option enabled.
 
+The HDF5 C library can also be built from source and linked in statically by 
+enabling `hdf5-sys/static` feature (CMake required).
+
 ## Building
 
 ### HDF5 version
