@@ -1,9 +1,13 @@
-# `hdf5`
+# hdf5-rust
 
-[![Build Status](https://img.shields.io/travis/aldanor/hdf5-rust.svg)](https://travis-ci.org/aldanor/hdf5-rust) [![Appveyor Build Status](https://img.shields.io/appveyor/ci/aldanor/hdf5-rust.svg)](https://ci.appveyor.com/project/aldanor/hdf5-rust)
+HDF5 for Rust.
 
-[Documentation](https://aldanor.github.io/hdf5-rust)
-[Changelog](https://github.com/aldanor/hdf5-rust/blob/master/CHANGELOG.md)
+[![Build](https://github.com/aldanor/hdf5-rust/workflows/CI/badge.svg)](https://github.com/aldanor/hdf5-rust/actions?query=branch%3Amaster)
+[![Latest Version](https://img.shields.io/crates/v/hdf5.svg)](https://crates.io/crates/hdf5)
+[![Documentation](https://docs.rs/hdf5/badge.svg)](https://docs.rs/hdf5)
+[![Changelog](https://img.shields.io/github/v/release/aldanor/hdf5-rust)](https://github.com/aldanor/hdf5-rust/blob/master/CHANGELOG.md)
+[![Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 The `hdf5` crate (previously known as `hdf5-rs`) provides thread-safe Rust bindings and 
 high-level wrappers for the HDF5 library API. Some of the features include:
