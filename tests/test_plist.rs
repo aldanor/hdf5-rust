@@ -302,7 +302,7 @@ fn test_fapl_driver_mpio() -> hdf5::Result<()> {
 
     let d = check_matches!(b.finish()?.get_driver()?, d, FileDriver::Mpio(d));
     let mut cmp = mem::MaybeUninit::uninit();
-    unsafe { MPI_Comm_compare(d.comm, world_comm, cmp.as_mut_ptr() as &mut _) };
+    unsafe { MPI_Comm_compare(d.comm, world_comm, cmp.as_mut_ptr()) };
     assert_eq!(unsafe { cmp.assume_init() }, MPI_CONGRUENT as _);
 
     Ok(())
