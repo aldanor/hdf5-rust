@@ -82,18 +82,24 @@ fn main() -> hdf5::Result<()> {
 
 ### Platforms
 
-`hdf5` crate is known to run on these platforms: Linux, macOS, Windows (tested on Travis 
-CI and AppVeyor, HDF5 1.8 and 1.10, system installations and conda environments).
+`hdf5` crate is known to run on these platforms: Linux, macOS, Windows (tested on:
+Ubuntu 16.04, 18.04, and 20.04; Windows Server 2019 with both MSVC and GNU 
+toolchains; macOS Catalina).
 
 ### Rust
 
-`hdf5` crate is tested continuously for all three official release channels, and requires 
-a modern Rust compiler (e.g. of version 1.40 or later).
+`hdf5` crate is tested continuously for all three official release channels, and
+requires a reasonably recent Rust compiler (e.g. of version 1.40 or newer).
 
 ### HDF5
 
 Required HDF5 version is 1.8.4 or newer. The library doesn't have to be built with
-threadsafe option enabled.
+threadsafe option enabled in order to make the user code threadsafe.
+
+Various HDF5 installation options are supported and tested: via package managers
+like homebrew and apt; system-wide installations on Windows; conda installations 
+from both the official channels and conda-forge. On Linux and macOS, both OpenMPI 
+and MPICH parallel builds are supported and tested. 
 
 The HDF5 C library can also be built from source and linked in statically by 
 enabling `hdf5-sys/static` feature (CMake required).
