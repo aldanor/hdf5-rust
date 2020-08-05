@@ -127,11 +127,11 @@ impl<'a> Reader<'a> {
             let mspace = Dataspace::try_new(&out_shape, false)?;
             let size = out_shape.iter().product();
             let mut vec = Vec::with_capacity(size);
+
+            self.read_into_buf(vec.as_mut_ptr(), Some(&fspace), Some(&mspace))?;
             unsafe {
                 vec.set_len(size);
             }
-
-            self.read_into_buf(vec.as_mut_ptr(), Some(&fspace), Some(&mspace))?;
 
             let arr = ArrayD::from_shape_vec(reduced_shape, vec)?;
             Ok(arr.into_dimensionality()?)
@@ -157,10 +157,12 @@ impl<'a> Reader<'a> {
     pub fn read_raw<T: H5Type>(&self) -> Result<Vec<T>> {
         let size = self.obj.space()?.size();
         let mut vec = Vec::with_capacity(size);
-        unsafe {
-            vec.set_len(size);
-        }
-        self.read_into_buf(vec.as_mut_ptr(), None, None).map(|_| vec)
+        self.read_into_buf(vec.as_mut_ptr(), None, None).map(|_| {
+            unsafe {
+                vec.set_len(size);
+            };
+            vec
+        })
     }
 
     /// Reads a dataset/attribute into a 1-dimensional array.
