@@ -1,10 +1,12 @@
 use std::fmt::{self, Debug, Display};
 use std::ops::Deref;
+use std::panic;
 use std::ptr;
 use std::str::FromStr;
 
 use hdf5_sys::h5p::{
     H5Pcopy, H5Pequal, H5Pexist, H5Pget_class, H5Pget_class_name, H5Pget_nprops, H5Piterate,
+    H5Pset_vlen_mem_manager,
 };
 
 use crate::internal_prelude::*;
@@ -200,6 +202,26 @@ impl PropertyList {
             PropertyListClass::from_str(&name)
         })
     }
+}
+
+/// Set the memory manager for variable length items to
+/// the same allocator as is in use by hdf5-types
+// TODO: move this to dataset_transfer module when DatasetTransfer plist is implemented
+pub fn set_vlen_manager_libc(plist: hid_t) -> Result<()> {
+    extern "C" fn alloc(size: size_t, _info: *mut c_void) -> *mut c_void {
+        panic::catch_unwind(|| unsafe { libc::malloc(size) }).unwrap_or(ptr::null_mut())
+    }
+    extern "C" fn free(ptr: *mut c_void, _info: *mut libc::c_void) {
+        let _ = panic::catch_unwind(|| unsafe { libc::free(ptr) });
+    }
+    h5try!(H5Pset_vlen_mem_manager(
+        plist,
+        Some(alloc),
+        ptr::null_mut(),
+        Some(free),
+        ptr::null_mut()
+    ));
+    Ok(())
 }
 
 #[cfg(test)]
