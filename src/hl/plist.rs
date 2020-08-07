@@ -1,5 +1,6 @@
 use std::fmt::{self, Debug, Display};
 use std::ops::Deref;
+use std::panic;
 use std::ptr;
 use std::str::FromStr;
 
@@ -167,12 +168,15 @@ impl PropertyList {
     /// Iterates over properties in the property list, returning their names.
     pub fn properties(&self) -> Vec<String> {
         extern "C" fn callback(_: hid_t, name: *const c_char, data: *mut c_void) -> herr_t {
-            let data = unsafe { &mut *(data as *mut Vec<String>) };
-            let name = string_from_cstr(name);
-            if !name.is_empty() {
-                data.push(name);
-            }
-            0
+            panic::catch_unwind(|| {
+                let data = unsafe { &mut *(data as *mut Vec<String>) };
+                let name = string_from_cstr(name);
+                if !name.is_empty() {
+                    data.push(name);
+                }
+                0
+            })
+            .unwrap_or(-1)
         }
 
         let mut data = Vec::new();
