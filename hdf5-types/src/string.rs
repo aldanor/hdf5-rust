@@ -245,7 +245,7 @@ impl VarLenAscii {
 
     #[inline]
     pub fn as_str(&self) -> &str {
-        unsafe { mem::transmute(self.as_bytes()) }
+        unsafe { str::from_utf8_unchecked(self.as_bytes()) }
     }
 
     #[inline]
@@ -439,7 +439,7 @@ impl<A: Array<Item = u8>> FixedAscii<A> {
 
     #[inline]
     pub fn as_str(&self) -> &str {
-        unsafe { mem::transmute(self.as_bytes()) }
+        unsafe { str::from_utf8_unchecked(self.as_bytes()) }
     }
 
     #[inline]
@@ -549,7 +549,7 @@ impl<A: Array<Item = u8>> FixedUnicode<A> {
 
     #[inline]
     pub fn as_str(&self) -> &str {
-        unsafe { mem::transmute(self.as_bytes()) }
+        unsafe { str::from_utf8_unchecked(self.as_bytes()) }
     }
 
     #[inline]

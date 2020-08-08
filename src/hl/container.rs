@@ -7,6 +7,7 @@ use ndarray::{SliceInfo, SliceOrIndex};
 
 use hdf5_sys::h5a::{H5Aget_space, H5Aget_storage_size, H5Aget_type, H5Aread, H5Awrite};
 use hdf5_sys::h5d::{H5Dget_space, H5Dget_storage_size, H5Dget_type, H5Dread, H5Dwrite};
+use hdf5_sys::h5p::H5Pcreate;
 
 use crate::internal_prelude::*;
 
@@ -44,13 +45,15 @@ impl<'a> Reader<'a> {
         file_dtype.ensure_convertible(&mem_dtype, self.conv)?;
         let (obj_id, tp_id) = (self.obj.id(), mem_dtype.id());
 
-        let fspace_id = fspace.map_or(H5S_ALL, |f| f.id());
-        let mspace_id = mspace.map_or(H5S_ALL, |m| m.id());
-
         if self.obj.is_attr() {
             h5try!(H5Aread(obj_id, tp_id, buf as *mut _));
         } else {
-            h5try!(H5Dread(obj_id, tp_id, mspace_id, fspace_id, H5P_DEFAULT, buf as *mut _));
+            let fspace_id = fspace.map_or(H5S_ALL, |f| f.id());
+            let mspace_id = mspace.map_or(H5S_ALL, |m| m.id());
+            let xfer =
+                PropertyList::from_id(h5call!(H5Pcreate(*crate::globals::H5P_DATASET_XFER))?)?;
+            crate::hl::plist::set_vlen_manager_libc(xfer.id())?;
+            h5try!(H5Dread(obj_id, tp_id, mspace_id, fspace_id, xfer.id(), buf as *mut _));
         }
         Ok(())
     }
@@ -127,11 +130,11 @@ impl<'a> Reader<'a> {
             let mspace = Dataspace::try_new(&out_shape, false)?;
             let size = out_shape.iter().product();
             let mut vec = Vec::with_capacity(size);
+
+            self.read_into_buf(vec.as_mut_ptr(), Some(&fspace), Some(&mspace))?;
             unsafe {
                 vec.set_len(size);
             }
-
-            self.read_into_buf(vec.as_mut_ptr(), Some(&fspace), Some(&mspace))?;
 
             let arr = ArrayD::from_shape_vec(reduced_shape, vec)?;
             Ok(arr.into_dimensionality()?)
@@ -157,10 +160,12 @@ impl<'a> Reader<'a> {
     pub fn read_raw<T: H5Type>(&self) -> Result<Vec<T>> {
         let size = self.obj.space()?.size();
         let mut vec = Vec::with_capacity(size);
-        unsafe {
-            vec.set_len(size);
-        }
-        self.read_into_buf(vec.as_mut_ptr(), None, None).map(|_| vec)
+        self.read_into_buf(vec.as_mut_ptr(), None, None).map(|_| {
+            unsafe {
+                vec.set_len(size);
+            };
+            vec
+        })
     }
 
     /// Reads a dataset/attribute into a 1-dimensional array.
@@ -245,12 +250,11 @@ impl<'a> Writer<'a> {
         mem_dtype.ensure_convertible(&file_dtype, self.conv)?;
         let (obj_id, tp_id) = (self.obj.id(), mem_dtype.id());
 
-        let fspace_id = fspace.map_or(H5S_ALL, |f| f.id());
-        let mspace_id = mspace.map_or(H5S_ALL, |m| m.id());
-
         if self.obj.is_attr() {
             h5try!(H5Awrite(obj_id, tp_id, buf as *const _));
         } else {
+            let fspace_id = fspace.map_or(H5S_ALL, |f| f.id());
+            let mspace_id = mspace.map_or(H5S_ALL, |m| m.id());
             h5try!(H5Dwrite(obj_id, tp_id, mspace_id, fspace_id, H5P_DEFAULT, buf as *const _));
         }
         Ok(())
