@@ -427,27 +427,26 @@ impl<T: H5Type> DatasetBuilder<T> {
             let dataspace = Dataspace::try_new(&shape, self.resizable)?;
             let dcpl = self.make_dcpl(&datatype, &shape)?;
 
-            match name {
-                Some(name) => {
-                    let lcpl = Self::make_lcpl()?;
-                    let name = to_cstring(name)?;
-                    Dataset::from_id(h5try!(H5Dcreate2(
-                        parent.id(),
-                        name.as_ptr(),
-                        datatype.id(),
-                        dataspace.id(),
-                        lcpl.id(),
-                        dcpl.id(),
-                        H5P_DEFAULT
-                    )))
-                }
-                _ => Dataset::from_id(h5try!(H5Dcreate_anon(
+            if let Some(name) = name {
+                let lcpl = Self::make_lcpl()?;
+                let name = to_cstring(name)?;
+                Dataset::from_id(h5try!(H5Dcreate2(
+                    parent.id(),
+                    name.as_ptr(),
+                    datatype.id(),
+                    dataspace.id(),
+                    lcpl.id(),
+                    dcpl.id(),
+                    H5P_DEFAULT
+                )))
+            } else {
+                Dataset::from_id(h5try!(H5Dcreate_anon(
                     parent.id(),
                     datatype.id(),
                     dataspace.id(),
                     dcpl.id(),
                     H5P_DEFAULT
-                ))),
+                )))
             }
         })
     }

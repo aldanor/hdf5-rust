@@ -385,23 +385,17 @@ pub mod tests {
         let _e = silence_errors();
 
         fn f1() -> Result<herr_t> {
-            let plist_id = h5try!(H5Pcreate(*H5P_ROOT));
-            h5try!(H5Pclose(plist_id));
+            h5try!(H5Pcreate(*H5P_ROOT));
             Ok(100)
         }
 
-        let result1 = f1();
-        assert!(result1.is_ok());
-        assert_eq!(result1.ok().unwrap(), 100);
+        assert_eq!(f1().unwrap(), 100);
 
         fn f2() -> Result<herr_t> {
-            let plist_id = h5try!(H5Pcreate(*H5P_ROOT));
-            h5try!(H5Pclose(plist_id));
-            h5try!(H5Pclose(plist_id));
+            h5try!(H5Pcreate(123456));
             Ok(100)
         }
 
-        let result2 = f2();
-        assert!(result2.is_err());
+        assert!(f2().is_err());
     }
 }

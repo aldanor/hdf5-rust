@@ -204,17 +204,20 @@ impl Filters {
                 );
                 name.push(0);
 
+                let v0 = values.get(0).cloned().unwrap_or(0);
+                let v1 = values.get(1).cloned().unwrap_or(0);
+
                 match code {
                     H5Z_FILTER_DEFLATE => {
-                        filters.gzip(values[0] as _);
+                        filters.gzip(v0 as _);
                     }
                     H5Z_FILTER_SZIP => {
-                        let nn = match values[0] {
+                        let nn = match v0 {
                             v if v & H5_SZIP_EC_OPTION_MASK != 0 => false,
                             v if v & H5_SZIP_NN_OPTION_MASK != 0 => true,
-                            _ => fail!("Unknown szip method: {:?}", values[0]),
+                            _ => fail!("Unknown szip method: {:?}", v0),
                         };
-                        filters.szip(nn, values[1] as _);
+                        filters.szip(nn, v1 as _);
                     }
                     H5Z_FILTER_SHUFFLE => {
                         filters.shuffle(true);
@@ -223,7 +226,7 @@ impl Filters {
                         filters.fletcher32(true);
                     }
                     H5Z_FILTER_SCALEOFFSET => {
-                        filters.scale_offset(values[1]);
+                        filters.scale_offset(v1);
                     }
                     _ => fail!("Unsupported filter: {:?}", code),
                 };

@@ -502,7 +502,7 @@ impl From<H5F_close_degree_t> for FileCloseDegree {
             H5F_close_degree_t::H5F_CLOSE_WEAK => Self::Weak,
             H5F_close_degree_t::H5F_CLOSE_SEMI => Self::Semi,
             H5F_close_degree_t::H5F_CLOSE_STRONG => Self::Strong,
-            _ => Self::Default,
+            H5F_close_degree_t::H5F_CLOSE_DEFAULT => Self::Default,
         }
     }
 }
@@ -513,7 +513,7 @@ impl Into<H5F_close_degree_t> for FileCloseDegree {
             Self::Weak => H5F_close_degree_t::H5F_CLOSE_WEAK,
             Self::Semi => H5F_close_degree_t::H5F_CLOSE_SEMI,
             Self::Strong => H5F_close_degree_t::H5F_CLOSE_STRONG,
-            _ => H5F_close_degree_t::H5F_CLOSE_DEFAULT,
+            Self::Default => H5F_close_degree_t::H5F_CLOSE_DEFAULT,
         }
     }
 }
@@ -568,7 +568,7 @@ impl From<H5C_cache_incr_mode> for CacheIncreaseMode {
     fn from(mode: H5C_cache_incr_mode) -> Self {
         match mode {
             H5C_cache_incr_mode::H5C_incr__threshold => Self::Threshold,
-            _ => Self::Off,
+            H5C_cache_incr_mode::H5C_incr__off => Self::Off,
         }
     }
 }
@@ -577,7 +577,7 @@ impl Into<H5C_cache_incr_mode> for CacheIncreaseMode {
     fn into(self) -> H5C_cache_incr_mode {
         match self {
             Self::Threshold => H5C_cache_incr_mode::H5C_incr__threshold,
-            _ => H5C_cache_incr_mode::H5C_incr__off,
+            Self::Off => H5C_cache_incr_mode::H5C_incr__off,
         }
     }
 }
@@ -592,7 +592,7 @@ impl From<H5C_cache_flash_incr_mode> for FlashIncreaseMode {
     fn from(mode: H5C_cache_flash_incr_mode) -> Self {
         match mode {
             H5C_cache_flash_incr_mode::H5C_flash_incr__add_space => Self::AddSpace,
-            _ => Self::Off,
+            H5C_cache_flash_incr_mode::H5C_flash_incr__off => Self::Off,
         }
     }
 }
@@ -601,7 +601,7 @@ impl Into<H5C_cache_flash_incr_mode> for FlashIncreaseMode {
     fn into(self) -> H5C_cache_flash_incr_mode {
         match self {
             Self::AddSpace => H5C_cache_flash_incr_mode::H5C_flash_incr__add_space,
-            _ => H5C_cache_flash_incr_mode::H5C_flash_incr__off,
+            Self::Off => H5C_cache_flash_incr_mode::H5C_flash_incr__off,
         }
     }
 }
@@ -620,7 +620,7 @@ impl From<H5C_cache_decr_mode> for CacheDecreaseMode {
             H5C_cache_decr_mode::H5C_decr__threshold => Self::Threshold,
             H5C_cache_decr_mode::H5C_decr__age_out => Self::AgeOut,
             H5C_cache_decr_mode::H5C_decr__age_out_with_threshold => Self::AgeOutWithThreshold,
-            _ => Self::Off,
+            H5C_cache_decr_mode::H5C_decr__off => Self::Off,
         }
     }
 }
@@ -631,7 +631,7 @@ impl Into<H5C_cache_decr_mode> for CacheDecreaseMode {
             Self::Threshold => H5C_cache_decr_mode::H5C_decr__threshold,
             Self::AgeOut => H5C_cache_decr_mode::H5C_decr__age_out,
             Self::AgeOutWithThreshold => H5C_cache_decr_mode::H5C_decr__age_out_with_threshold,
-            _ => H5C_cache_decr_mode::H5C_decr__off,
+            Self::Off => H5C_cache_decr_mode::H5C_decr__off,
         }
     }
 }
@@ -661,7 +661,7 @@ impl Into<c_int> for MetadataWriteStrategy {
     fn into(self) -> c_int {
         match self {
             Self::Distributed => H5AC_METADATA_WRITE_STRATEGY__DISTRIBUTED,
-            _ => H5AC_METADATA_WRITE_STRATEGY__PROCESS_0_ONLY,
+            Self::ProcessZeroOnly => H5AC_METADATA_WRITE_STRATEGY__PROCESS_0_ONLY,
         }
     }
 }

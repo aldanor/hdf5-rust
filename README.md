@@ -1,9 +1,13 @@
-# `hdf5`
+# hdf5-rust
 
-[![Build Status](https://img.shields.io/travis/aldanor/hdf5-rust.svg)](https://travis-ci.org/aldanor/hdf5-rust) [![Appveyor Build Status](https://img.shields.io/appveyor/ci/aldanor/hdf5-rust.svg)](https://ci.appveyor.com/project/aldanor/hdf5-rust)
+HDF5 for Rust.
 
-[Documentation](https://aldanor.github.io/hdf5-rust)
-[Changelog](https://github.com/aldanor/hdf5-rust/blob/master/CHANGELOG.md)
+[![Build](https://github.com/aldanor/hdf5-rust/workflows/CI/badge.svg)](https://github.com/aldanor/hdf5-rust/actions?query=branch%3Amaster)
+[![Latest Version](https://img.shields.io/crates/v/hdf5.svg)](https://crates.io/crates/hdf5)
+[![Documentation](https://docs.rs/hdf5/badge.svg)](https://docs.rs/hdf5)
+[![Changelog](https://img.shields.io/github/v/release/aldanor/hdf5-rust)](https://github.com/aldanor/hdf5-rust/blob/master/CHANGELOG.md)
+[![Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 The `hdf5` crate (previously known as `hdf5-rs`) provides thread-safe Rust bindings and 
 high-level wrappers for the HDF5 library API. Some of the features include:
@@ -78,18 +82,24 @@ fn main() -> hdf5::Result<()> {
 
 ### Platforms
 
-`hdf5` crate is known to run on these platforms: Linux, macOS, Windows (tested on Travis 
-CI and AppVeyor, HDF5 1.8 and 1.10, system installations and conda environments).
+`hdf5` crate is known to run on these platforms: Linux, macOS, Windows (tested on:
+Ubuntu 16.04, 18.04, and 20.04; Windows Server 2019 with both MSVC and GNU 
+toolchains; macOS Catalina).
 
 ### Rust
 
-`hdf5` crate is tested continuously for all three official release channels, and requires 
-a modern Rust compiler (e.g. of version 1.40 or later).
+`hdf5` crate is tested continuously for all three official release channels, and
+requires a reasonably recent Rust compiler (e.g. of version 1.40 or newer).
 
 ### HDF5
 
 Required HDF5 version is 1.8.4 or newer. The library doesn't have to be built with
-threadsafe option enabled.
+threadsafe option enabled in order to make the user code threadsafe.
+
+Various HDF5 installation options are supported and tested: via package managers
+like homebrew and apt; system-wide installations on Windows; conda installations 
+from both the official channels and conda-forge. On Linux and macOS, both OpenMPI 
+and MPICH parallel builds are supported and tested. 
 
 The HDF5 C library can also be built from source and linked in statically by 
 enabling `hdf5-sys/static` feature (CMake required).

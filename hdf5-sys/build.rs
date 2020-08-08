@@ -616,7 +616,7 @@ impl Config {
 }
 
 fn main() {
-    if feature_enabled("STATIC") && !std::env::var_os("HDF5_DIR").is_some() {
+    if feature_enabled("STATIC") && std::env::var_os("HDF5_DIR").is_none() {
         get_build_and_emit();
     } else {
         let mut searcher = LibrarySearcher::new_from_env();

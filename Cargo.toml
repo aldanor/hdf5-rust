@@ -16,8 +16,8 @@ default = []
 mpio = ["mpi-sys", "hdf5-sys/mpio"]
 
 [workspace]
-members = ["hdf5-types", "hdf5-derive", "hdf5-sys", "hdf5-src"]
-exclude = ["*.yml", "ci/*"]
+members = [".", "hdf5-types", "hdf5-derive", "hdf5-sys", "hdf5-src"]
+default-members = [".", "hdf5-types", "hdf5-derive", "hdf5-sys"]
 
 [dependencies]
 bitflags = "1.2"
