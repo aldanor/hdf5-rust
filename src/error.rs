@@ -2,6 +2,7 @@ use std::cell::RefCell;
 use std::error::Error as StdError;
 use std::fmt;
 use std::ops::Index;
+use std::panic;
 use std::ptr;
 
 use lazy_static::lazy_static;
@@ -65,7 +66,7 @@ lazy_static! {
 }
 
 extern "C" fn default_error_handler(estack: hid_t, _cdata: *mut c_void) -> herr_t {
-    unsafe { H5Eprint2(estack, ptr::null_mut()) }
+    panic::catch_unwind(|| unsafe { H5Eprint2(estack, ptr::null_mut()) }).unwrap_or(-1)
 }
 
 impl SilenceErrors {
@@ -134,7 +135,7 @@ impl ErrorStack {
         extern "C" fn callback(
             _: c_uint, err_desc: *const H5E_error2_t, data: *mut c_void,
         ) -> herr_t {
-            unsafe {
+            panic::catch_unwind(|| unsafe {
                 let data = &mut *(data as *mut CallbackData);
                 if data.err.is_some() {
                     return 0;
@@ -154,7 +155,8 @@ impl ErrorStack {
                     }
                 }
                 0
-            }
+            })
+            .unwrap_or(-1)
         }
 
         let mut data = CallbackData { stack: Self::new(), err: None };

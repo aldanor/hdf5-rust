@@ -1,5 +1,6 @@
 use std::fmt::{self, Debug};
 use std::ops::Deref;
+use std::panic;
 
 use hdf5_sys::{
     h5::{hsize_t, H5_index_t, H5_iter_order_t},
@@ -177,11 +178,14 @@ impl Group {
         extern "C" fn members_callback(
             _id: hid_t, name: *const c_char, _info: *const H5L_info_t, op_data: *mut c_void,
         ) -> herr_t {
-            let other_data: &mut Vec<String> = unsafe { &mut *(op_data as *mut Vec<String>) };
+            panic::catch_unwind(|| {
+                let other_data: &mut Vec<String> = unsafe { &mut *(op_data as *mut Vec<String>) };
 
-            other_data.push(string_from_cstr(name));
+                other_data.push(string_from_cstr(name));
 
-            0 // Continue iteration
+                0 // Continue iteration
+            })
+            .unwrap_or(-1)
         }
 
         let callback_fn: H5L_iterate_t = Some(members_callback);
