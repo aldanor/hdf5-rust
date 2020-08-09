@@ -1,3 +1,4 @@
+//! Creating and manipulating links within an HDF5 group
 use std::mem;
 
 pub use self::H5L_type_t::*;

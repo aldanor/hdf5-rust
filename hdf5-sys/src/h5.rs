@@ -1,3 +1,4 @@
+//! General purpose library functions
 use std::mem;
 
 pub use self::H5_index_t::*;

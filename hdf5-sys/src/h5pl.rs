@@ -1,3 +1,4 @@
+//! Programmatically controlling dynamically loaded plugins
 use crate::internal_prelude::*;
 
 #[cfg(hdf5_1_8_15)]

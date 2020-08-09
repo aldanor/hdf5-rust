@@ -1,3 +1,4 @@
+//! Configuring filters that process data during I/O operation
 use std::mem;
 
 pub use self::H5Z_EDC_t::*;

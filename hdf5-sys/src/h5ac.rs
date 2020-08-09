@@ -1,3 +1,4 @@
+//! Cache functions
 use std::mem;
 
 use crate::internal_prelude::*;

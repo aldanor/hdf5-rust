@@ -1,3 +1,4 @@
+//! Manipulating objects in an HDF5 file
 use std::mem;
 
 pub use self::H5O_mcdt_search_ret_t::*;

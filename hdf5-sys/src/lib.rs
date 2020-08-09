@@ -1,3 +1,4 @@
+//! Rust bindings to the `hdf5` library for reading and writing data to and from storage
 #![allow(non_camel_case_types, non_snake_case, dead_code, deprecated)]
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::unreadable_literal))]
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::missing_safety_doc))]

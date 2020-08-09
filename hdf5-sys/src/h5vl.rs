@@ -1,3 +1,4 @@
+//! Using the Virtual Object Layer
 #![cfg(hdf5_1_12_0)]
 use crate::internal_prelude::*;
 

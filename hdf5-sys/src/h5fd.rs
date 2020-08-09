@@ -1,3 +1,4 @@
+//! File drivers
 use std::mem;
 
 pub use self::H5FD_file_image_op_t::*;
