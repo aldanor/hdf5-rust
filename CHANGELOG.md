@@ -1,11 +1,45 @@
 # Changelog
 
+## 0.7.0
+
+### Added
+
+- HDF5 C library can now be built from source and linked in statically, enabled
+  via `hdf5-sys/static` feature (as of this release, the version of the bundled
+  sources of the library is 1.10.6). CMake is required for building. For further
+  details, see the docs for `hdf5-sys`.
+- Thanks to static build option, the documentation will now be built on 
+  [docs.rs](https://docs.rs/crate/hdf5); if it builds successfully, this 
+  will be the official documentation source from now on.
+- Add support for HDF5 1.12 on all platforms and include it in CI.
+
+### Changed
+
+- Switched CI from Travis/AppVeyor to GitHub Actions; for each pull request, we
+  now run around 30 concurrent builds which provides with a much wider coverage
+  than previously and has already revealed some issues that have been fixed.
+  Platforms covered: macOS 10.15, Windows Server 2019, Ubuntu 16.04/18.04/20.04;
+  HDF5 installation methods covered: conda, apt, homebrew, also official
+  binaries on Windows. We now also test MPI versions of the library for
+  both MPICH and OpenMPI on macOS / Linux.
+
+### Fixed
+
+- We now force the variable-length allocator that HDF5 uses when reading data
+  to use `libc::malloc` and `libc::free`, so that they can be deallocated
+  properly by `VarLenString` and `VarLenArray` in `hdf5-types`. Previously,
+  this could cause a rare but serious failure for Windows builds when the 
+  default allocator used for vlen types by HDF5 was not matching the 
+  libc deallocator.
+- Use `std::panic::catch_unwind` in all cases where we uses extern C callbacks,
+  so that they are panic-safe.
+- `Reader::read_raw` and `Reader::read_slice` should now be `Drop`-safe in the
+  event where the read operation fails and the destination type is not trivial.
+
 ## 0.6.1
 
 ### Added
 
-- HDF5 C library can now be built and statically linked to `hdf5-sys`
-  crate by enabling `hdf5-sys/static` feature (CMake required).
 - Implement `Default` for `H5D_layout_t`, `H5D_alloc_time_t`, `H5T_cset_t`,
   `H5D_fill_time_t`, `H5D_fill_value_t` (based on what their values are set
   to in default property lists).
