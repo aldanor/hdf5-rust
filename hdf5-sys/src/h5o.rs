@@ -50,22 +50,33 @@ pub const H5O_INFO_BASIC: c_uint = 0x0001;
 pub const H5O_INFO_TIME: c_uint = 0x0002;
 #[cfg(hdf5_1_10_3)]
 pub const H5O_INFO_NUM_ATTRS: c_uint = 0x0004;
-#[cfg(hdf5_1_10_3)]
+#[cfg(all(hdf5_1_10_3, not(hdf5_1_12_0)))]
 pub const H5O_INFO_HDR: c_uint = 0x0008;
-#[cfg(hdf5_1_10_3)]
+#[cfg(all(hdf5_1_10_3, not(hdf5_1_12_0)))]
 pub const H5O_INFO_META_SIZE: c_uint = 0x0010;
-#[cfg(hdf5_1_10_3)]
+#[cfg(all(hdf5_1_10_3, not(hdf5_1_12_0)))]
 pub const H5O_INFO_ALL: c_uint =
     H5O_INFO_BASIC | H5O_INFO_TIME | H5O_INFO_NUM_ATTRS | H5O_INFO_HDR | H5O_INFO_META_SIZE;
+#[cfg(hdf5_1_12_0)]
+pub const H5O_INFO_ALL: c_uint = H5O_INFO_BASIC | H5O_INFO_TIME | H5O_INFO_NUM_ATTRS;
+
+#[cfg(hdf5_1_12_0)]
+pub const H5O_NATIVE_INFO_HDR: c_uint = 0x0008;
+#[cfg(hdf5_1_12_0)]
+pub const H5O_NATIVE_INFO_META_SIZE: c_uint = 0x0010;
+#[cfg(hdf5_1_12_0)]
+pub const H5O_NATIVE_INFO_ALL: c_uint = H5O_NATIVE_INFO_HDR | H5O_NATIVE_INFO_META_SIZE;
 
 #[repr(C)]
 #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
 pub enum H5O_type_t {
     H5O_TYPE_UNKNOWN = -1,
-    H5O_TYPE_GROUP = 0,
-    H5O_TYPE_DATASET = 1,
-    H5O_TYPE_NAMED_DATATYPE = 2,
-    H5O_TYPE_NTYPES = 3,
+    H5O_TYPE_GROUP,
+    H5O_TYPE_DATASET,
+    H5O_TYPE_NAMED_DATATYPE,
+    #[cfg(hdf5_1_12_0)]
+    H5O_TYPE_MAP,
+    H5O_TYPE_NTYPES,
 }
 
 #[repr(C)]
@@ -142,6 +153,7 @@ pub struct H5O_info_t__meta_size {
     pub attr: H5_ih_info_t,
 }
 
+#[cfg(not(hdf5_1_12_0))]
 impl Default for H5O_info_t__meta_size {
     fn default() -> Self {
         unsafe { mem::zeroed() }
@@ -155,6 +167,16 @@ pub type H5O_iterate_t = Option<
         obj: hid_t,
         name: *const c_char,
         info: *const H5O_info_t,
+        op_data: *mut c_void,
+    ) -> herr_t,
+>;
+
+#[cfg(hdf5_1_12_0)]
+pub type H5O_iterate2_t = Option<
+    extern "C" fn(
+        obj: hid_t,
+        name: *const c_char,
+        info: *const H5O_info2_t,
         op_data: *mut c_void,
     ) -> herr_t,
 >;
@@ -317,4 +339,110 @@ extern "C" {
         loc_id: hid_t, obj_name: *const c_char, idx_type: H5_index_t, order: H5_iter_order_t,
         op: H5O_iterate_t, op_data: *mut c_void, lapl_id: hid_t,
     ) -> herr_t;
+}
+
+#[cfg(hdf5_1_12_0)]
+pub const H5O_MAX_TOKEN_SIZE: usize = 16;
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+#[cfg(hdf5_1_12_0)]
+pub struct H5O_token_t {
+    __data: [u8; H5O_MAX_TOKEN_SIZE],
+}
+
+#[cfg(hdf5_1_12_0)]
+impl Default for H5O_token_t {
+    fn default() -> Self {
+        *H5O_TOKEN_UNDEF
+    }
+}
+
+#[cfg(hdf5_1_12_0)]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct H5O_info2_t {
+    fileno: c_ulong,
+    token: H5O_token_t,
+    type_: H5O_type_t,
+    rc: c_uint,
+    atime: time_t,
+    mtime: time_t,
+    ctime: time_t,
+    btime: time_t,
+    num_attrs: hsize_t,
+}
+
+#[cfg(hdf5_1_12_0)]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct H5O_native_info_meta_size_t {
+    obj: H5_ih_info_t,
+    attr: H5_ih_info_t,
+}
+
+#[cfg(hdf5_1_12_0)]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct H5O_native_info_t {
+    hdf: H5O_hdr_info_t,
+    meta_size: H5O_native_info_meta_size_t,
+}
+
+#[cfg(hdf5_1_12_0)]
+extern "C" {
+    pub fn H5Oget_info3(loc_id: hid_t, oinfo: *mut H5O_info2_t, fields: c_uint) -> herr_t;
+    pub fn H5Oget_info_by_idx3(
+        loc_id: hid_t, group_name: *const c_char, idx_type: H5_index_t, order: H5_iter_order_t,
+        n: hsize_t, oinfo: *mut H5O_info2_t, fields: c_uint, lapl_id: hid_t,
+    ) -> herr_t;
+    pub fn H5Oget_info_by_name3(
+        loc_id: hid_t, name: *const c_char, oinfo: *mut H5O_info2_t, fields: c_uint, lapl_id: hid_t,
+    ) -> herr_t;
+    pub fn H5Oget_native_info(
+        loc_id: hid_t, oinfor: *mut H5O_native_info_t, fields: c_uint,
+    ) -> herr_t;
+    pub fn H5Oget_native_info_by_idx(
+        loc_id: hid_t, group_name: *const c_char, idx_type: H5_index_t, order: H5_iter_order_t,
+        n: hsize_t, oinfo: *mut H5O_native_info_t, fields: c_uint, lapl_id: hid_t,
+    ) -> herr_t;
+    pub fn H5Oget_native_info_by_name(
+        loc_id: hid_t, name: *const c_char, oinfo: *mut H5O_native_info_t, fields: c_uint,
+        lapl_id: hid_t,
+    ) -> herr_t;
+    pub fn H5Oopen_by_token(loc_id: hid_t, token: H5O_token_t) -> hid_t;
+    pub fn H5Otoken_cmp(
+        loc_id: hid_t, token1: *const H5O_token_t, token2: *const H5O_token_t,
+        cmp_value: *mut c_int,
+    ) -> herr_t;
+    pub fn H5Otoken_from_str(
+        loc_id: hid_t, token_str: *const c_char, token: *mut H5O_token_t,
+    ) -> herr_t;
+    pub fn H5Otoken_to_str(
+        loc_id: hid_t, token: *const H5O_token_t, token_str: *mut *mut c_char,
+    ) -> herr_t;
+    pub fn H5Ovisit3(
+        obj_id: hid_t, idx_type: H5_index_t, order: H5_iter_order_t, op: H5O_iterate2_t,
+        op_data: *mut c_void, fields: c_uint,
+    ) -> herr_t;
+    pub fn H5Ovisit_by_name3(
+        loc_id: hid_t, obj_name: *const c_char, idx_type: H5_index_t, order: H5_iter_order_t,
+        op: H5O_iterate2_t, op_data: *mut c_void, fields: c_uint, lapl_id: hid_t,
+    ) -> herr_t;
+}
+
+#[cfg(hdf5_1_12_0)]
+pub use self::globals::*;
+
+#[cfg(all(not(all(target_env = "msvc", not(feature = "static"))), hdf5_1_12_0))]
+mod globals {
+    use super::H5O_token_t as id_t;
+    extern_static!(H5O_TOKEN_UNDEF, H5O_TOKEN_UNDEF_g);
+}
+
+#[cfg(all(target_env = "msvc", not(feature = "static"), hdf5_1_12_0))]
+mod globals {
+    // TODO: special DLL handling?
+    use super::H5O_token_t as id_t;
+    extern_static!(H5O_TOKEN_UNDEF, __imp_H5O_TOKEN_UNDEF_g);
 }

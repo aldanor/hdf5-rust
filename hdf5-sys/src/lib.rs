@@ -35,6 +35,7 @@ pub mod h5p;
 pub mod h5r;
 pub mod h5s;
 pub mod h5t;
+pub mod h5vl;
 pub mod h5z;
 
 #[cfg(hdf5_1_8_15)]

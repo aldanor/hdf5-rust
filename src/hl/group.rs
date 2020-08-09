@@ -288,13 +288,13 @@ pub mod tests {
             file.link_hard("/foo/test", "/foo/hard").unwrap();
             file.group("foo/test/inner").unwrap();
             file.group("/foo/hard/inner").unwrap();
-            assert_err!(
+            assert_err_re!(
                 file.link_hard("foo/test", "/foo/test/inner"),
-                "unable to create link: name already exists"
+                "unable to create (?:hard )?link: name already exists"
             );
             assert_err_re!(
                 file.link_hard("foo/bar", "/foo/baz"),
-                "unable to create link: object.+doesn't exist"
+                "unable to create (?:hard )?link: object.+doesn't exist"
             );
             file.relink("/foo/hard", "/foo/hard2").unwrap();
             file.group("/foo/hard2/inner").unwrap();

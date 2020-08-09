@@ -35,6 +35,31 @@ jobs:
           command: ${{matrix.command}}
           args: "${{matrix.command == 'fmt' && '--all -- --check' || '-- -D warnings'}}"
 
+  brew:
+    name: brew
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {version: hdf5@1.8}
+          - {version: hdf5@1.10}
+          - {version: hdf5@1.12}
+          - {version: hdf5-mpi, mpi: true}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with: {submodules: true}
+      - name: Install Rust (${{matrix.rust}})
+        uses: actions-rs/toolchain@v1
+        with: {toolchain: stable, profile: minimal, override: true}
+      - name: Install HDF5 (${{matrix.version}})
+        run: brew install ${{matrix.version}}
+      - name: Build and test all crates
+        run: |
+          [ "${{matrix.mpi}}" != "" ] && FEATURES=mpio
+          cargo test -vv --features="$FEATURES"
+
   conda:
     name: conda
     runs-on: ${{matrix.os}}-latest
@@ -55,6 +80,9 @@ jobs:
           - {os: macos, version: 1.10.5, mpi: openmpi, channel: conda-forge, rust: beta}
           - {os: ubuntu, version: 1.10.6, channel: anaconda, rust: stable}
           - {os: ubuntu, version: 1.10.6, mpi: mpich, channel: conda-forge, rust: nightly}
+          - {os: ubuntu, version: 1.12.0, mpi: openmpi, channel: conda-forge, rust: stable}
+          - {os: macos, version: 1.12.0, channel: conda-forge, rust: stable}
+          - {os: windows, version: 1.12.0, channel: conda-forge, rust: stable}
     defaults:
       run:
         shell: bash -l {0}
@@ -101,26 +129,6 @@ jobs:
         with: {toolchain: '${{matrix.rust}}', profile: minimal, override: true}
       - name: Build and test all crates
         run: cargo test --workspace -v --features hdf5-sys/static,hdf5-sys/zlib --exclude hdf5-derive
-
-  brew:
-    name: brew
-    runs-on: macos-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        version: [1.8, '1.10']
-        rust: [stable]
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-        with: {submodules: true}
-      - name: Install Rust (${{matrix.rust}})
-        uses: actions-rs/toolchain@v1
-        with: {toolchain: '${{matrix.rust}}', profile: minimal, override: true}
-      - name: Install HDF5 (${{matrix.version}})
-        run: brew install hdf5@${{matrix.version}}
-      - name: Build and test all crates
-        run: cargo test -v
 
   apt:
     name: apt
