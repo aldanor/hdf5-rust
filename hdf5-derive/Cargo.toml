@@ -1,6 +1,6 @@
 [package]
 name = "hdf5-derive"
-version = "0.6.1"  # !V
+version = "0.7.0"  # !V
 authors = ["Ivan Smirnov <i.s.smirnov@gmail.com>"]
 keywords = ["hdf5"]
 license = "MIT OR Apache-2.0"
@@ -19,4 +19,4 @@ syn = { version = "^1.0.5", features = ["derive", "extra-traits"]}
 
 [dev-dependencies]
 trybuild = "1.0"
-hdf5 = { version = "0.6.1", path = ".." } # !V
+hdf5 = { version = ">=0.6", path = ".." }
