@@ -1,5 +1,6 @@
 pub mod container;
 pub mod dataset;
+pub mod dataset2; // TODO: temporary
 pub mod dataspace;
 pub mod datatype;
 pub mod extents;
