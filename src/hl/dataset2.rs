@@ -87,6 +87,13 @@ impl ChunkInfo {
         unsafe { offset.set_len(ndim) };
         Self { offset, filter_mask: 0, addr: 0, size: 0 }
     }
+
+    /// Returns positional indices of disabled filters.
+    pub fn disabled_filters(&self) -> Vec<usize> {
+        (0..32)
+            .filter_map(|i| if self.filter_mask & (1 << i) != 0 { Some(i) } else { None })
+            .collect()
+    }
 }
 
 impl Dataset {
@@ -186,6 +193,11 @@ impl Dataset {
         }
         h5try!(H5Dset_extent(self.id(), dims.as_ptr()));
         Ok(())
+    }
+
+    /// Returns the pipeline of filters used in this dataset.
+    pub fn filters(&self) -> Vec<Filter> {
+        self.dcpl().map_or(Default::default(), |pl| pl.filters())
     }
 }
 
