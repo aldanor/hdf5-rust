@@ -2,11 +2,13 @@ use std::fmt::{self, Debug};
 use std::ops::Deref;
 use std::ptr;
 
+#[allow(deprecated)]
+use hdf5_sys::h5o::H5Oset_comment;
 use hdf5_sys::{
     h5a::H5Aopen,
     h5f::H5Fget_name,
     h5i::{H5Iget_file_id, H5Iget_name},
-    h5o::{H5Oget_comment, H5Oset_comment},
+    h5o::H5Oget_comment,
 };
 
 use crate::internal_prelude::*;
@@ -77,15 +79,19 @@ impl Location {
     }
 
     /// Set or the commment attached to the named object.
+    #[deprecated(note = "Attributes are preferred to comments")]
     pub fn set_comment(&self, comment: &str) -> Result<()> {
         // TODO: &mut self?
         let comment = to_cstring(comment)?;
+        #[allow(deprecated)]
         h5call!(H5Oset_comment(self.id(), comment.as_ptr())).and(Ok(()))
     }
 
     /// Clear the commment attached to the named object.
+    #[deprecated(note = "Attributes are preferred to comments")]
     pub fn clear_comment(&self) -> Result<()> {
         // TODO: &mut self?
+        #[allow(deprecated)]
         h5call!(H5Oset_comment(self.id(), ptr::null_mut())).and(Ok(()))
     }
 
@@ -134,6 +140,7 @@ pub mod tests {
 
     #[test]
     pub fn test_comment() {
+        #[allow(deprecated)]
         with_tmp_file(|file| {
             assert!(file.comment().is_none());
             assert!(file.set_comment("foo").is_ok());
