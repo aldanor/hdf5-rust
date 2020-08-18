@@ -2,6 +2,11 @@ use std::mem;
 
 pub use self::H5E_direction_t::*;
 pub use self::H5E_type_t::*;
+pub use {
+    H5E_auto2_t as H5E_auto_t, H5E_error2_t as H5E_error_t, H5E_walk2_t as H5E_walk_t,
+    H5Eclear2 as H5Eclear, H5Eget_auto2 as H5Eget_auto, H5Eprint2 as H5Eprint, H5Epush2 as H5Epush,
+    H5Eset_auto2 as H5Eset_auto, H5Ewalk2 as H5Ewalk,
+};
 
 use crate::internal_prelude::*;
 
@@ -12,6 +17,21 @@ pub const H5E_DEFAULT: hid_t = 0;
 pub enum H5E_type_t {
     H5E_MAJOR = 0,
     H5E_MINOR = 1,
+}
+
+pub type H5E_major_t = hid_t;
+pub type H5E_minor_t = hid_t;
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+#[deprecated(note = "deprecated in HDF5 1.8.0, use H5E_error2_t")]
+pub struct H5E_error1_t {
+    maj_num: H5E_major_t,
+    min_num: H5E_minor_t,
+    func_name: *const c_char,
+    file_name: *const c_char,
+    line: c_uint,
+    desc: *const c_char,
 }
 
 #[repr(C)]
@@ -38,6 +58,13 @@ pub enum H5E_direction_t {
     H5E_WALK_UPWARD = 0,
     H5E_WALK_DOWNWARD = 1,
 }
+
+#[deprecated(note = "deprecated in HDF5 1.8.0, use H5E_walk2_t")]
+pub type H5E_walk1_t = Option<
+    unsafe extern "C" fn(n: c_int, err_desc: *mut H5E_error1_t, client_data: *mut c_void) -> herr_t,
+>;
+#[deprecated(note = "deprecated in HDF5 1.8.0, use H5E_auto2_t")]
+pub type H5E_auto1_t = Option<unsafe extern "C" fn(client_data: *mut c_void) -> herr_t>;
 
 pub type H5E_walk2_t = Option<
     unsafe extern "C" fn(
@@ -80,6 +107,28 @@ extern "C" {
         msg_id: hid_t, type_: *mut H5E_type_t, msg: *mut c_char, size: size_t,
     ) -> ssize_t;
     pub fn H5Eget_num(error_stack_id: hid_t) -> ssize_t;
+
+    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Epush2()")]
+    pub fn H5Epush1(
+        file: *const c_char, func: *const c_char, line: c_uint, maj: H5E_major_t, min: H5E_minor_t,
+        str_: *const c_char,
+    ) -> herr_t;
+    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Eprint2()")]
+    pub fn H5Eprint1(stream: *mut FILE) -> herr_t;
+    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Ewalk2()")]
+    pub fn H5Ewalk1(
+        direction: H5E_direction_t, func: H5E_walk1_t, client_data: *mut c_void,
+    ) -> herr_t;
+    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Eget_auto2()")]
+    pub fn H5Eget_auto1(func: *mut H5E_auto1_t, client_data: *mut *mut c_void) -> herr_t;
+    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Eset_auto2()")]
+    pub fn H5Eset_auto1(func: H5E_auto1_t, client_data: *mut c_void) -> herr_t;
+    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Eclear2()")]
+    pub fn H5Eclear1() -> herr_t;
+    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Eget_msg()")]
+    pub fn H5Eget_major(maj: H5E_major_t) -> *mut c_char;
+    #[deprecated(note = "deprecated in HDF5 1.8.0")]
+    pub fn H5Eget_minor(min: H5E_minor_t) -> *mut c_char;
 }
 
 pub use self::globals::*;
