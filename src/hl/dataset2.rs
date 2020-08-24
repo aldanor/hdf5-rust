@@ -29,6 +29,10 @@ use crate::hl::plist::dataset_create::{
 use crate::hl::plist::link_create::{CharEncoding, LinkCreate, LinkCreateBuilder};
 use crate::internal_prelude::*;
 
+/// Default chunk size when filters are enabled and the chunk size is not specified.
+/// This is the same value that netcdf uses by default.
+pub const DEFAULT_CHUNK_SIZE_KB: usize = 4096;
+
 /// Represents the HDF5 dataset object.
 #[repr(transparent)]
 #[derive(Clone)]
@@ -291,7 +295,7 @@ where
             dtype_src.ensure_convertible(&dtype_dst, Conversion::Soft)?;
             let ds = self.builder.create(&self.type_desc, name, &extents)?;
             if let Err(err) = ds.write(self.data.view()) {
-                let _ = self.builder.unlink(name);
+                let _ = self.builder.try_unlink(name);
                 Err(err)
             } else {
                 Ok(ds)
@@ -302,10 +306,18 @@ where
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Chunk {
-    Exact(Vec<Ix>),
-    BySizeKb(usize, Ix),
-    Auto,
+    Exact(Vec<Ix>), // exact chunk shape
+    MinKB(usize),   // minimum chunk shape in KB
+    None,           // leave it unchunked
 }
+
+impl Default for Chunk {
+    fn default() -> Self {
+        Self::None
+    }
+}
+
+pub(crate) fn compute_chunk_shape(type_size: usize, dims: &[Ix], min_kb: usize) -> Vec<Ix> {}
 
 #[derive(Clone)]
 pub struct DatasetBuilder {
@@ -313,10 +325,11 @@ pub struct DatasetBuilder {
     dapl_base: Option<DatasetAccess>,
     dcpl_base: Option<DatasetCreate>,
     lcpl_base: Option<LinkCreate>,
-    dapl: DatasetAccessBuilder,
-    dcpl: DatasetCreateBuilder,
-    lcpl: LinkCreateBuilder,
+    dapl_builder: DatasetAccessBuilder,
+    dcpl_builder: DatasetCreateBuilder,
+    lcpl_builder: LinkCreateBuilder,
     packed: bool,
+    chunk: Option<Chunk>,
 }
 
 impl DatasetBuilder {
@@ -332,10 +345,11 @@ impl DatasetBuilder {
             dapl_base: None,
             dcpl_base: None,
             lcpl_base: None,
-            dapl: DatasetAccessBuilder::default(),
-            dcpl,
-            lcpl,
+            dapl_builder: DatasetAccessBuilder::default(),
+            dcpl_builder: dcpl,
+            lcpl_builder: lcpl,
             packed: false,
+            chunk: None,
         }
     }
 
@@ -382,16 +396,64 @@ impl DatasetBuilder {
             Some(dapl) => dapl.clone(),
             None => DatasetAccess::try_new()?,
         };
-        self.dapl.apply(&mut dapl).map(|_| dapl)
+        self.dapl_builder.apply(&mut dapl).map(|_| dapl)
     }
 
-    fn build_dcpl(&self, dtype: &Datatype) -> Result<DatasetCreate> {
-        self.dcpl.validate_filters(dtype.id())?;
+    fn compute_chunk_shape(&self, extents: &Extents) -> Result<Option<Vec<Ix>>> {
+        let has_filters =
+            self.dcpl_builder.has_filters() || self.dcpl_base.map_or(false, |pl| pl.has_filters());
+        let chunking_required = has_filters || extents.is_resizable();
+        let chunking_allowed = extents.ndim() > 0 && (extents.size() > 0 || extents.is_resizable());
+
+        let chunk = if let Some(chunk) = *self.chunk {
+            chunk
+        } else if chunking_required && chunking_allowed {
+            Chunk::MinKB(DEFAULT_CHUNK_SIZE_KB)
+        } else {
+            Chunk::None
+        };
+
+        let chunk_shape = match chunk {
+            Chunk::Exact(chunk) => Some(chunk),
+            Chunk::MinKB(size) => Some(compute_chunk_shape(type_size, extents, size)),
+            Chunk::None => {
+                ensure!(!extents.is_resizable(), "Chunking required for resizable datasets");
+                ensure!(!has_filters, "Chunking required when filters are present");
+                None
+            }
+        };
+        if let Some(ref chunk) = chunk_shape {
+            let ndim = extents.ndim();
+            ensure!(ndim != 0, "Chunking cannot be enabled for 0-dim datasets");
+            ensure!(ndim == chunk.len(), "Expected chunk ndim {}, got {}", ndim, chunk.len());
+            let chunk_size = chunk.iter().product();
+            ensure!(chunk_size > 0, "All chunk dimensions must be positive, got {:?}", chunk);
+            let dims_ok =
+                extents.iter().zip(chunk).map(|(e, c)| e.max.is_none() || *c <= e.dim).all();
+            ensure!(dims_ok, "Chunk dimensions ({:?}) exceed data shape ({:?})", chunk, extents);
+        }
+        Ok(chunk_shape)
+    }
+
+    fn build_dcpl(&self, dtype: &Datatype, extents: &Extents) -> Result<DatasetCreate> {
+        self.dcpl_builder.validate_filters(dtype.id())?;
+
+        let mut dcpl_builder = self.dcpl_builder.clone();
+        if let Some(chunk) = self.compute_chunk_shape(extents)? {
+            dcpl_builder.chunk(chunk);
+            if !dcpl_builder.has_fill_time() {
+                // prevent resize glitch (borrowed from h5py)
+                dcpl_builder.fill_time(FillTime::Alloc);
+            }
+        } else {
+            dcpl_builder.no_chunk();
+        }
+
         let mut dcpl = match &self.dcpl_base {
             Some(dcpl) => dcpl.clone(),
             None => DatasetCreate::try_new()?,
         };
-        self.dcpl.apply(&mut dcpl).map(|_| dcpl)
+        dcpl_builder.apply(&mut dcpl).map(|_| dcpl)
     }
 
     fn build_lcpl(&self) -> Result<LinkCreate> {
@@ -399,17 +461,14 @@ impl DatasetBuilder {
             Some(lcpl) => lcpl.clone(),
             None => LinkCreate::try_new()?,
         };
-        self.lcpl.apply(&mut lcpl).map(|_| lcpl)
+        self.lcpl_builder.apply(&mut lcpl).map(|_| lcpl)
     }
 
-    fn unlink<'n, N: Into<Option<&'n str>>>(&self, name: N) -> Result<()> {
-        // TODO: try_unlink(); result is going to be ignored anyways
+    fn try_unlink<'n, N: Into<Option<&'n str>>>(&self, name: N) {
         if let Some(name) = name.into() {
             let name = to_cstring(name)?;
             let parent = try_ref_clone!(self.parent);
-            h5call!(H5Ldelete(parent.id(), name.as_ptr(), H5P_DEFAULT)).and(Ok(()))
-        } else {
-            Ok(())
+            h5lock!(H5Ldelete(parent.id(), name.as_ptr(), H5P_DEFAULT));
         }
     }
 
@@ -422,7 +481,7 @@ impl DatasetBuilder {
 
         // construct DAPL and DCPL, validate filters
         let dapl = self.build_dapl()?;
-        let dcpl = self.build_dcpl(&dtype)?;
+        let dcpl = self.build_dcpl(&dtype, &extents.dims())?;
 
         // create the dataspace from extents
         let space = Dataspace::try_new(extents)?;
@@ -457,7 +516,7 @@ impl DatasetBuilder {
     }
 
     pub fn access_plist(&mut self) -> &mut DatasetAccessBuilder {
-        &mut self.dapl
+        &mut self.dapl_builder
     }
 
     pub fn dapl(&mut self) -> &mut DatasetAccessBuilder {
@@ -468,7 +527,7 @@ impl DatasetBuilder {
     where
         F: Fn(&mut DatasetAccessBuilder) -> &mut DatasetAccessBuilder,
     {
-        func(&mut self.dapl);
+        func(&mut self.dapl_builder);
         self
     }
 
@@ -519,7 +578,7 @@ impl DatasetBuilder {
     }
 
     pub fn create_plist(&mut self) -> &mut DatasetCreateBuilder {
-        &mut self.dcpl
+        &mut self.dcpl_builder
     }
 
     pub fn dcpl(&mut self) -> &mut DatasetCreateBuilder {
@@ -530,7 +589,7 @@ impl DatasetBuilder {
     where
         F: Fn(&mut DatasetCreateBuilder) -> &mut DatasetCreateBuilder,
     {
-        func(&mut self.dcpl);
+        func(&mut self.dcpl_builder);
         self
     }
 
@@ -602,7 +661,7 @@ impl DatasetBuilder {
     }
 
     pub fn fill_value<T: Into<OwnedDynValue>>(&mut self, fill_value: T) -> &mut Self {
-        self.dcpl.fill_value(fill_value);
+        self.dcpl_builder.fill_value(fill_value);
         self
     }
 
@@ -611,12 +670,18 @@ impl DatasetBuilder {
     }
 
     pub fn chunk<D: Dimension>(&mut self, chunk: D) -> &mut Self {
-        self.dcpl.chunk(chunk);
+        self.chunk = Some(Chunk::Exact(chunk.dims()));
+        self
+    }
+
+    pub fn chunk_min_kb(&mut self, size: usize) -> &mut Self {
+        self.chunk = Some(Chunk::MinKB(size));
         self
     }
 
     pub fn no_chunk(&mut self) -> &mut Self {
-        self.with_dcpl(|pl| pl.no_chunk())
+        self.chunk = Some(Chunk::None);
+        self
     }
 
     pub fn layout(&mut self, layout: Layout) -> &mut Self {
@@ -645,7 +710,7 @@ impl DatasetBuilder {
         E2: Into<Extents>,
         S2: Into<Selection>,
     {
-        self.dcpl.virtual_map(
+        self.dcpl_builder.virtual_map(
             src_filename,
             src_dataset,
             src_extents,
@@ -682,7 +747,7 @@ impl DatasetBuilder {
     }
 
     pub fn link_create_plist(&mut self) -> &mut LinkCreateBuilder {
-        &mut self.lcpl
+        &mut self.lcpl_builder
     }
 
     pub fn lcpl(&mut self) -> &mut LinkCreateBuilder {
@@ -693,7 +758,7 @@ impl DatasetBuilder {
     where
         F: Fn(&mut LinkCreateBuilder) -> &mut LinkCreateBuilder,
     {
-        func(&mut self.lcpl);
+        func(&mut self.lcpl_builder);
         self
     }
 

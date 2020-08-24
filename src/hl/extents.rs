@@ -2,6 +2,7 @@ use std::borrow::Borrow;
 use std::convert::identity;
 use std::fmt::{self, Debug, Display};
 use std::ops::{Deref, RangeFrom, RangeInclusive};
+use std::slice;
 
 use hdf5_sys::h5s::H5S_MAX_RANK;
 
@@ -170,6 +171,10 @@ impl SimpleExtents {
 
     pub fn is_valid(&self) -> bool {
         self.inner.iter().map(Extent::is_valid).all(identity) && self.ndim() <= H5S_MAX_RANK as _
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = Extent> {
+        self.inner.iter()
     }
 }
 
@@ -391,6 +396,25 @@ impl Extents {
         match self {
             Extents::Simple(extents) => SimpleExtents::resizable(extents.dims()).into(),
             _ => self.clone(),
+        }
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &Extent> {
+        ExtentsIter { inner: self.as_simple().map(|e| e.iter()) }
+    }
+}
+
+pub struct ExtentsIter<'a> {
+    inner: Option<slice::Iter<'a, Extent>>,
+}
+
+impl<'a> Iterator for ExtentsIter<'a> {
+    type Item = &'a Extent;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.inner {
+            Some(ref mut iter) => iter.next(),
+            None => None,
         }
     }
 }

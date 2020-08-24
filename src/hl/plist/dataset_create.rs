@@ -487,6 +487,10 @@ impl DatasetCreateBuilder {
         self
     }
 
+    pub(crate) fn has_fill_time(&self) -> bool {
+        self.fill_time.is_some()
+    }
+
     pub fn fill_value<T: Into<OwnedDynValue>>(&mut self, fill_value: T) -> &mut Self {
         self.fill_value = Some(fill_value.into());
         self
@@ -624,6 +628,10 @@ impl DatasetCreateBuilder {
         validate_filters(&self.filters, h5lock!(H5Tget_class(datatype_id)))
     }
 
+    pub(crate) fn has_filters(&self) -> bool {
+        !self.filters.is_empty()
+    }
+
     pub fn apply(&self, plist: &mut DatasetCreate) -> Result<()> {
         h5lock!(self.populate_plist(plist.id()))
     }
@@ -661,6 +669,10 @@ impl DatasetCreate {
 
     pub fn filters(&self) -> Vec<Filter> {
         self.get_filters().unwrap_or_default()
+    }
+
+    pub fn has_filters(&self) -> bool {
+        !self.filters().is_empty()
     }
 
     #[doc(hidden)]
