@@ -25,7 +25,7 @@ impl Version {
     }
 
     pub fn parse(s: &str) -> Option<Self> {
-        let re = Regex::new(r"^(1)\.(8|10|12)\.(\d\d?)(_\d+)?(-patch\d+)?$").ok()?;
+        let re = Regex::new(r"^(1)\.(8|10|12|13)\.(\d\d?)(_\d+)?(-patch\d+)?$").ok()?;
         let captures = re.captures(s)?;
         Some(Self {
             major: captures.get(1).and_then(|c| c.as_str().parse::<u8>().ok())?,
@@ -38,7 +38,8 @@ impl Version {
         self.major == 1
             && ((self.minor == 8 && self.micro >= 4)
                 || (self.minor == 10)
-                || (self.minor == 12 && self.micro == 0))
+                || (self.minor == 12 && self.micro == 0)
+                || (self.minor == 13))
     }
 }
 
