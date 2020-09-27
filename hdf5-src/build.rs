@@ -57,7 +57,8 @@ fn main() {
         }
     }
 
-    let debug_postfix = if cfg!(target_os = "windows") { "_D" } else { "_debug" };
+    let targeting_windows = env::var("CARGO_CFG_TARGET_OS").unwrap() == "windows";
+    let debug_postfix = if targeting_windows { "_D" } else { "_debug" };
 
     if feature_enabled("HL") {
         cfg.define("HDF5_BUILD_HL_LIB", "ON");
@@ -69,6 +70,13 @@ fn main() {
             }
         }
         println!("cargo:hl_library={}", hdf5_hl_lib);
+    }
+
+    if cfg!(unix) && targeting_windows {
+        let wine_exec =
+            if env::var("CARGO_CFG_TARGET_ARCH").unwrap() == "x86_64" { "wine64" } else { "wine" };
+        // when cross-compiling to windows, use Wine to run code generation programs
+        cfg.define("CMAKE_CROSSCOMPILING_EMULATOR", wine_exec);
     }
 
     let dst = cfg.build();
