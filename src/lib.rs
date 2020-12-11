@@ -81,6 +81,9 @@ mod export {
 
 pub use crate::export::*;
 
+// Re-exports.
+pub use ndarray;
+
 #[macro_use]
 mod macros;
 #[macro_use]
