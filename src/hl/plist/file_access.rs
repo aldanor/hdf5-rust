@@ -1157,15 +1157,12 @@ impl FileAccessBuilder {
     }
 
     pub fn core_options(&mut self, increment: usize, filebacked: bool) -> &mut Self {
-        let mut drv = CoreDriver::default();
-        drv.increment = increment;
-        drv.filebacked = filebacked;
+        let drv = CoreDriver { increment, filebacked, ..CoreDriver::default() };
         self.driver(&FileDriver::Core(drv))
     }
 
     pub fn core_filebacked(&mut self, filebacked: bool) -> &mut Self {
-        let mut drv = CoreDriver::default();
-        drv.filebacked = filebacked;
+        let drv = CoreDriver { filebacked, ..CoreDriver::default() };
         self.driver(&FileDriver::Core(drv))
     }
 
@@ -1585,11 +1582,8 @@ impl FileAccess {
             self.get_family().map(FileDriver::Family)
         } else if drv_id == *H5FD_MULTI {
             let multi = self.get_multi()?;
-            if let Some(split) = SplitDriver::from_multi(&multi) {
-                Ok(FileDriver::Split(split))
-            } else {
-                Ok(FileDriver::Multi(multi))
-            }
+            SplitDriver::from_multi(&multi)
+                .map_or(Ok(FileDriver::Multi(multi)), |split| Ok(FileDriver::Split(split)))
         } else {
             fail!("unknown or unsupported file driver (id: {})", drv_id);
         }

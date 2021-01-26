@@ -215,7 +215,7 @@ pub fn set_vlen_manager_libc(plist: hid_t) -> Result<()> {
         panic::catch_unwind(|| unsafe { libc::malloc(size) }).unwrap_or(ptr::null_mut())
     }
     extern "C" fn free(ptr: *mut c_void, _info: *mut libc::c_void) {
-        let _ = panic::catch_unwind(|| unsafe { libc::free(ptr) });
+        let _p = panic::catch_unwind(|| unsafe { libc::free(ptr) });
     }
     h5try!(H5Pset_vlen_mem_manager(
         plist,

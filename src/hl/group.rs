@@ -189,7 +189,7 @@ impl Group {
         }
 
         let callback_fn: H5L_iterate_t = Some(members_callback);
-        let iteration_position: *mut hsize_t = &mut { 0 as u64 };
+        let iteration_position: *mut hsize_t = &mut { 0_u64 };
         let mut result: Vec<String> = Vec::new();
         let other_data: *mut c_void = &mut result as *mut _ as *mut c_void;
 

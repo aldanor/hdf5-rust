@@ -6,7 +6,7 @@ use crate::internal_prelude::*;
 
 pub const H5S_ALL: hid_t = 0;
 
-pub const H5S_UNLIMITED: hsize_t = (-1 as hssize_t) as _;
+pub const H5S_UNLIMITED: hsize_t = -1_i32 as _;
 
 pub const H5S_MAX_RANK: c_uint = 32;
 
