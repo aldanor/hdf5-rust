@@ -96,7 +96,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with: {toolchain: '${{matrix.rust}}', profile: minimal, override: true}
       - name: Install conda
-        uses: goanpeca/setup-miniconda@v1
+        uses: conda-incubator/setup-miniconda@v2
         with: {auto-update-conda: false, activate-environment: testenv}
       - name: Install HDF5 (${{matrix.version}}${{matrix.mpi && '-' || ''}}${{matrix.mpi}})
         run: |
@@ -170,7 +170,7 @@ jobs:
       fail-fast: false
       matrix:
         rust: [stable]
-        version: [1.8, '1.10']
+        version: ["1.8", "1.10"]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -181,18 +181,18 @@ jobs:
       - name: Configure environment
         shell: bash
         run: |
-          if [ "${{matrix.version}}" == "1.8" ]; then
+          if [[ "${{matrix.version}}" == "1.8" ]]; then
             VERSION=1.8.21
             DL_PATH=hdf5-1.8.21-Std-win7_64-vs14.zip
-            echo ::set-env name=MSI_PATH::hdf\\HDF5-1.8.21-win64.msi
+            echo "MSI_PATH=hdf\\HDF5-1.8.21-win64.msi" >> $GITHUB_ENV
           else
             VERSION=1.10.0
             DL_PATH=windows/extra/hdf5-1.10.0-win64-VS2015-shared.zip
-            echo ::set-env name=MSI_PATH::hdf5\\HDF5-1.10.0-win64.msi
+            echo "MSI_PATH=hdf5\\HDF5-1.10.0-win64.msi" >> $GITHUB_ENV
           fi
           BASE_URL=https://support.hdfgroup.org/ftp/HDF5/prev-releases
-          echo ::set-env name=DL_URL::$BASE_URL/hdf5-${{matrix.version}}/hdf5-$VERSION/bin/$DL_PATH
-          echo ::add-path::C:\\Program Files\\HDF_Group\\HDF5\\$VERSION\\bin
+          echo "DL_URL=$BASE_URL/hdf5-${{matrix.version}}/hdf5-$VERSION/bin/$DL_PATH" >> $GITHUB_ENV
+          echo "C:\\Program Files\\HDF_Group\\HDF5\\$VERSION\\bin" >> $GITHUB_PATH
       - name: Install HDF5 (${{matrix.version}})
         shell: pwsh
         run: |
