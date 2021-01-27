@@ -4,10 +4,16 @@
 
 ### Added
 - Slices can now be used used where trait item `Dimension` is required.
+- Arrays of arbitrary sizes are now supported in `hdf5-types`. This requires
+  the crate feature `const_generics` and `rustc` version `1.51`.
 
 ### Changed
 - Dependencies are bumped to newest major versions; `ndarray` users may now
   use both version `0.13` and version `0.14`.
+
+### Fixed
+- Cross-compilation of `hdf5-src` from Unix to Windows will now use the correct
+  name of the static library when linking.
 
 ## 0.7.0
 
