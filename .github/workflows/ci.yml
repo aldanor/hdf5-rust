@@ -205,3 +205,18 @@ jobs:
           msiexec /i ${{env.MSI_PATH}} /quiet /qn /norestart
       - name: Build and test all crates
         run: cargo test -vv
+
+  wine:
+    name: wine
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with: {submodules: true}
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with: {toolchain: stable, target: x86_64-pc-windows-gnu, profile: minimal, override: true}
+      - name: Install dependencies
+        run: sudo apt-get install wine64 mingw-w64
+      - name: Build and test
+        run: env CARGO_TARGET_X86_64_PC_WINDOWS_GNU_RUNNER=wine64 cargo test --features hdf5-sys/static --target x86_64-pc-windows-gnu -- --skip test_compile_fail
