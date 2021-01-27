@@ -1,6 +1,6 @@
 [package]
 name = "hdf5"
-version = "0.7.0"  # !V
+version = "0.7.1"  # !V
 authors = ["Ivan Smirnov <i.s.smirnov@gmail.com>"]
 keywords = ["hdf5"]
 license = "MIT OR Apache-2.0"
@@ -28,9 +28,9 @@ ndarray = ">=0.13,<0.15"
 num-integer = "0.1"
 num-traits = "0.2"
 mpi-sys = { version = "0.1", optional = true }
-hdf5-sys = { path = "hdf5-sys", version = "0.7.0" }  # !V
-hdf5-types = { path = "hdf5-types", version = "0.7.0" }  # !V
-hdf5-derive = { path = "hdf5-derive", version = "0.7.0" }  # !V
+hdf5-sys = { path = "hdf5-sys", version = "0.7.1" }  # !V
+hdf5-types = { path = "hdf5-types", version = "0.7.1" }  # !V
+hdf5-derive = { path = "hdf5-derive", version = "0.7.1" }  # !V
 
 [dev-dependencies]
 paste = "1.0"

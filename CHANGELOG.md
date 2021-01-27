@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.7.1
+
 ### Added
 - Slices can now be used used where trait item `Dimension` is required.
 - Arrays of arbitrary sizes are now supported in `hdf5-types`. This requires
