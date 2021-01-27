@@ -9,6 +9,9 @@ repository = "https://github.com/aldanor/hdf5-rust"
 homepage = "https://github.com/aldanor/hdf5-rust"
 edition = "2018"
 
+[features]
+const_generics = []
+
 [dependencies]
 ascii = "1.0"
 libc = "0.2"

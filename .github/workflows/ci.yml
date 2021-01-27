@@ -162,6 +162,9 @@ jobs:
         run: |
           [ "${{matrix.mpi}}" != "serial" ] && FEATURES=mpio
           cargo test -vv --features="$FEATURES"
+      - name: Test const generics
+        if: matrix.rust == 'nightly'
+        run: cargo test -p hdf5-types --features hdf5-types/const_generics
 
   msi:
     name: msi
