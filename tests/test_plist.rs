@@ -1,6 +1,3 @@
-#[macro_use]
-extern crate mashup;
-
 use std::mem;
 
 use hdf5::dataset::*;
@@ -14,11 +11,10 @@ macro_rules! test_pl {
 
     ($ty:ident, $field:ident ($($arg:expr,)+): $($name:ident=$value:expr,)+) => ({
         let mut b = $ty::build();
-        mashup! { m["get" $field] = get_ $field; }
         b.$field($($arg,)+);
         let fapl = b.finish()?;
         $(assert_eq!(fapl.$field().$name, $value);)+
-        m! { $(assert_eq!(fapl."get" $field()?.$name, $value);)+ }
+        paste::paste! { $(assert_eq!(fapl.[<get_ $field>]()?.$name, $value);)+ }
     });
 
     ($ty:ident, $field:ident: $($name:ident=$value:expr),+) => (
@@ -31,11 +27,10 @@ macro_rules! test_pl {
 
     ($ty:ident, $field:ident ($arg:expr): $value:expr) => ({
         let mut b = $ty::build();
-        mashup! { m["get" $field] = get_ $field; }
         b.$field($arg);
         let fapl = b.finish()?;
         assert_eq!(fapl.$field(), $value);
-        m! { assert_eq!(fapl."get" $field()?, $value); }
+        paste::paste! { assert_eq!(fapl.[<get_ $field>]()?, $value); }
     });
 
     ($ty:ident, $field:ident: $value:expr) => ({
