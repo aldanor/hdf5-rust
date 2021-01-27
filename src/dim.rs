@@ -19,7 +19,7 @@ pub trait Dimension {
     }
 }
 
-impl<'a, T: Dimension> Dimension for &'a T {
+impl<'a, T: Dimension + ?Sized> Dimension for &'a T {
     fn ndim(&self) -> usize {
         Dimension::ndim(*self)
     }
@@ -94,5 +94,15 @@ impl Dimension for Ix {
 
     fn dims(&self) -> Vec<Ix> {
         vec![*self]
+    }
+}
+
+#[cfg(test)]
+pub mod tests {
+    // compile-time test
+    #[allow(dead_code)]
+    pub fn slice_as_shape(shape: &[usize]) {
+        let file = crate::File::create("foo.h5").unwrap();
+        file.new_dataset::<u8>().create("Test", shape).unwrap();
     }
 }

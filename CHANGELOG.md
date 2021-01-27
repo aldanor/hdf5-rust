@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Added
+- Slices can now be used used where trait item `Dimension` is required.
+
 ### Changed
 - Dependencies are bumped to newest major versions; `ndarray` users may now
   use both version `0.13` and version `0.14`.
