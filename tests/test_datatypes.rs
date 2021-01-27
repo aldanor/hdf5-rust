@@ -42,7 +42,7 @@ pub fn test_datatype_roundtrip() {
     enum X {
         A = 1,
         B = -2,
-    };
+    }
     let x_desc = TD::Enum(EnumType {
         size: IntSize::U8,
         signed: true,
@@ -58,7 +58,7 @@ pub fn test_datatype_roundtrip() {
     struct A {
         a: i64,
         b: u64,
-    };
+    }
     let a_desc = TD::Compound(CompoundType {
         fields: vec![
             CompoundField::typed::<i64>("a", 0, 0),
@@ -73,7 +73,7 @@ pub fn test_datatype_roundtrip() {
     struct C {
         a: [X; 2],
         b: [[A; 4]; 32],
-    };
+    }
     let a_arr_desc = TD::FixedArray(Box::new(x_desc), 2);
     let b_arr_desc = TD::FixedArray(Box::new(TD::FixedArray(Box::new(a_desc), 4)), 32);
     let c_desc = TD::Compound(CompoundType {

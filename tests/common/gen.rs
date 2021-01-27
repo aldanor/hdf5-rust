@@ -10,11 +10,11 @@ use rand::distributions::{Alphanumeric, Uniform};
 use rand::prelude::{Rng, SliceRandom};
 
 pub fn gen_shape<R: Rng + ?Sized>(rng: &mut R, ndim: usize) -> Vec<usize> {
-    iter::repeat(()).map(|_| rng.gen_range(0, 11)).take(ndim).collect()
+    iter::repeat(()).map(|_| rng.gen_range(0..11)).take(ndim).collect()
 }
 
 pub fn gen_ascii<R: Rng + ?Sized>(rng: &mut R, len: usize) -> String {
-    iter::repeat(()).map(|_| rng.sample(Alphanumeric)).take(len).collect()
+    iter::repeat(()).map(|_| rng.sample(Alphanumeric)).map(char::from).take(len).collect()
 }
 
 /// Generate a random slice of elements inside the given `shape` dimension.
@@ -33,20 +33,20 @@ fn gen_slice_one_dim<R: Rng + ?Sized>(rng: &mut R, shape: usize) -> ndarray::Sli
     }
 
     if rng.gen_bool(0.1) {
-        ndarray::SliceOrIndex::Index(rng.gen_range(0, shape) as isize)
+        ndarray::SliceOrIndex::Index(rng.gen_range(0..shape) as isize)
     } else {
-        let start = rng.gen_range(0, shape) as isize;
+        let start = rng.gen_range(0..shape) as isize;
 
         let end = if rng.gen_bool(0.5) {
             None
         } else if rng.gen_bool(0.9) {
-            Some(rng.gen_range(start, shape as isize))
+            Some(rng.gen_range(start..shape as isize))
         } else {
             // Occasionally generate a slice with end < start.
-            Some(rng.gen_range(0, shape as isize))
+            Some(rng.gen_range(0..shape as isize))
         };
 
-        let step = if rng.gen_bool(0.9) { 1isize } else { rng.gen_range(1, shape * 2) as isize };
+        let step = if rng.gen_bool(0.9) { 1isize } else { rng.gen_range(1..shape * 2) as isize };
 
         ndarray::SliceOrIndex::Slice { start, end, step }
     }

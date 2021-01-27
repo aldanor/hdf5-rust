@@ -597,7 +597,7 @@ pub mod tests {
     pub struct UnicodeGen(pub String);
 
     impl Arbitrary for AsciiGen {
-        fn arbitrary<G: Gen>(g: &mut G) -> Self {
+        fn arbitrary(g: &mut Gen) -> Self {
             let mut bytes: Vec<u8> = Arbitrary::arbitrary(g);
             for c in &mut bytes {
                 *c = *c % 0x7e + 1;
@@ -620,7 +620,7 @@ pub mod tests {
     }
 
     impl Arbitrary for UnicodeGen {
-        fn arbitrary<G: Gen>(g: &mut G) -> Self {
+        fn arbitrary(g: &mut Gen) -> Self {
             let s: String = Arbitrary::arbitrary(g);
             let mut s: String = s.chars().filter(|&c| c != '\0').collect();
             while s.as_bytes().len() > 1024 {
