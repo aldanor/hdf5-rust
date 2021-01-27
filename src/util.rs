@@ -16,6 +16,7 @@ pub fn string_from_cstr(string: *const c_char) -> String {
 /// Convert a `String` or a `&str` into a zero-terminated string (`const char *`).
 pub fn to_cstring<S: Borrow<str>>(string: S) -> Result<CString> {
     let string = string.borrow();
+    #[allow(clippy::map_err_ignore)]
     CString::new(string).map_err(|_| format!("null byte in string: {:?}", string).into())
 }
 
