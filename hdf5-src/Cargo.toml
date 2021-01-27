@@ -1,6 +1,6 @@
 [package]
 name = "hdf5-src"
-version = "0.7.0"  # !V
+version = "0.7.1"  # !V
 authors = ["Ivan Smirnov <i.s.smirnov@gmail.com>"]
 keywords = ["hdf5"]
 license-file = "ext/hdf5/COPYING"
