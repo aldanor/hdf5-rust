@@ -173,7 +173,7 @@ impl SimpleExtents {
         self.inner.iter().map(Extent::is_valid).all(identity) && self.ndim() <= H5S_MAX_RANK as _
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = Extent> {
+    pub fn iter(&self) -> slice::Iter<'_, Extent> {
         self.inner.iter()
     }
 }
@@ -401,6 +401,13 @@ impl Extents {
 
     pub fn iter(&self) -> impl Iterator<Item = &Extent> {
         ExtentsIter { inner: self.as_simple().map(|e| e.iter()) }
+    }
+    pub fn slice(&self) -> Option<&[Extent]> {
+        if let Self::Simple(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 }
 

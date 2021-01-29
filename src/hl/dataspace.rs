@@ -2,8 +2,10 @@ use std::fmt::{self, Debug};
 use std::ops::Deref;
 use std::ptr;
 
+#[allow(deprecated)]
+use hdf5_sys::h5s::H5Sencode1;
 use hdf5_sys::h5s::{
-    H5S_class_t, H5Scopy, H5Screate, H5Screate_simple, H5Sdecode, H5Sencode, H5Sget_select_npoints,
+    H5S_class_t, H5Scopy, H5Screate, H5Screate_simple, H5Sdecode, H5Sget_select_npoints,
     H5Sget_simple_extent_dims, H5Sget_simple_extent_ndims, H5Sget_simple_extent_npoints,
     H5Sget_simple_extent_type, H5Sselect_valid, H5S_UNLIMITED,
 };
@@ -123,12 +125,13 @@ impl Dataspace {
         }
     }
 
+    #[allow(deprecated)]
     pub fn encode(&self) -> Result<Vec<u8>> {
         let mut len: size_t = 0;
         h5lock!({
-            h5try!(H5Sencode(self.id(), ptr::null_mut() as *mut _, &mut len as *mut _));
+            h5try!(H5Sencode1(self.id(), ptr::null_mut() as *mut _, &mut len as *mut _));
             let mut buf = vec![0u8; len];
-            h5try!(H5Sencode(self.id(), buf.as_mut_ptr() as *mut _, &mut len as *mut _));
+            h5try!(H5Sencode1(self.id(), buf.as_mut_ptr() as *mut _, &mut len as *mut _));
             Ok(buf)
         })
     }

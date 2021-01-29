@@ -317,7 +317,9 @@ impl Default for Chunk {
     }
 }
 
-pub(crate) fn compute_chunk_shape(type_size: usize, dims: &[Ix], min_kb: usize) -> Vec<Ix> {}
+pub(crate) fn compute_chunk_shape(type_size: usize, dims: &[Extent], min_kb: usize) -> Vec<Ix> {
+    todo!()
+}
 
 #[derive(Clone)]
 pub struct DatasetBuilder {
@@ -400,13 +402,13 @@ impl DatasetBuilder {
     }
 
     fn compute_chunk_shape(&self, extents: &Extents) -> Result<Option<Vec<Ix>>> {
-        let has_filters =
-            self.dcpl_builder.has_filters() || self.dcpl_base.map_or(false, |pl| pl.has_filters());
+        let has_filters = self.dcpl_builder.has_filters()
+            || self.dcpl_base.as_ref().map_or(false, |pl| pl.has_filters());
         let chunking_required = has_filters || extents.is_resizable();
         let chunking_allowed = extents.ndim() > 0 && (extents.size() > 0 || extents.is_resizable());
 
-        let chunk = if let Some(chunk) = *self.chunk {
-            chunk
+        let chunk = if let Some(chunk) = &self.chunk {
+            chunk.to_owned()
         } else if chunking_required && chunking_allowed {
             Chunk::MinKB(DEFAULT_CHUNK_SIZE_KB)
         } else {
@@ -415,7 +417,9 @@ impl DatasetBuilder {
 
         let chunk_shape = match chunk {
             Chunk::Exact(chunk) => Some(chunk),
-            Chunk::MinKB(size) => Some(compute_chunk_shape(type_size, extents, size)),
+            Chunk::MinKB(size) => {
+                Some(compute_chunk_shape(todo!(), extents.slice().unwrap(), size))
+            }
             Chunk::None => {
                 ensure!(!extents.is_resizable(), "Chunking required for resizable datasets");
                 ensure!(!has_filters, "Chunking required when filters are present");
@@ -426,10 +430,9 @@ impl DatasetBuilder {
             let ndim = extents.ndim();
             ensure!(ndim != 0, "Chunking cannot be enabled for 0-dim datasets");
             ensure!(ndim == chunk.len(), "Expected chunk ndim {}, got {}", ndim, chunk.len());
-            let chunk_size = chunk.iter().product();
+            let chunk_size = chunk.iter().product::<usize>();
             ensure!(chunk_size > 0, "All chunk dimensions must be positive, got {:?}", chunk);
-            let dims_ok =
-                extents.iter().zip(chunk).map(|(e, c)| e.max.is_none() || *c <= e.dim).all();
+            let dims_ok = extents.iter().zip(chunk).all(|(e, c)| e.max.is_none() || *c <= e.dim);
             ensure!(dims_ok, "Chunk dimensions ({:?}) exceed data shape ({:?})", chunk, extents);
         }
         Ok(chunk_shape)
@@ -466,9 +469,10 @@ impl DatasetBuilder {
 
     fn try_unlink<'n, N: Into<Option<&'n str>>>(&self, name: N) {
         if let Some(name) = name.into() {
-            let name = to_cstring(name)?;
-            let parent = try_ref_clone!(self.parent);
-            h5lock!(H5Ldelete(parent.id(), name.as_ptr(), H5P_DEFAULT));
+            let name = to_cstring(name).unwrap();
+            if let Ok(parent) = &self.parent {
+                h5lock!(H5Ldelete(parent.id(), name.as_ptr(), H5P_DEFAULT));
+            }
         }
     }
 
@@ -481,7 +485,7 @@ impl DatasetBuilder {
 
         // construct DAPL and DCPL, validate filters
         let dapl = self.build_dapl()?;
-        let dcpl = self.build_dcpl(&dtype, &extents.dims())?;
+        let dcpl = self.build_dcpl(&dtype, extents)?;
 
         // create the dataspace from extents
         let space = Dataspace::try_new(extents)?;
