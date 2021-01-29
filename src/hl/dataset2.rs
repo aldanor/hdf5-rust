@@ -644,6 +644,7 @@ impl DatasetBuilder {
     where
         T: Into<BloscShuffle>,
     {
+        let shuffle = shuffle.into();
         // TODO: add all the blosc_*() variants here as well?
         self.with_dcpl(|pl| pl.blosc(complib, clevel, shuffle))
     }

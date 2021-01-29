@@ -10,38 +10,16 @@ use hdf5_sys::h5z::{H5Z_class2_t, H5Z_filter_t, H5Zregister, H5Z_CLASS_T_VERS, H
 use crate::globals::{H5E_CALLBACK, H5E_CANTREGISTER, H5E_PLIST};
 use crate::internal_prelude::*;
 
-pub const BLOSC_VERSION_FORMAT: c_uint = 2;
+pub(crate) use blosc_sys::{
+    BLOSC_BITSHUFFLE, BLOSC_BLOSCLZ, BLOSC_LZ4, BLOSC_LZ4HC, BLOSC_MAX_TYPESIZE, BLOSC_NOSHUFFLE,
+    BLOSC_SHUFFLE, BLOSC_SNAPPY, BLOSC_VERSION_FORMAT, BLOSC_ZLIB, BLOSC_ZSTD,
+};
 
-pub const BLOSC_MAX_TYPESIZE: c_uint = 255;
-
-pub const BLOSC_NOSHUFFLE: c_uint = 0;
-pub const BLOSC_SHUFFLE: c_uint = 1;
-pub const BLOSC_BITSHUFFLE: c_uint = 2;
-
-pub const BLOSC_BLOSCLZ: c_uint = 0;
-pub const BLOSC_LZ4: c_uint = 1;
-pub const BLOSC_LZ4HC: c_uint = 2;
-pub const BLOSC_SNAPPY: c_uint = 3;
-pub const BLOSC_ZLIB: c_uint = 4;
-pub const BLOSC_ZSTD: c_uint = 5;
-
-extern "C" {
-    pub fn blosc_init();
-    pub fn blosc_get_version_string() -> *const c_char;
-    pub fn blosc_get_nthreads() -> c_int;
-    pub fn blosc_set_nthreads(nthreads: c_int) -> c_int;
-    pub fn blosc_compress(
-        clevel: c_int, doshuffle: c_int, typesize: size_t, nbytes: size_t, src: *const c_void,
-        dest: *mut c_void, destsize: size_t,
-    ) -> c_int;
-    pub fn blosc_decompress(src: *const c_void, dest: *mut c_void, destsize: size_t) -> c_int;
-    pub fn blosc_set_compressor(compname: *const c_char) -> c_int;
-    pub fn blosc_cbuffer_sizes(
-        cbuffer: *const c_void, nbytes: *mut size_t, cbytes: *mut size_t, blocksize: *mut size_t,
-    );
-    pub fn blosc_list_compressors() -> *const c_char;
-    pub fn blosc_compcode_to_compname(compcode: c_int, compname: *mut *const c_char) -> c_int;
-}
+pub(crate) use blosc_sys::{
+    blosc_cbuffer_sizes, blosc_compcode_to_compname, blosc_compress, blosc_decompress,
+    blosc_get_nthreads, blosc_get_version_string, blosc_init, blosc_list_compressors,
+    blosc_set_compressor, blosc_set_nthreads,
+};
 
 const BLOSC_FILTER_NAME: &[u8] = b"blosc\0";
 pub(crate) const BLOSC_FILTER_ID: H5Z_filter_t = 32001;

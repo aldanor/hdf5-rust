@@ -9,17 +9,8 @@ use hdf5_sys::h5z::{H5Z_class2_t, H5Z_filter_t, H5Zregister, H5Z_CLASS_T_VERS, H
 
 use crate::globals::{H5E_CALLBACK, H5E_CANTREGISTER, H5E_PLIST};
 use crate::internal_prelude::*;
+use lzf_sys::{lzf_compress, lzf_decompress, LZF_VERSION};
 
-extern "C" {
-    fn lzf_compress(
-        in_data: *const c_void, in_len: c_uint, out_data: *mut c_void, out_len: c_uint,
-    ) -> c_uint;
-    fn lzf_decompress(
-        in_data: *const c_void, in_len: c_uint, out_data: *mut c_void, out_len: c_uint,
-    ) -> c_uint;
-}
-
-const LZF_VERSION: c_uint = 0x0105;
 const LZF_FILTER_NAME: &[u8] = b"lzf\0";
 pub(crate) const LZF_FILTER_ID: H5Z_filter_t = 32000;
 const LZF_FILTER_VERSION: c_uint = 4;
