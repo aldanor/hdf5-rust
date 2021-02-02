@@ -17,7 +17,9 @@ pub use dataset2 as dataset;
 
 pub use self::{
     container::{Container, Reader, Writer},
-    dataset::{Dataset, DatasetBuilder},
+    dataset::{
+        Dataset, DatasetBuilder, DatasetBuilderData, DatasetBuilderEmpty, DatasetBuilderEmptyShape,
+    },
     dataspace::Dataspace,
     datatype::{Conversion, Datatype},
     file::{File, FileBuilder, OpenMode},

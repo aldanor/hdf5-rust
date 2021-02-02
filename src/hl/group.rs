@@ -163,7 +163,7 @@ impl Group {
     }
 
     /// Instantiates a new typed dataset builder.
-    pub fn new_dataset<T: H5Type>(&self) -> crate::hl::dataset::DatasetBuilderEmpty {
+    pub fn new_dataset<T: H5Type>(&self) -> DatasetBuilderEmpty {
         self.new_dataset_builder().empty::<T>()
     }
 

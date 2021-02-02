@@ -995,9 +995,9 @@ macro_rules! impl_builder_stuff {
         #[cfg(feature = "lzf")]
         #[inline]
         #[must_use]
-        pub fn lzf(mut self) {
+        pub fn lzf(mut self) -> Self {
             self.builder.lzf();
-            sefl
+            self
         }
 
         #[cfg(feature = "blosc")]
