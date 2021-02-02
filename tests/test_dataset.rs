@@ -188,7 +188,8 @@ where
                     let ds: hdf5::Dataset = file
                         .new_dataset::<T>()
                         .packed(*packed)
-                        .create("x", arr.shape().to_vec())?;
+                        .shape(arr.shape().to_vec())
+                        .create("x")?;
                     let ds = scopeguard::guard(ds, |ds| {
                         drop(ds);
                         drop(file.unlink("x"));

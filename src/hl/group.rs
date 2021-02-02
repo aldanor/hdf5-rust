@@ -162,9 +162,14 @@ impl Group {
         .unwrap_or(false)
     }
 
+    /// Instantiates a new typed dataset builder.
+    pub fn new_dataset<T: H5Type>(&self) -> crate::hl::dataset::DatasetBuilderEmpty {
+        self.new_dataset_builder().empty::<T>()
+    }
+
     /// Instantiates a new dataset builder.
-    pub fn new_dataset<T: H5Type>(&self) -> DatasetBuilder<T> {
-        DatasetBuilder::<T>::new(self)
+    pub fn new_dataset_builder(&self) -> DatasetBuilder {
+        DatasetBuilder::new(self)
     }
 
     /// Opens an existing dataset in the file or group.
@@ -383,9 +388,9 @@ pub mod tests {
     #[test]
     pub fn test_dataset() {
         with_tmp_file(|file| {
-            file.new_dataset::<u32>().no_chunk().create("/foo/bar", (10, 20)).unwrap();
-            file.new_dataset::<f32>().resizable(true).create("baz", (10, 20)).unwrap();
-            file.new_dataset::<u8>().resizable(true).create_anon((10, 20)).unwrap();
+            file.new_dataset::<i32>().no_chunk().shape((10, 20)).create("/foo/bar").unwrap();
+            file.new_dataset::<f32>().shape((10, 20)).resizable(true).create("baz").unwrap();
+            file.new_dataset::<u8>().shape((10, 20)).resizable(true).create(None).unwrap();
         });
     }
 
@@ -396,9 +401,9 @@ pub mod tests {
             file.create_group("b").unwrap();
             let group_a = file.group("a").unwrap();
             let group_b = file.group("b").unwrap();
-            file.new_dataset::<u32>().no_chunk().create("a/foo", (10, 20)).unwrap();
-            file.new_dataset::<u32>().no_chunk().create("a/123", (10, 20)).unwrap();
-            file.new_dataset::<u32>().no_chunk().create("a/bar", (10, 20)).unwrap();
+            file.new_dataset::<u32>().no_chunk().shape((10, 20)).create("a/foo").unwrap();
+            file.new_dataset::<u32>().no_chunk().shape((10, 20)).create("a/123").unwrap();
+            file.new_dataset::<u32>().no_chunk().shape((10, 20)).create("a/bar").unwrap();
             assert_eq!(group_a.member_names().unwrap(), vec!["123", "bar", "foo"]);
             assert_eq!(group_b.member_names().unwrap().len(), 0);
             assert_eq!(file.member_names().unwrap(), vec!["a", "b"]);
