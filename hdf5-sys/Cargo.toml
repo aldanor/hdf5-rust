@@ -27,10 +27,16 @@ threadsafe = ["hdf5-src/threadsafe"]
 zlib = ["libz-sys", "hdf5-src/zlib"]
 static = ["hdf5-src"]
 deprecated = ["hdf5-src/deprecated"]
+conda = ["attohttpc", "md5", "bzip2", "tar"]
 
 [build-dependencies]
 libloading = "0.6"
 regex = { version = "1.3", features = ["std"] }
+md5 = { version = "0.6", optional = true }
+attohttpc = { version = "0.12", default-features = false, features = ["compress", "tls-rustls"], optional = true }
+bzip2 = { version = "0.3.3", optional = true }
+tar = { version = "*", optional = true }
+
 
 [target.'cfg(all(unix, not(target_os = "macos")))'.build-dependencies]
 pkg-config = "0.3"

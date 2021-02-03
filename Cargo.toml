@@ -14,6 +14,7 @@ edition = "2018"
 [features]
 default = []
 mpio = ["mpi-sys", "hdf5-sys/mpio"]
+conda = ["hdf5-sys/conda"] 
 
 [workspace]
 members = [".", "hdf5-types", "hdf5-derive", "hdf5-sys", "hdf5-src"]
