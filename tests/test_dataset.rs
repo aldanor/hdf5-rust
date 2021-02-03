@@ -185,11 +185,8 @@ where
                 for mode in 0..4 {
                     let arr: ArrayD<T> = gen_arr(&mut rng, ndim);
 
-                    let ds: hdf5::Dataset = file
-                        .new_dataset::<T>()
-                        .packed(*packed)
-                        .shape(arr.shape().to_vec())
-                        .create("x")?;
+                    let ds: hdf5::Dataset =
+                        file.new_dataset::<T>().packed(*packed).shape(arr.shape()).create("x")?;
                     let ds = scopeguard::guard(ds, |ds| {
                         drop(ds);
                         drop(file.unlink("x"));

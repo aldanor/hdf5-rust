@@ -473,8 +473,14 @@ impl DatasetBuilderInner {
                 Some(compute_chunk_shape(extents, min_elements))
             }
             Chunk::None => {
-                ensure!(!extents.is_resizable(), "Chunking required for resizable datasets");
-                ensure!(!has_filters, "Chunking required when filters are present");
+                ensure!(
+                    !(extents.is_resizable() && extents.ndim() != 0),
+                    "Chunking required for resizable datasets"
+                );
+                ensure!(
+                    !(has_filters && extents.ndim() != 0),
+                    "Chunking required when filters are present"
+                );
                 None
             }
         };
