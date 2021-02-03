@@ -378,16 +378,23 @@ pub(crate) fn compute_chunk_shape(dims: &SimpleExtents, minimum_elements: usize)
 
     // For c-order datasets we iterate from the back (fastest iteration order)
     for (extent, cs) in dims.iter().zip(chunk_shape.iter_mut()).rev() {
-        if product_cs > minimum_elements {
+        if product_cs >= minimum_elements {
             break;
         }
         let wanted_size = minimum_elements / product_cs;
-        *cs = if let Some(maxdim) = extent.max {
-            std::cmp::min(wanted_size, maxdim)
-        } else {
-            // Unlimited datasize
-            wanted_size
-        };
+        // If unlimited dimension we just map to wanted_size
+        *cs = extent.max.map_or(wanted_size, |maxdim| {
+            // If the requested chunk size would result
+            // in dividing the chunk in two uneven parts,
+            // we instead merge these into the same chunk
+            // to prevent having small chunks
+            if 2 * wanted_size > maxdim + 1 {
+                maxdim
+            } else {
+                std::cmp::min(wanted_size, maxdim)
+            }
+        });
+
         product_cs *= *cs;
     }
     chunk_shape
@@ -441,10 +448,15 @@ impl DatasetBuilderInner {
     }
 
     fn compute_chunk_shape(&self, dtype: &Datatype, extents: &Extents) -> Result<Option<Vec<Ix>>> {
+        let extents = if let Extents::Simple(extents) = extents {
+            extents
+        } else {
+            return Ok(None);
+        };
         let has_filters = self.dcpl_builder.has_filters()
             || self.dcpl_base.as_ref().map_or(false, |pl| pl.has_filters());
         let chunking_required = has_filters || extents.is_resizable();
-        let chunking_allowed = extents.ndim() > 0 && (extents.size() > 0 || extents.is_resizable());
+        let chunking_allowed = extents.size() > 0 || extents.is_resizable();
 
         let chunk = if let Some(chunk) = &self.chunk {
             chunk.to_owned()
@@ -457,12 +469,8 @@ impl DatasetBuilderInner {
         let chunk_shape = match chunk {
             Chunk::Exact(chunk) => Some(chunk),
             Chunk::MinKB(size) => {
-                if let Extents::Simple(extents) = extents {
-                    let min_elements = size / dtype.size() * 1024;
-                    Some(compute_chunk_shape(extents, min_elements))
-                } else {
-                    None
-                }
+                let min_elements = size / dtype.size() * 1024;
+                Some(compute_chunk_shape(extents, min_elements))
             }
             Chunk::None => {
                 ensure!(!extents.is_resizable(), "Chunking required for resizable datasets");
@@ -1265,11 +1273,16 @@ fn test_compute_chunk_shape() {
     assert_eq!(compute_chunk_shape(&e, 9), vec![1, 9]);
 
     let e = SimpleExtents::new(&[4, 4, 4]);
-    assert_eq!(compute_chunk_shape(&e, 12), vec![1, 3, 4]);
+    // chunk shape should be greedy here, a minimal
+    // chunk shape would be (1, 3, 4) + (1, 1, 4)
+    assert_eq!(compute_chunk_shape(&e, 12), vec![1, 4, 4]);
 
     let e = SimpleExtents::new(&[4, 4, 4]);
     assert_eq!(compute_chunk_shape(&e, 100), vec![4, 4, 4]);
 
     let e = SimpleExtents::new(&[4, 4, 4]);
     assert_eq!(compute_chunk_shape(&e, 9), vec![1, 2, 4]);
+
+    let e = SimpleExtents::new(&[1, 1, 100]);
+    assert_eq!(compute_chunk_shape(&e, 51), vec![1, 1, 100]);
 }
