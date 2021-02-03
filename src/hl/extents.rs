@@ -291,7 +291,7 @@ impl_from!(Extent);
 pub enum Extents {
     /// A null dataspace contains no data elements.
     ///
-    /// Note that no selections can be appliedmto a null dataset as there is nothing to select.
+    /// Note that no selections can be applied to a null dataset as there is nothing to select.
     Null,
 
     /// A scalar dataspace, representing just one element.

@@ -372,8 +372,25 @@ impl Default for Chunk {
     }
 }
 
-pub(crate) fn compute_chunk_shape(type_size: usize, dims: &[Extent], min_kb: usize) -> Vec<Ix> {
-    todo!()
+pub(crate) fn compute_chunk_shape(dims: &SimpleExtents, minimum_elements: usize) -> Vec<Ix> {
+    let mut chunk_shape = vec![1; dims.ndim()];
+    let mut product_cs = 1;
+
+    // For c-order datasets we iterate from the back (fastest iteration order)
+    for (extent, cs) in dims.iter().zip(chunk_shape.iter_mut()).rev() {
+        if product_cs > minimum_elements {
+            break;
+        }
+        let wanted_size = minimum_elements / product_cs;
+        *cs = if let Some(maxdim) = extent.max {
+            std::cmp::min(wanted_size, maxdim)
+        } else {
+            // Unlimited datasize
+            wanted_size
+        };
+        product_cs *= *cs;
+    }
+    chunk_shape
 }
 
 #[derive(Clone)]
@@ -423,7 +440,7 @@ impl DatasetBuilderInner {
         self.dapl_builder.apply(&mut dapl).map(|_| dapl)
     }
 
-    fn compute_chunk_shape(&self, extents: &Extents) -> Result<Option<Vec<Ix>>> {
+    fn compute_chunk_shape(&self, dtype: &Datatype, extents: &Extents) -> Result<Option<Vec<Ix>>> {
         let has_filters = self.dcpl_builder.has_filters()
             || self.dcpl_base.as_ref().map_or(false, |pl| pl.has_filters());
         let chunking_required = has_filters || extents.is_resizable();
@@ -440,7 +457,12 @@ impl DatasetBuilderInner {
         let chunk_shape = match chunk {
             Chunk::Exact(chunk) => Some(chunk),
             Chunk::MinKB(size) => {
-                Some(compute_chunk_shape(todo!(), extents.slice().unwrap(), size))
+                if let Extents::Simple(extents) = extents {
+                    let min_elements = size / dtype.size() * 1024;
+                    Some(compute_chunk_shape(extents, min_elements))
+                } else {
+                    None
+                }
             }
             Chunk::None => {
                 ensure!(!extents.is_resizable(), "Chunking required for resizable datasets");
@@ -464,7 +486,7 @@ impl DatasetBuilderInner {
         self.dcpl_builder.validate_filters(dtype.id())?;
 
         let mut dcpl_builder = self.dcpl_builder.clone();
-        if let Some(chunk) = self.compute_chunk_shape(extents)? {
+        if let Some(chunk) = self.compute_chunk_shape(dtype, extents)? {
             dcpl_builder.chunk(chunk);
             if !dcpl_builder.has_fill_time() {
                 // prevent resize glitch (borrowed from h5py)
@@ -1225,4 +1247,29 @@ where
     D2: ndarray::Dimension,
 {
     impl_builder_stuff!();
+}
+
+#[test]
+fn test_compute_chunk_shape() {
+    let e = SimpleExtents::new(&[1, 1]);
+    assert_eq!(compute_chunk_shape(&e, 1), vec![1, 1]);
+    let e = SimpleExtents::new(&[1, 10]);
+    assert_eq!(compute_chunk_shape(&e, 3), vec![1, 3]);
+    let e = SimpleExtents::new(&[1, 10]);
+    assert_eq!(compute_chunk_shape(&e, 11), vec![1, 10]);
+
+    let e = SimpleExtents::new(&[Extent::from(1), Extent::from(10..)]);
+    assert_eq!(compute_chunk_shape(&e, 11), vec![1, 11]);
+
+    let e = SimpleExtents::new(&[Extent::from(1), Extent::from(10..)]);
+    assert_eq!(compute_chunk_shape(&e, 9), vec![1, 9]);
+
+    let e = SimpleExtents::new(&[4, 4, 4]);
+    assert_eq!(compute_chunk_shape(&e, 12), vec![1, 3, 4]);
+
+    let e = SimpleExtents::new(&[4, 4, 4]);
+    assert_eq!(compute_chunk_shape(&e, 100), vec![4, 4, 4]);
+
+    let e = SimpleExtents::new(&[4, 4, 4]);
+    assert_eq!(compute_chunk_shape(&e, 9), vec![1, 2, 4]);
 }
