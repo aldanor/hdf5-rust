@@ -455,7 +455,7 @@ impl Eq for DynFixedString<'_> {}
 
 impl Debug for DynFixedString<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let s = unsafe { mem::transmute::<_, &str>(self.get_buf()) };
+        let s = unsafe { std::str::from_utf8_unchecked(self.get_buf()) };
         Debug::fmt(&s, f)
     }
 }
