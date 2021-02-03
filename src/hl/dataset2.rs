@@ -925,7 +925,7 @@ macro_rules! impl_builder_stuff {
         #[inline]
         #[must_use]
         pub fn all_coll_metadata_ops(mut self, is_collective: bool) -> Self {
-            self.builder.add_coll_metadata_ops(is_collective);
+            self.builder.all_coll_metadata_ops(is_collective);
             self
         }
 

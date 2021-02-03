@@ -5,6 +5,7 @@ use std::mem;
 use std::ops::Deref;
 use std::ptr;
 
+#[cfg(hdf5_1_10_0)]
 use bitflags::bitflags;
 
 use hdf5_sys::h5d::{H5D_alloc_time_t, H5D_fill_time_t, H5D_fill_value_t, H5D_layout_t};

@@ -3,8 +3,6 @@ use std::mem;
 use std::ptr;
 use std::slice;
 
-use libc;
-
 use crate::h5type::{hvl_t, CompoundType, EnumType, FloatSize, H5Type, IntSize, TypeDescriptor};
 use crate::string::{VarLenAscii, VarLenUnicode};
 

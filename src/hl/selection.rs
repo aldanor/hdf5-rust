@@ -13,8 +13,6 @@ use hdf5_sys::h5s::{
 };
 #[cfg(hdf5_1_10_0)]
 use hdf5_sys::h5s::{H5Sget_regular_hyperslab, H5Sis_regular_hyperslab};
-#[cfg(not(hdf5_1_10_0))]
-use hdf5_sys::h5s::{H5Sget_select_hyper_blocklist, H5Sget_select_hyper_nblocks};
 
 use crate::hl::extents::Ix;
 use crate::internal_prelude::*;
@@ -45,6 +43,7 @@ unsafe fn set_points_selection(space_id: hid_t, coords: ArrayView2<Ix>) -> Resul
     Ok(())
 }
 
+#[cfg_attr(not(hdf5_1_10_0), allow(unused))]
 unsafe fn get_regular_hyperslab(space_id: hid_t) -> Result<Option<RawHyperslab>> {
     #[cfg(hdf5_1_10_0)]
     {
