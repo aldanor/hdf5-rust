@@ -349,7 +349,7 @@ unsafe impl DynDrop for DynArray<'_> {
         }
         if self.len.is_none() && !self.get_ptr().is_null() {
             unsafe {
-                libc::free(self.get_ptr() as *mut _);
+                crate::free(self.get_ptr() as *mut _);
             }
         }
     }
@@ -362,7 +362,7 @@ unsafe impl DynClone for DynArray<'_> {
             debug_assert_eq!(out.len(), mem::size_of::<hvl_t>());
             if !self.get_ptr().is_null() {
                 unsafe {
-                    let dst = libc::malloc(len * size) as *mut u8;
+                    let dst = crate::malloc(len * size) as *mut u8;
                     ptr::copy_nonoverlapping(ptr, dst, len * size);
                     (*(out.as_mut_ptr() as *mut hvl_t)).ptr = dst as _;
                     slice::from_raw_parts_mut(dst, len * size)
@@ -517,7 +517,7 @@ unsafe impl DynDrop for DynVarLenString<'_> {
     fn dyn_drop(&mut self) {
         if !self.get_ptr().is_null() {
             unsafe {
-                libc::free(self.get_ptr() as *mut _);
+                crate::free(self.get_ptr() as *mut _);
             }
         }
     }
@@ -529,7 +529,7 @@ unsafe impl DynClone for DynVarLenString<'_> {
         if !self.get_ptr().is_null() {
             unsafe {
                 let raw_len = self.raw_len();
-                let dst = libc::malloc(raw_len + 1) as *mut _;
+                let dst = crate::malloc(raw_len + 1) as *mut _;
                 ptr::copy_nonoverlapping(self.get_ptr(), dst, raw_len);
                 *dst.add(raw_len) = 0;
                 *(out.as_mut_ptr() as *mut *const u8) = dst as _;

@@ -97,7 +97,7 @@ pub struct VarLenArray<T: Copy> {
 impl<T: Copy> VarLenArray<T> {
     pub unsafe fn from_parts(p: *const T, len: usize) -> VarLenArray<T> {
         let (len, ptr) = if !p.is_null() && len != 0 {
-            let dst = libc::malloc(len * mem::size_of::<T>());
+            let dst = crate::malloc(len * mem::size_of::<T>());
             ptr::copy_nonoverlapping(p, dst as *mut _, len);
             (len, dst)
         } else {
@@ -136,7 +136,7 @@ impl<T: Copy> Drop for VarLenArray<T> {
     fn drop(&mut self) {
         if !self.ptr.is_null() {
             unsafe {
-                libc::free(self.ptr as *mut _);
+                crate::free(self.ptr as *mut _);
             }
             self.ptr = ptr::null();
             if self.len != 0 {

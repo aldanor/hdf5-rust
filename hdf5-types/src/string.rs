@@ -191,7 +191,7 @@ impl Drop for VarLenAscii {
     #[inline]
     fn drop(&mut self) {
         if !self.ptr.is_null() {
-            unsafe { libc::free(self.ptr as *mut _) };
+            unsafe { crate::free(self.ptr as *mut _) };
         }
     }
 }
@@ -207,7 +207,7 @@ impl VarLenAscii {
     #[inline]
     pub fn new() -> Self {
         unsafe {
-            let ptr = libc::malloc(1) as *mut _;
+            let ptr = crate::malloc(1) as *mut _;
             *ptr = 0;
             VarLenAscii { ptr }
         }
@@ -215,7 +215,7 @@ impl VarLenAscii {
 
     #[inline]
     unsafe fn from_bytes(bytes: &[u8]) -> Self {
-        let ptr = libc::malloc(bytes.len() + 1) as *mut _;
+        let ptr = crate::malloc(bytes.len() + 1) as *mut _;
         ptr::copy_nonoverlapping(bytes.as_ptr(), ptr, bytes.len());
         *ptr.add(bytes.len()) = 0;
         VarLenAscii { ptr }
@@ -294,7 +294,7 @@ impl Drop for VarLenUnicode {
     #[inline]
     fn drop(&mut self) {
         if !self.ptr.is_null() {
-            unsafe { libc::free(self.ptr as *mut _) };
+            unsafe { crate::free(self.ptr as *mut _) };
         }
     }
 }
@@ -310,7 +310,7 @@ impl VarLenUnicode {
     #[inline]
     pub fn new() -> Self {
         unsafe {
-            let ptr = libc::malloc(1) as *mut _;
+            let ptr = crate::malloc(1) as *mut _;
             *ptr = 0;
             VarLenUnicode { ptr }
         }
@@ -318,7 +318,7 @@ impl VarLenUnicode {
 
     #[inline]
     unsafe fn from_bytes(bytes: &[u8]) -> Self {
-        let ptr = libc::malloc(bytes.len() + 1) as *mut _;
+        let ptr = crate::malloc(bytes.len() + 1) as *mut _;
         ptr::copy_nonoverlapping(bytes.as_ptr(), ptr, bytes.len());
         *ptr.add(bytes.len()) = 0;
         VarLenUnicode { ptr }

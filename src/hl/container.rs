@@ -51,7 +51,9 @@ impl<'a> Reader<'a> {
             let mspace_id = mspace.map_or(H5S_ALL, |m| m.id());
             let xfer =
                 PropertyList::from_id(h5call!(H5Pcreate(*crate::globals::H5P_DATASET_XFER))?)?;
-            crate::hl::plist::set_vlen_manager_libc(xfer.id())?;
+            if !hdf5_types::USING_H5_ALLOCATOR {
+                crate::hl::plist::set_vlen_manager_libc(xfer.id())?;
+            }
             h5try!(H5Dread(obj_id, tp_id, mspace_id, fspace_id, xfer.id(), buf.cast()));
         }
         Ok(())
