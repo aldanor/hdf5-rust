@@ -45,14 +45,14 @@ impl<'a> Reader<'a> {
         let (obj_id, tp_id) = (self.obj.id(), mem_dtype.id());
 
         if self.obj.is_attr() {
-            h5try!(H5Aread(obj_id, tp_id, buf as *mut _));
+            h5try!(H5Aread(obj_id, tp_id, buf.cast()));
         } else {
             let fspace_id = fspace.map_or(H5S_ALL, |f| f.id());
             let mspace_id = mspace.map_or(H5S_ALL, |m| m.id());
             let xfer =
                 PropertyList::from_id(h5call!(H5Pcreate(*crate::globals::H5P_DATASET_XFER))?)?;
             crate::hl::plist::set_vlen_manager_libc(xfer.id())?;
-            h5try!(H5Dread(obj_id, tp_id, mspace_id, fspace_id, xfer.id(), buf as *mut _));
+            h5try!(H5Dread(obj_id, tp_id, mspace_id, fspace_id, xfer.id(), buf.cast()));
         }
         Ok(())
     }
@@ -219,11 +219,11 @@ impl<'a> Writer<'a> {
         let (obj_id, tp_id) = (self.obj.id(), mem_dtype.id());
 
         if self.obj.is_attr() {
-            h5try!(H5Awrite(obj_id, tp_id, buf as *const _));
+            h5try!(H5Awrite(obj_id, tp_id, buf.cast()));
         } else {
             let fspace_id = fspace.map_or(H5S_ALL, |f| f.id());
             let mspace_id = mspace.map_or(H5S_ALL, |m| m.id());
-            h5try!(H5Dwrite(obj_id, tp_id, mspace_id, fspace_id, H5P_DEFAULT, buf as *const _));
+            h5try!(H5Dwrite(obj_id, tp_id, mspace_id, fspace_id, H5P_DEFAULT, buf.cast()));
         }
         Ok(())
     }

@@ -94,9 +94,7 @@ impl ChunkInfo {
 
     /// Returns positional indices of disabled filters.
     pub fn disabled_filters(&self) -> Vec<usize> {
-        (0..32)
-            .filter_map(|i| if self.filter_mask & (1 << i) != 0 { Some(i) } else { None })
-            .collect()
+        (0..32).filter(|i| self.filter_mask & (1 << i) != 0).collect()
     }
 }
 
@@ -133,7 +131,7 @@ impl Dataset {
 
     /// Returns the dataset layout.
     pub fn layout(&self) -> Layout {
-        self.dcpl().map_or(Default::default(), |pl| pl.layout())
+        self.dcpl().map_or(Layout::default(), |pl| pl.layout())
     }
 
     #[cfg(hdf5_1_10_5)]
@@ -201,7 +199,7 @@ impl Dataset {
 
     /// Returns the pipeline of filters used in this dataset.
     pub fn filters(&self) -> Vec<Filter> {
-        self.dcpl().map_or(Default::default(), |pl| pl.filters())
+        self.dcpl().map_or(Vec::default(), |pl| pl.filters())
     }
 }
 
@@ -215,20 +213,20 @@ impl<T> Deref for Maybe<T> {
     }
 }
 
-impl<T> Into<Option<T>> for Maybe<T> {
-    fn into(self) -> Option<T> {
-        self.0
+impl<T> From<Maybe<T>> for Option<T> {
+    fn from(v: Maybe<T>) -> Self {
+        v.0
     }
 }
 
 impl<T> From<T> for Maybe<T> {
-    fn from(v: T) -> Maybe<T> {
+    fn from(v: T) -> Self {
         Self(Some(v))
     }
 }
 
 impl<T> From<Option<T>> for Maybe<T> {
-    fn from(v: Option<T>) -> Maybe<T> {
+    fn from(v: Option<T>) -> Self {
         Self(v)
     }
 }
@@ -350,7 +348,7 @@ where
             dtype_src.ensure_convertible(&dtype_dst, Conversion::Soft)?;
             let ds = self.builder.create(&self.type_desc, name, &extents)?;
             if let Err(err) = ds.write(self.data.view()) {
-                let _ = self.builder.try_unlink(name);
+                self.builder.try_unlink(name);
                 Err(err)
             } else {
                 Ok(ds)
@@ -372,7 +370,7 @@ impl Default for Chunk {
     }
 }
 
-pub(crate) fn compute_chunk_shape(dims: &SimpleExtents, minimum_elements: usize) -> Vec<Ix> {
+fn compute_chunk_shape(dims: &SimpleExtents, minimum_elements: usize) -> Vec<Ix> {
     let mut chunk_shape = vec![1; dims.ndim()];
     let mut product_cs = 1;
 
@@ -402,7 +400,7 @@ pub(crate) fn compute_chunk_shape(dims: &SimpleExtents, minimum_elements: usize)
 
 #[derive(Clone)]
 /// The true internal dataset builder
-pub(crate) struct DatasetBuilderInner {
+struct DatasetBuilderInner {
     parent: Result<Handle>,
     dapl_base: Option<DatasetAccess>,
     dcpl_base: Option<DatasetCreate>,
@@ -454,7 +452,7 @@ impl DatasetBuilderInner {
             return Ok(None);
         };
         let has_filters = self.dcpl_builder.has_filters()
-            || self.dcpl_base.as_ref().map_or(false, |pl| pl.has_filters());
+            || self.dcpl_base.as_ref().map_or(false, DatasetCreate::has_filters);
         let chunking_required = has_filters || extents.is_resizable();
         let chunking_allowed = extents.size() > 0 || extents.is_resizable();
 

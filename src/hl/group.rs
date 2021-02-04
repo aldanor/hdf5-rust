@@ -184,7 +184,7 @@ impl Group {
             _id: hid_t, name: *const c_char, _info: *const H5L_info_t, op_data: *mut c_void,
         ) -> herr_t {
             panic::catch_unwind(|| {
-                let other_data: &mut Vec<String> = unsafe { &mut *(op_data as *mut Vec<String>) };
+                let other_data: &mut Vec<String> = unsafe { &mut *(op_data.cast::<Vec<String>>()) };
 
                 other_data.push(string_from_cstr(name));
 
@@ -196,7 +196,7 @@ impl Group {
         let callback_fn: H5L_iterate_t = Some(members_callback);
         let iteration_position: *mut hsize_t = &mut { 0_u64 };
         let mut result: Vec<String> = Vec::new();
-        let other_data: *mut c_void = &mut result as *mut _ as *mut c_void;
+        let other_data: *mut c_void = (&mut result as *mut Vec<String>).cast::<c_void>();
 
         h5call!(H5Literate(
             self.id(),

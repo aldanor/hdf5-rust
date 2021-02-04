@@ -16,6 +16,9 @@
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::must_use_candidate))]
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::wildcard_imports))]
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::struct_excessive_bools))]
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::redundant_pub_crate))]
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::unnecessary_unwrap))]
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::unnecessary_wraps))]
 #![cfg_attr(all(feature = "cargo-clippy", test), allow(clippy::cyclomatic_complexity))]
 #![cfg_attr(not(test), allow(dead_code))]
 

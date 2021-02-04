@@ -119,18 +119,18 @@ pub enum Layout {
 
 impl Default for Layout {
     fn default() -> Self {
-        Layout::Contiguous
+        Self::Contiguous
     }
 }
 
 impl From<H5D_layout_t> for Layout {
     fn from(layout: H5D_layout_t) -> Self {
         match layout {
-            H5D_layout_t::H5D_COMPACT => Layout::Compact,
-            H5D_layout_t::H5D_CHUNKED => Layout::Chunked,
+            H5D_layout_t::H5D_COMPACT => Self::Compact,
+            H5D_layout_t::H5D_CHUNKED => Self::Chunked,
             #[cfg(hdf5_1_10_0)]
-            H5D_layout_t::H5D_VIRTUAL => Layout::Virtual,
-            _ => Layout::Contiguous,
+            H5D_layout_t::H5D_VIRTUAL => Self::Virtual,
+            _ => Self::Contiguous,
         }
     }
 }
@@ -138,11 +138,11 @@ impl From<H5D_layout_t> for Layout {
 impl From<Layout> for H5D_layout_t {
     fn from(layout: Layout) -> Self {
         match layout {
-            Layout::Compact => H5D_layout_t::H5D_COMPACT,
-            Layout::Chunked => H5D_layout_t::H5D_CHUNKED,
+            Layout::Compact => Self::H5D_COMPACT,
+            Layout::Chunked => Self::H5D_CHUNKED,
             #[cfg(hdf5_1_10_0)]
-            Layout::Virtual => H5D_layout_t::H5D_VIRTUAL,
-            _ => H5D_layout_t::H5D_CONTIGUOUS,
+            Layout::Virtual => Self::H5D_VIRTUAL,
+            Layout::Contiguous => Self::H5D_CONTIGUOUS,
         }
     }
 }
@@ -157,7 +157,7 @@ bitflags! {
 #[cfg(hdf5_1_10_0)]
 impl Default for ChunkOpts {
     fn default() -> Self {
-        ChunkOpts::DONT_FILTER_PARTIAL_CHUNKS
+        Self::DONT_FILTER_PARTIAL_CHUNKS
     }
 }
 
@@ -171,9 +171,9 @@ pub enum AllocTime {
 impl From<H5D_alloc_time_t> for AllocTime {
     fn from(alloc_time: H5D_alloc_time_t) -> Self {
         match alloc_time {
-            H5D_alloc_time_t::H5D_ALLOC_TIME_EARLY => AllocTime::Early,
-            H5D_alloc_time_t::H5D_ALLOC_TIME_INCR => AllocTime::Incr,
-            _ => AllocTime::Late,
+            H5D_alloc_time_t::H5D_ALLOC_TIME_EARLY => Self::Early,
+            H5D_alloc_time_t::H5D_ALLOC_TIME_INCR => Self::Incr,
+            _ => Self::Late,
         }
     }
 }
@@ -181,9 +181,9 @@ impl From<H5D_alloc_time_t> for AllocTime {
 impl From<AllocTime> for H5D_alloc_time_t {
     fn from(alloc_time: AllocTime) -> Self {
         match alloc_time {
-            AllocTime::Early => H5D_alloc_time_t::H5D_ALLOC_TIME_EARLY,
-            AllocTime::Incr => H5D_alloc_time_t::H5D_ALLOC_TIME_INCR,
-            _ => H5D_alloc_time_t::H5D_ALLOC_TIME_LATE,
+            AllocTime::Early => Self::H5D_ALLOC_TIME_EARLY,
+            AllocTime::Incr => Self::H5D_ALLOC_TIME_INCR,
+            AllocTime::Late => Self::H5D_ALLOC_TIME_LATE,
         }
     }
 }
@@ -197,16 +197,16 @@ pub enum FillTime {
 
 impl Default for FillTime {
     fn default() -> Self {
-        FillTime::IfSet
+        Self::IfSet
     }
 }
 
 impl From<H5D_fill_time_t> for FillTime {
     fn from(fill_time: H5D_fill_time_t) -> Self {
         match fill_time {
-            H5D_fill_time_t::H5D_FILL_TIME_IFSET => FillTime::IfSet,
-            H5D_fill_time_t::H5D_FILL_TIME_ALLOC => FillTime::Alloc,
-            _ => FillTime::Never,
+            H5D_fill_time_t::H5D_FILL_TIME_IFSET => Self::IfSet,
+            H5D_fill_time_t::H5D_FILL_TIME_ALLOC => Self::Alloc,
+            _ => Self::Never,
         }
     }
 }
@@ -214,9 +214,9 @@ impl From<H5D_fill_time_t> for FillTime {
 impl From<FillTime> for H5D_fill_time_t {
     fn from(fill_time: FillTime) -> Self {
         match fill_time {
-            FillTime::IfSet => H5D_fill_time_t::H5D_FILL_TIME_IFSET,
-            FillTime::Alloc => H5D_fill_time_t::H5D_FILL_TIME_ALLOC,
-            _ => H5D_fill_time_t::H5D_FILL_TIME_NEVER,
+            FillTime::IfSet => Self::H5D_FILL_TIME_IFSET,
+            FillTime::Alloc => Self::H5D_FILL_TIME_ALLOC,
+            FillTime::Never => Self::H5D_FILL_TIME_NEVER,
         }
     }
 }
@@ -230,16 +230,16 @@ pub enum FillValue {
 
 impl Default for FillValue {
     fn default() -> Self {
-        FillValue::Default
+        Self::Default
     }
 }
 
 impl From<H5D_fill_value_t> for FillValue {
     fn from(fill_value: H5D_fill_value_t) -> Self {
         match fill_value {
-            H5D_fill_value_t::H5D_FILL_VALUE_DEFAULT => FillValue::Default,
-            H5D_fill_value_t::H5D_FILL_VALUE_USER_DEFINED => FillValue::UserDefined,
-            _ => FillValue::Undefined,
+            H5D_fill_value_t::H5D_FILL_VALUE_DEFAULT => Self::Default,
+            H5D_fill_value_t::H5D_FILL_VALUE_USER_DEFINED => Self::UserDefined,
+            _ => Self::Undefined,
         }
     }
 }
@@ -247,9 +247,9 @@ impl From<H5D_fill_value_t> for FillValue {
 impl From<FillValue> for H5D_fill_value_t {
     fn from(fill_value: FillValue) -> Self {
         match fill_value {
-            FillValue::Default => H5D_fill_value_t::H5D_FILL_VALUE_DEFAULT,
-            FillValue::UserDefined => H5D_fill_value_t::H5D_FILL_VALUE_USER_DEFINED,
-            _ => H5D_fill_value_t::H5D_FILL_VALUE_UNDEFINED,
+            FillValue::Default => Self::H5D_FILL_VALUE_DEFAULT,
+            FillValue::UserDefined => Self::H5D_FILL_VALUE_USER_DEFINED,
+            FillValue::Undefined => Self::H5D_FILL_VALUE_UNDEFINED,
         }
     }
 }
@@ -301,6 +301,7 @@ impl VirtualMapping {
 #[derive(Clone, Debug, Default)]
 pub struct DatasetCreateBuilder {
     filters: Vec<Filter>,
+    #[allow(clippy::option_option)]
     alloc_time: Option<Option<AllocTime>>,
     fill_time: Option<FillTime>,
     fill_value: Option<OwnedDynValue>,
@@ -572,7 +573,7 @@ impl DatasetCreateBuilder {
             filter.apply_to_plist(id)?;
         }
         if let Some(v) = self.alloc_time {
-            let v = v.map(Into::into).unwrap_or(H5D_alloc_time_t::H5D_ALLOC_TIME_DEFAULT);
+            let v = v.map_or(H5D_alloc_time_t::H5D_ALLOC_TIME_DEFAULT, Into::into);
             h5try!(H5Pset_alloc_time(id, v));
         }
         if let Some(v) = self.fill_time {
@@ -580,7 +581,7 @@ impl DatasetCreateBuilder {
         }
         if let Some(ref v) = self.fill_value {
             let dtype = Datatype::from_descriptor(v.type_descriptor())?;
-            h5try!(H5Pset_fill_value(id, dtype.id(), v.get_buf().as_ptr() as *const _));
+            h5try!(H5Pset_fill_value(id, dtype.id(), v.get_buf().as_ptr().cast()));
         }
         if let Some(v) = self.layout {
             h5try!(H5Pset_layout(id, v.into()));
@@ -610,7 +611,7 @@ impl DatasetCreateBuilder {
         }
         for external in &self.external {
             let name = to_cstring(external.name.as_str())?;
-            let size = if external.size != 0 { external.size as _ } else { H5F_UNLIMITED as _ };
+            let size = if external.size == 0 { H5F_UNLIMITED as _ } else { external.size as _ };
             h5try!(H5Pset_external(id, name.as_ptr(), external.offset as _, size));
         }
         if let Some(v) = self.obj_track_times {
@@ -707,12 +708,12 @@ impl DatasetCreate {
     pub fn get_fill_value(&self, tp: &TypeDescriptor) -> Result<Option<OwnedDynValue>> {
         match self.get_fill_value_defined()? {
             FillValue::Default | FillValue::UserDefined => {
-                let dtype = Datatype::from_descriptor(&tp)?;
+                let dtype = Datatype::from_descriptor(tp)?;
                 let mut buf: Vec<u8> = Vec::with_capacity(tp.size());
                 unsafe {
                     buf.set_len(tp.size());
                 }
-                h5try!(H5Pget_fill_value(self.id(), dtype.id(), buf.as_mut_ptr() as *mut _));
+                h5try!(H5Pget_fill_value(self.id(), dtype.id(), buf.as_mut_ptr().cast()));
                 Ok(Some(unsafe { OwnedDynValue::from_raw(tp.clone(), buf) }))
             }
             _ => Ok(None),
@@ -729,7 +730,7 @@ impl DatasetCreate {
         Ok(self.get_fill_value(&dtype.to_descriptor()?)?.map(|value| unsafe {
             let mut out: T = mem::zeroed();
             let buf = value.get_buf();
-            ptr::copy_nonoverlapping(buf.as_ptr(), &mut out as *mut _ as *mut _, buf.len());
+            ptr::copy_nonoverlapping(buf.as_ptr(), (&mut out as *mut T).cast(), buf.len());
             mem::forget(value);
             out
         }))
@@ -743,7 +744,7 @@ impl DatasetCreate {
     pub fn get_chunk(&self) -> Result<Option<Vec<usize>>> {
         if let Layout::Chunked = self.get_layout()? {
             let ndims = h5try!(H5Pget_chunk(self.id(), 0, ptr::null_mut()));
-            let mut buf = vec![0 as hsize_t; ndims as usize];
+            let mut buf: Vec<hsize_t> = vec![0; ndims as usize];
             h5try!(H5Pget_chunk(self.id(), ndims, buf.as_mut_ptr()));
             Ok(Some(buf.into_iter().map(|x| x as _).collect()))
         } else {
@@ -784,11 +785,11 @@ impl DatasetCreate {
 
     #[doc(hidden)]
     pub fn get_external(&self) -> Result<Vec<ExternalFile>> {
+        const NAME_LEN: usize = 1024;
         h5lock!({
             let mut external = Vec::new();
             let count = h5try!(H5Pget_external_count(self.id()));
-            const NAME_LEN: usize = 1024;
-            let mut name = vec![0 as c_char; NAME_LEN + 1];
+            let mut name: Vec<c_char> = vec![0; NAME_LEN + 1];
             for idx in 0..count {
                 let mut offset: libc::off_t = 0;
                 let mut size: hsize_t = 0;
@@ -800,6 +801,7 @@ impl DatasetCreate {
                     &mut offset as *mut _,
                     &mut size as *mut _,
                 ));
+                #[allow(clippy::absurd_extreme_comparisons)]
                 external.push(ExternalFile {
                     name: string_from_cstr(name.as_ptr()),
                     offset: offset as _,

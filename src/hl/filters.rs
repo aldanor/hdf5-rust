@@ -37,6 +37,7 @@ pub enum ScaleOffset {
 #[cfg(feature = "blosc")]
 mod blosc_impl {
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    #[allow(clippy::pub_enum_variant_names)]
     pub enum Blosc {
         BloscLZ,
         LZ4,
@@ -55,23 +56,23 @@ mod blosc_impl {
 
     impl Default for BloscShuffle {
         fn default() -> Self {
-            BloscShuffle::Byte
+            Self::Byte
         }
     }
 
     impl From<bool> for BloscShuffle {
         fn from(shuffle: bool) -> Self {
             if shuffle {
-                BloscShuffle::Byte
+                Self::Byte
             } else {
-                BloscShuffle::None
+                Self::None
             }
         }
     }
 
     impl Default for Blosc {
         fn default() -> Self {
-            Blosc::BloscLZ
+            Self::BloscLZ
         }
     }
 
@@ -79,8 +80,9 @@ mod blosc_impl {
         h5lock!(super::blosc::blosc_get_nthreads()).max(0).min(255) as _
     }
 
-    pub fn blosc_set_nthreads(nthreads: u8) -> u8 {
-        let nthreads = h5lock!(super::blosc::blosc_set_nthreads(nthreads as _));
+    pub fn blosc_set_nthreads(num_threads: u8) -> u8 {
+        use std::os::raw::c_int;
+        let nthreads = h5lock!(super::blosc::blosc_set_nthreads(c_int::from(num_threads)));
         nthreads.max(0).min(255) as _
     }
 }
@@ -110,7 +112,8 @@ pub struct FilterInfo {
     pub decode_enabled: bool,
 }
 
-pub(crate) fn register_filters() -> Result<()> {
+#[cfg_attr(not(any(feature = "lzf", feature = "blosc")), allow(clippy::unnecessary_unwrap))]
+pub fn register_filters() -> Result<()> {
     #[cfg(feature = "lzf")]
     lzf::register_lzf()?;
     #[cfg(feature = "blosc")]
@@ -141,17 +144,17 @@ pub fn blosc_available() -> bool {
 impl Filter {
     pub fn id(&self) -> H5Z_filter_t {
         match self {
-            Filter::Deflate(_) => H5Z_FILTER_DEFLATE,
-            Filter::Shuffle => H5Z_FILTER_SHUFFLE,
-            Filter::Fletcher32 => H5Z_FILTER_FLETCHER32,
-            Filter::SZip(_, _) => H5Z_FILTER_SZIP,
-            Filter::NBit => H5Z_FILTER_NBIT,
-            Filter::ScaleOffset(_) => H5Z_FILTER_SCALEOFFSET,
+            Self::Deflate(_) => H5Z_FILTER_DEFLATE,
+            Self::Shuffle => H5Z_FILTER_SHUFFLE,
+            Self::Fletcher32 => H5Z_FILTER_FLETCHER32,
+            Self::SZip(_, _) => H5Z_FILTER_SZIP,
+            Self::NBit => H5Z_FILTER_NBIT,
+            Self::ScaleOffset(_) => H5Z_FILTER_SCALEOFFSET,
             #[cfg(feature = "lzf")]
-            Filter::LZF => lzf::LZF_FILTER_ID,
+            Self::LZF => lzf::LZF_FILTER_ID,
             #[cfg(feature = "blosc")]
-            Filter::Blosc(_, _, _) => blosc::BLOSC_FILTER_ID,
-            Filter::User(id, _) => *id,
+            Self::Blosc(_, _, _) => blosc::BLOSC_FILTER_ID,
+            Self::User(id, _) => *id,
         }
     }
 
@@ -181,32 +184,32 @@ impl Filter {
     }
 
     pub fn deflate(level: u8) -> Self {
-        Filter::Deflate(level)
+        Self::Deflate(level)
     }
 
     pub fn shuffle() -> Self {
-        Filter::Shuffle
+        Self::Shuffle
     }
 
     pub fn fletcher32() -> Self {
-        Filter::Fletcher32
+        Self::Fletcher32
     }
 
     pub fn szip(coding: SZip, px_per_block: u8) -> Self {
-        Filter::SZip(coding, px_per_block)
+        Self::SZip(coding, px_per_block)
     }
 
     pub fn nbit() -> Self {
-        Filter::NBit
+        Self::NBit
     }
 
     pub fn scale_offset(mode: ScaleOffset) -> Self {
-        Filter::ScaleOffset(mode)
+        Self::ScaleOffset(mode)
     }
 
     #[cfg(feature = "lzf")]
     pub fn lzf() -> Self {
-        Filter::LZF
+        Self::LZF
     }
 
     #[cfg(feature = "blosc")]
@@ -214,7 +217,7 @@ impl Filter {
     where
         T: Into<BloscShuffle>,
     {
-        Filter::Blosc(complib, clevel, shuffle.into())
+        Self::Blosc(complib, clevel, shuffle.into())
     }
 
     #[cfg(feature = "blosc")]
@@ -266,7 +269,7 @@ impl Filter {
     }
 
     pub fn user(id: H5Z_filter_t, cdata: &[c_uint]) -> Self {
-        Filter::User(id, cdata.to_vec())
+        Self::User(id, cdata.to_vec())
     }
 
     fn parse_deflate(cdata: &[c_uint]) -> Result<Self> {
@@ -276,17 +279,17 @@ impl Filter {
     }
 
     fn parse_shuffle(cdata: &[c_uint]) -> Result<Self> {
-        ensure!(cdata.len() == 0, "expected length 0 cdata for shuffle filter");
+        ensure!(cdata.is_empty(), "expected length 0 cdata for shuffle filter");
         Ok(Self::shuffle())
     }
 
     fn parse_fletcher32(cdata: &[c_uint]) -> Result<Self> {
-        ensure!(cdata.len() == 0, "expected length 0 cdata for fletcher32 filter");
+        ensure!(cdata.is_empty(), "expected length 0 cdata for fletcher32 filter");
         Ok(Self::fletcher32())
     }
 
     fn parse_nbit(cdata: &[c_uint]) -> Result<Self> {
-        ensure!(cdata.len() == 0, "expected length 0 cdata for nbit filter");
+        ensure!(cdata.is_empty(), "expected length 0 cdata for nbit filter");
         Ok(Self::nbit())
     }
 
@@ -299,7 +302,7 @@ impl Filter {
             m
         );
         let szip_coding =
-            if m & H5_SZIP_EC_OPTION_MASK != 0 { SZip::Entropy } else { SZip::NearestNeighbor };
+            if m & H5_SZIP_EC_OPTION_MASK == 0 { SZip::NearestNeighbor } else { SZip::Entropy };
         let px_per_block = cdata[1];
         ensure!(
             px_per_block <= H5_SZIP_MAX_PIXELS_PER_BLOCK,
@@ -313,10 +316,18 @@ impl Filter {
         ensure!(cdata.len() == 2, "expected length 2 cdata for scaleoffset filter");
         let scale_type = cdata[0];
         let mode = if scale_type == (H5Z_SO_INT as c_uint) {
-            ensure!(cdata[1] <= u16::max_value() as _, "invalid int scale-offset: {}", cdata[1]);
+            ensure!(
+                cdata[1] <= c_uint::from(u16::max_value()),
+                "invalid int scale-offset: {}",
+                cdata[1]
+            );
             ScaleOffset::Integer(cdata[1] as _)
         } else if scale_type == (H5Z_SO_FLOAT_DSCALE as c_uint) {
-            ensure!(cdata[1] <= u8::max_value() as _, "invalid float scale-offset: {}", cdata[1]);
+            ensure!(
+                cdata[1] <= c_uint::from(u8::max_value()),
+                "invalid float scale-offset: {}",
+                cdata[1]
+            );
             ScaleOffset::FloatDScale(cdata[1] as _)
         } else {
             fail!("invalid scale type for scaleoffset filter: {}", cdata[0])
@@ -326,7 +337,7 @@ impl Filter {
 
     #[cfg(feature = "lzf")]
     fn parse_lzf(cdata: &[c_uint]) -> Result<Self> {
-        ensure!(cdata.len() == 0, "expected length 0 cdata for lzf filter");
+        ensure!(cdata.is_empty(), "expected length 0 cdata for lzf filter");
         Ok(Self::lzf())
     }
 
@@ -380,7 +391,7 @@ impl Filter {
     }
 
     unsafe fn apply_deflate(plist_id: hid_t, level: u8) -> herr_t {
-        H5Pset_deflate(plist_id, level as _)
+        H5Pset_deflate(plist_id, c_uint::from(level))
     }
 
     unsafe fn apply_shuffle(plist_id: hid_t) -> herr_t {
@@ -396,7 +407,7 @@ impl Filter {
             SZip::Entropy => H5_SZIP_EC_OPTION_MASK,
             SZip::NearestNeighbor => H5_SZIP_NN_OPTION_MASK,
         };
-        H5Pset_szip(plist_id, mask, px_per_block as _)
+        H5Pset_szip(plist_id, mask, c_uint::from(px_per_block))
     }
 
     unsafe fn apply_nbit(plist_id: hid_t) -> herr_t {
@@ -405,8 +416,8 @@ impl Filter {
 
     unsafe fn apply_scaleoffset(plist_id: hid_t, mode: ScaleOffset) -> herr_t {
         let (scale_type, factor) = match mode {
-            ScaleOffset::Integer(bits) => (H5Z_SO_INT, bits as _),
-            ScaleOffset::FloatDScale(factor) => (H5Z_SO_FLOAT_DSCALE, factor as _),
+            ScaleOffset::Integer(bits) => (H5Z_SO_INT, c_int::from(bits)),
+            ScaleOffset::FloatDScale(factor) => (H5Z_SO_FLOAT_DSCALE, c_int::from(factor)),
         };
         H5Pset_scaleoffset(plist_id, scale_type, factor)
     }
@@ -420,8 +431,8 @@ impl Filter {
     unsafe fn apply_blosc(
         plist_id: hid_t, complib: Blosc, clevel: u8, shuffle: BloscShuffle,
     ) -> herr_t {
-        let mut cdata = vec![0 as c_uint; 7];
-        cdata[4] = clevel as _;
+        let mut cdata: Vec<c_uint> = vec![0; 7];
+        cdata[4] = c_uint::from(clevel);
         cdata[5] = match shuffle {
             BloscShuffle::None => blosc::BLOSC_NOSHUFFLE,
             BloscShuffle::Byte => blosc::BLOSC_SHUFFLE,
@@ -444,33 +455,33 @@ impl Filter {
         // in H5Pset_fletcher32() in H5Pocpl.c; for all other purposes than
         // verifying checksums optional filter makes more sense than mandatory.
         let cd_nelmts = cdata.len() as _;
-        let cd_values = if cd_nelmts != 0 { cdata.as_ptr() } else { ptr::null() };
+        let cd_values = if cd_nelmts == 0 { ptr::null() } else { cdata.as_ptr() };
         H5Pset_filter(plist_id, filter_id, H5Z_FLAG_OPTIONAL, cd_nelmts, cd_values)
     }
 
     pub(crate) fn apply_to_plist(&self, id: hid_t) -> Result<()> {
         h5try!(match self {
-            Filter::Deflate(level) => Self::apply_deflate(id, *level),
-            Filter::Shuffle => Self::apply_shuffle(id),
-            Filter::Fletcher32 => Self::apply_fletcher32(id),
-            Filter::SZip(coding, px_per_block) => Self::apply_szip(id, *coding, *px_per_block),
-            Filter::NBit => Self::apply_nbit(id),
-            Filter::ScaleOffset(mode) => Self::apply_scaleoffset(id, *mode),
+            Self::Deflate(level) => Self::apply_deflate(id, *level),
+            Self::Shuffle => Self::apply_shuffle(id),
+            Self::Fletcher32 => Self::apply_fletcher32(id),
+            Self::SZip(coding, px_per_block) => Self::apply_szip(id, *coding, *px_per_block),
+            Self::NBit => Self::apply_nbit(id),
+            Self::ScaleOffset(mode) => Self::apply_scaleoffset(id, *mode),
             #[cfg(feature = "lzf")]
-            Filter::LZF => Self::apply_lzf(id),
+            Self::LZF => Self::apply_lzf(id),
             #[cfg(feature = "blosc")]
-            Filter::Blosc(complib, clevel, shuffle) => {
+            Self::Blosc(complib, clevel, shuffle) => {
                 Self::apply_blosc(id, *complib, *clevel, *shuffle)
             }
-            Filter::User(filter_id, ref cdata) => Self::apply_user(id, *filter_id, cdata),
+            Self::User(filter_id, ref cdata) => Self::apply_user(id, *filter_id, cdata),
         });
         Ok(())
     }
 
     pub(crate) fn extract_pipeline(plist_id: hid_t) -> Result<Vec<Self>> {
         let mut filters = Vec::new();
-        let mut name = vec![0 as c_char; 257];
-        let mut cd_values = vec![0 as c_uint; 32];
+        let mut name: Vec<c_char> = vec![0; 257];
+        let mut cd_values: Vec<c_uint> = vec![0; 32];
         h5lock!({
             let n_filters = h5try!(H5Pget_nfilters(plist_id));
             for idx in 0..n_filters {
@@ -497,7 +508,7 @@ impl Filter {
     }
 }
 
-pub(crate) fn validate_filters(filters: &[Filter], type_class: H5T_class_t) -> Result<()> {
+pub fn validate_filters(filters: &[Filter], type_class: H5T_class_t) -> Result<()> {
     const COMP_FILTER_IDS: &[H5Z_filter_t] = &[H5Z_FILTER_DEFLATE, H5Z_FILTER_SZIP, 32000, 32001];
 
     let mut map: HashMap<H5Z_filter_t, &Filter> = HashMap::new();
@@ -512,7 +523,7 @@ pub(crate) fn validate_filters(filters: &[Filter], type_class: H5T_class_t) -> R
             if let Some(comp_filter) = comp_filter {
                 fail!("Multiple compression filters: {:?} and {:?}", comp_filter, filter);
             }
-            comp_filter = Some(&filter);
+            comp_filter = Some(filter);
         } else if id == H5Z_FILTER_FLETCHER32 && map.contains_key(&H5Z_FILTER_SCALEOFFSET) {
             fail!("Lossy scale-offset filter before fletcher2 checksum filter");
         } else if let Filter::ScaleOffset(mode) = filter {
@@ -539,7 +550,7 @@ pub(crate) fn validate_filters(filters: &[Filter], type_class: H5T_class_t) -> R
                 fail!("Shuffle filter placed after compression filter: {:?}", comp_filter);
             }
         }
-        map.insert(id, &filter);
+        map.insert(id, filter);
     }
 
     Ok(())

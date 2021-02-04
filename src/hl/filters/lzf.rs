@@ -12,7 +12,7 @@ use crate::internal_prelude::*;
 use lzf_sys::{lzf_compress, lzf_decompress, LZF_VERSION};
 
 const LZF_FILTER_NAME: &[u8] = b"lzf\0";
-pub(crate) const LZF_FILTER_ID: H5Z_filter_t = 32000;
+pub const LZF_FILTER_ID: H5Z_filter_t = 32000;
 const LZF_FILTER_VERSION: c_uint = 4;
 
 const LZF_FILTER_INFO: H5Z_class2_t = H5Z_class2_t {
@@ -20,7 +20,7 @@ const LZF_FILTER_INFO: H5Z_class2_t = H5Z_class2_t {
     id: LZF_FILTER_ID,
     encoder_present: 1,
     decoder_present: 1,
-    name: LZF_FILTER_NAME.as_ptr() as *const _,
+    name: LZF_FILTER_NAME.as_ptr().cast(),
     can_apply: None,
     set_local: Some(set_local_lzf),
     filter: Some(filter_lzf),
@@ -29,21 +29,22 @@ const LZF_FILTER_INFO: H5Z_class2_t = H5Z_class2_t {
 lazy_static! {
     static ref LZF_INIT: Result<()> = {
         h5try!({
-            let ret = H5Zregister(&LZF_FILTER_INFO as *const _ as *const _);
+            let ret = H5Zregister((&LZF_FILTER_INFO as *const H5Z_class2_t).cast());
             h5maybe_err!(ret, "Can't register LZF filter", H5E_PLIST, H5E_CANTREGISTER)
         });
         Ok(())
     };
 }
 
-pub(crate) fn register_lzf() -> Result<()> {
+pub fn register_lzf() -> Result<()> {
     (*LZF_INIT).clone()
 }
 
 extern "C" fn set_local_lzf(dcpl_id: hid_t, type_id: hid_t, _space_id: hid_t) -> herr_t {
+    const MAX_NDIMS: usize = 32;
     let mut flags: c_uint = 0;
     let mut nelmts: size_t = 0;
-    let mut values = vec![0 as c_uint; 8];
+    let mut values: Vec<c_uint> = vec![0; 8];
     let ret = unsafe {
         H5Pget_filter_by_id2(
             dcpl_id,
@@ -66,8 +67,7 @@ extern "C" fn set_local_lzf(dcpl_id: hid_t, type_id: hid_t, _space_id: hid_t) ->
     if values[1] == 0 {
         values[1] = LZF_VERSION;
     }
-    const MAX_NDIMS: usize = 32;
-    let mut chunkdims = vec![0 as hsize_t; MAX_NDIMS];
+    let mut chunkdims: Vec<hsize_t> = vec![0; MAX_NDIMS];
     let ndims: c_int = unsafe { H5Pget_chunk(dcpl_id, MAX_NDIMS as _, chunkdims.as_mut_ptr()) };
     if ndims < 0 {
         return -1;
@@ -80,8 +80,8 @@ extern "C" fn set_local_lzf(dcpl_id: hid_t, type_id: hid_t, _space_id: hid_t) ->
     if bufsize == 0 {
         return -1;
     }
-    for i in 0..(ndims as usize) {
-        bufsize *= chunkdims[i] as size_t;
+    for &chunkdim in chunkdims[..(ndims as usize)].iter() {
+        bufsize *= chunkdim as size_t;
     }
     values[2] = bufsize as _;
     let r = unsafe { H5Pmodify_filter(dcpl_id, LZF_FILTER_ID, flags, nelmts, values.as_ptr()) };
@@ -113,11 +113,11 @@ unsafe fn filter_lzf_compress(
         return 0;
     }
     let status = lzf_compress(*buf, nbytes as _, outbuf, outbuf_size as _);
-    if status != 0 {
+    if status == 0 {
+        libc::free(outbuf);
+    } else {
         libc::free(*buf);
         *buf = outbuf;
-    } else {
-        libc::free(outbuf);
     }
     status as _
 }

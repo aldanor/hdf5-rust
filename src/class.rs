@@ -43,16 +43,16 @@ pub trait ObjectClass: Sized {
     }
 
     unsafe fn transmute<T: ObjectClass>(&self) -> &T {
-        &*(self as *const Self as *const T)
+        &*(self as *const Self).cast::<T>()
     }
 
     unsafe fn transmute_mut<T: ObjectClass>(&mut self) -> &mut T {
-        &mut *(self as *mut Self as *mut T)
+        &mut *(self as *mut Self).cast::<T>()
     }
 
     unsafe fn cast<T: ObjectClass>(self) -> T {
         // This method requires you to be 18 years or older to use it
-        let obj = ptr::read(&self as *const _ as *const _);
+        let obj = ptr::read((&self as *const Self).cast());
         mem::forget(self);
         obj
     }

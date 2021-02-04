@@ -26,10 +26,10 @@ impl Debug for Extent {
 impl Display for Extent {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if let Some(max) = self.max {
-            if self.dim != max {
-                write!(f, "{}..={}", self.dim, max)
-            } else {
+            if self.dim == max {
                 write!(f, "{}", self.dim)
+            } else {
+                write!(f, "{}..={}", self.dim, max)
             }
         } else {
             write!(f, "{}..", self.dim)
@@ -130,7 +130,7 @@ impl SimpleExtents {
         T: IntoIterator,
         T::Item: Borrow<Ix>,
     {
-        Self::from_vec(extents.into_iter().map(|x| Extent::fixed(x.borrow().clone())).collect())
+        Self::from_vec(extents.into_iter().map(|x| Extent::fixed(*x.borrow())).collect())
     }
 
     pub fn resizable<T>(extents: T) -> Self
@@ -138,7 +138,7 @@ impl SimpleExtents {
         T: IntoIterator,
         T::Item: Borrow<Ix>,
     {
-        Self::from_vec(extents.into_iter().map(|x| Extent::resizable(x.borrow().clone())).collect())
+        Self::from_vec(extents.into_iter().map(|x| Extent::resizable(*x.borrow())).collect())
     }
 
     pub fn ndim(&self) -> usize {
@@ -321,34 +321,34 @@ impl Extents {
 
     /// Creates extents for a *null* dataspace.
     pub fn null() -> Self {
-        Extents::Null
+        Self::Null
     }
 
     /// Creates extents for a *scalar* dataspace.
     pub fn scalar() -> Self {
-        Extents::Scalar
+        Self::Scalar
     }
 
     /// Creates extents for a *simple* dataspace.
     pub fn simple<T: Into<SimpleExtents>>(extents: T) -> Self {
-        Extents::Simple(extents.into())
+        Self::Simple(extents.into())
     }
 
     fn as_simple(&self) -> Option<&SimpleExtents> {
         match self {
-            Extents::Simple(ref e) => Some(e),
+            Self::Simple(ref e) => Some(e),
             _ => None,
         }
     }
 
     /// Returns true if the extents type is *null*.
     pub fn is_null(&self) -> bool {
-        self == &Extents::Null
+        self == &Self::Null
     }
 
     /// Returns true if the extents type is *scalar*.
     pub fn is_scalar(&self) -> bool {
-        self == &Extents::Scalar
+        self == &Self::Scalar
     }
 
     /// Returns true if the extents type is *simple*.
@@ -374,9 +374,9 @@ impl Extents {
     /// Returns the total number of elements.
     pub fn size(&self) -> usize {
         match self {
-            Extents::Null => 0,
-            Extents::Scalar => 1,
-            Extents::Simple(extents) => extents.size(),
+            Self::Null => 0,
+            Self::Scalar => 1,
+            Self::Simple(extents) => extents.size(),
         }
     }
 
@@ -394,13 +394,13 @@ impl Extents {
 
     pub fn resizable(self) -> Self {
         match self {
-            Extents::Simple(extents) => SimpleExtents::resizable(extents.dims()).into(),
+            Self::Simple(extents) => SimpleExtents::resizable(extents.dims()).into(),
             _ => self.clone(),
         }
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &Extent> {
-        ExtentsIter { inner: self.as_simple().map(|e| e.iter()) }
+        ExtentsIter { inner: self.as_simple().map(SimpleExtents::iter) }
     }
     pub fn slice(&self) -> Option<&[Extent]> {
         if let Self::Simple(x) = self {
@@ -429,9 +429,9 @@ impl<'a> Iterator for ExtentsIter<'a> {
 impl Display for Extents {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Extents::Null => write!(f, "null"),
-            Extents::Scalar => write!(f, "scalar"),
-            Extents::Simple(ref e) => write!(f, "{}", e),
+            Self::Null => write!(f, "null"),
+            Self::Scalar => write!(f, "scalar"),
+            Self::Simple(ref e) => write!(f, "{}", e),
         }
     }
 }
@@ -440,21 +440,21 @@ impl<T: Into<SimpleExtents>> From<T> for Extents {
     fn from(extents: T) -> Self {
         let extents = extents.into();
         if extents.is_empty() {
-            Extents::Scalar
+            Self::Scalar
         } else {
-            Extents::Simple(extents)
+            Self::Simple(extents)
         }
     }
 }
 
 impl From<()> for Extents {
     fn from(_: ()) -> Self {
-        Extents::Scalar
+        Self::Scalar
     }
 }
 
 impl From<&Extents> for Extents {
-    fn from(extents: &Extents) -> Self {
+    fn from(extents: &Self) -> Self {
         extents.clone()
     }
 }

@@ -35,7 +35,7 @@ unsafe fn set_points_selection(space_id: hid_t, coords: ArrayView2<Ix>) -> Resul
     let same_size = mem::size_of::<hsize_t>() == mem::size_of::<Ix>();
     let coords = match (coords.as_slice(), same_size) {
         (Some(coords), true) => {
-            Cow::Borrowed(slice::from_raw_parts(coords.as_ptr() as *const _, coords.len()))
+            Cow::Borrowed(slice::from_raw_parts(coords.as_ptr().cast(), coords.len()))
         }
         _ => Cow::Owned(coords.iter().map(|&x| x as _).collect()),
     };
@@ -95,13 +95,12 @@ unsafe fn set_regular_hyperslab(space_id: hid_t, hyper: &RawHyperslab) -> Result
 }
 
 fn check_coords(coords: &Array2<Ix>, shape: &[Ix]) -> Result<()> {
-    if coords.shape() == &[0, 0] {
+    if coords.shape() == [0, 0] {
         return Ok(());
     }
     let ndim = coords.shape()[1];
     ensure!(ndim == shape.len(), "Slice ndim ({}) != shape ndim ({})", ndim, shape.len());
-    for i in 0..ndim {
-        let dim = shape[i];
+    for (i, &dim) in shape.iter().enumerate() {
         for &d in coords.slice(s![.., i]).iter() {
             ensure!(d < dim, "Index {} out of bounds for axis {} with size {}", d, i, dim);
         }
@@ -184,41 +183,45 @@ pub enum RawSelection {
 
 impl Default for RawSelection {
     fn default() -> Self {
-        RawSelection::All
+        Self::All
     }
 }
 
 impl From<RawHyperslab> for RawSelection {
     fn from(hyper: RawHyperslab) -> Self {
-        RawSelection::RegularHyperslab(hyper)
+        Self::RegularHyperslab(hyper)
     }
 }
 
 impl From<Vec<RawSlice>> for RawSelection {
     fn from(dims: Vec<RawSlice>) -> Self {
-        RawSelection::RegularHyperslab(dims.into())
+        Self::RegularHyperslab(dims.into())
     }
 }
 
 impl RawSelection {
     pub unsafe fn apply_to_dataspace(&self, space_id: hid_t) -> Result<()> {
         match self {
-            RawSelection::None => drop(h5check(H5Sselect_none(space_id))?),
-            RawSelection::All => drop(h5check(H5Sselect_all(space_id))?),
-            RawSelection::Points(ref coords) => set_points_selection(space_id, coords.view())?,
-            RawSelection::RegularHyperslab(ref hyper) => set_regular_hyperslab(space_id, hyper)?,
-            RawSelection::ComplexHyperslab => fail!("Complex hyperslabs are not supported"),
+            Self::None => {
+                h5check(H5Sselect_none(space_id))?;
+            }
+            Self::All => {
+                h5check(H5Sselect_all(space_id))?;
+            }
+            Self::Points(ref coords) => set_points_selection(space_id, coords.view())?,
+            Self::RegularHyperslab(ref hyper) => set_regular_hyperslab(space_id, hyper)?,
+            Self::ComplexHyperslab => fail!("Complex hyperslabs are not supported"),
         };
         Ok(())
     }
 
     pub unsafe fn extract_from_dataspace(space_id: hid_t) -> Result<Self> {
         Ok(match H5Sget_select_type(space_id) {
-            H5S_sel_type::H5S_SEL_NONE => RawSelection::None,
-            H5S_sel_type::H5S_SEL_ALL => RawSelection::All,
-            H5S_sel_type::H5S_SEL_POINTS => RawSelection::Points(get_points_selection(space_id)?),
+            H5S_sel_type::H5S_SEL_NONE => Self::None,
+            H5S_sel_type::H5S_SEL_ALL => Self::All,
+            H5S_sel_type::H5S_SEL_POINTS => Self::Points(get_points_selection(space_id)?),
             H5S_sel_type::H5S_SEL_HYPERSLABS => get_regular_hyperslab(space_id)?
-                .map_or(RawSelection::ComplexHyperslab, RawSelection::RegularHyperslab),
+                .map_or(Self::ComplexHyperslab, Self::RegularHyperslab),
             sel_type => fail!("Invalid selection type: {:?}", sel_type as c_int),
         })
     }
@@ -234,60 +237,42 @@ pub enum SliceOrIndex {
 impl SliceOrIndex {
     pub fn to_unlimited(self) -> Result<Self> {
         Ok(match self {
-            SliceOrIndex::Index(_) => fail!("Cannot make index selection unlimited"),
-            SliceOrIndex::Slice { end: Some(_), .. } => {
+            Self::Index(_) => fail!("Cannot make index selection unlimited"),
+            Self::Slice { end: Some(_), .. } => {
                 fail!("Cannot make bounded slice unlimited")
             }
-            SliceOrIndex::Slice { start, step, end: None, block } => {
-                SliceOrIndex::Unlimited { start, step, block }
-            }
-            SliceOrIndex::Unlimited { .. } => self,
+            Self::Slice { start, step, end: None, block } => Self::Unlimited { start, step, block },
+            Self::Unlimited { .. } => self,
         })
     }
 
     pub fn to_block(self) -> Result<Self> {
         Ok(match self {
-            SliceOrIndex::Index(_) => fail!("Cannot make index selection block-like"),
-            SliceOrIndex::Slice { start, step, end, .. } => {
-                SliceOrIndex::Slice { start, step, end, block: true }
-            }
-            SliceOrIndex::Unlimited { start, step, .. } => {
-                SliceOrIndex::Unlimited { start, step, block: true }
-            }
+            Self::Index(_) => fail!("Cannot make index selection block-like"),
+            Self::Slice { start, step, end, .. } => Self::Slice { start, step, end, block: true },
+            Self::Unlimited { start, step, .. } => Self::Unlimited { start, step, block: true },
         })
     }
 
     pub fn is_index(self) -> bool {
-        if let SliceOrIndex::Index(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, Self::Index(_))
     }
 
     pub fn is_slice(self) -> bool {
-        if let SliceOrIndex::Slice { .. } = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, Self::Slice { .. })
     }
 
     pub fn is_unlimited(self) -> bool {
-        if let SliceOrIndex::Unlimited { .. } = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, Self::Unlimited { .. })
     }
 }
 
 impl<T: Into<ndarray::SliceOrIndex>> From<T> for SliceOrIndex {
     fn from(slice: T) -> Self {
         match slice.into() {
-            ndarray::SliceOrIndex::Index(index) => SliceOrIndex::Index(index),
+            ndarray::SliceOrIndex::Index(index) => Self::Index(index),
             ndarray::SliceOrIndex::Slice { start, end, step } => {
-                SliceOrIndex::Slice { start, step, end, block: false }
+                Self::Slice { start, step, end, block: false }
             }
         }
     }
@@ -296,8 +281,8 @@ impl<T: Into<ndarray::SliceOrIndex>> From<T> for SliceOrIndex {
 impl Display for SliceOrIndex {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            SliceOrIndex::Index(index) => write!(f, "{}", index)?,
-            SliceOrIndex::Slice { start, end, step, block } => {
+            Self::Index(index) => write!(f, "{}", index)?,
+            Self::Slice { start, end, step, block } => {
                 if start != 0 {
                     write!(f, "{}", start)?;
                 }
@@ -312,11 +297,12 @@ impl Display for SliceOrIndex {
                     write!(f, "(B)")?;
                 }
             }
-            SliceOrIndex::Unlimited { start, step, block } => {
+            Self::Unlimited { start, step, block } => {
                 if start != 0 {
                     write!(f, "{}", start)?;
                 }
-                write!(f, "..∞")?;
+                // \u{221e} = ∞
+                write!(f, "..\u{221e}")?;
                 if step != 1 {
                     write!(f, ";{}", step)?;
                 }
@@ -335,7 +321,7 @@ pub struct Hyperslab {
 }
 
 impl Hyperslab {
-    pub fn new<T: Into<Hyperslab>>(hyper: T) -> Self {
+    pub fn new<T: Into<Self>>(hyper: T) -> Self {
         hyper.into()
     }
 
@@ -344,7 +330,7 @@ impl Hyperslab {
     }
 
     pub fn unlimited_axis(&self) -> Option<usize> {
-        self.iter().enumerate().skip_while(|(_, s)| !s.is_unlimited()).next().map(|(i, _)| i)
+        self.iter().enumerate().find_map(|(i, s)| if s.is_unlimited() { Some(i) } else { None })
     }
 
     pub fn set_unlimited(&self, axis: usize) -> Result<Self> {
@@ -388,6 +374,7 @@ impl Hyperslab {
     }
 
     #[doc(hidden)]
+    #[allow(clippy::needless_pass_by_value)]
     pub fn from_raw(hyper: RawHyperslab) -> Result<Self> {
         let mut dims = vec![];
         for (i, slice) in hyper.iter().enumerate() {
@@ -464,13 +451,13 @@ where
 
 fn slice_info_to_raw(axis: usize, slice: &SliceOrIndex, dim: Ix) -> Result<RawSlice> {
     let err_msg = || format!("out of bounds for axis {} with size {}", axis, dim);
-    let (start, step, count, block) = match slice {
-        &SliceOrIndex::Index(index) => {
+    let (start, step, count, block) = match *slice {
+        SliceOrIndex::Index(index) => {
             let idx = abs_index(dim, index);
             ensure!(idx >= 0 && idx < dim as _, "Index {} {}", index, err_msg());
             (idx as _, 1, Some(1), 1)
         }
-        &SliceOrIndex::Slice { start, step, end, block } => {
+        SliceOrIndex::Slice { start, step, end, block } => {
             ensure!(step >= 1, "Slice stride {} < 1 for axis {}", step, axis);
             let s = abs_index(dim, start);
             ensure!(s >= 0 && s <= dim as _, "Slice start {} {}", start, err_msg());
@@ -481,7 +468,7 @@ fn slice_info_to_raw(axis: usize, slice: &SliceOrIndex, dim: Ix) -> Result<RawSl
             let count = if e < s + block { 0 } else { 1 + (e - s - block) / step };
             (s as _, step as _, Some(count as _), block as _)
         }
-        &SliceOrIndex::Unlimited { start, step, block } => {
+        SliceOrIndex::Unlimited { start, step, block } => {
             ensure!(step >= 1, "Slice stride {} < 1 for axis {}", step, axis);
             let s = abs_index(dim, start);
             ensure!(s >= 0 && s <= dim as _, "Slice start {} {}", start, err_msg());
@@ -496,11 +483,11 @@ impl Display for Hyperslab {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let slice: &[_] = self.as_ref();
         write!(f, "(")?;
-        for i in 0..slice.len() {
+        for (i, s) in slice.iter().enumerate() {
             if i != 0 {
                 write!(f, ", ")?;
             }
-            write!(f, "{}", slice[i])?;
+            write!(f, "{}", s)?;
         }
         if slice.len() == 1 {
             write!(f, ",")?;
@@ -518,7 +505,7 @@ pub enum Selection {
 
 impl Default for Selection {
     fn default() -> Self {
-        Selection::All
+        Self::All
     }
 }
 
@@ -531,8 +518,8 @@ impl Selection {
     pub fn into_raw<S: AsRef<[Ix]>>(self, shape: S) -> Result<RawSelection> {
         let shape = shape.as_ref();
         Ok(match self {
-            Selection::All => RawSelection::All,
-            Selection::Points(coords) => {
+            Self::All => RawSelection::All,
+            Self::Points(coords) => {
                 check_coords(&coords, shape)?;
                 if coords.shape()[0] == 0 {
                     RawSelection::None
@@ -540,7 +527,7 @@ impl Selection {
                     RawSelection::Points(coords)
                 }
             }
-            Selection::Hyperslab(hyper) => {
+            Self::Hyperslab(hyper) => {
                 let hyper = hyper.into_raw(shape)?;
                 if hyper.is_none() {
                     RawSelection::None
@@ -556,9 +543,9 @@ impl Selection {
     #[doc(hidden)]
     pub fn from_raw(selection: RawSelection) -> Result<Self> {
         Ok(match selection {
-            RawSelection::None => Selection::Points(Array2::default((0, 0))),
-            RawSelection::All => Selection::All,
-            RawSelection::Points(coords) => Selection::Points(coords),
+            RawSelection::None => Self::Points(Array2::default((0, 0))),
+            RawSelection::All => Self::All,
+            RawSelection::Points(coords) => Self::Points(coords),
             RawSelection::RegularHyperslab(hyper) => Hyperslab::from_raw(hyper)?.into(),
             RawSelection::ComplexHyperslab => fail!("Cannot convert complex hyperslabs"),
         })
@@ -566,35 +553,33 @@ impl Selection {
 
     pub fn in_ndim(&self) -> Option<usize> {
         match self {
-            Selection::All => None,
-            Selection::Points(ref points) => {
-                if points.shape() == &[0, 0] {
+            Self::All => None,
+            Self::Points(ref points) => {
+                if points.shape() == [0, 0] {
                     None
                 } else {
                     Some(points.shape()[1])
                 }
             }
-            Selection::Hyperslab(ref hyper) => Some(hyper.len()),
+            Self::Hyperslab(ref hyper) => Some(hyper.len()),
         }
     }
 
     pub fn out_ndim(&self) -> Option<usize> {
         match self {
-            Selection::All => None,
-            Selection::Points(ref points) => Some((points.shape() != &[0, 0]) as usize),
-            Selection::Hyperslab(ref hyper) => {
-                Some(hyper.iter().map(|&s| s.is_slice() as usize).sum())
-            }
+            Self::All => None,
+            Self::Points(ref points) => Some((points.shape() != [0, 0]) as usize),
+            Self::Hyperslab(ref hyper) => Some(hyper.iter().map(|&s| s.is_slice() as usize).sum()),
         }
     }
 
     pub fn out_shape<S: AsRef<[Ix]>>(&self, in_shape: S) -> Result<Vec<Ix>> {
         let in_shape = in_shape.as_ref();
         match self {
-            Selection::All => Ok(in_shape.to_owned()),
-            Selection::Points(ref points) => check_coords(points, in_shape)
-                .and(Ok(if points.shape() == &[0, 0] { vec![] } else { vec![points.shape()[0]] })),
-            Selection::Hyperslab(ref hyper) => hyper
+            Self::All => Ok(in_shape.to_owned()),
+            Self::Points(ref points) => check_coords(points, in_shape)
+                .and(Ok(if points.shape() == [0, 0] { vec![] } else { vec![points.shape()[0]] })),
+            Self::Hyperslab(ref hyper) => hyper
                 .clone()
                 .into_raw(in_shape)?
                 .iter()
@@ -611,59 +596,55 @@ impl Selection {
     }
 
     pub fn is_all(&self) -> bool {
-        self == &Selection::All
+        self == &Self::All
     }
 
     pub fn is_points(&self) -> bool {
-        if let &Selection::Points(ref points) = self {
-            points.shape() != &[0, 0]
+        if let Self::Points(ref points) = self {
+            points.shape() != [0, 0]
         } else {
             false
         }
     }
 
     pub fn is_none(&self) -> bool {
-        if let &Selection::Points(ref points) = self {
-            points.shape() == &[0, 0]
+        if let Self::Points(points) = self {
+            points.shape() == [0, 0]
         } else {
             false
         }
     }
 
     pub fn is_hyperslab(&self) -> bool {
-        if let &Selection::Hyperslab(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, Self::Hyperslab(_))
     }
 }
 
 impl Display for Selection {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Selection::All => write!(f, ".."),
-            Selection::Points(ref points) => {
-                if points.shape() == &[0, 0] {
+            Self::All => write!(f, ".."),
+            Self::Points(ref points) => {
+                if points.shape() == [0, 0] {
                     write!(f, "[]")
                 } else {
                     write!(f, "{}", points)
                 }
             }
-            Selection::Hyperslab(hyper) => write!(f, "{}", hyper),
+            Self::Hyperslab(hyper) => write!(f, "{}", hyper),
         }
     }
 }
 
 impl From<&Selection> for Selection {
-    fn from(sel: &Selection) -> Self {
+    fn from(sel: &Self) -> Self {
         sel.clone()
     }
 }
 
 impl From<RangeFull> for Selection {
     fn from(_: RangeFull) -> Self {
-        Selection::All
+        Self::All
     }
 }
 
@@ -675,13 +656,13 @@ impl From<()> for Selection {
 
 impl From<SliceOrIndex> for Selection {
     fn from(slice: SliceOrIndex) -> Self {
-        Selection::Hyperslab(slice.into())
+        Self::Hyperslab(slice.into())
     }
 }
 
 impl From<Hyperslab> for Selection {
     fn from(hyper: Hyperslab) -> Self {
-        Selection::Hyperslab(hyper)
+        Self::Hyperslab(hyper)
     }
 }
 
@@ -697,14 +678,15 @@ where
 
 impl From<Array2<Ix>> for Selection {
     fn from(points: Array2<Ix>) -> Self {
-        Selection::Points(points)
+        Self::Points(points)
     }
 }
 
+#[allow(clippy::fallible_impl_from)]
 impl From<Array1<Ix>> for Selection {
     fn from(points: Array1<Ix>) -> Self {
         let n = points.len();
-        Selection::Points(if n == 0 {
+        Self::Points(if n == 0 {
             Array2::zeros((0, 0))
         } else {
             points.into_shape((n, 1)).unwrap().into_dimensionality().unwrap()

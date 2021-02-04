@@ -116,11 +116,11 @@ impl From<H5D_vds_view_t> for VirtualView {
 }
 
 #[cfg(hdf5_1_10_0)]
-impl Into<H5D_vds_view_t> for VirtualView {
-    fn into(self) -> H5D_vds_view_t {
-        match self {
-            Self::FirstMissing => H5D_vds_view_t::H5D_VDS_FIRST_MISSING,
-            _ => H5D_vds_view_t::H5D_VDS_LAST_AVAILABLE,
+impl From<VirtualView> for H5D_vds_view_t {
+    fn from(v: VirtualView) -> Self {
+        match v {
+            VirtualView::FirstMissing => Self::H5D_VDS_FIRST_MISSING,
+            VirtualView::LastAvailable => Self::H5D_VDS_LAST_AVAILABLE,
         }
     }
 }

@@ -54,14 +54,14 @@ impl Deref for Dataspace {
     }
 }
 
-pub(crate) unsafe fn get_shape(space_id: hid_t) -> Result<Vec<Ix>> {
+unsafe fn get_shape(space_id: hid_t) -> Result<Vec<Ix>> {
     let ndim = h5check(H5Sget_simple_extent_ndims(space_id))? as usize;
     let mut dims = vec![0; ndim];
     h5check(H5Sget_simple_extent_dims(space_id, dims.as_mut_ptr(), ptr::null_mut()))?;
     Ok(dims.into_iter().map(|x| x as _).collect())
 }
 
-pub(crate) unsafe fn get_simple_extents(space_id: hid_t) -> Result<SimpleExtents> {
+unsafe fn get_simple_extents(space_id: hid_t) -> Result<SimpleExtents> {
     let ndim = h5check(H5Sget_simple_extent_ndims(space_id))? as usize;
     let (mut dims, mut maxdims) = (vec![0; ndim], vec![0; ndim]);
     h5check(H5Sget_simple_extent_dims(space_id, dims.as_mut_ptr(), maxdims.as_mut_ptr()))?;
@@ -76,7 +76,7 @@ pub(crate) unsafe fn get_simple_extents(space_id: hid_t) -> Result<SimpleExtents
 
 impl Dataspace {
     pub fn try_new<T: Into<Extents>>(extents: T) -> Result<Self> {
-        Self::from_extents(extents.into())
+        Self::from_extents(&extents.into())
     }
 
     pub fn copy(&self) -> Self {
@@ -129,9 +129,9 @@ impl Dataspace {
     pub fn encode(&self) -> Result<Vec<u8>> {
         let mut len: size_t = 0;
         h5lock!({
-            h5try!(H5Sencode1(self.id(), ptr::null_mut() as *mut _, &mut len as *mut _));
-            let mut buf = vec![0u8; len];
-            h5try!(H5Sencode1(self.id(), buf.as_mut_ptr() as *mut _, &mut len as *mut _));
+            h5try!(H5Sencode1(self.id(), ptr::null_mut(), &mut len as *mut _));
+            let mut buf = vec![0_u8; len];
+            h5try!(H5Sencode1(self.id(), buf.as_mut_ptr().cast(), &mut len as *mut _));
             Ok(buf)
         })
     }
@@ -140,10 +140,10 @@ impl Dataspace {
     where
         T: AsRef<[u8]>,
     {
-        h5lock!(Self::from_id(h5try!(H5Sdecode(buf.as_ref().as_ptr() as *const _))))
+        h5lock!(Self::from_id(h5try!(H5Sdecode(buf.as_ref().as_ptr().cast()))))
     }
 
-    fn from_extents(extents: Extents) -> Result<Self> {
+    fn from_extents(extents: &Extents) -> Result<Self> {
         h5lock!(Self::from_id(match extents {
             Extents::Null => H5Screate(H5S_class_t::H5S_NULL),
             Extents::Scalar => H5Screate(H5S_class_t::H5S_SCALAR),
@@ -151,13 +151,14 @@ impl Dataspace {
                 let (mut dims, mut maxdims) = (vec![], vec![]);
                 for extent in e.iter() {
                     dims.push(extent.dim as _);
-                    maxdims.push(extent.max.map(|x| x as _).unwrap_or(H5S_UNLIMITED));
+                    maxdims.push(extent.max.map_or(H5S_UNLIMITED, |x| x as _));
                 }
                 H5Screate_simple(e.ndim() as _, dims.as_ptr(), maxdims.as_ptr())
             }
         }))
     }
 
+    #[allow(clippy::match_wildcard_for_single_variants)]
     pub fn extents(&self) -> Result<Extents> {
         h5lock!(match H5Sget_simple_extent_type(self.id()) {
             H5S_class_t::H5S_NULL => Ok(Extents::Null),
