@@ -1,6 +1,6 @@
 pub mod container;
 // pub mod dataset;
-pub mod dataset2;
+pub mod dataset;
 pub mod dataspace;
 pub mod datatype;
 pub mod extents;
@@ -12,8 +12,6 @@ pub mod location;
 pub mod object;
 pub mod plist;
 pub mod selection;
-
-pub use dataset2 as dataset;
 
 pub use self::{
     container::{Container, Reader, Writer},

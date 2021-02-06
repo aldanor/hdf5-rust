@@ -1,26 +1,37 @@
 use std::fmt::{self, Debug};
-use std::mem;
 use std::ops::Deref;
 
-use num_integer::div_floor;
+use ndarray::{self, ArrayView};
 
+use hdf5_sys::h5::HADDR_UNDEF;
+use hdf5_sys::h5d::{
+    H5Dcreate2, H5Dcreate_anon, H5Dget_access_plist, H5Dget_create_plist, H5Dget_offset,
+    H5Dset_extent,
+};
 #[cfg(hdf5_1_10_5)]
 use hdf5_sys::h5d::{H5Dget_chunk_info, H5Dget_num_chunks};
-use hdf5_sys::{
-    h5::HADDR_UNDEF,
-    h5d::{
-        H5D_fill_value_t, H5D_layout_t, H5Dcreate2, H5Dcreate_anon, H5Dget_create_plist,
-        H5Dget_offset, H5Dset_extent, H5D_FILL_TIME_ALLOC,
-    },
-    h5p::{
-        H5Pcreate, H5Pfill_value_defined, H5Pget_chunk, H5Pget_fill_value, H5Pget_layout,
-        H5Pget_obj_track_times, H5Pset_chunk, H5Pset_create_intermediate_group, H5Pset_fill_time,
-        H5Pset_fill_value, H5Pset_obj_track_times,
-    },
-};
+use hdf5_sys::h5l::H5Ldelete;
+use hdf5_sys::h5p::H5P_DEFAULT;
+use hdf5_sys::h5z::H5Z_filter_t;
+use hdf5_types::{OwnedDynValue, TypeDescriptor};
 
-use crate::globals::H5P_LINK_CREATE;
+#[cfg(feature = "blosc")]
+use crate::hl::filters::{Blosc, BloscShuffle};
+use crate::hl::filters::{Filter, SZip, ScaleOffset};
+#[cfg(hdf5_1_10_0)]
+use crate::hl::plist::dataset_access::VirtualView;
+use crate::hl::plist::dataset_access::{DatasetAccess, DatasetAccessBuilder};
+#[cfg(hdf5_1_10_0)]
+use crate::hl::plist::dataset_create::ChunkOpts;
+use crate::hl::plist::dataset_create::{
+    AllocTime, AttrCreationOrder, DatasetCreate, DatasetCreateBuilder, FillTime, Layout,
+};
+use crate::hl::plist::link_create::{CharEncoding, LinkCreate, LinkCreateBuilder};
 use crate::internal_prelude::*;
+
+/// Default chunk size when filters are enabled and the chunk size is not specified.
+/// This is the same value that netcdf uses by default.
+pub const DEFAULT_CHUNK_SIZE_KB: usize = 4096;
 
 /// Represents the HDF5 dataset object.
 #[repr(transparent)]
@@ -56,14 +67,6 @@ impl Deref for Dataset {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Chunk {
-    None,
-    Auto,
-    Infer,
-    Manual(Vec<Ix>),
-}
-
 #[cfg(hdf5_1_10_5)]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ChunkInfo {
@@ -88,25 +91,51 @@ impl ChunkInfo {
         unsafe { offset.set_len(ndim) };
         Self { offset, filter_mask: 0, addr: 0, size: 0 }
     }
+
+    /// Returns positional indices of disabled filters.
+    pub fn disabled_filters(&self) -> Vec<usize> {
+        (0..32).filter(|i| self.filter_mask & (1 << i) != 0).collect()
+    }
 }
 
 impl Dataset {
-    /// Returns whether this dataset is resizable along some axis.
+    /// Returns a copy of the dataset access property list.
+    pub fn access_plist(&self) -> Result<DatasetAccess> {
+        h5lock!(DatasetAccess::from_id(h5try!(H5Dget_access_plist(self.id()))))
+    }
+
+    /// A short alias for `access_plist()`.
+    pub fn dapl(&self) -> Result<DatasetAccess> {
+        self.access_plist()
+    }
+
+    /// Returns a copy of the dataset creation property list.
+    pub fn create_plist(&self) -> Result<DatasetCreate> {
+        h5lock!(DatasetCreate::from_id(h5try!(H5Dget_create_plist(self.id()))))
+    }
+
+    /// A short alias for `create_plist()`.
+    pub fn dcpl(&self) -> Result<DatasetCreate> {
+        self.create_plist()
+    }
+
+    /// Returns `true` if this dataset is resizable along at least one axis.
     pub fn is_resizable(&self) -> bool {
         h5lock!(self.space().ok().map_or(false, |s| s.is_resizable()))
     }
 
-    /// Returns whether this dataset has a chunked layout.
+    /// Returns `true` if this dataset has a chunked layout.
     pub fn is_chunked(&self) -> bool {
-        h5lock!({
-            self.dcpl_id()
-                .ok()
-                .map_or(false, |dcpl_id| H5Pget_layout(dcpl_id) == H5D_layout_t::H5D_CHUNKED)
-        })
+        self.layout() == Layout::Chunked
+    }
+
+    /// Returns the dataset layout.
+    pub fn layout(&self) -> Layout {
+        self.dcpl().map_or(Layout::default(), |pl| pl.layout())
     }
 
     #[cfg(hdf5_1_10_5)]
-    /// Returns number of chunks if the dataset is chunked.
+    /// Returns the number of chunks if the dataset is chunked.
     pub fn num_chunks(&self) -> Option<usize> {
         if !self.is_chunked() {
             return None;
@@ -140,730 +169,1118 @@ impl Dataset {
     }
 
     /// Returns the chunk shape if the dataset is chunked.
-    pub fn chunks(&self) -> Option<Vec<Ix>> {
-        h5lock!({
-            self.dcpl_id().ok().and_then(|dcpl_id| {
-                if self.is_chunked() {
-                    Some({
-                        let ndim = self.ndim();
-                        let mut dims: Vec<hsize_t> = Vec::with_capacity(ndim);
-                        dims.set_len(ndim);
-                        H5Pget_chunk(dcpl_id, ndim as _, dims.as_mut_ptr());
-                        dims.iter().map(|&x| x as _).collect()
-                    })
-                } else {
-                    None
-                }
-            })
-        })
-    }
-
-    /// Returns the filters used to create the dataset.
-    pub fn filters(&self) -> Filters {
-        h5lock!({
-            let dcpl = PropertyList::from_id(H5Dget_create_plist(self.id()))?;
-            Ok(Filters::from_dcpl(&dcpl)?)
-        })
-        .unwrap_or_else(|_: crate::error::Error| Filters::default())
-    }
-
-    /// Returns `true` if object modification time is tracked by the dataset.
-    pub fn tracks_times(&self) -> bool {
-        h5lock!({
-            self.dcpl_id().ok().map_or(false, |dcpl_id| {
-                let mut track_times: hbool_t = 0;
-                h5lock!(H5Pget_obj_track_times(dcpl_id, &mut track_times as *mut _));
-                track_times > 0
-            })
-        })
+    pub fn chunk(&self) -> Option<Vec<Ix>> {
+        self.dcpl().map_or(None, |pl| pl.chunk())
     }
 
     /// Returns the absolute byte offset of the dataset in the file if such offset is defined
     /// (which is not the case for datasets that are chunked, compact or not allocated yet).
     pub fn offset(&self) -> Option<u64> {
-        let offset: haddr_t = h5lock!(H5Dget_offset(self.id()));
-        if offset == HADDR_UNDEF {
-            None
-        } else {
-            Some(offset as _)
+        match h5lock!(H5Dget_offset(self.id())) as haddr_t {
+            HADDR_UNDEF => None,
+            offset => Some(offset as _),
         }
     }
 
-    /// Returns default fill value for the dataset if such value is set. Note that conversion
-    /// to the requested type is done by HDF5 which may result in loss of precision for
-    /// floating-point values if the datatype differs from the datatype of of the dataset.
-    pub fn fill_value<T: H5Type>(&self) -> Result<Option<T>> {
-        h5lock!({
-            let defined: *mut H5D_fill_value_t = &mut H5D_fill_value_t::H5D_FILL_VALUE_UNDEFINED;
-            let dcpl_id = self.dcpl_id()?;
-            h5try!(H5Pfill_value_defined(dcpl_id, defined));
-            match *defined {
-                H5D_fill_value_t::H5D_FILL_VALUE_ERROR => fail!("Invalid fill value"),
-                H5D_fill_value_t::H5D_FILL_VALUE_UNDEFINED => Ok(None),
-                _ => {
-                    let datatype = Datatype::from_type::<T>()?;
-                    let mut value = mem::MaybeUninit::<T>::uninit();
-                    h5try!(
-                        H5Pget_fill_value(dcpl_id, datatype.id(), value.as_mut_ptr() as *mut _,)
-                    );
-                    Ok(Some(value.assume_init()))
-                }
-            }
-        })
+    /// Returns default fill value for the dataset if such value is set.
+    pub fn fill_value(&self) -> Result<Option<OwnedDynValue>> {
+        h5lock!(self.dcpl()?.get_fill_value(&self.dtype()?.to_descriptor()?))
     }
 
-    fn dcpl_id(&self) -> Result<hid_t> {
-        h5call!(H5Dget_create_plist(self.id()))
-    }
-
-    pub fn resize<D: Dimension>(&self, d: D) -> Result<()> {
+    /// Resizes the dataset to a new shape.
+    pub fn resize<D: Dimension>(&self, shape: D) -> Result<()> {
         let mut dims: Vec<hsize_t> = vec![];
-        for dim in &d.dims() {
+        for dim in &shape.dims() {
             dims.push(*dim as _);
         }
         h5try!(H5Dset_extent(self.id(), dims.as_ptr()));
         Ok(())
     }
+
+    /// Returns the pipeline of filters used in this dataset.
+    pub fn filters(&self) -> Vec<Filter> {
+        self.dcpl().map_or(Vec::default(), |pl| pl.filters())
+    }
+}
+
+pub struct Maybe<T>(Option<T>);
+
+impl<T> Deref for Maybe<T> {
+    type Target = Option<T>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<T> From<Maybe<T>> for Option<T> {
+    fn from(v: Maybe<T>) -> Self {
+        v.0
+    }
+}
+
+impl<T> From<T> for Maybe<T> {
+    fn from(v: T) -> Self {
+        Self(Some(v))
+    }
+}
+
+impl<T> From<Option<T>> for Maybe<T> {
+    fn from(v: Option<T>) -> Self {
+        Self(v)
+    }
+}
+#[derive(Clone)]
+/// A dataset builder
+pub struct DatasetBuilder {
+    builder: DatasetBuilderInner,
+}
+
+impl DatasetBuilder {
+    pub fn new(parent: &Group) -> Self {
+        Self { builder: DatasetBuilderInner::new(parent) }
+    }
+
+    pub fn empty<T: H5Type>(self) -> DatasetBuilderEmpty {
+        self.empty_as(&T::type_descriptor())
+    }
+
+    pub fn empty_as(self, type_desc: &TypeDescriptor) -> DatasetBuilderEmpty {
+        DatasetBuilderEmpty { builder: self.builder, type_desc: type_desc.clone() }
+    }
+
+    pub fn with_data<'d, A, T, D>(self, data: A) -> DatasetBuilderData<'d, T, D>
+    where
+        A: Into<ArrayView<'d, T, D>>,
+        T: H5Type,
+        D: ndarray::Dimension,
+    {
+        self.with_data_as::<A, T, D>(data, &T::type_descriptor())
+    }
+
+    pub fn with_data_as<'d, A, T, D>(
+        self, data: A, type_desc: &TypeDescriptor,
+    ) -> DatasetBuilderData<'d, T, D>
+    where
+        A: Into<ArrayView<'d, T, D>>,
+        T: H5Type,
+        D: ndarray::Dimension,
+    {
+        DatasetBuilderData {
+            builder: self.builder,
+            data: data.into(),
+            type_desc: type_desc.clone(),
+            resizable: false,
+        }
+    }
 }
 
 #[derive(Clone)]
-pub struct DatasetBuilder<T> {
-    packed: bool,
-    filters: Filters,
-    chunk: Chunk,
-    parent: Result<Handle>,
-    track_times: bool,
-    resizable: bool,
-    fill_value: Option<T>,
+/// A dataset builder with the type known
+pub struct DatasetBuilderEmpty {
+    builder: DatasetBuilderInner,
+    type_desc: TypeDescriptor,
 }
 
-impl<T: H5Type> DatasetBuilder<T> {
-    /// Create a new dataset builder and bind it to the parent container.
-    pub fn new(parent: &Group) -> Self {
-        Self {
-            packed: false,
-            filters: Filters::default(),
-            chunk: Chunk::Auto,
-            parent: parent.try_borrow(),
-            track_times: false,
+impl DatasetBuilderEmpty {
+    pub fn shape<S: Into<Extents>>(self, extents: S) -> DatasetBuilderEmptyShape {
+        DatasetBuilderEmptyShape {
+            builder: self.builder,
+            type_desc: self.type_desc,
+            extents: extents.into(),
             resizable: false,
-            fill_value: None,
         }
     }
+}
 
-    pub fn packed(&mut self, packed: bool) -> &mut Self {
-        self.packed = packed;
+#[derive(Clone)]
+/// A dataset builder with type and shape known
+pub struct DatasetBuilderEmptyShape {
+    builder: DatasetBuilderInner,
+    type_desc: TypeDescriptor,
+    extents: Extents,
+    resizable: bool,
+}
+
+impl DatasetBuilderEmptyShape {
+    pub fn resizable(&mut self, resizable: bool) -> &mut Self {
+        self.resizable = resizable;
         self
     }
-
-    pub fn fill_value(&mut self, fill_value: T) -> &mut Self {
-        self.fill_value = Some(fill_value);
-        self
+    pub fn create<'n, T: Into<Maybe<&'n str>>>(&self, name: T) -> Result<Dataset> {
+        let extents = self.extents.clone();
+        let extents = if self.resizable { extents.resizable() } else { extents };
+        h5lock!(self.builder.create(&self.type_desc, name.into().into(), &extents))
     }
+}
 
-    /// Disable chunking.
-    pub fn no_chunk(&mut self) -> &mut Self {
-        self.chunk = Chunk::None;
-        self
-    }
+#[derive(Clone)]
+/// A dataset builder with type, shape, and data known
+pub struct DatasetBuilderData<'d, T, D> {
+    builder: DatasetBuilderInner,
+    data: ArrayView<'d, T, D>,
+    type_desc: TypeDescriptor,
+    resizable: bool,
+}
 
-    /// Enable automatic chunking only if chunking is required (default option).
-    pub fn chunk_auto(&mut self) -> &mut Self {
-        self.chunk = Chunk::Auto;
-        self
-    }
-
-    /// Enable chunking with automatic chunk shape.
-    pub fn chunk_infer(&mut self) -> &mut Self {
-        self.chunk = Chunk::Infer;
-        self
-    }
-
-    /// Set chunk shape manually.
-    pub fn chunk<D: Dimension>(&mut self, chunk: D) -> &mut Self {
-        self.chunk = Chunk::Manual(chunk.dims());
-        self
-    }
-
-    /// Set the filters.
-    pub fn filters(&mut self, filters: &Filters) -> &mut Self {
-        self.filters = filters.clone();
-        self
-    }
-
-    /// Enable or disable tracking object modification time (disabled by default).
-    pub fn track_times(&mut self, track_times: bool) -> &mut Self {
-        self.track_times = track_times;
-        self
-    }
-
-    /// Make the dataset resizable along all axes (requires chunking).
+impl<'d, T, D> DatasetBuilderData<'d, T, D>
+where
+    T: H5Type,
+    D: ndarray::Dimension,
+{
     pub fn resizable(&mut self, resizable: bool) -> &mut Self {
         self.resizable = resizable;
         self
     }
 
-    /// Enable gzip compression with a specified level (0-9).
-    pub fn gzip(&mut self, level: u8) -> &mut Self {
-        self.filters.gzip(level);
-        self
-    }
-
-    /// Enable szip compression with a specified method (EC, NN) and level (0-32).
-    ///
-    /// If `nn` if set to `true` (default), the nearest neighbor method is used, otherwise
-    /// the method is set to entropy coding.
-    pub fn szip(&mut self, nn: bool, level: u8) -> &mut Self {
-        self.filters.szip(nn, level);
-        self
-    }
-
-    /// Enable or disable shuffle filter.
-    pub fn shuffle(&mut self, shuffle: bool) -> &mut Self {
-        self.filters.shuffle(shuffle);
-        self
-    }
-
-    /// Enable or disable fletcher32 filter.
-    pub fn fletcher32(&mut self, fletcher32: bool) -> &mut Self {
-        self.filters.fletcher32(fletcher32);
-        self
-    }
-
-    /// Enable scale-offset filter with a specified factor (0 means automatic).
-    pub fn scale_offset(&mut self, scale_offset: u32) -> &mut Self {
-        self.filters.scale_offset(scale_offset);
-        self
-    }
-
-    fn make_dcpl(&self, datatype: &Datatype, extents: &Extents) -> Result<PropertyList> {
-        let ndim = extents.ndim();
-        let resizable = extents.is_resizable();
-        let shape = extents.dims();
+    pub fn create<'n, N: Into<Maybe<&'n str>>>(&self, name: N) -> Result<Dataset> {
+        ensure!(
+            self.data.is_standard_layout(),
+            "input array is not in standard layout or is not contiguous"
+        ); // TODO: relax this when it's supported in the writer
+        let extents = Extents::from(self.data.shape());
+        let extents = if self.resizable { extents.resizable() } else { extents };
+        let name = name.into().into();
         h5lock!({
-            let dcpl = self.filters.to_dcpl(datatype)?;
-            let id = dcpl.id();
-
-            h5try!(H5Pset_obj_track_times(id, self.track_times as _));
-
-            if let Some(ref fill_value) = self.fill_value {
-                h5try!(H5Pset_fill_value(id, datatype.id(), fill_value as *const _ as *const _));
-            }
-
-            if let Chunk::None = self.chunk {
-                ensure!(
-                    !self.filters.has_filters(),
-                    "Chunking must be enabled when filters are present"
-                );
-                ensure!(!resizable, "Chunking must be enabled for resizable datasets");
+            let dtype_src = Datatype::from_type::<T>()?;
+            let dtype_dst = Datatype::from_descriptor(&self.type_desc)?;
+            // TODO: soft conversion? hard? user-specifiable?
+            dtype_src.ensure_convertible(&dtype_dst, Conversion::Soft)?;
+            let ds = self.builder.create(&self.type_desc, name, &extents)?;
+            if let Err(err) = ds.write(self.data.view()) {
+                self.builder.try_unlink(name);
+                Err(err)
             } else {
-                let no_chunk = if let Chunk::Auto = self.chunk {
-                    !self.filters.has_filters() && !self.resizable
-                } else {
-                    false
-                };
-                if !no_chunk {
-                    ensure!(ndim > 0, "Chunking cannot be enabled for 0-dim datasets");
-
-                    let dims = match self.chunk {
-                        Chunk::Manual(ref c) => c.clone(),
-                        _ => infer_chunk_size(&shape, datatype.size()),
-                    };
-
-                    ensure!(
-                        dims.ndim() == ndim,
-                        "Invalid chunk ndim: expected {}, got {}",
-                        ndim,
-                        dims.ndim()
-                    );
-                    ensure!(
-                        dims.size() > 0,
-                        "Invalid chunk: {:?} (all dimensions must be positive)",
-                        dims
-                    );
-
-                    if !resizable {
-                        ensure!(
-                            dims.iter().zip(shape.iter()).all(|(&c, &s)| c <= s),
-                            "Invalid chunk: {:?} (must not exceed data shape in any dimension)",
-                            dims
-                        );
-                    }
-
-                    let c_dims: Vec<hsize_t> = dims.iter().map(|&x| x as _).collect();
-                    h5try!(H5Pset_chunk(id, dims.ndim() as _, c_dims.as_ptr()));
-
-                    // For chunked datasets, write fill values at the allocation time.
-                    h5try!(H5Pset_fill_time(id, H5D_FILL_TIME_ALLOC));
-                }
-            }
-
-            Ok(dcpl)
-        })
-    }
-
-    fn make_lcpl() -> Result<PropertyList> {
-        h5lock!({
-            let lcpl = PropertyList::from_id(h5try!(H5Pcreate(*H5P_LINK_CREATE)))?;
-            h5call!(H5Pset_create_intermediate_group(lcpl.id(), 1)).and(Ok(lcpl))
-        })
-    }
-
-    fn finalize<S: Into<Extents>>(&self, name: Option<&str>, extents: S) -> Result<Dataset> {
-        let type_descriptor = if self.packed {
-            <T as H5Type>::type_descriptor().to_packed_repr()
-        } else {
-            <T as H5Type>::type_descriptor().to_c_repr()
-        };
-        let mut extents = extents.into();
-        if self.resizable {
-            extents = extents.resizable();
-        }
-        h5lock!({
-            let datatype = Datatype::from_descriptor(&type_descriptor)?;
-            let parent = try_ref_clone!(self.parent);
-
-            let dcpl = self.make_dcpl(&datatype, &extents)?;
-            let dataspace = Dataspace::try_new(extents)?;
-
-            if let Some(name) = name {
-                let lcpl = Self::make_lcpl()?;
-                let name = to_cstring(name)?;
-                Dataset::from_id(h5try!(H5Dcreate2(
-                    parent.id(),
-                    name.as_ptr(),
-                    datatype.id(),
-                    dataspace.id(),
-                    lcpl.id(),
-                    dcpl.id(),
-                    H5P_DEFAULT
-                )))
-            } else {
-                Dataset::from_id(h5try!(H5Dcreate_anon(
-                    parent.id(),
-                    datatype.id(),
-                    dataspace.id(),
-                    dcpl.id(),
-                    H5P_DEFAULT
-                )))
+                Ok(ds)
             }
         })
-    }
-
-    /// Create the dataset and link it into the file structure.
-    pub fn create<S: Into<Extents>>(&self, name: &str, shape: S) -> Result<Dataset> {
-        self.finalize(Some(name), shape)
-    }
-
-    /// Create an anonymous dataset without linking it.
-    pub fn create_anon<S: Into<Extents>>(&self, shape: S) -> Result<Dataset> {
-        self.finalize(None, shape)
     }
 }
 
-fn infer_chunk_size(shape: &[Ix], typesize: usize) -> Vec<Ix> {
-    // This algorithm is borrowed from h5py, though the idea originally comes from PyTables.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Chunk {
+    Exact(Vec<Ix>), // exact chunk shape
+    MinKB(usize),   // minimum chunk shape in KB
+    None,           // leave it unchunked
+}
 
-    const CHUNK_BASE: f64 = (16 * 1024) as _;
-    const CHUNK_MIN: f64 = (8 * 1024) as _;
-    const CHUNK_MAX: f64 = (1024 * 1024) as _;
-
-    let ndim = shape.len();
-    let size: usize = shape.iter().product();
-
-    if ndim == 0 {
-        return vec![];
-    } else if size == 0 {
-        return vec![1];
+impl Default for Chunk {
+    fn default() -> Self {
+        Self::None
     }
+}
 
-    let mut chunks = shape.to_vec();
-    let total = (typesize * size) as f64;
-    let mut target: f64 = CHUNK_BASE * (total / (1024.0 * 1024.0)).log10().exp2();
+fn compute_chunk_shape(dims: &SimpleExtents, minimum_elements: usize) -> Vec<Ix> {
+    let mut chunk_shape = vec![1; dims.ndim()];
+    let mut product_cs = 1;
 
-    if target > CHUNK_MAX {
-        target = CHUNK_MAX;
-    } else if target < CHUNK_MIN {
-        target = CHUNK_MIN;
-    }
-
-    // Loop over axes, dividing them by 2, stop when all of the following is true:
-    // - chunk size is smaller than the target chunk size or is within 50% of target chunk size
-    // - chunk size is smaller than the maximum chunk size
-    for i in 0.. {
-        let size: usize = chunks.iter().product();
-        let bytes = (size * typesize) as f64;
-        if (bytes < target * 1.5 && bytes < CHUNK_MAX) || size == 1 {
+    // For c-order datasets we iterate from the back (fastest iteration order)
+    for (extent, cs) in dims.iter().zip(chunk_shape.iter_mut()).rev() {
+        if product_cs >= minimum_elements {
             break;
         }
-        let axis = i % ndim;
-        chunks[axis] = div_floor(chunks[axis] + 1, 2);
-    }
+        let wanted_size = minimum_elements / product_cs;
+        // If unlimited dimension we just map to wanted_size
+        *cs = extent.max.map_or(wanted_size, |maxdim| {
+            // If the requested chunk size would result
+            // in dividing the chunk in two uneven parts,
+            // we instead merge these into the same chunk
+            // to prevent having small chunks
+            if 2 * wanted_size > maxdim + 1 {
+                maxdim
+            } else {
+                std::cmp::min(wanted_size, maxdim)
+            }
+        });
 
-    chunks
+        product_cs *= *cs;
+    }
+    chunk_shape
 }
 
-#[cfg(test)]
-pub mod tests {
-    use std::fs;
-    use std::io::Read;
+#[derive(Clone)]
+/// The true internal dataset builder
+struct DatasetBuilderInner {
+    parent: Result<Handle>,
+    dapl_base: Option<DatasetAccess>,
+    dcpl_base: Option<DatasetCreate>,
+    lcpl_base: Option<LinkCreate>,
+    dapl_builder: DatasetAccessBuilder,
+    dcpl_builder: DatasetCreateBuilder,
+    lcpl_builder: LinkCreateBuilder,
+    packed: bool,
+    chunk: Option<Chunk>,
+}
 
-    use hdf5_sys::{h5d::H5Dwrite, h5s::H5S_ALL};
+impl DatasetBuilderInner {
+    pub fn new(parent: &Group) -> Self {
+        // same as in h5py, disable time tracking by default and enable intermediate groups
+        let mut dcpl = DatasetCreateBuilder::default();
+        dcpl.obj_track_times(false);
+        let mut lcpl = LinkCreateBuilder::default();
+        lcpl.create_intermediate_group(true);
 
-    use crate::filters::{gzip_available, szip_available};
-    use crate::internal_prelude::*;
-
-    use super::infer_chunk_size;
-
-    #[test]
-    pub fn test_infer_chunk_size() {
-        assert_eq!(infer_chunk_size(&[], 1), vec![]);
-        assert_eq!(infer_chunk_size(&[0], 1), vec![1]);
-        assert_eq!(infer_chunk_size(&[1], 1), vec![1]);
-
-        // generated regression tests vs h5py implementation
-        assert_eq!(infer_chunk_size(&[65682868], 1), vec![64144]);
-        assert_eq!(infer_chunk_size(&[56755037], 2), vec![27713]);
-        assert_eq!(infer_chunk_size(&[56882283], 4), vec![27775]);
-        assert_eq!(infer_chunk_size(&[21081789], 8), vec![10294]);
-        assert_eq!(infer_chunk_size(&[5735, 6266], 1), vec![180, 392]);
-        assert_eq!(infer_chunk_size(&[467, 4427], 2), vec![30, 554]);
-        assert_eq!(infer_chunk_size(&[5579, 8323], 4), vec![88, 261]);
-        assert_eq!(infer_chunk_size(&[1686, 770], 8), vec![106, 49]);
-        assert_eq!(infer_chunk_size(&[344, 414, 294], 1), vec![22, 52, 37]);
-        assert_eq!(infer_chunk_size(&[386, 192, 444], 2), vec![25, 24, 56]);
-        assert_eq!(infer_chunk_size(&[277, 161, 460], 4), vec![18, 21, 58]);
-        assert_eq!(infer_chunk_size(&[314, 22, 253], 8), vec![40, 3, 32]);
-        assert_eq!(infer_chunk_size(&[89, 49, 91, 59], 1), vec![12, 13, 23, 15]);
-        assert_eq!(infer_chunk_size(&[42, 92, 60, 80], 2), vec![6, 12, 15, 20]);
-        assert_eq!(infer_chunk_size(&[15, 62, 62, 47], 4), vec![4, 16, 16, 12]);
-        assert_eq!(infer_chunk_size(&[62, 51, 55, 64], 8), vec![8, 7, 7, 16]);
+        Self {
+            parent: parent.try_borrow(),
+            dapl_base: None,
+            dcpl_base: None,
+            lcpl_base: None,
+            dapl_builder: DatasetAccessBuilder::default(),
+            dcpl_builder: dcpl,
+            lcpl_builder: lcpl,
+            packed: false,
+            chunk: None,
+        }
     }
 
-    #[test]
-    pub fn test_is_chunked() {
-        with_tmp_file(|file| {
-            assert_eq!(file.new_dataset::<u32>().create_anon(1).unwrap().is_chunked(), false);
-            assert_eq!(
-                file.new_dataset::<u32>().shuffle(true).create_anon(1).unwrap().is_chunked(),
-                true
-            );
-        })
+    pub fn packed(&mut self, packed: bool) {
+        self.packed = packed;
     }
 
-    #[test]
-    pub fn test_chunks() {
-        with_tmp_file(|file| {
-            assert_eq!(file.new_dataset::<u32>().create_anon(1).unwrap().chunks(), None);
-            assert_eq!(file.new_dataset::<u32>().no_chunk().create_anon(1).unwrap().chunks(), None);
-            assert_eq!(
-                file.new_dataset::<u32>().chunk((1, 2)).create_anon((10, 20)).unwrap().chunks(),
-                Some(vec![1, 2])
-            );
-            assert_eq!(
-                file.new_dataset::<u32>().chunk_infer().create_anon((5579, 8323)).unwrap().chunks(),
-                Some(vec![88, 261])
-            );
-            assert_eq!(
-                file.new_dataset::<u32>().chunk_auto().create_anon((5579, 8323)).unwrap().chunks(),
+    fn build_dapl(&self) -> Result<DatasetAccess> {
+        let mut dapl = match &self.dapl_base {
+            Some(dapl) => dapl.clone(),
+            None => DatasetAccess::try_new()?,
+        };
+        self.dapl_builder.apply(&mut dapl).map(|_| dapl)
+    }
+
+    fn compute_chunk_shape(&self, dtype: &Datatype, extents: &Extents) -> Result<Option<Vec<Ix>>> {
+        let extents = if let Extents::Simple(extents) = extents {
+            extents
+        } else {
+            return Ok(None);
+        };
+        let has_filters = self.dcpl_builder.has_filters()
+            || self.dcpl_base.as_ref().map_or(false, DatasetCreate::has_filters);
+        let chunking_required = has_filters || extents.is_resizable();
+        let chunking_allowed = extents.size() > 0 || extents.is_resizable();
+
+        let chunk = if let Some(chunk) = &self.chunk {
+            chunk.to_owned()
+        } else if chunking_required && chunking_allowed {
+            Chunk::MinKB(DEFAULT_CHUNK_SIZE_KB)
+        } else {
+            Chunk::None
+        };
+
+        let chunk_shape = match chunk {
+            Chunk::Exact(chunk) => Some(chunk),
+            Chunk::MinKB(size) => {
+                let min_elements = size / dtype.size() * 1024;
+                Some(compute_chunk_shape(extents, min_elements))
+            }
+            Chunk::None => {
+                ensure!(!extents.is_resizable(), "Chunking required for resizable datasets");
+                ensure!(!has_filters, "Chunking required when filters are present");
                 None
-            );
-            assert_eq!(
-                file.new_dataset::<u32>()
-                    .chunk_auto()
-                    .shuffle(true)
-                    .create_anon((5579, 8323))
-                    .unwrap()
-                    .chunks(),
-                Some(vec![88, 261])
-            );
-        })
-    }
-
-    #[test]
-    pub fn test_chunks_resizable_zero_size() {
-        with_tmp_file(|file| {
-            let ds = file
-                .new_dataset::<u32>()
-                .chunk((128,))
-                .resizable(true)
-                .create("chunked_empty", (0,))
-                .unwrap();
-            assert_eq!(ds.shape(), vec![0]);
-
-            ds.resize((10,)).unwrap();
-            assert_eq!(ds.shape(), vec![10]);
-
-            ds.as_writer().write(&vec![3; 10]).unwrap();
-        })
-    }
-
-    #[test]
-    pub fn test_invalid_chunk() {
-        with_tmp_file(|file| {
-            let b = file.new_dataset::<u32>();
-            assert_err!(
-                b.clone().shuffle(true).no_chunk().create_anon(1),
-                "Chunking must be enabled when filters are present"
-            );
-            assert_err!(
-                b.clone().no_chunk().resizable(true).create_anon(1),
-                "Chunking must be enabled for resizable datasets"
-            );
-            assert_err!(
-                b.clone().chunk_infer().create_anon(()),
-                "Chunking cannot be enabled for 0-dim datasets"
-            );
-            assert_err!(
-                b.clone().chunk((1, 2)).create_anon(()),
-                "Chunking cannot be enabled for 0-dim datasets"
-            );
-            assert_err!(
-                b.clone().chunk((1, 2)).create_anon(1),
-                "Invalid chunk ndim: expected 1, got 2"
-            );
-            assert_err!(
-                b.clone().chunk((0, 2)).create_anon((1, 2)),
-                "Invalid chunk: [0, 2] (all dimensions must be positive)"
-            );
-            assert_err!(
-                b.clone().chunk((1, 3)).create_anon((1, 2)),
-                "Invalid chunk: [1, 3] (must not exceed data shape in any dimension)"
-            );
-        })
-    }
-
-    #[test]
-    pub fn test_shape_ndim_size() {
-        with_tmp_file(|file| {
-            let d = file.new_dataset::<f32>().create_anon((2, 3)).unwrap();
-            assert_eq!(d.shape(), vec![2, 3]);
-            assert_eq!(d.size(), 6);
-            assert_eq!(d.ndim(), 2);
-            assert_eq!(d.is_scalar(), false);
-
-            let d = file.new_dataset::<u8>().create_anon(()).unwrap();
-            assert_eq!(d.shape(), vec![]);
-            assert_eq!(d.size(), 1);
-            assert_eq!(d.ndim(), 0);
-            assert_eq!(d.is_scalar(), true);
-        })
-    }
-
-    #[test]
-    pub fn test_filters() {
-        with_tmp_file(|file| {
-            assert_eq!(
-                file.new_dataset::<u32>().create_anon(100).unwrap().filters(),
-                Filters::default()
-            );
-            assert_eq!(
-                file.new_dataset::<u32>()
-                    .shuffle(true)
-                    .create_anon(100)
-                    .unwrap()
-                    .filters()
-                    .get_shuffle(),
-                true
-            );
-            assert_eq!(
-                file.new_dataset::<u32>()
-                    .fletcher32(true)
-                    .create_anon(100)
-                    .unwrap()
-                    .filters()
-                    .get_fletcher32(),
-                true
-            );
-            assert_eq!(
-                file.new_dataset::<u32>()
-                    .scale_offset(8)
-                    .create_anon(100)
-                    .unwrap()
-                    .filters()
-                    .get_scale_offset(),
-                Some(8)
-            );
-            if gzip_available() {
-                assert_eq!(
-                    file.new_dataset::<u32>()
-                        .gzip(7)
-                        .create_anon(100)
-                        .unwrap()
-                        .filters()
-                        .get_gzip(),
-                    Some(7)
-                );
             }
-            if szip_available() {
-                assert_eq!(
-                    file.new_dataset::<u32>()
-                        .szip(false, 4)
-                        .create_anon(100)
-                        .unwrap()
-                        .filters()
-                        .get_szip(),
-                    Some((false, 4))
-                );
+        };
+        if let Some(ref chunk) = chunk_shape {
+            let ndim = extents.ndim();
+            ensure!(ndim != 0, "Chunking cannot be enabled for 0-dim datasets");
+            ensure!(ndim == chunk.len(), "Expected chunk ndim {}, got {}", ndim, chunk.len());
+            let chunk_size = chunk.iter().product::<usize>();
+            ensure!(chunk_size > 0, "All chunk dimensions must be positive, got {:?}", chunk);
+            let dims_ok = extents.iter().zip(chunk).all(|(e, c)| e.max.is_none() || *c <= e.dim);
+            ensure!(dims_ok, "Chunk dimensions ({:?}) exceed data shape ({:?})", chunk, extents);
+        }
+        Ok(chunk_shape)
+    }
+
+    fn build_dcpl(&self, dtype: &Datatype, extents: &Extents) -> Result<DatasetCreate> {
+        self.dcpl_builder.validate_filters(dtype.id())?;
+
+        let mut dcpl_builder = self.dcpl_builder.clone();
+        if let Some(chunk) = self.compute_chunk_shape(dtype, extents)? {
+            dcpl_builder.chunk(chunk);
+            if !dcpl_builder.has_fill_time() {
+                // prevent resize glitch (borrowed from h5py)
+                dcpl_builder.fill_time(FillTime::Alloc);
             }
-        });
+        } else {
+            dcpl_builder.no_chunk();
+        }
 
-        with_tmp_file(|file| {
-            let filters = Filters::new().fletcher32(true).shuffle(true).clone();
-            assert_eq!(
-                file.new_dataset::<u32>().filters(&filters).create_anon(100).unwrap().filters(),
-                filters
-            );
-        })
+        let mut dcpl = match &self.dcpl_base {
+            Some(dcpl) => dcpl.clone(),
+            None => DatasetCreate::try_new()?,
+        };
+        dcpl_builder.apply(&mut dcpl).map(|_| dcpl)
     }
 
-    #[test]
-    pub fn test_resizable() {
-        with_tmp_file(|file| {
-            assert_eq!(file.new_dataset::<u32>().create_anon(1).unwrap().is_resizable(), false);
-            assert_eq!(
-                file.new_dataset::<u32>().resizable(false).create_anon(1).unwrap().is_resizable(),
-                false
-            );
-            assert_eq!(
-                file.new_dataset::<u32>().resizable(true).create_anon(1).unwrap().is_resizable(),
-                true
-            );
-        })
+    fn build_lcpl(&self) -> Result<LinkCreate> {
+        let mut lcpl = match &self.lcpl_base {
+            Some(lcpl) => lcpl.clone(),
+            None => LinkCreate::try_new()?,
+        };
+        self.lcpl_builder.apply(&mut lcpl).map(|_| lcpl)
     }
 
-    #[test]
-    pub fn test_track_times() {
-        with_tmp_file(|file| {
-            assert_eq!(file.new_dataset::<u32>().create_anon(1).unwrap().tracks_times(), false);
-            assert_eq!(
-                file.new_dataset::<u32>().track_times(false).create_anon(1).unwrap().tracks_times(),
-                false
-            );
-            assert_eq!(
-                file.new_dataset::<u32>().track_times(true).create_anon(1).unwrap().tracks_times(),
-                true
-            );
-        });
-
-        with_tmp_path(|path| {
-            let mut buf1: Vec<u8> = Vec::new();
-            File::create(&path).unwrap().new_dataset::<u32>().create("foo", 1).unwrap();
-            fs::File::open(&path).unwrap().read_to_end(&mut buf1).unwrap();
-
-            let mut buf2: Vec<u8> = Vec::new();
-            File::create(&path)
-                .unwrap()
-                .new_dataset::<u32>()
-                .track_times(false)
-                .create("foo", 1)
-                .unwrap();
-            fs::File::open(&path).unwrap().read_to_end(&mut buf2).unwrap();
-
-            assert_eq!(buf1, buf2);
-
-            let mut buf2: Vec<u8> = Vec::new();
-            File::create(&path)
-                .unwrap()
-                .new_dataset::<u32>()
-                .track_times(true)
-                .create("foo", 1)
-                .unwrap();
-            fs::File::open(&path).unwrap().read_to_end(&mut buf2).unwrap();
-            assert_ne!(buf1, buf2);
-        });
-    }
-
-    #[test]
-    pub fn test_storage_size_offset() {
-        with_tmp_file(|file| {
-            let ds = file.new_dataset::<u16>().create_anon(3).unwrap();
-            assert_eq!(ds.storage_size(), 0);
-            assert!(ds.offset().is_none());
-
-            let buf: Vec<u16> = vec![1, 2, 3];
-            h5call!(H5Dwrite(
-                ds.id(),
-                Datatype::from_type::<u16>().unwrap().id(),
-                H5S_ALL,
-                H5S_ALL,
-                H5P_DEFAULT,
-                buf.as_ptr() as *const _
-            ))
-            .unwrap();
-            assert_eq!(ds.storage_size(), 6);
-            assert!(ds.offset().is_some());
-        })
-    }
-
-    #[test]
-    pub fn test_datatype() {
-        with_tmp_file(|file| {
-            assert_eq!(
-                file.new_dataset::<f32>().create_anon(1).unwrap().dtype().unwrap(),
-                Datatype::from_type::<f32>().unwrap()
-            );
-        })
-    }
-
-    #[test]
-    pub fn test_create_anon() {
-        with_tmp_file(|file| {
-            let ds = file.new_dataset::<u32>().create("foo/bar", (1, 2)).unwrap();
-            assert!(ds.is_valid());
-            assert_eq!(ds.shape(), vec![1, 2]);
-            assert_eq!(ds.name(), "/foo/bar");
-            assert_eq!(file.group("foo").unwrap().dataset("bar").unwrap().shape(), vec![1, 2]);
-
-            let ds = file.new_dataset::<u32>().create_anon((2, 3)).unwrap();
-            assert!(ds.is_valid());
-            assert_eq!(ds.name(), "");
-            assert_eq!(ds.shape(), vec![2, 3]);
-        })
-    }
-
-    #[test]
-    pub fn test_fill_value() {
-        with_tmp_file(|file| {
-            macro_rules! check_fill_value {
-                ($ds:expr, $tp:ty, $v:expr) => {
-                    assert_eq!(($ds).fill_value::<$tp>().unwrap(), Some(($v) as $tp));
-                };
+    fn try_unlink<'n, N: Into<Option<&'n str>>>(&self, name: N) {
+        if let Some(name) = name.into() {
+            let name = to_cstring(name).unwrap();
+            if let Ok(parent) = &self.parent {
+                h5lock!(H5Ldelete(parent.id(), name.as_ptr(), H5P_DEFAULT));
             }
-
-            macro_rules! check_fill_value_approx {
-                ($ds:expr, $tp:ty, $v:expr) => {{
-                    let fill_value = ($ds).fill_value::<$tp>().unwrap().unwrap();
-                    // FIXME: should inexact float->float casts be prohibited?
-                    assert!((fill_value - (($v) as $tp)).abs() < (1.0e-6 as $tp));
-                }};
-            }
-
-            macro_rules! check_all_fill_values {
-                ($ds:expr, $v:expr) => {
-                    check_fill_value!($ds, u8, $v);
-                    check_fill_value!($ds, u16, $v);
-                    check_fill_value!($ds, u32, $v);
-                    check_fill_value!($ds, u64, $v);
-                    check_fill_value!($ds, i8, $v);
-                    check_fill_value!($ds, i16, $v);
-                    check_fill_value!($ds, i32, $v);
-                    check_fill_value!($ds, i64, $v);
-                    check_fill_value!($ds, usize, $v);
-                    check_fill_value!($ds, isize, $v);
-                    check_fill_value_approx!($ds, f32, $v);
-                    check_fill_value_approx!($ds, f64, $v);
-                };
-            }
-
-            let ds = file.new_dataset::<u16>().create_anon(100).unwrap();
-            check_all_fill_values!(ds, 0);
-
-            let ds = file.new_dataset::<u16>().fill_value(42).create_anon(100).unwrap();
-            check_all_fill_values!(ds, 42);
-
-            let ds = file.new_dataset::<f32>().fill_value(1.234).create_anon(100).unwrap();
-            check_all_fill_values!(ds, 1.234);
-        })
+        }
     }
+
+    unsafe fn create(
+        &self, desc: &TypeDescriptor, name: Option<&str>, extents: &Extents,
+    ) -> Result<Dataset> {
+        // construct in-file type descriptor; convert to packed representation if needed
+        let desc = if self.packed { desc.to_packed_repr() } else { desc.to_c_repr() };
+        let dtype = Datatype::from_descriptor(&desc)?;
+
+        // construct DAPL and DCPL, validate filters
+        let dapl = self.build_dapl()?;
+        let dcpl = self.build_dcpl(&dtype, extents)?;
+
+        // create the dataspace from extents
+        let space = Dataspace::try_new(extents)?;
+
+        // extract all ids and create the dataset
+        let parent = try_ref_clone!(self.parent);
+        let (pid, dtype_id, space_id, dcpl_id, dapl_id) =
+            (parent.id(), dtype.id(), space.id(), dcpl.id(), dapl.id());
+        let ds_id = if let Some(name) = name {
+            // create named dataset
+            let lcpl = self.build_lcpl()?;
+            let name = to_cstring(name)?;
+            H5Dcreate2(pid, name.as_ptr(), dtype_id, space_id, lcpl.id(), dcpl_id, dapl_id)
+        } else {
+            // create anonymous dataset
+            H5Dcreate_anon(pid, dtype_id, space_id, dcpl_id, dapl_id)
+        };
+        Dataset::from_id(h5check(ds_id)?)
+    }
+
+    ////////////////////
+    // DatasetAccess  //
+    ////////////////////
+
+    pub fn set_access_plist(&mut self, dapl: &DatasetAccess) {
+        self.dapl_base = Some(dapl.clone());
+    }
+
+    pub fn set_dapl(&mut self, dapl: &DatasetAccess) {
+        self.set_access_plist(dapl);
+    }
+
+    pub fn access_plist(&mut self) -> &mut DatasetAccessBuilder {
+        &mut self.dapl_builder
+    }
+
+    pub fn dapl(&mut self) -> &mut DatasetAccessBuilder {
+        self.access_plist()
+    }
+
+    pub fn with_access_plist<F>(&mut self, func: F)
+    where
+        F: Fn(&mut DatasetAccessBuilder) -> &mut DatasetAccessBuilder,
+    {
+        func(&mut self.dapl_builder);
+    }
+
+    pub fn with_dapl<F>(&mut self, func: F)
+    where
+        F: Fn(&mut DatasetAccessBuilder) -> &mut DatasetAccessBuilder,
+    {
+        self.with_access_plist(func);
+    }
+
+    // DAPL properties
+
+    pub fn chunk_cache(&mut self, nslots: usize, nbytes: usize, w0: f64) {
+        self.with_dapl(|pl| pl.chunk_cache(nslots, nbytes, w0));
+    }
+
+    #[cfg(hdf5_1_8_17)]
+    pub fn efile_prefix(&mut self, prefix: &str) {
+        self.with_dapl(|pl| pl.efile_prefix(prefix));
+    }
+
+    #[cfg(hdf5_1_10_0)]
+    pub fn virtual_view(&mut self, view: VirtualView) {
+        self.with_dapl(|pl| pl.virtual_view(view));
+    }
+
+    #[cfg(hdf5_1_10_0)]
+    pub fn virtual_printf_gap(&mut self, gap_size: usize) {
+        self.with_dapl(|pl| pl.virtual_printf_gap(gap_size));
+    }
+
+    #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
+    pub fn all_coll_metadata_ops(&mut self, is_collective: bool) {
+        self.with_dapl(|pl| pl.all_coll_metadata_ops(is_collective));
+    }
+
+    ////////////////////
+    // DatasetCreate  //
+    ////////////////////
+
+    pub fn set_create_plist(&mut self, dcpl: &DatasetCreate) {
+        self.dcpl_base = Some(dcpl.clone());
+    }
+
+    pub fn set_dcpl(&mut self, dcpl: &DatasetCreate) {
+        self.set_create_plist(dcpl);
+    }
+
+    pub fn create_plist(&mut self) -> &mut DatasetCreateBuilder {
+        &mut self.dcpl_builder
+    }
+
+    pub fn dcpl(&mut self) -> &mut DatasetCreateBuilder {
+        self.create_plist()
+    }
+
+    pub fn with_create_plist<F>(&mut self, func: F)
+    where
+        F: Fn(&mut DatasetCreateBuilder) -> &mut DatasetCreateBuilder,
+    {
+        func(&mut self.dcpl_builder);
+    }
+
+    pub fn with_dcpl<F>(&mut self, func: F)
+    where
+        F: Fn(&mut DatasetCreateBuilder) -> &mut DatasetCreateBuilder,
+    {
+        self.with_create_plist(func);
+    }
+
+    // DCPL properties
+
+    pub fn set_filters(&mut self, filters: &[Filter]) {
+        self.with_dcpl(|pl| pl.set_filters(filters));
+    }
+
+    pub fn deflate(&mut self, level: u8) {
+        self.with_dcpl(|pl| pl.deflate(level));
+    }
+
+    pub fn shuffle(&mut self) {
+        self.with_dcpl(|pl| pl.shuffle());
+    }
+
+    pub fn fletcher32(&mut self) {
+        self.with_dcpl(|pl| pl.fletcher32());
+    }
+
+    pub fn szip(&mut self, coding: SZip, px_per_block: u8) {
+        self.with_dcpl(|pl| pl.szip(coding, px_per_block));
+    }
+
+    pub fn nbit(&mut self) {
+        self.with_dcpl(|pl| pl.nbit());
+    }
+
+    pub fn scale_offset(&mut self, mode: ScaleOffset) {
+        self.with_dcpl(|pl| pl.scale_offset(mode));
+    }
+
+    #[cfg(feature = "lzf")]
+    pub fn lzf(&mut self) {
+        self.with_dcpl(|pl| pl.lzf());
+    }
+
+    #[cfg(feature = "blosc")]
+    pub fn blosc<T>(&mut self, complib: Blosc, clevel: u8, shuffle: T)
+    where
+        T: Into<BloscShuffle>,
+    {
+        let shuffle = shuffle.into();
+        // TODO: add all the blosc_*() variants here as well?
+        self.with_dcpl(|pl| pl.blosc(complib, clevel, shuffle));
+    }
+
+    pub fn add_filter(&mut self, id: H5Z_filter_t, cdata: &[c_uint]) {
+        self.with_dcpl(|pl| pl.add_filter(id, cdata));
+    }
+
+    pub fn clear_filters(&mut self) {
+        self.with_dcpl(|pl| pl.clear_filters());
+    }
+
+    pub fn alloc_time(&mut self, alloc_time: Option<AllocTime>) {
+        self.with_dcpl(|pl| pl.alloc_time(alloc_time));
+    }
+
+    pub fn fill_time(&mut self, fill_time: FillTime) {
+        self.with_dcpl(|pl| pl.fill_time(fill_time))
+    }
+
+    pub fn fill_value<T: Into<OwnedDynValue>>(&mut self, fill_value: T) {
+        self.dcpl_builder.fill_value(fill_value);
+    }
+
+    pub fn no_fill_value(&mut self) {
+        self.with_dcpl(|pl| pl.no_fill_value());
+    }
+
+    pub fn chunk<D: Dimension>(&mut self, chunk: D) {
+        self.chunk = Some(Chunk::Exact(chunk.dims()));
+    }
+
+    pub fn chunk_min_kb(&mut self, size: usize) {
+        self.chunk = Some(Chunk::MinKB(size));
+    }
+
+    pub fn no_chunk(&mut self) {
+        self.chunk = Some(Chunk::None);
+    }
+
+    pub fn layout(&mut self, layout: Layout) {
+        self.with_dcpl(|pl| pl.layout(layout));
+    }
+
+    #[cfg(hdf5_1_10_0)]
+    pub fn chunk_opts(&mut self, opts: ChunkOpts) {
+        self.with_dcpl(|pl| pl.chunk_opts(opts));
+    }
+
+    pub fn external(&mut self, name: &str, offset: usize, size: usize) {
+        self.with_dcpl(|pl| pl.external(name, offset, size));
+    }
+
+    #[cfg(hdf5_1_10_0)]
+    pub fn virtual_map<F, D, E1, S1, E2, S2>(
+        &mut self, src_filename: F, src_dataset: D, src_extents: E1, src_selection: S1,
+        vds_extents: E2, vds_selection: S2,
+    ) where
+        F: AsRef<str>,
+        D: AsRef<str>,
+        E1: Into<Extents>,
+        S1: Into<Selection>,
+        E2: Into<Extents>,
+        S2: Into<Selection>,
+    {
+        self.dcpl_builder.virtual_map(
+            src_filename,
+            src_dataset,
+            src_extents,
+            src_selection,
+            vds_extents,
+            vds_selection,
+        );
+    }
+
+    pub fn obj_track_times(&mut self, track_times: bool) {
+        self.with_dcpl(|pl| pl.obj_track_times(track_times));
+    }
+
+    pub fn attr_phase_change(&mut self, max_compact: u32, min_dense: u32) {
+        self.with_dcpl(|pl| pl.attr_phase_change(max_compact, min_dense));
+    }
+
+    pub fn attr_creation_order(&mut self, attr_creation_order: AttrCreationOrder) {
+        self.with_dcpl(|pl| pl.attr_creation_order(attr_creation_order));
+    }
+
+    ////////////////////
+    // LinkCreate     //
+    ////////////////////
+
+    pub fn set_link_create_plist(&mut self, lcpl: &LinkCreate) {
+        self.lcpl_base = Some(lcpl.clone());
+    }
+
+    pub fn set_lcpl(&mut self, lcpl: &LinkCreate) {
+        self.set_link_create_plist(lcpl);
+    }
+
+    pub fn link_create_plist(&mut self) -> &mut LinkCreateBuilder {
+        &mut self.lcpl_builder
+    }
+
+    pub fn lcpl(&mut self) -> &mut LinkCreateBuilder {
+        self.link_create_plist()
+    }
+
+    pub fn with_link_create_plist<F>(&mut self, func: F)
+    where
+        F: Fn(&mut LinkCreateBuilder) -> &mut LinkCreateBuilder,
+    {
+        func(&mut self.lcpl_builder);
+    }
+
+    pub fn with_lcpl<F>(&mut self, func: F)
+    where
+        F: Fn(&mut LinkCreateBuilder) -> &mut LinkCreateBuilder,
+    {
+        self.with_link_create_plist(func);
+    }
+
+    // LCPL properties
+
+    pub fn create_intermediate_group(&mut self, create: bool) {
+        self.with_lcpl(|pl| pl.create_intermediate_group(create));
+    }
+
+    pub fn char_encoding(&mut self, encoding: CharEncoding) {
+        self.with_lcpl(|pl| pl.char_encoding(encoding));
+    }
+}
+
+macro_rules! impl_builder_stuff {
+    () => {
+        #[inline]
+        #[must_use]
+        pub fn packed(mut self, packed: bool) -> Self {
+            self.builder.packed(packed);
+            self
+        }
+
+        ////////////////////
+        // DatasetAccess  //
+        ////////////////////
+
+        #[inline]
+        #[must_use]
+        pub fn set_access_plist(mut self, dapl: &DatasetAccess) -> Self {
+            self.builder.set_access_plist(dapl);
+            self
+        }
+
+        #[inline]
+        #[must_use]
+        pub fn set_dapl(mut self, dapl: &DatasetAccess) -> Self {
+            self.builder.set_dapl(dapl);
+            self
+        }
+
+        #[inline]
+        pub fn access_plist(&mut self) -> &mut DatasetAccessBuilder {
+            self.builder.access_plist()
+        }
+
+        #[inline]
+        pub fn dapl(&mut self) -> &mut DatasetAccessBuilder {
+            self.builder.dapl()
+        }
+
+        #[inline]
+        #[must_use]
+        pub fn with_access_plist<F>(mut self, func: F) -> Self
+        where
+            F: Fn(&mut DatasetAccessBuilder) -> &mut DatasetAccessBuilder,
+        {
+            self.builder.with_access_plist(func);
+            self
+        }
+
+        #[inline]
+        #[must_use]
+        pub fn with_dapl<F>(mut self, func: F) -> Self
+        where
+            F: Fn(&mut DatasetAccessBuilder) -> &mut DatasetAccessBuilder,
+        {
+            self.builder.with_dapl(func);
+            self
+        }
+
+        // DAPL properties
+
+        #[inline]
+        #[must_use]
+        pub fn chunk_cache(mut self, nslots: usize, nbytes: usize, w0: f64) -> Self {
+            self.builder.chunk_cache(nslots, nbytes, w0);
+            self
+        }
+
+        #[cfg(hdf5_1_8_17)]
+        #[inline]
+        #[must_use]
+        pub fn efile_prefix(mut self, prefix: &str) -> Self {
+            self.builder.efile_prefix(prefix);
+            self
+        }
+
+        #[cfg(hdf5_1_10_0)]
+        #[inline]
+        #[must_use]
+        pub fn virtual_view(mut self, view: VirtualView) -> Self {
+            self.builder.virtual_view(view);
+            self
+        }
+
+        #[cfg(hdf5_1_10_0)]
+        #[inline]
+        #[must_use]
+        pub fn virtual_printf_gap(mut self, gap_size: usize) -> Self {
+            self.builder.virtual_printf_gap(gap_size);
+            self
+        }
+
+        #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
+        #[inline]
+        #[must_use]
+        pub fn all_coll_metadata_ops(mut self, is_collective: bool) -> Self {
+            self.builder.all_coll_metadata_ops(is_collective);
+            self
+        }
+
+        ////////////////////
+        // DatasetCreate  //
+        ////////////////////
+
+        #[inline]
+        #[must_use]
+        pub fn set_create_plist(mut self, dcpl: &DatasetCreate) -> Self {
+            self.builder.set_create_plist(dcpl);
+            self
+        }
+
+        #[inline]
+        #[must_use]
+        pub fn set_dcpl(mut self, dcpl: &DatasetCreate) -> Self {
+            self.builder.set_dcpl(dcpl);
+            self
+        }
+
+        #[inline]
+        pub fn create_plist(&mut self) -> &mut DatasetCreateBuilder {
+            self.builder.create_plist()
+        }
+
+        #[inline]
+        pub fn dcpl(&mut self) -> &mut DatasetCreateBuilder {
+            self.builder.dcpl()
+        }
+
+        #[inline]
+        #[must_use]
+        pub fn with_create_plist<F>(mut self, func: F) -> Self
+        where
+            F: Fn(&mut DatasetCreateBuilder) -> &mut DatasetCreateBuilder,
+        {
+            self.builder.with_create_plist(func);
+            self
+        }
+
+        #[inline]
+        #[must_use]
+        pub fn with_dcpl<F>(mut self, func: F) -> Self
+        where
+            F: Fn(&mut DatasetCreateBuilder) -> &mut DatasetCreateBuilder,
+        {
+            self.builder.with_dcpl(func);
+            self
+        }
+
+        // DCPL properties
+
+        #[inline]
+        #[must_use]
+        pub fn set_filters(mut self, filters: &[Filter]) -> Self {
+            self.builder.set_filters(filters);
+            self
+        }
+
+        #[inline]
+        #[must_use]
+        pub fn deflate(mut self, level: u8) -> Self {
+            self.builder.deflate(level);
+            self
+        }
+
+        #[inline]
+        #[must_use]
+        pub fn shuffle(mut self) -> Self {
+            self.builder.shuffle();
+            self
+        }
+
+        #[inline]
+        #[must_use]
+        pub fn fletcher32(mut self) -> Self {
+            self.builder.fletcher32();
+            self
+        }
+
+        #[inline]
+        #[must_use]
+        pub fn szip(mut self, coding: SZip, px_per_block: u8) -> Self {
+            self.builder.szip(coding, px_per_block);
+            self
+        }
+
+        #[inline]
+        #[must_use]
+        pub fn nbit(mut self) -> Self {
+            self.builder.nbit();
+            self
+        }
+
+        #[inline]
+        #[must_use]
+        pub fn scale_offset(mut self, mode: ScaleOffset) -> Self {
+            self.builder.scale_offset(mode);
+            self
+        }
+
+        #[cfg(feature = "lzf")]
+        #[inline]
+        #[must_use]
+        pub fn lzf(mut self) -> Self {
+            self.builder.lzf();
+            self
+        }
+
+        #[cfg(feature = "blosc")]
+        #[inline]
+        #[must_use]
+        pub fn blosc<T>(mut self, complib: Blosc, clevel: u8, shuffle: T) -> Self
+        where
+            T: Into<BloscShuffle>,
+        {
+            self.builder.blosc(complib, clevel, shuffle);
+            self
+        }
+
+        #[inline]
+        #[must_use]
+        pub fn add_filter(mut self, id: H5Z_filter_t, cdata: &[c_uint]) -> Self {
+            self.builder.add_filter(id, cdata);
+            self
+        }
+
+        #[inline]
+        #[must_use]
+        pub fn clear_filters(mut self) -> Self {
+            self.builder.clear_filters();
+            self
+        }
+
+        #[inline]
+        #[must_use]
+        pub fn alloc_time(mut self, alloc_time: Option<AllocTime>) -> Self {
+            self.builder.alloc_time(alloc_time);
+            self
+        }
+
+        #[inline]
+        #[must_use]
+        pub fn fill_time(mut self, fill_time: FillTime) -> Self {
+            self.builder.fill_time(fill_time);
+            self
+        }
+
+        #[inline]
+        #[must_use]
+        pub fn fill_value<T: Into<OwnedDynValue>>(mut self, fill_value: T) -> Self {
+            self.builder.fill_value(fill_value);
+            self
+        }
+
+        #[inline]
+        #[must_use]
+        pub fn no_fill_value(mut self) -> Self {
+            self.builder.no_fill_value();
+            self
+        }
+
+        #[inline]
+        #[must_use]
+        pub fn chunk<D: Dimension>(mut self, chunk: D) -> Self {
+            self.builder.chunk(chunk);
+            self
+        }
+
+        #[inline]
+        #[must_use]
+        pub fn chunk_min_kb(mut self, size: usize) -> Self {
+            self.builder.chunk_min_kb(size);
+            self
+        }
+
+        #[inline]
+        #[must_use]
+        pub fn no_chunk(mut self) -> Self {
+            self.builder.no_chunk();
+            self
+        }
+
+        #[inline]
+        #[must_use]
+        pub fn layout(mut self, layout: Layout) -> Self {
+            self.builder.layout(layout);
+            self
+        }
+
+        #[cfg(hdf5_1_10_0)]
+        #[inline]
+        #[must_use]
+        pub fn chunk_opts(mut self, opts: ChunkOpts) -> Self {
+            self.builder.chunk_opts(opts);
+            self
+        }
+
+        #[inline]
+        #[must_use]
+        pub fn external(mut self, name: &str, offset: usize, size: usize) -> Self {
+            self.builder.external(name, offset, size);
+            self
+        }
+
+        #[cfg(hdf5_1_10_0)]
+        #[inline]
+        #[must_use]
+        pub fn virtual_map<F, D, E1, S1, E2, S2>(
+            mut self, src_filename: F, src_dataset: D, src_extents: E1, src_selection: S1,
+            vds_extents: E2, vds_selection: S2,
+        ) -> Self
+        where
+            F: AsRef<str>,
+            D: AsRef<str>,
+            E1: Into<Extents>,
+            S1: Into<Selection>,
+            E2: Into<Extents>,
+            S2: Into<Selection>,
+        {
+            self.builder.virtual_map(
+                src_filename,
+                src_dataset,
+                src_extents,
+                src_selection,
+                vds_extents,
+                vds_selection,
+            );
+            self
+        }
+
+        #[inline]
+        #[must_use]
+        pub fn obj_track_times(mut self, track_times: bool) -> Self {
+            self.builder.obj_track_times(track_times);
+            self
+        }
+
+        #[inline]
+        #[must_use]
+        pub fn attr_phase_change(mut self, max_compact: u32, min_dense: u32) -> Self {
+            self.builder.attr_phase_change(max_compact, min_dense);
+            self
+        }
+
+        #[inline]
+        #[must_use]
+        pub fn attr_creation_order(mut self, attr_creation_order: AttrCreationOrder) -> Self {
+            self.builder.attr_creation_order(attr_creation_order);
+            self
+        }
+
+        ////////////////////
+        // LinkCreate     //
+        ////////////////////
+
+        #[inline]
+        #[must_use]
+        pub fn set_link_create_plist(mut self, lcpl: &LinkCreate) -> Self {
+            self.builder.set_link_create_plist(lcpl);
+            self
+        }
+
+        #[inline]
+        #[must_use]
+        pub fn set_lcpl(mut self, lcpl: &LinkCreate) -> Self {
+            self.builder.set_lcpl(lcpl);
+            self
+        }
+
+        #[inline]
+        pub fn link_create_plist(&mut self) -> &mut LinkCreateBuilder {
+            self.builder.link_create_plist()
+        }
+
+        #[inline]
+        pub fn lcpl(&mut self) -> &mut LinkCreateBuilder {
+            self.builder.lcpl()
+        }
+
+        #[inline]
+        #[must_use]
+        pub fn with_link_create_plist<F>(mut self, func: F) -> Self
+        where
+            F: Fn(&mut LinkCreateBuilder) -> &mut LinkCreateBuilder,
+        {
+            self.builder.with_link_create_plist(func);
+            self
+        }
+
+        #[inline]
+        #[must_use]
+        pub fn with_lcpl<F>(mut self, func: F) -> Self
+        where
+            F: Fn(&mut LinkCreateBuilder) -> &mut LinkCreateBuilder,
+        {
+            self.builder.with_lcpl(func);
+            self
+        }
+
+        // LCPL properties
+
+        #[inline]
+        #[must_use]
+        pub fn create_intermediate_group(mut self, create: bool) -> Self {
+            self.builder.create_intermediate_group(create);
+            self
+        }
+
+        #[inline]
+        #[must_use]
+        pub fn char_encoding(mut self, encoding: CharEncoding) -> Self {
+            self.builder.char_encoding(encoding);
+            self
+        }
+    };
+}
+
+impl DatasetBuilder {
+    impl_builder_stuff!();
+}
+impl DatasetBuilderEmpty {
+    impl_builder_stuff!();
+}
+impl DatasetBuilderEmptyShape {
+    impl_builder_stuff!();
+}
+
+impl<'d, T2, D2> DatasetBuilderData<'d, T2, D2>
+where
+    T2: H5Type,
+    D2: ndarray::Dimension,
+{
+    impl_builder_stuff!();
+}
+
+#[test]
+fn test_compute_chunk_shape() {
+    let e = SimpleExtents::new(&[1, 1]);
+    assert_eq!(compute_chunk_shape(&e, 1), vec![1, 1]);
+    let e = SimpleExtents::new(&[1, 10]);
+    assert_eq!(compute_chunk_shape(&e, 3), vec![1, 3]);
+    let e = SimpleExtents::new(&[1, 10]);
+    assert_eq!(compute_chunk_shape(&e, 11), vec![1, 10]);
+
+    let e = SimpleExtents::new(&[Extent::from(1), Extent::from(10..)]);
+    assert_eq!(compute_chunk_shape(&e, 11), vec![1, 11]);
+
+    let e = SimpleExtents::new(&[Extent::from(1), Extent::from(10..)]);
+    assert_eq!(compute_chunk_shape(&e, 9), vec![1, 9]);
+
+    let e = SimpleExtents::new(&[4, 4, 4]);
+    // chunk shape should be greedy here, a minimal
+    // chunk shape would be (1, 3, 4) + (1, 1, 4)
+    assert_eq!(compute_chunk_shape(&e, 12), vec![1, 4, 4]);
+
+    let e = SimpleExtents::new(&[4, 4, 4]);
+    assert_eq!(compute_chunk_shape(&e, 100), vec![4, 4, 4]);
+
+    let e = SimpleExtents::new(&[4, 4, 4]);
+    assert_eq!(compute_chunk_shape(&e, 9), vec![1, 2, 4]);
+
+    let e = SimpleExtents::new(&[1, 1, 100]);
+    assert_eq!(compute_chunk_shape(&e, 51), vec![1, 1, 100]);
 }
