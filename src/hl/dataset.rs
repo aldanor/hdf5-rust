@@ -681,11 +681,17 @@ impl DatasetBuilderInner {
     }
 
     #[cfg(feature = "lzf")]
+    /// Apply a `lzf` filter
+    ///
+    /// This requires the `lzf` crate feature
     pub fn lzf(&mut self) {
         self.with_dcpl(|pl| pl.lzf());
     }
 
     #[cfg(feature = "blosc")]
+    /// Apply a `blosc` filter
+    ///
+    /// This requires the `blosc` crate feature
     pub fn blosc<T>(&mut self, complib: Blosc, clevel: u8, shuffle: T)
     where
         T: Into<BloscShuffle>,

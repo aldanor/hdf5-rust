@@ -13,7 +13,6 @@ use hdf5_sys::h5z::{
     H5Z_SO_FLOAT_DSCALE, H5Z_SO_INT, H5_SZIP_EC_OPTION_MASK, H5_SZIP_MAX_PIXELS_PER_BLOCK,
     H5_SZIP_NN_OPTION_MASK,
 };
-use hdf5_types::TypeDescriptor;
 
 use crate::internal_prelude::*;
 

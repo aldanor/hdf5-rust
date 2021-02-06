@@ -1,11 +1,9 @@
 pub mod container;
-// pub mod dataset;
 pub mod dataset;
 pub mod dataspace;
 pub mod datatype;
 pub mod extents;
 pub mod file;
-#[allow(unused)] // temporarily
 pub mod filters;
 pub mod group;
 pub mod location;
