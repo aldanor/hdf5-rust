@@ -30,28 +30,31 @@ pub use self::h5type::{
 pub use self::string::{FixedAscii, FixedUnicode, StringError, VarLenAscii, VarLenUnicode};
 
 pub(crate) unsafe fn malloc(n: usize) -> *mut core::ffi::c_void {
-    #[cfg(any(feature = "force-h5-allocator", windows_dll))]
-    {
-        hdf5_sys::h5::H5allocate_memory(n, 0)
-    }
-    #[cfg(not(any(feature = "force-h5-allocator", windows_dll)))]
-    {
-        libc::malloc(n)
+    cfg_if::cfg_if! {
+        if #[cfg(any(feature = "force-h5-allocator", windows_dll))] {
+            hdf5_sys::h5::H5allocate_memory(n, 0)
+        } else {
+            libc::malloc(n)
+        }
     }
 }
 
 pub(crate) unsafe fn free(ptr: *mut core::ffi::c_void) {
-    #[cfg(any(feature = "force-h5_allocator", windows_dll))]
-    {
-        hdf5_sys::h5::H5free_memory(ptr);
-    }
-    #[cfg(not(any(feature = "force-h5-allocator", windows_dll)))]
-    {
-        libc::free(ptr)
+    cfg_if::cfg_if! {
+        if #[cfg(any(feature = "force-h5-allocator", windows_dll))] {
+            hdf5_sys::h5::H5free_memory(ptr);
+        } else {
+            libc::free(ptr)
+        }
     }
 }
 
-#[cfg(any(feature = "force-h5-allocator", windows_dll))]
-pub const USING_H5_ALLOCATOR: bool = true;
-#[cfg(not(any(feature = "force-h5-allocator", windows_dll)))]
-pub const USING_H5_ALLOCATOR: bool = false;
+pub const USING_H5_ALLOCATOR: bool = {
+    cfg_if::cfg_if! {
+        if #[cfg(any(feature = "force-h5-allocator", windows_dll))] {
+            true
+        } else {
+            false
+        }
+    }
+};

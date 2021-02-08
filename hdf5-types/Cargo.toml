@@ -18,6 +18,7 @@ force-h5-allocator = []
 ascii = "1.0"
 libc = "0.2"
 hdf5-sys = { version = "0.7.1", path = "../hdf5-sys" }
+cfg-if = "1.0.0"
 
 [dev-dependencies]
 quickcheck = { version = "1.0", default-features = false }
