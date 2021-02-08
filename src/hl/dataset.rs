@@ -30,8 +30,7 @@ use crate::hl::plist::link_create::{CharEncoding, LinkCreate, LinkCreateBuilder}
 use crate::internal_prelude::*;
 
 /// Default chunk size when filters are enabled and the chunk size is not specified.
-/// This is the same value that netcdf uses by default.
-pub const DEFAULT_CHUNK_SIZE_KB: usize = 4096;
+pub const DEFAULT_CHUNK_SIZE_KB: usize = 64 * 1024;
 
 /// Represents the HDF5 dataset object.
 #[repr(transparent)]

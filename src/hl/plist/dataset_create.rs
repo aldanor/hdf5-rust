@@ -407,6 +407,12 @@ impl DatasetCreateBuilder {
     }
 
     #[cfg(feature = "blosc")]
+    /// Enable the blosc filter on this dataset.
+    ///
+    /// For efficient compression and decompression on multiple cores a chunk-size
+    /// of minimum 1MB per core should be selected.
+    /// For e.g. 16 cores a minimum chunksize of 16MB should allow efficient
+    /// compression and decompression, although larger chunks might be more efficient.
     pub fn blosc<T>(&mut self, complib: Blosc, clevel: u8, shuffle: T) -> &mut Self
     where
         T: Into<BloscShuffle>,
@@ -503,6 +509,13 @@ impl DatasetCreateBuilder {
         self
     }
 
+    /// Set chunking for the dataset
+    ///
+    /// The chunk should match the usage pattern of the dataset.
+    ///
+    /// If compression is enabled, it is a good idea to have chunks of sufficient
+    /// size to allow efficient compression. Chunk sizes of less than 4MB will in
+    /// most cases be inefficient, and will yield limited space- and time-savings.
     pub fn chunk<D: Dimension>(&mut self, chunk: D) -> &mut Self {
         self.chunk = Some(chunk.dims().to_vec());
         self
