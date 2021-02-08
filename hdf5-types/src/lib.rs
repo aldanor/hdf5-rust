@@ -4,7 +4,7 @@
 //! Types that can be stored and retrieved from a `HDF5` dataset
 //!
 //! Crate features:
-//! * `const_generics`: Uses const generics to enable arrays [T; N] for all N.
+//! * `const-generics`: Uses const generics to enable arrays [T; N] for all N.
 //!                     Compiling without this limits arrays to certain prespecified
 //!                     sizes
 //! * `force-h5-allocator`: Force the `hdf5` allocator for varlen types and dynamic values.

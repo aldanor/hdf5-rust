@@ -14,7 +14,7 @@ pub unsafe trait Array: 'static {
     fn capacity() -> usize;
 }
 
-#[cfg(not(feature = "const_generics"))]
+#[cfg(not(feature = "const-generics"))]
 mod impl_array {
     use super::*;
 
@@ -63,7 +63,7 @@ mod impl_array {
     );
 }
 
-#[cfg(feature = "const_generics")]
+#[cfg(feature = "const-generics")]
 mod impl_array {
     use super::*;
 

@@ -164,7 +164,7 @@ jobs:
           cargo test -vv --features="$FEATURES"
       - name: Test const generics
         if: matrix.rust == 'nightly'
-        run: cargo test -p hdf5-types --features hdf5-types/const_generics
+        run: cargo test -p hdf5-types --features hdf5-types/const-generics
 
   msi:
     name: msi
