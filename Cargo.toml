@@ -34,8 +34,8 @@ errno = { version = "0.2", optional = true }
 hdf5-sys = { path = "hdf5-sys", version = "0.7.1" }  # !V
 hdf5-types = { path = "hdf5-types", version = "0.7.1" }  # !V
 hdf5-derive = { path = "hdf5-derive", version = "0.7.1" }  # !V
-blosc-sys = { git = "https://github.com/mulimoen/rust-blosc-src", branch = "main", package = "blosc-src", optional = true }
-lzf-sys = { git = "https://github.com/mulimoen/lzf-sys.git", branch = "main", optional = true }
+blosc-sys = { version = "0.1.0", package = "blosc-src", optional = true }
+lzf-sys = { version = "0.1.0", optional = true }
 
 [dev-dependencies]
 paste = "1.0"
