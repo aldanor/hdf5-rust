@@ -15,13 +15,19 @@ use hdf5_sys::h5fd::{
 
 use crate::internal_prelude::*;
 
+lazy_static! {
+    static ref LIBRARY_INIT: () = {
+        h5lock!(::hdf5_sys::h5::H5open());
+        let _e = crate::hl::filters::register_filters();
+    };
+}
+
 #[cfg(not(h5_dll_indirection))]
 macro_rules! link_hid {
     ($rust_name:ident, $mod_name:ident::$c_name:ident) => {
         lazy_static! {
             pub static ref $rust_name: ::hdf5_sys::h5i::hid_t = {
-                h5lock!(::hdf5_sys::h5::H5open());
-                let _r = $crate::hl::filters::register_filters();
+                lazy_static::initialize(&LIBRARY_INIT);
                 *::hdf5_sys::$mod_name::$c_name
             };
         }
@@ -34,8 +40,7 @@ macro_rules! link_hid {
     ($rust_name:ident, $mod_name:ident::$c_name:ident) => {
         lazy_static! {
             pub static ref $rust_name: ::hdf5_sys::h5i::hid_t = {
-                h5lock!(::hdf5_sys::h5::H5open());
-                let _r = $crate::hl::filters::register_filters();
+                lazy_static::initialize(&LIBRARY_INIT);
                 unsafe { *(*::hdf5_sys::$mod_name::$c_name as *const _) }
             };
         }
