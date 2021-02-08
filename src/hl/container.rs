@@ -70,9 +70,7 @@ impl<'a> Reader<'a> {
         S: Into<Selection>,
         D: ndarray::Dimension,
     {
-        if self.obj.is_attr() {
-            fail!("Slicing cannot be used on attribute datasets");
-        }
+        ensure!(!self.obj.is_attr(), "Slicing cannot be used on attribute datasets");
 
         let obj_space = self.obj.space()?;
         let obj_shape = obj_space.shape();
@@ -82,19 +80,18 @@ impl<'a> Reader<'a> {
         let out_shape = selection.out_shape(&obj_shape)?;
         let out_ndim = out_shape.len();
         let out_size: Ix = out_shape.iter().product();
-        //        println!("------------------------------");
-        //        dbg!(&obj_space, &obj_shape, obj_ndim);
-        //        dbg!(&selection, &out_shape, out_ndim, out_size);
         let fspace = obj_space.select(selection)?;
         let fsize = fspace.selection_size();
-        //        dbg!(&fspace, fsize);
 
         if let Some(ndim) = D::NDIM {
-            if ndim != out_ndim {
-                fail!("Selection ndim ({}) != array ndim ({})", out_ndim, ndim);
-            }
-        } else if out_size != fsize {
-            fail!("Selected size mismatch: {} != {} (shouldn't happen)", out_size, fsize);
+            ensure!(ndim == out_ndim, "Selection ndim ({}) != array ndim ({})", out_ndim, ndim);
+        } else {
+            ensure!(
+                out_size == fsize,
+                "Selected size mismatch: {} != {} (shouldn't happen)",
+                out_size,
+                fsize
+            );
         }
 
         if out_size == 0 {
@@ -242,9 +239,7 @@ impl<'a> Writer<'a> {
         S: Into<Selection>,
         D: ndarray::Dimension,
     {
-        if self.obj.is_attr() {
-            fail!("Slicing cannot be used on attribute datasets");
-        }
+        ensure!(!self.obj.is_attr(), "Slicing cannot be used on attribute datasets");
 
         let obj_space = self.obj.space()?;
         let obj_shape = obj_space.shape();
@@ -259,13 +254,20 @@ impl<'a> Writer<'a> {
         let view = arr.into();
 
         if let Some(ndim) = D::NDIM {
-            if ndim != out_ndim {
-                fail!("Selection ndim ({}) != array ndim ({})", out_ndim, ndim);
-            }
-        } else if out_size != fsize {
-            fail!("Selected size mismatch: {} != {} (shouldn't happen)", out_size, fsize);
-        } else if view.shape() != out_shape.as_slice() {
-            fail!("Shape mismatch: memory ({:?}) != destination ({:?})", view.shape(), out_shape);
+            ensure!(ndim == out_ndim, "Selection ndim ({}) != array ndim ({})", out_ndim, ndim);
+        } else {
+            ensure!(
+                out_size == fsize,
+                "Selected size mismatch: {} != {} (shouldn't happen)",
+                out_size,
+                fsize
+            );
+            ensure!(
+                view.shape() == out_shape.as_slice(),
+                "Shape mismatch: memory ({:?}) != destination ({:?})",
+                view.shape(),
+                out_shape
+            );
         }
 
         if out_size == 0 {
@@ -274,10 +276,12 @@ impl<'a> Writer<'a> {
             self.write(view)
         } else {
             let mspace = Dataspace::try_new(view.shape())?;
-            if !view.is_standard_layout() {
-                // TODO: support strided arrays (C-ordering we have to require regardless)
-                fail!("Input array is not in standard layout or non-contiguous");
-            }
+            // TODO: support strided arrays (C-ordering we have to require regardless)
+            ensure!(
+                view.is_standard_layout(),
+                "Input array is not in standard layout or non-contiguous"
+            );
+
             self.write_from_buf(view.as_ptr(), Some(&fspace), Some(&mspace))
         }
     }
