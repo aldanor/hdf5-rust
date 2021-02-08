@@ -30,7 +30,6 @@ mod export {
         class::from_id,
         dim::{Dimension, Ix},
         error::{silence_errors, Error, Result},
-        filters::Filters,
         hl::extents::{Extent, Extents, SimpleExtents},
         hl::selection::{Hyperslab, Selection, SliceOrIndex},
         hl::{
@@ -92,6 +91,9 @@ mod export {
             pub use crate::hl::plist::link_create::*;
         }
     }
+    pub mod filters {
+        pub use crate::hl::filters::*;
+    }
 }
 
 pub use crate::export::*;
@@ -103,7 +105,6 @@ mod class;
 
 mod dim;
 mod error;
-mod filters;
 #[doc(hidden)]
 pub mod globals;
 mod handle;

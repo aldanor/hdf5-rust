@@ -112,7 +112,7 @@ pub struct FilterInfo {
 }
 
 #[cfg_attr(not(any(feature = "lzf", feature = "blosc")), allow(clippy::unnecessary_unwrap))]
-pub fn register_filters() -> Result<()> {
+pub(crate) fn register_filters() -> Result<()> {
     #[cfg(feature = "lzf")]
     lzf::register_lzf()?;
     #[cfg(feature = "blosc")]
@@ -507,7 +507,7 @@ impl Filter {
     }
 }
 
-pub fn validate_filters(filters: &[Filter], type_class: H5T_class_t) -> Result<()> {
+pub(crate) fn validate_filters(filters: &[Filter], type_class: H5T_class_t) -> Result<()> {
     const COMP_FILTER_IDS: &[H5Z_filter_t] = &[H5Z_FILTER_DEFLATE, H5Z_FILTER_SZIP, 32000, 32001];
 
     let mut map: HashMap<H5Z_filter_t, &Filter> = HashMap::new();
