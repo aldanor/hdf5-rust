@@ -2,7 +2,6 @@ use std::borrow::Borrow;
 use std::convert::identity;
 use std::fmt::{self, Debug, Display};
 use std::ops::{Deref, RangeFrom, RangeInclusive};
-use std::slice;
 
 use hdf5_sys::h5s::H5S_MAX_RANK;
 
@@ -173,7 +172,9 @@ impl SimpleExtents {
         self.inner.iter().map(Extent::is_valid).all(identity) && self.ndim() <= H5S_MAX_RANK as _
     }
 
-    pub fn iter(&self) -> slice::Iter<'_, Extent> {
+    pub fn iter(
+        &self,
+    ) -> impl ExactSizeIterator<Item = &Extent> + DoubleEndedIterator<Item = &Extent> {
         self.inner.iter()
     }
 }
@@ -399,7 +400,9 @@ impl Extents {
         }
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &Extent> {
+    pub fn iter(
+        &self,
+    ) -> impl ExactSizeIterator<Item = &Extent> + DoubleEndedIterator<Item = &Extent> {
         ExtentsIter { inner: self.as_simple().map(SimpleExtents::iter) }
     }
     pub fn slice(&self) -> Option<&[Extent]> {
@@ -411,17 +414,41 @@ impl Extents {
     }
 }
 
-pub struct ExtentsIter<'a> {
-    inner: Option<slice::Iter<'a, Extent>>,
+pub struct ExtentsIter<A> {
+    inner: Option<A>,
 }
 
-impl<'a> Iterator for ExtentsIter<'a> {
+impl<'a, A: DoubleEndedIterator<Item = &'a Extent> + ExactSizeIterator<Item = &'a Extent>> Iterator
+    for ExtentsIter<A>
+{
     type Item = &'a Extent;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.inner {
             Some(ref mut iter) => iter.next(),
             None => None,
+        }
+    }
+}
+
+impl<'a, A: DoubleEndedIterator<Item = &'a Extent> + ExactSizeIterator<Item = &'a Extent>>
+    DoubleEndedIterator for ExtentsIter<A>
+{
+    fn next_back(&mut self) -> Option<Self::Item> {
+        match self.inner {
+            Some(ref mut iter) => iter.next_back(),
+            None => None,
+        }
+    }
+}
+
+impl<'a, A: DoubleEndedIterator<Item = &'a Extent> + ExactSizeIterator<Item = &'a Extent>>
+    ExactSizeIterator for ExtentsIter<A>
+{
+    fn len(&self) -> usize {
+        match self.inner {
+            Some(ref iter) => iter.len(),
+            None => 0,
         }
     }
 }
