@@ -173,10 +173,10 @@ impl<'a, T: Copy> From<&'a [T]> for VarLenArray<T> {
     }
 }
 
-impl<T: Copy> Into<Vec<T>> for VarLenArray<T> {
+impl<T: Copy> From<VarLenArray<T>> for Vec<T> {
     #[inline]
-    fn into(self) -> Vec<T> {
-        self.iter().cloned().collect()
+    fn from(v: VarLenArray<T>) -> Self {
+        v.iter().cloned().collect()
     }
 }
 
