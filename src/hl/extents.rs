@@ -312,6 +312,12 @@ pub enum Extents {
     /// maximum size are specified at creation time. The sizes of dimensions at any particular
     /// time in the life of a dataspace are called the current dimensions, or the dataspace
     /// extent. They can be queried along with the maximum sizes.
+    ///
+    /// A dimension can have an `UNLIMITED` maximum size. This results in a dataset which can
+    /// be resized after being created.
+    /// Do note that an unlimited dimension will force chunking of the
+    /// dataset which could result in excessive disk usage with the default chunk size.
+    /// It is recommended to apply some compression filter to such datasets.
     Simple(SimpleExtents),
 }
 
