@@ -229,6 +229,7 @@ impl<T> From<Option<T>> for Maybe<T> {
         Self(v)
     }
 }
+
 #[derive(Clone)]
 /// A dataset builder
 pub struct DatasetBuilder {

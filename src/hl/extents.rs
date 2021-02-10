@@ -405,6 +405,7 @@ impl Extents {
     ) -> impl ExactSizeIterator<Item = &Extent> + DoubleEndedIterator<Item = &Extent> {
         ExtentsIter { inner: self.as_simple().map(SimpleExtents::iter) }
     }
+
     pub fn slice(&self) -> Option<&[Extent]> {
         if let Self::Simple(x) = self {
             Some(x)
