@@ -72,20 +72,18 @@ impl<'a> Reader<'a> {
     {
         ensure!(!self.obj.is_attr(), "Slicing cannot be used on attribute datasets");
 
-        let obj_space = self.obj.space()?;
-        let obj_shape = obj_space.shape();
-        let obj_ndim = obj_shape.len();
-
         let selection = selection.into();
-        let out_shape = selection.out_shape(&obj_shape)?;
-        let out_ndim = out_shape.len();
+        let obj_space = self.obj.space()?;
+
+        let out_shape = selection.out_shape(&obj_space.shape())?;
         let out_size: Ix = out_shape.iter().product();
         let fspace = obj_space.select(selection)?;
-        let fsize = fspace.selection_size();
 
         if let Some(ndim) = D::NDIM {
+            let out_ndim = out_shape.len();
             ensure!(ndim == out_ndim, "Selection ndim ({}) != array ndim ({})", out_ndim, ndim);
         } else {
+            let fsize = fspace.selection_size();
             ensure!(
                 out_size == fsize,
                 "Selected size mismatch: {} != {} (shouldn't happen)",
@@ -96,7 +94,7 @@ impl<'a> Reader<'a> {
 
         if out_size == 0 {
             Ok(unsafe { Array::from_shape_vec_unchecked(out_shape, vec![]).into_dimensionality()? })
-        } else if obj_ndim == 0 {
+        } else if obj_space.ndim() == 0 {
             self.read()
         } else {
             let mspace = Dataspace::try_new(&out_shape)?;
@@ -241,21 +239,19 @@ impl<'a> Writer<'a> {
     {
         ensure!(!self.obj.is_attr(), "Slicing cannot be used on attribute datasets");
 
-        let obj_space = self.obj.space()?;
-        let obj_shape = obj_space.shape();
-        let obj_ndim = obj_shape.len();
-
         let selection = selection.into();
-        let out_shape = selection.out_shape(&obj_shape)?;
-        let out_ndim = out_shape.len();
+        let obj_space = self.obj.space()?;
+
+        let out_shape = selection.out_shape(&obj_space.shape())?;
         let out_size: Ix = out_shape.iter().product();
         let fspace = obj_space.select(selection)?;
-        let fsize = fspace.selection_size();
         let view = arr.into();
 
         if let Some(ndim) = D::NDIM {
+            let out_ndim = out_shape.len();
             ensure!(ndim == out_ndim, "Selection ndim ({}) != array ndim ({})", out_ndim, ndim);
         } else {
+            let fsize = fspace.selection_size();
             ensure!(
                 out_size == fsize,
                 "Selected size mismatch: {} != {} (shouldn't happen)",
@@ -272,7 +268,7 @@ impl<'a> Writer<'a> {
 
         if out_size == 0 {
             Ok(())
-        } else if obj_ndim == 0 {
+        } else if obj_space.ndim() == 0 {
             self.write(view)
         } else {
             let mspace = Dataspace::try_new(view.shape())?;
