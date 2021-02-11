@@ -255,3 +255,13 @@ fn test_read_write_tuples() -> hdf5::Result<()> {
     test_read_write::<(i8, u64, f32)>()?;
     Ok(())
 }
+
+#[test]
+fn test_create_on_databuilder() {
+    let file = new_in_memory_file().unwrap();
+
+    let _ds = file.new_dataset_builder().empty::<i32>().create("ds1").unwrap();
+    let _ds = file.new_dataset_builder().with_data(&[1_i32, 2, 3]).create("ds2").unwrap();
+    let _ds = file.new_dataset::<i32>().create("ds3").unwrap();
+    let _ds = file.new_dataset::<i32>().shape(2).create("ds4").unwrap();
+}

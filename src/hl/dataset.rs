@@ -291,6 +291,9 @@ impl DatasetBuilderEmpty {
             resizable: false,
         }
     }
+    pub fn create<'n, T: Into<Maybe<&'n str>>>(self, name: T) -> Result<Dataset> {
+        self.shape(()).create(name)
+    }
 }
 
 #[derive(Clone)]
