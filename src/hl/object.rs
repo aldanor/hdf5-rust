@@ -124,11 +124,14 @@ pub mod tests {
         obj.decref();
         assert_eq!(obj.refcount(), 1);
         obj.decref();
-        obj.decref();
-        assert_eq!(obj.refcount(), 0);
-        assert!(!obj.is_valid());
-        assert!(!is_valid_user_id(obj.id()));
-        assert!(!is_valid_id(obj.id()));
+        h5lock!({
+            obj.decref();
+            assert_eq!(obj.refcount(), 0);
+            assert!(!obj.is_valid());
+            assert!(!is_valid_user_id(obj.id()));
+            assert!(!is_valid_id(obj.id()));
+            drop(obj);
+        });
     }
 
     #[test]
@@ -166,6 +169,8 @@ pub mod tests {
             obj.decref();
             assert!(!obj.is_valid());
             assert!(!obj2.is_valid());
+            drop(obj);
+            drop(obj2);
         });
     }
 }

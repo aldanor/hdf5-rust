@@ -427,6 +427,9 @@ pub mod tests {
             h5lock!({
                 file.close().unwrap();
                 assert_eq!(format!("{:?}", a), "<HDF5 group: invalid id>");
+                drop(a);
+                drop(ab);
+                drop(abc);
             })
         })
     }

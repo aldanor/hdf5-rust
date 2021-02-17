@@ -516,6 +516,7 @@ pub mod tests {
                 assert!(crate::handle::refcount(fileid).is_err());
                 assert!(crate::handle::refcount(groupid).is_err());
                 assert!(!group.is_valid());
+                drop(group);
             });
         });
     }
