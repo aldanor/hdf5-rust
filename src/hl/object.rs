@@ -1,7 +1,5 @@
 use std::fmt::{self, Debug};
 
-use hdf5_sys::h5i::H5Iget_ref;
-
 use crate::internal_prelude::*;
 
 /// Any HDF5 object that can be referenced through an identifier.
@@ -37,11 +35,7 @@ impl Object {
 
     /// Returns reference count if the handle is valid and 0 otherwise.
     pub fn refcount(&self) -> u32 {
-        if self.is_valid() {
-            h5call!(H5Iget_ref(self.id())).unwrap_or(0) as _
-        } else {
-            0
-        }
+        self.handle().refcount()
     }
 
     /// Returns `true` if the object has a valid unlocked identifier (`false` for pre-defined
@@ -105,7 +99,7 @@ pub mod tests {
         }
 
         fn decref(&self) {
-            self.0.decref()
+            unsafe { self.0.decref() }
         }
     }
 
@@ -148,18 +142,30 @@ pub mod tests {
         assert!(is_valid_id(obj.id()));
         assert!(is_valid_user_id(obj.id()));
         assert_eq!(obj.refcount(), 1);
-        let mut obj2 = TestObject::from_id(obj.id()).unwrap();
+
+        let obj2 = TestObject::from_id(obj.id()).unwrap();
         obj2.incref();
         assert_eq!(obj.refcount(), 2);
         assert_eq!(obj2.refcount(), 2);
+
         drop(obj2);
         assert!(obj.is_valid());
         assert_eq!(obj.refcount(), 1);
-        obj2 = TestObject::from_id(obj.id()).unwrap();
+
+        // obj is already owned, we must ensure we do not call drop on this without
+        // an incref
+        let mut obj2 = std::mem::ManuallyDrop::new(TestObject::from_id(obj.id()).unwrap());
+        assert_eq!(obj.refcount(), 1);
+
         obj2.incref();
+        // We can now take, as we have exactly two handles
+        let obj2 = unsafe { std::mem::ManuallyDrop::take(&mut obj2) };
+
         obj.decref();
-        obj.decref();
-        assert_eq!(obj.id(), H5I_INVALID_HID);
-        assert_eq!(obj2.id(), H5I_INVALID_HID);
+        h5lock!({
+            obj.decref();
+            assert!(!obj.is_valid());
+            assert!(!obj2.is_valid());
+        });
     }
 }

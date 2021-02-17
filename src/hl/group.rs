@@ -410,7 +410,12 @@ pub mod tests {
 
     #[test]
     pub fn test_debug() {
-        with_tmp_file(|file| {
+        use crate::hl::plist::file_access::FileCloseDegree;
+        with_tmp_path(|path| {
+            let file = File::with_options()
+                .with_fapl(|fapl| fapl.fclose_degree(FileCloseDegree::Strong))
+                .create(&path)
+                .unwrap();
             file.create_group("a/b/c").unwrap();
             file.create_group("/a/d").unwrap();
             let a = file.group("a").unwrap();
@@ -419,8 +424,10 @@ pub mod tests {
             assert_eq!(format!("{:?}", a), "<HDF5 group: \"/a\" (2 members)>");
             assert_eq!(format!("{:?}", ab), "<HDF5 group: \"/a/b\" (1 member)>");
             assert_eq!(format!("{:?}", abc), "<HDF5 group: \"/a/b/c\" (empty)>");
-            file.close();
-            assert_eq!(format!("{:?}", a), "<HDF5 group: invalid id>");
+            h5lock!({
+                file.close().unwrap();
+                assert_eq!(format!("{:?}", a), "<HDF5 group: invalid id>");
+            })
         })
     }
 
