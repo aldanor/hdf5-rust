@@ -54,15 +54,17 @@ impl Handle {
         self.id
     }
 
+    /// Increment the reference count of the handle
     pub fn incref(&self) {
         if is_valid_user_id(self.id()) {
             h5lock!(H5Iinc_ref(self.id()));
         }
     }
 
-    /// An object should not be decreffed unless it has an
-    /// associated incref
-    pub unsafe fn decref(&self) {
+    /// Decrease the reference count of the handle
+    ///
+    /// This function should only be used if `incref` has been used
+    pub fn decref(&self) {
         h5lock!({
             if self.is_valid_id() {
                 H5Idec_ref(self.id());
@@ -80,7 +82,8 @@ impl Handle {
         is_valid_id(self.id())
     }
 
-    pub(crate) fn refcount(&self) -> u32 {
+    /// Return the reference count of the object
+    pub fn refcount(&self) -> u32 {
         refcount(self.id).unwrap_or(0) as u32
     }
 }

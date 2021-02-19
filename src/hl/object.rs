@@ -99,7 +99,7 @@ pub mod tests {
         }
 
         fn decref(&self) {
-            unsafe { self.0.decref() }
+            self.0.decref()
         }
     }
 
@@ -164,11 +164,19 @@ pub mod tests {
         // We can now take, as we have exactly two handles
         let obj2 = unsafe { std::mem::ManuallyDrop::take(&mut obj2) };
 
-        obj.decref();
         h5lock!({
+            // We must hold a lock here to prevent another thread creating an object
+            // with the same identifier as the one we just owned. Failing to do this
+            // might lead to the wrong object being dropped.
             obj.decref();
+            obj.decref();
+            // We here have to dangling identifiers stored in obj and obj2. As this part
+            // is locked we know some other object is not going to created with these
+            // identifiers
             assert!(!obj.is_valid());
             assert!(!obj2.is_valid());
+            // By manually dropping we don't close some other unrelated objects.
+            // Dropping/closing an invalid object is allowed
             drop(obj);
             drop(obj2);
         });

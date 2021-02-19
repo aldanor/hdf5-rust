@@ -1026,6 +1026,11 @@ impl FileAccessBuilder {
         Ok(builder)
     }
 
+    /// Sets the file close degree
+    ///
+    /// If called with `FileCloseDegree::Strong`, the programmer is responsible
+    /// for closing all items before closing the file. Failure to do so might
+    /// invalidate newly created objects.
     pub fn fclose_degree(&mut self, fc_degree: FileCloseDegree) -> &mut Self {
         self.fclose_degree = Some(fc_degree);
         self
@@ -1374,6 +1379,8 @@ impl FileAccessBuilder {
         if let Some(v) = self.chunk_cache {
             h5try!(H5Pset_cache(id, 0, v.nslots as _, v.nbytes as _, v.w0 as _));
         }
+        // The default is to use CLOSE_SEMI or CLOSE_WEAK, depending on VFL driver.
+        // Both of these are unproblematic for our ownership
         if let Some(v) = self.fclose_degree {
             h5try!(H5Pset_fclose_degree(id, v.into()));
         }
