@@ -367,6 +367,55 @@ extern "C" {
     pub fn H5FDunlock(file: *mut H5FD_t) -> herr_t;
 }
 
+#[cfg(hdf5_1_10_6)]
+pub mod hdfs {
+    use super::*;
+    pub const H5FD__CURR_HDFS_FAPL_T_VERSION: c_uint = 1;
+    pub const H5FD__HDFS_NODE_NAME_SPACE: c_uint = 128;
+    pub const H5FD__HDFS_USER_NAME_SPACE: c_uint = 128;
+    pub const H5FD__HDFS_KERB_CACHE_PATH_SPACE: c_uint = 128;
+
+    #[repr(C)]
+    pub struct H5FD_hdfs_fapl_t {
+        version: i32,
+        namenode_name: [c_char; H5FD__HDFS_NODE_NAME_SPACE as usize + 1],
+        namenode_port: i32,
+        user_name: [c_char; H5FD__HDFS_USER_NAME_SPACE as usize + 1],
+        kerberos_ticket_cache: [c_char; H5FD__HDFS_KERB_CACHE_PATH_SPACE as usize + 1],
+        stream_buffer_size: i32,
+    }
+
+    extern "C" {
+        pub fn H5FD_hdfs_init() -> hid_t;
+        pub fn H5Pget_fapl_hdfs(fapl_id: hid_t, fa: *mut H5FD_hdfs_fapl_t) -> herr_t;
+        pub fn H5Pset_fapl_hdfs(fapl_id: hid_t, fa: *mut H5FD_hdfs_fapl_t) -> herr_t;
+    }
+}
+
+#[cfg(hdf5_1_10_6)]
+pub mod ros3 {
+    use super::*;
+    pub const H5FD_CURR_ROS3_FAPL_T_VERSION: c_uint = 1;
+    pub const H5FD_ROS3_MAX_REGION_LEN: c_uint = 128;
+    pub const H5FD_ROS3_MAX_SECRET_ID_LEN: c_uint = 128;
+    pub const H5FD_ROS3_MAX_SECRET_KEY_LEN: c_uint = 128;
+
+    #[repr(C)]
+    pub struct H5FD_ros3_fapl_t {
+        version: i32,
+        authenticate: hbool_t,
+        aws_region: [c_char; H5FD_ROS3_MAX_REGION_LEN as usize + 1],
+        secret_id: [c_char; H5FD_ROS3_MAX_SECRET_ID_LEN as usize + 1],
+        secret_key: [c_char; H5FD_ROS3_MAX_SECRET_KEY_LEN as usize + 1],
+    }
+
+    extern "C" {
+        pub fn H5FD_ros3_init() -> hid_t;
+        pub fn H5Pget_fapl_ros3(fapl_id: hid_t, fa: *mut H5FD_ros3_fapl_t) -> herr_t;
+        pub fn H5Pset_fapl_ros3(fapl_id: hid_t, fa: *mut H5FD_ros3_fapl_t) -> herr_t;
+    }
+}
+
 #[cfg(hdf5_1_10_2)]
 extern "C" {
     pub fn H5FDdriver_query(driver_id: hid_t, flags: *mut c_ulong) -> herr_t;
