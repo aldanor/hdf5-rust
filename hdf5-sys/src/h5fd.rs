@@ -416,6 +416,36 @@ pub mod ros3 {
     }
 }
 
+#[cfg(all(hdf5_1_10_7, not(hdf5_1_12_0)))]
+pub mod splitter {
+    use super::*;
+
+    pub const H5FD_CURR_SPLITTER_VFD_CONFIG_VERSION: c_uint = 1;
+    pub const H5FD_SPLITTER_PATH_MAX: c_uint = 4096;
+    pub const H5FD_SPLITTER_MAGIC: c_uint = 0x2B916880;
+
+    #[repr(C)]
+    pub struct H5FD_splitter_vfg_config_t {
+        magic: i32,
+        version: c_uint,
+        rw_fapl_id: hid_t,
+        wo_fapl_id: hid_t,
+        wo_path: [c_char; H5FD_SPLITTER_PATH_MAX as usize + 1],
+        log_file_path: [c_char; H5FD_SPLITTER_PATH_MAX as usize + 1],
+        ignore_wo_errs: hbool_t,
+    }
+
+    extern "C" {
+        pub fn H5FD_splitter_init() -> hid_t;
+        pub fn H5Pget_fapl_splitter(
+            fapl_id: hid_t, config_ptr: *mut H5FD_splitter_vfg_config_t,
+        ) -> herr_t;
+        pub fn H5Pset_fapl_splitter(
+            fapl_id: hid_t, config_ptr: *mut H5FD_splitter_vfg_config_t,
+        ) -> herr_t;
+    }
+}
+
 #[cfg(hdf5_1_10_2)]
 extern "C" {
     pub fn H5FDdriver_query(driver_id: hid_t, flags: *mut c_ulong) -> herr_t;
