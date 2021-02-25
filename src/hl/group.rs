@@ -389,8 +389,11 @@ pub mod tests {
     pub fn test_dataset() {
         with_tmp_file(|file| {
             file.new_dataset::<i32>().no_chunk().shape((10, 20)).create("/foo/bar").unwrap();
-            file.new_dataset::<f32>().shape((10, 20)).resizable(true).create("baz").unwrap();
-            file.new_dataset::<u8>().shape((10, 20)).resizable(true).create(None).unwrap();
+            file.new_dataset::<f32>()
+                .shape(Extents::resizable((10, 20).into()))
+                .create("baz")
+                .unwrap();
+            file.new_dataset::<u8>().shape((10.., 20..)).create(None).unwrap();
         });
     }
 

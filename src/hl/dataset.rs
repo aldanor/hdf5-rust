@@ -270,7 +270,6 @@ impl DatasetBuilder {
             builder: self.builder,
             data: data.into(),
             type_desc: type_desc.clone(),
-            resizable: false,
         }
     }
 }
@@ -288,7 +287,6 @@ impl DatasetBuilderEmpty {
             builder: self.builder,
             type_desc: self.type_desc,
             extents: extents.into(),
-            resizable: false,
         }
     }
     pub fn create<'n, T: Into<Maybe<&'n str>>>(self, name: T) -> Result<Dataset> {
@@ -302,18 +300,11 @@ pub struct DatasetBuilderEmptyShape {
     builder: DatasetBuilderInner,
     type_desc: TypeDescriptor,
     extents: Extents,
-    resizable: bool,
 }
 
 impl DatasetBuilderEmptyShape {
-    pub fn resizable(&mut self, resizable: bool) -> &mut Self {
-        self.resizable = resizable;
-        self
-    }
     pub fn create<'n, T: Into<Maybe<&'n str>>>(&self, name: T) -> Result<Dataset> {
-        let extents = self.extents.clone();
-        let extents = if self.resizable { extents.resizable() } else { extents };
-        h5lock!(self.builder.create(&self.type_desc, name.into().into(), &extents))
+        h5lock!(self.builder.create(&self.type_desc, name.into().into(), &self.extents))
     }
 }
 
@@ -323,7 +314,6 @@ pub struct DatasetBuilderData<'d, T, D> {
     builder: DatasetBuilderInner,
     data: ArrayView<'d, T, D>,
     type_desc: TypeDescriptor,
-    resizable: bool,
 }
 
 impl<'d, T, D> DatasetBuilderData<'d, T, D>
@@ -331,18 +321,12 @@ where
     T: H5Type,
     D: ndarray::Dimension,
 {
-    pub fn resizable(&mut self, resizable: bool) -> &mut Self {
-        self.resizable = resizable;
-        self
-    }
-
     pub fn create<'n, N: Into<Maybe<&'n str>>>(&self, name: N) -> Result<Dataset> {
         ensure!(
             self.data.is_standard_layout(),
             "input array is not in standard layout or is not contiguous"
         ); // TODO: relax this when it's supported in the writer
         let extents = Extents::from(self.data.shape());
-        let extents = if self.resizable { extents.resizable() } else { extents };
         let name = name.into().into();
         h5lock!({
             let dtype_src = Datatype::from_type::<T>()?;

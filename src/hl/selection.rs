@@ -1449,4 +1449,24 @@ mod test {
 
         Ok(())
     }
+
+    #[test]
+    fn use_selection_on_dataset() {
+        with_tmp_file(|file| {
+            let ds = file.new_dataset::<u8>().shape((5, 5)).create("ds_fixed").unwrap();
+            assert_eq!(&ds.shape(), &[5, 5]);
+            let ds = file.new_dataset::<u8>().shape((0.., 0..)).create("ds_twounlim").unwrap();
+            assert_eq!(&ds.shape(), &[0, 0]);
+            ds.resize((5, 5)).unwrap();
+            assert_eq!(&ds.shape(), &[5, 5]);
+            let ds = file.new_dataset::<u8>().shape((5, 0..)).create("ds_oneunlim0").unwrap();
+            assert_eq!(&ds.shape(), &[5, 0]);
+            ds.resize((5, 5)).unwrap();
+            assert_eq!(&ds.shape(), &[5, 5]);
+            let ds = file.new_dataset::<u8>().shape((0.., 5)).create("ds_oneunlim1").unwrap();
+            assert_eq!(&ds.shape(), &[0, 5]);
+            ds.resize((5, 5)).unwrap();
+            assert_eq!(&ds.shape(), &[5, 5]);
+        })
+    }
 }

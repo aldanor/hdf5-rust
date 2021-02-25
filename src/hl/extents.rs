@@ -132,6 +132,7 @@ impl SimpleExtents {
         Self::from_vec(extents.into_iter().map(|x| Extent::fixed(*x.borrow())).collect())
     }
 
+    /// Create extents resizable along all dimensions
     pub fn resizable<T>(extents: T) -> Self
     where
         T: IntoIterator,
@@ -161,7 +162,7 @@ impl SimpleExtents {
     }
 
     pub fn is_resizable(&self) -> bool {
-        !self.inner.is_empty() && self.inner.iter().map(Extent::is_unlimited).all(identity)
+        !self.inner.is_empty() && self.inner.iter().map(Extent::is_unlimited).any(identity)
     }
 
     pub fn is_unlimited(&self) -> bool {
@@ -560,7 +561,7 @@ pub mod tests {
 
         assert!(!se1.is_fixed() && se2.is_fixed() && !se3.is_fixed());
         assert!(se1.is_unlimited() && !se2.is_unlimited() && se3.is_unlimited());
-        assert!(!se1.is_resizable() && !se2.is_resizable() && se3.is_resizable());
+        assert!(se1.is_resizable() && !se2.is_resizable() && se3.is_resizable());
 
         assert!(se1.is_valid() && se2.is_valid() && se3.is_valid());
         assert!(!SE::new(&[1..=2, 4..=3]).is_valid());
@@ -622,7 +623,7 @@ pub mod tests {
         assert_eq!(e.ndim(), 2);
         assert_eq!(e.dims(), vec![3, 4]);
         assert_eq!(e.size(), 12);
-        assert!(!e.is_resizable());
+        assert!(e.is_resizable());
         assert!(e.is_unlimited());
         assert_eq!(e.maxdims(), vec![None, Some(4)]);
 
