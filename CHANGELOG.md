@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+### Added
+- The `Extents` type, used for shape selection and allows far more ways of
+  selecting shapes for new datasets.
+- Filters for `blosc` and `lsf` compression
+- Support for virtual maps
+- The `Selection` API for selecting dataset regions
+- Dataset creation property lists (DCPL)
+
+### Changed
+- `fill_value` now returns `DynValue`.
+- `hdf5-types` conditionally uses the `hdf5` allocator when necessary.
+- Compression filters has been renamed.
+- The automatic chunking uses a fill-from-back approach instead of the
+  approach used by `h5py`.
+- `DatasetBuilder` now comes in different flavours to reflect additional
+  information used during the building of a dataset.
+
 ## 0.7.1
 
 ### Added
