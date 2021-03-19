@@ -232,3 +232,15 @@ jobs:
         run: sudo apt-get install wine64 mingw-w64
       - name: Build and test
         run: env CARGO_TARGET_X86_64_PC_WINDOWS_GNU_RUNNER=wine64 cargo test --features hdf5-sys/static --target x86_64-pc-windows-gnu -- --skip test_compile_fail
+  addr_san:
+    name: Address sanitizer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with: {submodules: true}
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with: {toolchain: nightly, profile: minimal, override: true}
+      - name: Run test with sanitizer
+        run: env RUSTFLAGS="-Z sanitizer=address" cargo test --features hdf5-sys/static --target x86_64-unknown-linux-gnu --workspace --exclude hdf5-derive
