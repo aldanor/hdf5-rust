@@ -267,13 +267,14 @@ impl SliceOrIndex {
     }
 }
 
-impl<T: Into<ndarray::SliceOrIndex>> From<T> for SliceOrIndex {
+impl<T: Into<ndarray::SliceInfoElem>> From<T> for SliceOrIndex {
     fn from(slice: T) -> Self {
         match slice.into() {
-            ndarray::SliceOrIndex::Index(index) => Self::Index(index),
-            ndarray::SliceOrIndex::Slice { start, end, step } => {
+            ndarray::SliceInfoElem::Index(index) => Self::Index(index),
+            ndarray::SliceInfoElem::Slice { start, end, step } => {
                 Self::Slice { start, step, end, block: false }
             }
+            ndarray::SliceInfoElem::NewAxis => panic!("ndarray NewAxis can not be mapped to hdf5"),
         }
     }
 }
@@ -439,12 +440,13 @@ impl From<SliceOrIndex> for Hyperslab {
     }
 }
 
-impl<T, D> From<&ndarray::SliceInfo<T, D>> for Hyperslab
+impl<T, Din, Dout> From<ndarray::SliceInfo<T, Din, Dout>> for Hyperslab
 where
-    T: AsRef<[ndarray::SliceOrIndex]>,
-    D: ndarray::Dimension,
+    T: AsRef<[ndarray::SliceInfoElem]>,
+    Din: ndarray::Dimension,
+    Dout: ndarray::Dimension,
 {
-    fn from(slice: &ndarray::SliceInfo<T, D>) -> Self {
+    fn from(slice: ndarray::SliceInfo<T, Din, Dout>) -> Self {
         slice.deref().as_ref().iter().cloned().map(Into::into).collect::<Vec<_>>().into()
     }
 }
@@ -666,12 +668,13 @@ impl From<Hyperslab> for Selection {
     }
 }
 
-impl<T, D> From<&ndarray::SliceInfo<T, D>> for Selection
+impl<T, Din, Dout> From<ndarray::SliceInfo<T, Din, Dout>> for Selection
 where
-    T: AsRef<[ndarray::SliceOrIndex]>,
-    D: ndarray::Dimension,
+    T: AsRef<[ndarray::SliceInfoElem]>,
+    Din: ndarray::Dimension,
+    Dout: ndarray::Dimension,
 {
-    fn from(slice: &ndarray::SliceInfo<T, D>) -> Self {
+    fn from(slice: ndarray::SliceInfo<T, Din, Dout>) -> Self {
         Hyperslab::from(slice).into()
     }
 }
@@ -801,7 +804,7 @@ impl_slice_scalar!(isize);
 impl_slice_scalar!(usize);
 impl_slice_scalar!(i32);
 impl_slice_scalar!(ndarray::Slice);
-impl_slice_scalar!(ndarray::SliceOrIndex);
+impl_slice_scalar!(ndarray::SliceInfoElem);
 
 macro_rules! impl_range_scalar {
     ($index:ty) => {
@@ -904,7 +907,7 @@ mod test {
             ndarray::Slice::new(-1, None, 2),
             vec![Slice { start: -1, step: 2, end: None, block: false }]
         );
-        check!(ndarray::SliceOrIndex::Index(10), vec![Index(10)]);
+        check!(ndarray::SliceInfoElem::Index(10), vec![Index(10)]);
 
         check!(-1, vec![Index(-1)]);
         check!(-1..2, vec![Slice { start: -1, step: 1, end: Some(2), block: false }]);

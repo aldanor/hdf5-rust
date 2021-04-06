@@ -85,7 +85,7 @@ impl Display for RuntimeError {
 
 #[allow(non_snake_case, non_camel_case_types)]
 fn get_runtime_version_single<P: AsRef<Path>>(path: P) -> Result<Version, Box<dyn Error>> {
-    let lib = libloading::Library::new(path.as_ref())?;
+    let lib = unsafe { libloading::Library::new(path.as_ref()) }?;
 
     type H5open_t = unsafe extern "C" fn() -> c_int;
     let H5open = unsafe { lib.get::<H5open_t>(b"H5open")? };
