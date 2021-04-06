@@ -37,7 +37,7 @@
   low-level settings).
 - Added `const-generics` feature to `hdf5-types` crate - adds const generics support for
   Rust 1.51 (will be eventually added to default features list).
-- Added `force-h5-allocator` feature to `hdf5-types` crate - forces HDF5 allocator for
+- Added `h5-alloc` feature to `hdf5-types` crate - uses the HDF5 allocator for
   varlen types and dynamic values. This may be necessary on platforms where different
   allocators may be used in different libraries (e.g. dynamic libraries on Windows),
   or if `libhdf5` is compiled with the memchecker option enabled. This option is

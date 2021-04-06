@@ -12,7 +12,7 @@ build = "build.rs"
 
 [features]
 const-generics = []
-force-h5-allocator = []
+h5-alloc = []
 
 [dependencies]
 ascii = "1.0"
