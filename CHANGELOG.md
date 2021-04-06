@@ -35,8 +35,6 @@
 - File creation property list (FCPL) API has been extended to include a few previously
   missing properties (object time tracking, attribute creation order and few other
   low-level settings).
-- Added `const-generics` feature to `hdf5-types` crate - adds const generics support for
-  Rust 1.51 (will be eventually added to default features list).
 - Added `h5-alloc` feature to `hdf5-types` crate - uses the HDF5 allocator for
   varlen types and dynamic values. This may be necessary on platforms where different
   allocators may be used in different libraries (e.g. dynamic libraries on Windows),
@@ -59,6 +57,8 @@
 - `write_slice`, `read_slice`, `read_slice_1d`, `read_slice_2d` now take any object
   convertible to `Selection` (instead of `SliceInfo`).
 - `Dataset::chunks` has been renamed to `Dataset::chunk`
+- Const generics support (MSRV 1.51): `hdf5-types` now uses const generics for array types,
+  allowing fixed-size arrays of arbitrary sizes.
 
 ## 0.7.1
 
