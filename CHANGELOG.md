@@ -3,21 +3,62 @@
 ## Unreleased
 
 ### Added
-- The `Extents` type, used for shape selection and allows far more ways of
-  selecting shapes for new datasets.
-- Filters for `blosc` and `lsf` compression
-- Support for virtual maps
-- The `Selection` API for selecting dataset regions
-- Dataset creation property lists (DCPL)
 
-### Changed
-- `fill_value` now returns `DynValue`.
-- `hdf5-types` conditionally uses the `hdf5` allocator when necessary.
-- Compression filters has been renamed.
-- The automatic chunking uses a fill-from-back approach instead of the
-  approach used by `h5py`.
-- `DatasetBuilder` now comes in different flavours to reflect additional
-  information used during the building of a dataset.
+- Complete rewrite of `DatasetBuilder`; dataset creation API is now different and not
+  backwards-compatible (however, it integrates all of the new features and is more
+  flexible and powerful). It is now possible to create and write the datasets in one step.
+  Refer to the API docs for full reference.
+- New `Extents` type matching HDF5 extents types: null (no elements), scalar, simple (fixed
+  dimensionality); it is used to query and specify shapes of datasets. Extents objects
+  are convertible from numbers and also tuples, slices and vectors of indices - all of
+  which can be used whenever extents are required (e.g., when creating a new dataset).
+- New `Selection` type and the API around it closely matching HDF5 selection API - this
+  includes 'all' selection, point-wise selection and hyperslab selection (only 'regular'
+  hyperslabs are supported - that is, hyperslabs that can be represented as a single
+  multi-dimensional box some of whose dimensions may be infinite). Selection objects
+  are convertible from numbers and ranges and tuples and arrays of numbers and ranges;
+  one can also use `s!` macro from `ndarray` crate. Selections can be provided when
+  reading and writing slices.
+- LZF / Blosc filters have been added, they have to be enabled by `"lzf"` / `"blosc"`
+  cargo features and depend on `lzf-sys` / `blosc-sys` crates respectively. Blosc filter
+  is a meta-filter providing multi-threaded access to the best-in-class compression codecs
+  like Zstd and LZ4 and is recommended to use as a default when compression is critical.
+- New `Filter` type to unify all of the filters API; if LZF / Blosc filters are enabled,
+  this enum also contains the corresponding variants. It is now also possible to provide
+  user-defined filters with custom filter IDs and parameters.
+- Dataset creation property list (DCPL) API is now supported; this provides access to all
+  of the properties that can be specified at dataset creation time (e.g., layout, chunking,
+  fill values, external file linking, virtual maps, object time tracking, attribute
+  creation order, and a few other low-level settings).
+- As part of DCPL change, virtual dataset maps (VDS API in HDF5 1.10+) are now supported.
+- Link creation property list (LCPL) API is now also wrapped.
+- File creation property list (FCPL) API has been extended to include a few previously
+  missing properties (object time tracking, attribute creation order and few other
+  low-level settings).
+- Added `const-generics` feature to `hdf5-types` crate - adds const generics support for
+  Rust 1.51 (will be eventually added to default features list).
+- Added `force-h5-allocator` feature to `hdf5-types` crate - forces HDF5 allocator for
+  varlen types and dynamic values. This may be necessary on platforms where different
+  allocators may be used in different libraries (e.g. dynamic libraries on Windows),
+  or if `libhdf5` is compiled with the memchecker option enabled. This option is
+  force-enabled by default if using a dll version of the library on Windows.
+- New `DynValue` type which represents a dynamic self-describing HDF5 object that
+  also knows how to deallocate itself; it supports all of the HDF5 types including
+  compound types, strings and arrays.
+- Added methods to `Dataset`: `layout`, `dapl`, `access_plist`, `dcpl`, `create_plist`.
+  
+ ### Changed
+  
+- `Dataspace` type has been reworked and can be now constructed from an extents object 
+  and sliced with a selection object.
+- `Dataset::fill_value` now returns an object of the newly added `DynValue` type; this
+  object is self-describing and knows how to free itself.
+- Automatic chunking now uses a fill-from-back approach instead of the previously
+  used method which is used in `h5py`.
+- Removed `Filters` type (there's now `Filter` that represents a single filter).
+- `write_slice`, `read_slice`, `read_slice_1d`, `read_slice_2d` now take any object
+  convertible to `Selection` (instead of `SliceInfo`).
+- `Dataset::chunks` has been renamed to `Dataset::chunk`
 
 ## 0.7.1
 
