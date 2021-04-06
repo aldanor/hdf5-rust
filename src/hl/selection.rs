@@ -267,6 +267,7 @@ impl SliceOrIndex {
     }
 }
 
+#[allow(clippy::fallible_impl_from)]
 impl<T: Into<ndarray::SliceInfoElem>> From<T> for SliceOrIndex {
     fn from(slice: T) -> Self {
         match slice.into() {
@@ -638,7 +639,7 @@ impl Display for Selection {
     }
 }
 
-impl From<&Selection> for Selection {
+impl From<&Self> for Selection {
     fn from(sel: &Self) -> Self {
         sel.clone()
     }

@@ -517,7 +517,7 @@ impl DatasetCreateBuilder {
     /// size to allow efficient compression. Chunk sizes of less than 4MB will in
     /// most cases be inefficient, and will yield limited space- and time-savings.
     pub fn chunk<D: Dimension>(&mut self, chunk: D) -> &mut Self {
-        self.chunk = Some(chunk.dims().to_vec());
+        self.chunk = Some(chunk.dims());
         self
     }
 

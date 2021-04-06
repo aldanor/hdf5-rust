@@ -444,7 +444,7 @@ impl DatasetBuilderInner {
         let chunking_allowed = extents.size() > 0 || extents.is_resizable();
 
         let chunk = if let Some(chunk) = &self.chunk {
-            chunk.to_owned()
+            chunk.clone()
         } else if chunking_required && chunking_allowed {
             Chunk::MinKB(DEFAULT_CHUNK_SIZE_KB)
         } else {

@@ -60,7 +60,7 @@ impl From<RangeInclusive<Ix>> for Extent {
     }
 }
 
-impl<T: Into<Extent> + Clone> From<&T> for Extent {
+impl<T: Into<Self> + Clone> From<&T> for Extent {
     fn from(extent: &T) -> Self {
         extent.clone().into()
     }
@@ -488,7 +488,7 @@ impl From<()> for Extents {
     }
 }
 
-impl From<&Extents> for Extents {
+impl From<&Self> for Extents {
     fn from(extents: &Self) -> Self {
         extents.clone()
     }
