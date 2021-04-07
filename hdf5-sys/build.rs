@@ -85,7 +85,7 @@ impl Display for RuntimeError {
 
 #[allow(non_snake_case, non_camel_case_types)]
 fn get_runtime_version_single<P: AsRef<Path>>(path: P) -> Result<Version, Box<dyn Error>> {
-    let lib = libloading::Library::new(path.as_ref())?;
+    let lib = unsafe { libloading::Library::new(path.as_ref()) }?;
 
     type H5open_t = unsafe extern "C" fn() -> c_int;
     let H5open = unsafe { lib.get::<H5open_t>(b"H5open")? };
@@ -124,28 +124,26 @@ fn validate_runtime_version(config: &Config) {
     }
     for link_path in &link_paths {
         if let Ok(paths) = fs::read_dir(link_path) {
-            for path in paths {
-                if let Ok(path) = path {
-                    let path = path.path();
-                    if let Some(filename) = path.file_name() {
-                        let filename = filename.to_str().unwrap_or("");
-                        if path.is_file() && libfiles.contains(&filename) {
-                            println!("Attempting to load: {:?}", path);
-                            match get_runtime_version_single(&path) {
-                                Ok(version) => {
-                                    println!("    => runtime version = {:?}", version);
-                                    if version == config.header.version {
-                                        println!("HDF5 library runtime version matches headers.");
-                                        return;
-                                    }
-                                    panic!(
-                                        "Invalid HDF5 runtime version (expected: {:?}).",
-                                        config.header.version
-                                    );
+            for path in paths.flatten() {
+                let path = path.path();
+                if let Some(filename) = path.file_name() {
+                    let filename = filename.to_str().unwrap_or("");
+                    if path.is_file() && libfiles.contains(&filename) {
+                        println!("Attempting to load: {:?}", path);
+                        match get_runtime_version_single(&path) {
+                            Ok(version) => {
+                                println!("    => runtime version = {:?}", version);
+                                if version == config.header.version {
+                                    println!("HDF5 library runtime version matches headers.");
+                                    return;
                                 }
-                                Err(err) => {
-                                    println!("    => {}", err);
-                                }
+                                panic!(
+                                    "Invalid HDF5 runtime version (expected: {:?}).",
+                                    config.header.version
+                                );
+                            }
+                            Err(err) => {
+                                println!("    => {}", err);
                             }
                         }
                     }

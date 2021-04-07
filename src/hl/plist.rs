@@ -11,9 +11,12 @@ use hdf5_sys::h5p::{
 
 use crate::internal_prelude::*;
 
+pub mod common;
 pub mod dataset_access;
+pub mod dataset_create;
 pub mod file_access;
 pub mod file_create;
+pub mod link_create;
 
 /// Represents the HDF5 property list.
 #[repr(transparent)]
@@ -119,9 +122,9 @@ impl Display for PropertyListClass {
     }
 }
 
-impl Into<String> for PropertyListClass {
-    fn into(self) -> String {
-        format!("{}", self)
+impl From<PropertyListClass> for String {
+    fn from(v: PropertyListClass) -> Self {
+        format!("{}", v)
     }
 }
 
@@ -170,7 +173,7 @@ impl PropertyList {
     pub fn properties(&self) -> Vec<String> {
         extern "C" fn callback(_: hid_t, name: *const c_char, data: *mut c_void) -> herr_t {
             panic::catch_unwind(|| {
-                let data = unsafe { &mut *(data as *mut Vec<String>) };
+                let data = unsafe { &mut *(data.cast::<Vec<String>>()) };
                 let name = string_from_cstr(name);
                 if !name.is_empty() {
                     data.push(name);
@@ -181,7 +184,7 @@ impl PropertyList {
         }
 
         let mut data = Vec::new();
-        let data_ptr: *mut c_void = &mut data as *mut _ as *mut _;
+        let data_ptr: *mut c_void = (&mut data as *mut Vec<_>).cast();
 
         h5lock!(H5Piterate(self.id(), ptr::null_mut(), Some(callback), data_ptr));
         data
@@ -201,7 +204,7 @@ impl PropertyList {
                 return Err(Error::query().unwrap_or_else(|| "invalid property class".into()));
             }
             let name = string_from_cstr(buf);
-            h5_free_memory(buf as _);
+            h5_free_memory(buf.cast());
             PropertyListClass::from_str(&name)
         })
     }

@@ -54,6 +54,16 @@ impl Object {
     pub fn id_type(&self) -> H5I_type_t {
         get_id_type(self.id())
     }
+
+    pub(crate) fn try_borrow(&self) -> Result<Handle> {
+        h5lock!({
+            let handle = Handle::try_new(self.id());
+            if let Ok(ref handle) = handle {
+                handle.incref();
+            }
+            handle
+        })
+    }
 }
 
 #[cfg(test)]

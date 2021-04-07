@@ -35,7 +35,7 @@ pub fn string_to_fixed_bytes(s: &str, buf: &mut [c_char]) {
     }
     let bytes = s.as_bytes();
     unsafe {
-        ptr::copy_nonoverlapping(bytes.as_ptr(), buf.as_mut_ptr() as *mut _, bytes.len());
+        ptr::copy_nonoverlapping(bytes.as_ptr(), buf.as_mut_ptr().cast(), bytes.len());
     }
     for c in &mut buf[bytes.len()..] {
         *c = 0;

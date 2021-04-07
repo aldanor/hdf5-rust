@@ -14,6 +14,8 @@ edition = "2018"
 [features]
 default = []
 mpio = ["mpi-sys", "hdf5-sys/mpio"]
+lzf = ["lzf-sys", "errno"]
+blosc = ["blosc-sys"]
 
 [workspace]
 members = [".", "hdf5-types", "hdf5-derive", "hdf5-sys", "hdf5-src"]
@@ -24,21 +26,25 @@ bitflags = "1.2"
 lazy_static = "1.4"
 libc = "0.2"
 parking_lot = "0.11"
-ndarray = ">=0.13,<0.15"
+ndarray = "0.15"
 num-integer = "0.1"
 num-traits = "0.2"
 mpi-sys = { version = "0.1", optional = true }
+errno = { version = "0.2", optional = true }
 hdf5-sys = { path = "hdf5-sys", version = "0.7.1" }  # !V
 hdf5-types = { path = "hdf5-types", version = "0.7.1" }  # !V
 hdf5-derive = { path = "hdf5-derive", version = "0.7.1" }  # !V
+blosc-sys = { version = "0.1", package = "blosc-src", optional = true }
+lzf-sys = { version = "0.1", optional = true }
+cfg-if = "1.0"
 
 [dev-dependencies]
 paste = "1.0"
-pretty_assertions = "0.6"
+pretty_assertions = "0.7"
 rand = { version = "0.8", features = ["small_rng"] }
 regex = "1.3"
 scopeguard = "1.0"
 tempfile = "3.2"
 
 [package.metadata.docs.rs]
-features = ["hdf5-sys/static", "hdf5-sys/zlib"]
+features = ["hdf5-sys/static", "hdf5-sys/zlib", "blosc", "lzf"]

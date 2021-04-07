@@ -16,6 +16,10 @@
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::must_use_candidate))]
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::wildcard_imports))]
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::struct_excessive_bools))]
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::redundant_pub_crate))]
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::unnecessary_unwrap))]
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::unnecessary_wraps))]
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::upper_case_acronyms))]
 #![cfg_attr(all(feature = "cargo-clippy", test), allow(clippy::cyclomatic_complexity))]
 #![cfg_attr(not(test), allow(dead_code))]
 
@@ -27,9 +31,11 @@ mod export {
         class::from_id,
         dim::{Dimension, Ix},
         error::{silence_errors, Error, Result},
-        filters::Filters,
+        hl::extents::{Extent, Extents, SimpleExtents},
+        hl::selection::{Hyperslab, Selection, SliceOrIndex},
         hl::{
-            Container, Conversion, Dataset, DatasetBuilder, Dataspace, Datatype, File, FileBuilder,
+            Container, Conversion, Dataset, DatasetBuilder, DatasetBuilderData,
+            DatasetBuilderEmpty, DatasetBuilderEmptyShape, Dataspace, Datatype, File, FileBuilder,
             Group, Location, Object, PropertyList, Reader, Writer,
         },
     };
@@ -49,6 +55,7 @@ mod export {
         pub use crate::hl::dataset::ChunkInfo;
         pub use crate::hl::dataset::{Chunk, Dataset, DatasetBuilder};
         pub use crate::hl::plist::dataset_access::*;
+        pub use crate::hl::plist::dataset_create::*;
     }
 
     pub mod datatype {
@@ -62,13 +69,18 @@ mod export {
     }
 
     pub mod plist {
-        pub use crate::hl::plist::dataset_access::DatasetAccess;
-        pub use crate::hl::plist::file_access::FileAccess;
-        pub use crate::hl::plist::file_create::FileCreate;
+        pub use crate::hl::plist::dataset_access::{DatasetAccess, DatasetAccessBuilder};
+        pub use crate::hl::plist::dataset_create::{DatasetCreate, DatasetCreateBuilder};
+        pub use crate::hl::plist::file_access::{FileAccess, FileAccessBuilder};
+        pub use crate::hl::plist::file_create::{FileCreate, FileCreateBuilder};
+        pub use crate::hl::plist::link_create::{LinkCreate, LinkCreateBuilder};
         pub use crate::hl::plist::{PropertyList, PropertyListClass};
 
         pub mod dataset_access {
             pub use crate::hl::plist::dataset_access::*;
+        }
+        pub mod dataset_create {
+            pub use crate::hl::plist::dataset_create::*;
         }
         pub mod file_access {
             pub use crate::hl::plist::file_access::*;
@@ -76,6 +88,12 @@ mod export {
         pub mod file_create {
             pub use crate::hl::plist::file_create::*;
         }
+        pub mod link_create {
+            pub use crate::hl::plist::link_create::*;
+        }
+    }
+    pub mod filters {
+        pub use crate::hl::filters::*;
     }
 }
 
@@ -88,7 +106,6 @@ mod class;
 
 mod dim;
 mod error;
-mod filters;
 #[doc(hidden)]
 pub mod globals;
 mod handle;

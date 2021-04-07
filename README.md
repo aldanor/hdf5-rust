@@ -49,10 +49,10 @@ fn main() -> hdf5::Result<()> {
     {
         // write
         let file = hdf5::File::create("pixels.h5")?;
-        let colors = file.new_dataset::<Color>().create("colors", 2)?;
+        let colors = file.new_dataset::<Color>().shape(2).create("colors")?;
         colors.write(&[RED, BLUE])?;
         let group = file.create_group("dir")?;
-        let pixels = group.new_dataset::<Pixel>().create("pixels", (2, 2))?;
+        let pixels = group.new_dataset::<Pixel>().shape((2, 2)).create("pixels")?;
         pixels.write(&arr2(&[
             [Pixel { xy: (1, 2), color: RED }, Pixel { xy: (3, 4), color: BLUE }],
             [Pixel { xy: (5, 6), color: GREEN }, Pixel { xy: (7, 8), color: RED }],

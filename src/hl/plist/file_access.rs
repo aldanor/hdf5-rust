@@ -224,17 +224,17 @@ bitflags! {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+impl Default for LogFlags {
+    fn default() -> Self {
+        Self::LOC_IO
+    }
+}
+
+#[derive(Clone, Default, Debug, PartialEq, Eq)]
 pub struct LogOptions {
     logfile: Option<String>,
     flags: LogFlags,
     buf_size: usize,
-}
-
-impl Default for LogOptions {
-    fn default() -> Self {
-        Self { logfile: None, flags: LogFlags::LOC_IO, buf_size: 0 }
-    }
 }
 
 static FD_MEM_TYPES: &[H5F_mem_t] = &[
@@ -507,13 +507,13 @@ impl From<H5F_close_degree_t> for FileCloseDegree {
     }
 }
 
-impl Into<H5F_close_degree_t> for FileCloseDegree {
-    fn into(self) -> H5F_close_degree_t {
-        match self {
-            Self::Weak => H5F_close_degree_t::H5F_CLOSE_WEAK,
-            Self::Semi => H5F_close_degree_t::H5F_CLOSE_SEMI,
-            Self::Strong => H5F_close_degree_t::H5F_CLOSE_STRONG,
-            Self::Default => H5F_close_degree_t::H5F_CLOSE_DEFAULT,
+impl From<FileCloseDegree> for H5F_close_degree_t {
+    fn from(v: FileCloseDegree) -> Self {
+        match v {
+            FileCloseDegree::Weak => Self::H5F_CLOSE_WEAK,
+            FileCloseDegree::Semi => Self::H5F_CLOSE_SEMI,
+            FileCloseDegree::Strong => Self::H5F_CLOSE_STRONG,
+            FileCloseDegree::Default => Self::H5F_CLOSE_DEFAULT,
         }
     }
 }
@@ -573,11 +573,11 @@ impl From<H5C_cache_incr_mode> for CacheIncreaseMode {
     }
 }
 
-impl Into<H5C_cache_incr_mode> for CacheIncreaseMode {
-    fn into(self) -> H5C_cache_incr_mode {
-        match self {
-            Self::Threshold => H5C_cache_incr_mode::H5C_incr__threshold,
-            Self::Off => H5C_cache_incr_mode::H5C_incr__off,
+impl From<CacheIncreaseMode> for H5C_cache_incr_mode {
+    fn from(v: CacheIncreaseMode) -> Self {
+        match v {
+            CacheIncreaseMode::Threshold => Self::H5C_incr__threshold,
+            CacheIncreaseMode::Off => Self::H5C_incr__off,
         }
     }
 }
@@ -597,11 +597,11 @@ impl From<H5C_cache_flash_incr_mode> for FlashIncreaseMode {
     }
 }
 
-impl Into<H5C_cache_flash_incr_mode> for FlashIncreaseMode {
-    fn into(self) -> H5C_cache_flash_incr_mode {
-        match self {
-            Self::AddSpace => H5C_cache_flash_incr_mode::H5C_flash_incr__add_space,
-            Self::Off => H5C_cache_flash_incr_mode::H5C_flash_incr__off,
+impl From<FlashIncreaseMode> for H5C_cache_flash_incr_mode {
+    fn from(v: FlashIncreaseMode) -> Self {
+        match v {
+            FlashIncreaseMode::AddSpace => Self::H5C_flash_incr__add_space,
+            FlashIncreaseMode::Off => Self::H5C_flash_incr__off,
         }
     }
 }
@@ -625,13 +625,13 @@ impl From<H5C_cache_decr_mode> for CacheDecreaseMode {
     }
 }
 
-impl Into<H5C_cache_decr_mode> for CacheDecreaseMode {
-    fn into(self) -> H5C_cache_decr_mode {
-        match self {
-            Self::Threshold => H5C_cache_decr_mode::H5C_decr__threshold,
-            Self::AgeOut => H5C_cache_decr_mode::H5C_decr__age_out,
-            Self::AgeOutWithThreshold => H5C_cache_decr_mode::H5C_decr__age_out_with_threshold,
-            Self::Off => H5C_cache_decr_mode::H5C_decr__off,
+impl From<CacheDecreaseMode> for H5C_cache_decr_mode {
+    fn from(v: CacheDecreaseMode) -> Self {
+        match v {
+            CacheDecreaseMode::Threshold => Self::H5C_decr__threshold,
+            CacheDecreaseMode::AgeOut => Self::H5C_decr__age_out,
+            CacheDecreaseMode::AgeOutWithThreshold => Self::H5C_decr__age_out_with_threshold,
+            CacheDecreaseMode::Off => Self::H5C_decr__off,
         }
     }
 }
@@ -657,11 +657,11 @@ impl From<c_int> for MetadataWriteStrategy {
     }
 }
 
-impl Into<c_int> for MetadataWriteStrategy {
-    fn into(self) -> c_int {
-        match self {
-            Self::Distributed => H5AC_METADATA_WRITE_STRATEGY__DISTRIBUTED,
-            Self::ProcessZeroOnly => H5AC_METADATA_WRITE_STRATEGY__PROCESS_0_ONLY,
+impl From<MetadataWriteStrategy> for c_int {
+    fn from(v: MetadataWriteStrategy) -> Self {
+        match v {
+            MetadataWriteStrategy::Distributed => H5AC_METADATA_WRITE_STRATEGY__DISTRIBUTED,
+            MetadataWriteStrategy::ProcessZeroOnly => H5AC_METADATA_WRITE_STRATEGY__PROCESS_0_ONLY,
         }
     }
 }
@@ -739,42 +739,42 @@ impl Default for MetadataCacheConfig {
     }
 }
 
-impl Into<H5AC_cache_config_t> for MetadataCacheConfig {
-    fn into(self) -> H5AC_cache_config_t {
+impl From<MetadataCacheConfig> for H5AC_cache_config_t {
+    fn from(v: MetadataCacheConfig) -> Self {
         const N: usize = H5AC__MAX_TRACE_FILE_NAME_LEN;
         let mut trace_file_name: [c_char; N + 1] = unsafe { mem::zeroed() };
-        string_to_fixed_bytes(&self.trace_file_name, &mut trace_file_name[..N]);
-        H5AC_cache_config_t {
+        string_to_fixed_bytes(&v.trace_file_name, &mut trace_file_name[..N]);
+        Self {
             version: H5AC__CURR_CACHE_CONFIG_VERSION,
-            rpt_fcn_enabled: self.rpt_fcn_enabled as _,
-            open_trace_file: self.open_trace_file as _,
-            close_trace_file: self.close_trace_file as _,
+            rpt_fcn_enabled: v.rpt_fcn_enabled as _,
+            open_trace_file: v.open_trace_file as _,
+            close_trace_file: v.close_trace_file as _,
             trace_file_name,
-            evictions_enabled: self.evictions_enabled as _,
-            set_initial_size: self.set_initial_size as _,
-            initial_size: self.initial_size as _,
-            min_clean_fraction: self.min_clean_fraction as _,
-            max_size: self.max_size as _,
-            min_size: self.min_size as _,
-            epoch_length: self.epoch_length as _,
-            incr_mode: self.incr_mode.into(),
-            lower_hr_threshold: self.lower_hr_threshold as _,
-            increment: self.increment as _,
-            apply_max_increment: self.apply_max_increment as _,
-            max_increment: self.max_increment as _,
-            flash_incr_mode: self.flash_incr_mode.into(),
-            flash_multiple: self.flash_multiple as _,
-            flash_threshold: self.flash_threshold as _,
-            decr_mode: self.decr_mode.into(),
-            upper_hr_threshold: self.upper_hr_threshold as _,
-            decrement: self.decrement as _,
-            apply_max_decrement: self.apply_max_decrement as _,
-            max_decrement: self.max_decrement as _,
-            epochs_before_eviction: self.epochs_before_eviction as _,
-            apply_empty_reserve: self.apply_empty_reserve as _,
-            empty_reserve: self.empty_reserve as _,
-            dirty_bytes_threshold: self.dirty_bytes_threshold as _,
-            metadata_write_strategy: self.metadata_write_strategy.into(),
+            evictions_enabled: v.evictions_enabled as _,
+            set_initial_size: v.set_initial_size as _,
+            initial_size: v.initial_size as _,
+            min_clean_fraction: v.min_clean_fraction as _,
+            max_size: v.max_size as _,
+            min_size: v.min_size as _,
+            epoch_length: v.epoch_length as _,
+            incr_mode: v.incr_mode.into(),
+            lower_hr_threshold: v.lower_hr_threshold as _,
+            increment: v.increment as _,
+            apply_max_increment: v.apply_max_increment as _,
+            max_increment: v.max_increment as _,
+            flash_incr_mode: v.flash_incr_mode.into(),
+            flash_multiple: v.flash_multiple as _,
+            flash_threshold: v.flash_threshold as _,
+            decr_mode: v.decr_mode.into(),
+            upper_hr_threshold: v.upper_hr_threshold as _,
+            decrement: v.decrement as _,
+            apply_max_decrement: v.apply_max_decrement as _,
+            max_decrement: v.max_decrement as _,
+            epochs_before_eviction: v.epochs_before_eviction as _,
+            apply_empty_reserve: v.apply_empty_reserve as _,
+            empty_reserve: v.empty_reserve as _,
+            dirty_bytes_threshold: v.dirty_bytes_threshold as _,
+            metadata_write_strategy: v.metadata_write_strategy.into(),
         }
     }
 }
@@ -838,13 +838,13 @@ mod cache_image_config {
         }
     }
 
-    impl Into<H5AC_cache_image_config_t> for CacheImageConfig {
-        fn into(self) -> H5AC_cache_image_config_t {
-            H5AC_cache_image_config_t {
+    impl From<CacheImageConfig> for H5AC_cache_image_config_t {
+        fn from(v: CacheImageConfig) -> Self {
+            Self {
                 version: H5AC__CURR_CACHE_CONFIG_VERSION,
-                generate_image: self.generate_image as _,
-                save_resize_status: self.save_resize_status as _,
-                entry_ageout: self.entry_ageout as _,
+                generate_image: v.generate_image as _,
+                save_resize_status: v.save_resize_status as _,
+                entry_ageout: v.entry_ageout as _,
             }
         }
     }
@@ -899,12 +899,12 @@ mod libver {
         }
     }
 
-    impl Into<H5F_libver_t> for LibraryVersion {
-        fn into(self) -> H5F_libver_t {
-            match self {
-                Self::V18 => H5F_libver_t::H5F_LIBVER_V18,
-                Self::V110 => H5F_libver_t::H5F_LIBVER_V110,
-                _ => H5F_libver_t::H5F_LIBVER_EARLIEST,
+    impl From<LibraryVersion> for H5F_libver_t {
+        fn from(v: LibraryVersion) -> Self {
+            match v {
+                LibraryVersion::V18 => Self::H5F_LIBVER_V18,
+                LibraryVersion::V110 => Self::H5F_LIBVER_V110,
+                LibraryVersion::Earliest => Self::H5F_LIBVER_EARLIEST,
             }
         }
     }
@@ -1449,11 +1449,14 @@ impl FileAccessBuilder {
         Ok(())
     }
 
+    pub fn apply(&self, plist: &mut FileAccess) -> Result<()> {
+        h5lock!(self.populate_plist(plist.id()))
+    }
+
     pub fn finish(&self) -> Result<FileAccess> {
         h5lock!({
-            let plist = FileAccess::try_new()?;
-            self.populate_plist(plist.id())?;
-            Ok(plist)
+            let mut plist = FileAccess::try_new()?;
+            self.apply(&mut plist).map(|_| plist)
         })
     }
 }

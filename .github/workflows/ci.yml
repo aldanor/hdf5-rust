@@ -162,9 +162,6 @@ jobs:
         run: |
           [ "${{matrix.mpi}}" != "serial" ] && FEATURES=mpio
           cargo test -vv --features="$FEATURES"
-      - name: Test const generics
-        if: matrix.rust == 'nightly'
-        run: cargo test -p hdf5-types --features hdf5-types/const_generics
 
   msi:
     name: msi
@@ -208,6 +205,22 @@ jobs:
           msiexec /i ${{env.MSI_PATH}} /quiet /qn /norestart
       - name: Build and test all crates
         run: cargo test -vv
+
+  msrv:
+    name: Minimal Supported Rust Version
+    runs-on: ubuntu-18.04
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with: {submodules: true}
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with: {toolchain: 1.51, profile: minimal, override: true}
+      - name: Build and test all crates
+        run:
+          cargo test --workspace -vv --features=hdf5-sys/static --exclude=hdf5-derive
 
   wine:
     name: wine

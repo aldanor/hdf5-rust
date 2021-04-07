@@ -8,9 +8,10 @@ use crate::string::{FixedAscii, FixedUnicode, VarLenAscii, VarLenUnicode};
 
 #[allow(non_camel_case_types)]
 #[repr(C)]
-struct hvl_t {
-    len: usize,
-    p: *mut c_void,
+#[derive(Copy, Clone)]
+pub(crate) struct hvl_t {
+    pub len: usize,
+    pub ptr: *mut c_void,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]

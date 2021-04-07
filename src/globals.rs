@@ -12,31 +12,43 @@ use hdf5_sys::h5fd::{
     H5FD_core_init, H5FD_family_init, H5FD_log_init, H5FD_multi_init, H5FD_sec2_init,
     H5FD_stdio_init,
 };
+use hdf5_sys::{h5e, h5p, h5t};
 
 use crate::internal_prelude::*;
 
-#[cfg(not(h5_dll_indirection))]
-macro_rules! link_hid {
-    ($rust_name:ident, $mod_name:ident::$c_name:ident) => {
-        lazy_static! {
-            pub static ref $rust_name: ::hdf5_sys::h5i::hid_t = {
-                h5lock!(::hdf5_sys::h5::H5open());
-                *::hdf5_sys::$mod_name::$c_name
-            };
-        }
+lazy_static! {
+    static ref LIBRARY_INIT: () = {
+        h5lock!(::hdf5_sys::h5::H5open());
+        let _e = crate::hl::filters::register_filters();
     };
 }
 
-// God damn dllimport...
 #[cfg(h5_dll_indirection)]
-macro_rules! link_hid {
-    ($rust_name:ident, $mod_name:ident::$c_name:ident) => {
-        lazy_static! {
-            pub static ref $rust_name: ::hdf5_sys::h5i::hid_t = {
-                h5lock!(::hdf5_sys::h5::H5open());
-                unsafe { *(*::hdf5_sys::$mod_name::$c_name as *const _) }
-            };
+pub struct H5GlobalConstant(&'static usize);
+#[cfg(not(h5_dll_indirection))]
+pub struct H5GlobalConstant(&'static hdf5_sys::h5i::hid_t);
+
+impl std::ops::Deref for H5GlobalConstant {
+    type Target = hdf5_sys::h5i::hid_t;
+    fn deref(&self) -> &Self::Target {
+        lazy_static::initialize(&LIBRARY_INIT);
+        cfg_if::cfg_if! {
+            if #[cfg(h5_dll_indirection)] {
+                let dll_ptr = self.0 as *const usize;
+                let ptr: *const *const hdf5_sys::h5i::hid_t = dll_ptr.cast();
+                unsafe {
+                    &**ptr
+                }
+            } else {
+                self.0
+            }
         }
+    }
+}
+
+macro_rules! link_hid {
+    ($rust_name:ident, $c_name:path) => {
+        pub static $rust_name: H5GlobalConstant = H5GlobalConstant($c_name);
     };
 }
 

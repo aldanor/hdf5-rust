@@ -136,7 +136,7 @@ impl ErrorStack {
             _: c_uint, err_desc: *const H5E_error2_t, data: *mut c_void,
         ) -> herr_t {
             panic::catch_unwind(|| unsafe {
-                let data = &mut *(data as *mut CallbackData);
+                let data = &mut *(data.cast::<CallbackData>());
                 if data.err.is_some() {
                     return 0;
                 }
@@ -160,7 +160,7 @@ impl ErrorStack {
         }
 
         let mut data = CallbackData { stack: Self::new(), err: None };
-        let data_ptr: *mut c_void = &mut data as *mut _ as *mut _;
+        let data_ptr: *mut c_void = (&mut data as *mut CallbackData).cast::<c_void>();
 
         // known HDF5 bug: H5Eget_msg() may corrupt the current stack, so we copy it first
         let stack_id = h5lock!(H5Eget_current_stack());

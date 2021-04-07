@@ -116,11 +116,11 @@ impl From<H5D_vds_view_t> for VirtualView {
 }
 
 #[cfg(hdf5_1_10_0)]
-impl Into<H5D_vds_view_t> for VirtualView {
-    fn into(self) -> H5D_vds_view_t {
-        match self {
-            Self::FirstMissing => H5D_vds_view_t::H5D_VDS_FIRST_MISSING,
-            _ => H5D_vds_view_t::H5D_VDS_LAST_AVAILABLE,
+impl From<VirtualView> for H5D_vds_view_t {
+    fn from(v: VirtualView) -> Self {
+        match v {
+            VirtualView::FirstMissing => Self::H5D_VDS_FIRST_MISSING,
+            VirtualView::LastAvailable => Self::H5D_VDS_LAST_AVAILABLE,
         }
     }
 }
@@ -223,11 +223,14 @@ impl DatasetAccessBuilder {
         Ok(())
     }
 
+    pub fn apply(&self, plist: &mut DatasetAccess) -> Result<()> {
+        h5lock!(self.populate_plist(plist.id()))
+    }
+
     pub fn finish(&self) -> Result<DatasetAccess> {
         h5lock!({
-            let plist = DatasetAccess::try_new()?;
-            self.populate_plist(plist.id())?;
-            Ok(plist)
+            let mut plist = DatasetAccess::try_new()?;
+            self.apply(&mut plist).map(|_| plist)
         })
     }
 }

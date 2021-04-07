@@ -162,9 +162,14 @@ impl Group {
         .unwrap_or(false)
     }
 
+    /// Instantiates a new typed dataset builder.
+    pub fn new_dataset<T: H5Type>(&self) -> DatasetBuilderEmpty {
+        self.new_dataset_builder().empty::<T>()
+    }
+
     /// Instantiates a new dataset builder.
-    pub fn new_dataset<T: H5Type>(&self) -> DatasetBuilder<T> {
-        DatasetBuilder::<T>::new(self)
+    pub fn new_dataset_builder(&self) -> DatasetBuilder {
+        DatasetBuilder::new(self)
     }
 
     /// Opens an existing dataset in the file or group.
@@ -179,7 +184,7 @@ impl Group {
             _id: hid_t, name: *const c_char, _info: *const H5L_info_t, op_data: *mut c_void,
         ) -> herr_t {
             panic::catch_unwind(|| {
-                let other_data: &mut Vec<String> = unsafe { &mut *(op_data as *mut Vec<String>) };
+                let other_data: &mut Vec<String> = unsafe { &mut *(op_data.cast::<Vec<String>>()) };
 
                 other_data.push(string_from_cstr(name));
 
@@ -191,7 +196,7 @@ impl Group {
         let callback_fn: H5L_iterate_t = Some(members_callback);
         let iteration_position: *mut hsize_t = &mut { 0_u64 };
         let mut result: Vec<String> = Vec::new();
-        let other_data: *mut c_void = &mut result as *mut _ as *mut c_void;
+        let other_data: *mut c_void = (&mut result as *mut Vec<String>).cast::<c_void>();
 
         h5call!(H5Literate(
             self.id(),
@@ -383,9 +388,12 @@ pub mod tests {
     #[test]
     pub fn test_dataset() {
         with_tmp_file(|file| {
-            file.new_dataset::<u32>().no_chunk().create("/foo/bar", (10, 20)).unwrap();
-            file.new_dataset::<f32>().resizable(true).create("baz", (10, 20)).unwrap();
-            file.new_dataset::<u8>().resizable(true).create_anon((10, 20)).unwrap();
+            file.new_dataset::<i32>().no_chunk().shape((10, 20)).create("/foo/bar").unwrap();
+            file.new_dataset::<f32>()
+                .shape(Extents::resizable((10, 20).into()))
+                .create("baz")
+                .unwrap();
+            file.new_dataset::<u8>().shape((10.., 20..)).create(None).unwrap();
         });
     }
 
@@ -396,9 +404,9 @@ pub mod tests {
             file.create_group("b").unwrap();
             let group_a = file.group("a").unwrap();
             let group_b = file.group("b").unwrap();
-            file.new_dataset::<u32>().no_chunk().create("a/foo", (10, 20)).unwrap();
-            file.new_dataset::<u32>().no_chunk().create("a/123", (10, 20)).unwrap();
-            file.new_dataset::<u32>().no_chunk().create("a/bar", (10, 20)).unwrap();
+            file.new_dataset::<u32>().no_chunk().shape((10, 20)).create("a/foo").unwrap();
+            file.new_dataset::<u32>().no_chunk().shape((10, 20)).create("a/123").unwrap();
+            file.new_dataset::<u32>().no_chunk().shape((10, 20)).create("a/bar").unwrap();
             assert_eq!(group_a.member_names().unwrap(), vec!["123", "bar", "foo"]);
             assert_eq!(group_b.member_names().unwrap().len(), 0);
             assert_eq!(file.member_names().unwrap(), vec!["a", "b"]);

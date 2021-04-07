@@ -8,13 +8,17 @@ description = "Native Rust equivalents of HDF5 types."
 repository = "https://github.com/aldanor/hdf5-rust"
 homepage = "https://github.com/aldanor/hdf5-rust"
 edition = "2018"
+build = "build.rs"
 
 [features]
-const_generics = []
+h5-alloc = []
 
 [dependencies]
 ascii = "1.0"
 libc = "0.2"
+hdf5-sys = { version = "0.7.1", path = "../hdf5-sys" }  # !V
+cfg-if = "1.0.0"
 
 [dev-dependencies]
 quickcheck = { version = "1.0", default-features = false }
+unindent = "0.1"
