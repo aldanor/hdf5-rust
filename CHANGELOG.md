@@ -79,6 +79,10 @@
 - Errors are not expanded when encountered, but only when being used for printing or by
   the library user.
 
+### Fixed
+
+- A memory leak of handles has been identified and fixed.
+
 ## 0.7.1
 
 ### Added
