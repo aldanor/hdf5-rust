@@ -702,7 +702,7 @@ impl Display for DynValue<'_> {
 
 pub struct OwnedDynValue {
     tp: TypeDescriptor,
-    buf: Vec<u8>,
+    buf: Box<[u8]>,
 }
 
 impl OwnedDynValue {
@@ -711,7 +711,7 @@ impl OwnedDynValue {
         let len = mem::size_of_val(&value);
         let buf = unsafe { std::slice::from_raw_parts(ptr, len) };
         mem::forget(value);
-        Self { tp: T::type_descriptor(), buf: buf.to_owned() }
+        Self { tp: T::type_descriptor(), buf: buf.to_owned().into_boxed_slice() }
     }
 
     pub fn get(&self) -> DynValue {
@@ -728,8 +728,18 @@ impl OwnedDynValue {
     }
 
     #[doc(hidden)]
-    pub unsafe fn from_raw(tp: TypeDescriptor, buf: Vec<u8>) -> Self {
+    pub unsafe fn from_raw(tp: TypeDescriptor, buf: Box<[u8]>) -> Self {
         Self { tp, buf }
+    }
+
+    #[doc(hidden)]
+    /// Use this if the values should still be used after the buffer has been
+    /// copied to the concrete type
+    pub fn drop_nonrecursive(mut self) {
+        // We can't take ownership of the contents of self,
+        // but we can replace the items with a zero-sized object
+        self.tp = <[u8; 0] as H5Type>::type_descriptor();
+        self.buf = Box::new([]);
     }
 }
 

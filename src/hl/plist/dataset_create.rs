@@ -722,11 +722,11 @@ impl DatasetCreate {
             FillValue::Default | FillValue::UserDefined => {
                 let dtype = Datatype::from_descriptor(tp)?;
                 let mut buf: Vec<u8> = Vec::with_capacity(tp.size());
+                h5try!(H5Pget_fill_value(self.id(), dtype.id(), buf.as_mut_ptr().cast()));
                 unsafe {
                     buf.set_len(tp.size());
                 }
-                h5try!(H5Pget_fill_value(self.id(), dtype.id(), buf.as_mut_ptr().cast()));
-                Ok(Some(unsafe { OwnedDynValue::from_raw(tp.clone(), buf) }))
+                Ok(Some(unsafe { OwnedDynValue::from_raw(tp.clone(), buf.into_boxed_slice()) }))
             }
             FillValue::Undefined => Ok(None),
         }
@@ -740,11 +740,13 @@ impl DatasetCreate {
     pub fn get_fill_value_as<T: H5Type>(&self) -> Result<Option<T>> {
         let dtype = Datatype::from_type::<T>()?;
         Ok(self.get_fill_value(&dtype.to_descriptor()?)?.map(|value| unsafe {
-            let mut out: T = mem::zeroed();
+            let mut out: mem::MaybeUninit<T> = mem::MaybeUninit::uninit();
             let buf = value.get_buf();
-            ptr::copy_nonoverlapping(buf.as_ptr(), (&mut out as *mut T).cast(), buf.len());
-            mem::forget(value);
-            out
+            ptr::copy_nonoverlapping(buf.as_ptr(), out.as_mut_ptr().cast(), buf.len());
+            // Drop the Box<[u8]>, but not subfields
+            value.drop_nonrecursive();
+            // We now have exclusive access to all subfields
+            out.assume_init()
         }))
     }
 
