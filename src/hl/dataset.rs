@@ -1230,16 +1230,19 @@ macro_rules! impl_builder_stuff {
     };
 }
 
+/// These methods are common to all dataset builders
 impl DatasetBuilder {
     impl_builder_stuff!();
 }
+/// These methods are common to all dataset builders
 impl DatasetBuilderEmpty {
     impl_builder_stuff!();
 }
+/// These methods are common to all dataset builders
 impl DatasetBuilderEmptyShape {
     impl_builder_stuff!();
 }
-
+/// These methods are common to all dataset builders
 impl<'d, T2, D2> DatasetBuilderData<'d, T2, D2>
 where
     T2: H5Type,
