@@ -60,6 +60,7 @@
 - Const generics support (MSRV 1.51): `hdf5-types` now uses const generics for array types,
   allowing fixed-size arrays of arbitrary sizes.
 - The `ndarray` dependency has been updated to `0.15`.
+- The `Array` trait has been removed and replaced with const generics.
 
 ## 0.7.1
 
