@@ -18,10 +18,10 @@ struct A {
 #[repr(C)]
 struct B {
     a: [A; 4],
-    b: FixedAscii<[u8; 8]>,
+    b: FixedAscii<8>,
     c: VarLenArray<f64>,
     d: bool,
-    e: FixedUnicode<[u8; 7]>,
+    e: FixedUnicode<7>,
     f: VarLenAscii,
     g: VarLenUnicode,
 }

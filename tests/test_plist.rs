@@ -728,8 +728,8 @@ fn test_dcpl_fill_value() -> hdf5::Result<()> {
     #[derive(H5Type, Clone, Debug, PartialEq, Eq)]
     #[repr(C)]
     struct Data {
-        a: FixedAscii<[u8; 5]>,
-        b: FixedUnicode<[u8; 5]>,
+        a: FixedAscii<5>,
+        b: FixedUnicode<5>,
         c: [i16; 2],
         d: VarLenAscii,
         e: VarLenUnicode,

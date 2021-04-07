@@ -11,8 +11,6 @@ use std::str::{self, FromStr};
 
 use ascii::{AsAsciiStr, AsAsciiStrError, AsciiStr};
 
-use crate::array::Array;
-
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[non_exhaustive]
 pub enum StringError {
@@ -46,15 +44,15 @@ impl fmt::Display for StringError {
 // ================================================================================
 
 macro_rules! impl_string_eq {
-    ($lhs:ty, $rhs:ty $(,$t:ident: $b:ident<$a:ident=$v:ty>)*) => {
-        impl<'a $(,$t: $b<$a=$v>)*> PartialEq<$rhs> for $lhs {
+    ($lhs:ty, $rhs:ty $(,const $N:ident:  usize)*) => {
+        impl<'a $(,const $N: usize)*> PartialEq<$rhs> for $lhs {
             #[inline]
             fn eq(&self, other: &$rhs) -> bool {
                 PartialEq::eq(&self[..], &other[..])
             }
         }
 
-        impl<'a $(,$t: $b<$a=$v>)*> PartialEq<$lhs> for $rhs {
+        impl<'a $(,const $N: usize)*> PartialEq<$lhs> for $rhs {
             #[inline]
             fn eq(&self, other: &$lhs) -> bool {
                 PartialEq::eq(&self[..], &other[..])
@@ -64,36 +62,36 @@ macro_rules! impl_string_eq {
 }
 
 macro_rules! impl_string_traits {
-    ($nm:ident, $ty:ty $(,$t:ident: $b:ident<$a:ident=$v:ty>)*) => (
-        impl<'a $(,$t: $b<$a=$v>)*> fmt::Debug for $ty {
+    ($nm:ident, $ty:ty $(, const $N:ident: usize)*) => (
+        impl<'a $(,const $N: usize)*> fmt::Debug for $ty {
             #[inline]
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
                 self.as_str().fmt(f)
             }
         }
 
-        impl<'a $(,$t: $b<$a=$v>)*> fmt::Display for $ty {
+        impl<'a $(,const $N: usize)*> fmt::Display for $ty {
             #[inline]
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
                 self.as_str().fmt(f)
             }
         }
 
-        impl<'a $(,$t: $b<$a=$v>)*> Hash for $ty {
+        impl<'a $(,const $N: usize)*> Hash for $ty {
             #[inline]
             fn hash<H: Hasher>(&self, hasher: &mut H) {
                 Hash::hash(&self.as_bytes(), hasher)
             }
         }
 
-        impl<'a $(,$t: $b<$a=$v>)*> Default for $ty {
+        impl<'a $(,const $N: usize)*> Default for $ty {
             #[inline]
             fn default() -> $ty {
                 $nm::new()
             }
         }
 
-        impl<'a $(,$t: $b<$a=$v>)*> Deref for $ty {
+        impl<'a $(,const $N: usize)*> Deref for $ty {
             type Target = str;
 
             #[inline]
@@ -102,28 +100,28 @@ macro_rules! impl_string_traits {
             }
         }
 
-        impl<'a $(,$t: $b<$a=$v>)*> Borrow<str> for $ty {
+        impl<'a $(,const $N: usize)*> Borrow<str> for $ty {
             #[inline]
             fn borrow(&self) -> &str {
                 self
             }
         }
 
-        impl<'a $(,$t: $b<$a=$v>)*> AsRef<str> for $ty {
+        impl<'a $(,const $N: usize)*> AsRef<str> for $ty {
             #[inline]
             fn as_ref(&self) -> &str {
                 self
             }
         }
 
-        impl<'a $(,$t: $b<$a=$v>)*> AsRef<[u8]> for $ty {
+        impl<'a $(,const $N: usize)*> AsRef<[u8]> for $ty {
             #[inline]
             fn as_ref(&self) -> &[u8] {
                 self.as_bytes()
             }
         }
 
-        impl<'a $(,$t: $b<$a=$v>)*> Index<RangeFull> for $ty {
+        impl<'a $(,const $N: usize)*> Index<RangeFull> for $ty {
             type Output = str;
 
             #[inline]
@@ -132,42 +130,42 @@ macro_rules! impl_string_traits {
             }
         }
 
-        impl<'a $(,$t: $b<$a=$v>)*> PartialEq for $ty {
+        impl<'a $(,const $N: usize)*> PartialEq for $ty {
             #[inline]
             fn eq(&self, other: &Self) -> bool {
                 PartialEq::eq(&self[..], &other[..])
             }
         }
 
-        impl<'a $(,$t: $b<$a=$v>)*> Eq for $ty { }
+        impl<'a $(,const $N: usize)*> Eq for $ty { }
 
-        impl_string_eq!($ty, str $(,$t: $b<$a=$v>)*);
-        impl_string_eq!($ty, &'a str $(,$t: $b<$a=$v>)*);
-        impl_string_eq!($ty, String $(,$t: $b<$a=$v>)*);
-        impl_string_eq!($ty, Cow<'a, str> $(,$t: $b<$a=$v>)*);
+        impl_string_eq!($ty, str $(,const $N: usize)*);
+        impl_string_eq!($ty, &'a str $(,const $N: usize)*);
+        impl_string_eq!($ty, String $(,const $N: usize)*);
+        impl_string_eq!($ty, Cow<'a, str> $(,const $N: usize)*);
 
-        impl<'a $(,$t: $b<$a=$v>)*> From<$ty> for String {
+        impl<'a $(,const $N: usize)*> From<$ty> for String {
             #[inline]
             fn from(s: $ty) -> String {
                 s.as_str().to_owned()
             }
         }
 
-        impl<'a $(,$t: $b<$a=$v>)*> From<&'a $ty> for &'a [u8] {
+        impl<'a $(,const $N: usize)*> From<&'a $ty> for &'a [u8] {
             #[inline]
             fn from(s: &$ty) -> &[u8] {
                 s.as_bytes()
             }
         }
 
-        impl<'a $(,$t: $b<$a=$v>)*> From<&'a $ty> for &'a str {
+        impl<'a $(,const $N: usize)*> From<&'a $ty> for &'a str {
             #[inline]
             fn from(s: &$ty) -> &str {
                 s.as_str()
             }
         }
 
-        impl<'a $(,$t: $b<$a=$v>)*> From<$ty> for Vec<u8> {
+        impl<'a $(,const $N: usize)*> From<$ty> for Vec<u8> {
             #[inline]
             fn from(s: $ty) -> Vec<u8> {
                 s.as_bytes().to_vec()
@@ -176,8 +174,8 @@ macro_rules! impl_string_traits {
     )
 }
 
-impl_string_traits!(FixedAscii, FixedAscii<A>, A: Array<Item = u8>);
-impl_string_traits!(FixedUnicode, FixedUnicode<A>, A: Array<Item = u8>);
+impl_string_traits!(FixedAscii, FixedAscii<N>, const N: usize);
+impl_string_traits!(FixedUnicode, FixedUnicode<N>, const N: usize);
 impl_string_traits!(VarLenAscii, VarLenAscii);
 impl_string_traits!(VarLenUnicode, VarLenUnicode);
 
@@ -377,22 +375,22 @@ impl FromStr for VarLenUnicode {
 
 #[repr(C)]
 #[derive(Copy)]
-pub struct FixedAscii<A: Array<Item = u8>> {
-    buf: A,
+pub struct FixedAscii<const N: usize> {
+    buf: [u8; N],
 }
 
-impl<A: Array<Item = u8>> Clone for FixedAscii<A> {
+impl<const N: usize> Clone for FixedAscii<N> {
     #[inline]
     fn clone(&self) -> Self {
         unsafe {
-            let mut buf = mem::MaybeUninit::<A>::uninit();
-            ptr::copy_nonoverlapping(self.buf.as_ptr(), buf.as_mut_ptr() as *mut _, A::capacity());
+            let mut buf: mem::MaybeUninit<[u8; N]> = mem::MaybeUninit::uninit();
+            ptr::copy_nonoverlapping(self.buf.as_ptr(), buf.as_mut_ptr() as *mut _, N);
             FixedAscii { buf: buf.assume_init() }
         }
     }
 }
 
-impl<A: Array<Item = u8>> FixedAscii<A> {
+impl<const N: usize> FixedAscii<N> {
     #[inline]
     pub fn new() -> Self {
         unsafe { FixedAscii { buf: mem::zeroed() } }
@@ -400,20 +398,20 @@ impl<A: Array<Item = u8>> FixedAscii<A> {
 
     #[inline]
     unsafe fn from_bytes(bytes: &[u8]) -> Self {
-        let len = if bytes.len() < A::capacity() { bytes.len() } else { A::capacity() };
-        let mut buf: A = mem::zeroed();
+        let len = if bytes.len() < N { bytes.len() } else { N };
+        let mut buf: [u8; N] = mem::zeroed();
         ptr::copy_nonoverlapping(bytes.as_ptr(), buf.as_mut_ptr() as *mut _, len);
         FixedAscii { buf }
     }
 
     #[inline]
     fn as_raw_slice(&self) -> &[u8] {
-        unsafe { slice::from_raw_parts(self.buf.as_ptr(), A::capacity()) }
+        unsafe { slice::from_raw_parts(self.buf.as_ptr(), N) }
     }
 
     #[inline]
     pub fn capacity() -> usize {
-        A::capacity()
+        N
     }
 
     #[inline]
@@ -448,7 +446,7 @@ impl<A: Array<Item = u8>> FixedAscii<A> {
 
     pub fn from_ascii<B: ?Sized + AsRef<[u8]>>(bytes: &B) -> Result<Self, StringError> {
         let bytes = bytes.as_ref();
-        if bytes.len() > A::capacity() {
+        if bytes.len() > N {
             return Err(StringError::InsufficientCapacity);
         }
         let s = AsciiStr::from_ascii(bytes)?;
@@ -456,7 +454,7 @@ impl<A: Array<Item = u8>> FixedAscii<A> {
     }
 }
 
-impl<A: Array<Item = u8>> AsAsciiStr for FixedAscii<A> {
+impl<const N: usize> AsAsciiStr for FixedAscii<N> {
     type Inner = u8;
 
     #[inline]
@@ -482,22 +480,22 @@ impl<A: Array<Item = u8>> AsAsciiStr for FixedAscii<A> {
 
 #[repr(C)]
 #[derive(Copy)]
-pub struct FixedUnicode<A: Array<Item = u8>> {
-    buf: A,
+pub struct FixedUnicode<const N: usize> {
+    buf: [u8; N],
 }
 
-impl<A: Array<Item = u8>> Clone for FixedUnicode<A> {
+impl<const N: usize> Clone for FixedUnicode<N> {
     #[inline]
     fn clone(&self) -> Self {
         unsafe {
-            let mut buf = mem::MaybeUninit::<A>::uninit();
-            ptr::copy_nonoverlapping(self.buf.as_ptr(), buf.as_mut_ptr() as *mut _, A::capacity());
+            let mut buf: mem::MaybeUninit<[u8; N]> = mem::MaybeUninit::uninit();
+            ptr::copy_nonoverlapping(self.buf.as_ptr(), buf.as_mut_ptr() as *mut _, N);
             FixedUnicode { buf: buf.assume_init() }
         }
     }
 }
 
-impl<A: Array<Item = u8>> FixedUnicode<A> {
+impl<const N: usize> FixedUnicode<N> {
     #[inline]
     pub fn new() -> Self {
         unsafe { FixedUnicode { buf: mem::zeroed() } }
@@ -505,15 +503,15 @@ impl<A: Array<Item = u8>> FixedUnicode<A> {
 
     #[inline]
     unsafe fn from_bytes(bytes: &[u8]) -> Self {
-        let len = if bytes.len() < A::capacity() { bytes.len() } else { A::capacity() };
-        let mut buf: A = mem::zeroed();
+        let len = if bytes.len() < N { bytes.len() } else { N };
+        let mut buf: [u8; N] = mem::zeroed();
         ptr::copy_nonoverlapping(bytes.as_ptr(), buf.as_mut_ptr() as *mut _, len);
         FixedUnicode { buf }
     }
 
     #[inline]
     fn as_raw_slice(&self) -> &[u8] {
-        unsafe { slice::from_raw_parts(self.buf.as_ptr(), A::capacity()) }
+        unsafe { slice::from_raw_parts(self.buf.as_ptr(), N) }
     }
 
     #[inline]
@@ -523,7 +521,7 @@ impl<A: Array<Item = u8>> FixedUnicode<A> {
 
     #[inline]
     pub fn capacity() -> usize {
-        A::capacity()
+        N
     }
 
     #[inline]
@@ -557,14 +555,11 @@ impl<A: Array<Item = u8>> FixedUnicode<A> {
     }
 }
 
-impl<A> FromStr for FixedUnicode<A>
-where
-    A: Array<Item = u8>,
-{
+impl<const N: usize> FromStr for FixedUnicode<N> {
     type Err = StringError;
 
     fn from_str(s: &str) -> Result<Self, <Self as FromStr>::Err> {
-        if s.as_bytes().len() <= A::capacity() {
+        if s.as_bytes().len() <= N {
             unsafe { Ok(Self::from_bytes(s.as_bytes())) }
         } else {
             Err(StringError::InsufficientCapacity)
@@ -588,8 +583,8 @@ pub mod tests {
 
     type VA = VarLenAscii;
     type VU = VarLenUnicode;
-    type FA = FixedAscii<[u8; 1024]>;
-    type FU = FixedUnicode<[u8; 1024]>;
+    type FA = FixedAscii<1024>;
+    type FU = FixedUnicode<1024>;
 
     #[derive(Clone, Debug)]
     pub struct AsciiGen(pub Vec<u8>);
@@ -650,8 +645,8 @@ pub mod tests {
 
     #[test]
     pub fn test_capacity() {
-        type A = FixedAscii<[u8; 2]>;
-        type U = FixedUnicode<[u8; 2]>;
+        type A = FixedAscii<2>;
+        type U = FixedUnicode<2>;
         assert_eq!(A::from_ascii("ab").unwrap().as_str(), "ab");
         assert!(A::from_ascii("abc").is_err());
         assert_eq!(U::from_str("ab").unwrap().as_str(), "ab");
@@ -670,8 +665,8 @@ pub mod tests {
 
     #[test]
     pub fn test_null_padding() {
-        type A = FixedAscii<[u8; 3]>;
-        type U = FixedUnicode<[u8; 3]>;
+        type A = FixedAscii<3>;
+        type U = FixedUnicode<3>;
         assert_eq!(A::from_ascii("a\0b").unwrap().as_str(), "a\0b");
         assert_eq!(A::from_ascii("a\0\0").unwrap().as_str(), "a");
         assert!(A::from_ascii("\0\0\0").unwrap().is_empty());

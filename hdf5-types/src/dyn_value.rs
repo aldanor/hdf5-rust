@@ -803,8 +803,8 @@ mod tests {
     #[repr(C)]
     struct Data {
         points: VarLenArray<Point>,
-        fa: FixedAscii<[u8; 5]>,
-        fu: FixedUnicode<[u8; 5]>,
+        fa: FixedAscii<5>,
+        fu: FixedUnicode<5>,
         va: VarLenAscii,
         vu: VarLenUnicode,
     }

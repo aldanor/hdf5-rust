@@ -5,34 +5,6 @@ use std::ops::Deref;
 use std::ptr;
 use std::slice;
 
-/* This trait is borrowed from arrayvec::Array (C) @bluss */
-pub unsafe trait Array: 'static {
-    type Item;
-
-    fn as_ptr(&self) -> *const Self::Item;
-    fn as_mut_ptr(&mut self) -> *mut Self::Item;
-    fn capacity() -> usize;
-}
-
-unsafe impl<T: 'static, const N: usize> Array for [T; N] {
-    type Item = T;
-
-    #[inline(always)]
-    fn as_ptr(&self) -> *const T {
-        self as *const _
-    }
-
-    #[inline(always)]
-    fn as_mut_ptr(&mut self) -> *mut T {
-        self as *mut _ as *mut _
-    }
-
-    #[inline(always)]
-    fn capacity() -> usize {
-        N
-    }
-}
-
 #[repr(C)]
 pub struct VarLenArray<T: Copy> {
     len: usize,
@@ -126,10 +98,10 @@ impl<T: Copy> From<VarLenArray<T>> for Vec<T> {
     }
 }
 
-impl<T: Copy, A: Array<Item = T>> From<A> for VarLenArray<T> {
+impl<T: Copy, const N: usize> From<[T; N]> for VarLenArray<T> {
     #[inline]
-    fn from(arr: A) -> VarLenArray<T> {
-        unsafe { VarLenArray::from_parts(arr.as_ptr(), A::capacity()) }
+    fn from(arr: [T; N]) -> VarLenArray<T> {
+        unsafe { VarLenArray::from_parts(arr.as_ptr(), arr.len()) }
     }
 }
 
@@ -156,10 +128,10 @@ impl<T: Copy + PartialEq> PartialEq<[T]> for VarLenArray<T> {
     }
 }
 
-impl<T: Copy + PartialEq, A: Array<Item = T>> PartialEq<A> for VarLenArray<T> {
+impl<T: Copy + PartialEq, const N: usize> PartialEq<[T; N]> for VarLenArray<T> {
     #[inline]
-    fn eq(&self, other: &A) -> bool {
-        self.as_slice() == unsafe { slice::from_raw_parts(other.as_ptr(), A::capacity()) }
+    fn eq(&self, other: &[T; N]) -> bool {
+        self.as_slice() == other
     }
 }
 
@@ -172,18 +144,9 @@ impl<T: Copy + fmt::Debug> fmt::Debug for VarLenArray<T> {
 
 #[cfg(test)]
 pub mod tests {
-    use super::{Array, VarLenArray};
+    use super::VarLenArray;
 
     type S = VarLenArray<u16>;
-
-    #[test]
-    pub fn test_array_trait() {
-        type T = [u32; 256];
-        assert_eq!(<T as Array>::capacity(), 256);
-        let mut arr = [1, 2, 3];
-        assert_eq!(arr.as_ptr(), &arr[0] as *const _);
-        assert_eq!(arr.as_mut_ptr(), &mut arr[0] as *mut _);
-    }
 
     #[test]
     pub fn test_vla_empty_default() {
