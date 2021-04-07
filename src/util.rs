@@ -3,9 +3,6 @@ use std::ffi::{CStr, CString};
 use std::ptr;
 use std::str;
 
-use num_integer::Integer;
-use num_traits::{cast, NumCast};
-
 use crate::internal_prelude::*;
 
 /// Convert a zero-terminated string (`const char *`) into a `String`.
@@ -59,9 +56,9 @@ pub fn h5_free_memory(mem: *mut c_void) {
 pub fn get_h5_str<T, F>(func: F) -> Result<String>
 where
     F: Fn(*mut c_char, size_t) -> T,
-    T: Integer + NumCast,
+    T: std::convert::TryInto<isize>,
 {
-    let len = 1 + cast::<T, isize>(func(ptr::null_mut(), 0)).unwrap();
+    let len = 1_isize + (func(ptr::null_mut(), 0)).try_into().unwrap_or(-1);
     ensure!(len > 0, "negative string length in get_h5_str()");
     if len == 1 {
         Ok("".to_owned())
