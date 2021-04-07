@@ -3,7 +3,7 @@ use std::mem;
 use std::os::raw::c_void;
 use std::ptr;
 
-use crate::array::{Array, VarLenArray};
+use crate::array::VarLenArray;
 use crate::string::{FixedAscii, FixedUnicode, VarLenAscii, VarLenUnicode};
 
 #[allow(non_camel_case_types)]
@@ -331,13 +331,10 @@ macro_rules! impl_tuple {
 
 impl_tuple! { A, B, C, D, E, F, G, H, I, J, K, L }
 
-unsafe impl<T: Array<Item = I>, I: H5Type> H5Type for T {
+unsafe impl<T: H5Type, const N: usize> H5Type for [T; N] {
     #[inline]
     fn type_descriptor() -> TypeDescriptor {
-        TypeDescriptor::FixedArray(
-            Box::new(<I as H5Type>::type_descriptor()),
-            <T as Array>::capacity(),
-        )
+        TypeDescriptor::FixedArray(Box::new(<T as H5Type>::type_descriptor()), N)
     }
 }
 
@@ -348,17 +345,17 @@ unsafe impl<T: Copy + H5Type> H5Type for VarLenArray<T> {
     }
 }
 
-unsafe impl<A: Array<Item = u8>> H5Type for FixedAscii<A> {
+unsafe impl<const N: usize> H5Type for FixedAscii<N> {
     #[inline]
     fn type_descriptor() -> TypeDescriptor {
-        TypeDescriptor::FixedAscii(A::capacity())
+        TypeDescriptor::FixedAscii(N)
     }
 }
 
-unsafe impl<A: Array<Item = u8>> H5Type for FixedUnicode<A> {
+unsafe impl<const N: usize> H5Type for FixedUnicode<N> {
     #[inline]
     fn type_descriptor() -> TypeDescriptor {
-        TypeDescriptor::FixedUnicode(A::capacity())
+        TypeDescriptor::FixedUnicode(N)
     }
 }
 
@@ -439,8 +436,8 @@ pub mod tests {
 
     #[test]
     pub fn test_string_types() {
-        type FA = FixedAscii<[u8; 16]>;
-        type FU = FixedUnicode<[u8; 32]>;
+        type FA = FixedAscii<16>;
+        type FU = FixedUnicode<32>;
         assert_eq!(FA::type_descriptor(), TD::FixedAscii(16));
         assert_eq!(FU::type_descriptor(), TD::FixedUnicode(32));
         assert_eq!(VarLenAscii::type_descriptor(), TD::VarLenAscii);

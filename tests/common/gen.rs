@@ -4,7 +4,6 @@ use std::iter;
 
 use hdf5::types::{FixedAscii, FixedUnicode, VarLenArray, VarLenAscii, VarLenUnicode};
 use hdf5::H5Type;
-use hdf5_types::Array;
 
 use ndarray::{ArrayD, SliceInfo, SliceInfoElem};
 use rand::distributions::{Alphanumeric, Uniform};
@@ -109,9 +108,9 @@ where
     ArrayD::from_shape_vec(shape, vec).unwrap()
 }
 
-impl<A: Array<Item = u8>> Gen for FixedAscii<A> {
+impl<const N: usize> Gen for FixedAscii<N> {
     fn gen<R: Rng + ?Sized>(rng: &mut R) -> Self {
-        let len = rng.sample(Uniform::new_inclusive(0, A::capacity()));
+        let len = rng.sample(Uniform::new_inclusive(0, N));
         let dist = Uniform::new_inclusive(0, 127);
         let mut v = Vec::with_capacity(len);
         for _ in 0..len {
@@ -121,9 +120,9 @@ impl<A: Array<Item = u8>> Gen for FixedAscii<A> {
     }
 }
 
-impl<A: Array<Item = u8>> Gen for FixedUnicode<A> {
+impl<const N: usize> Gen for FixedUnicode<N> {
     fn gen<R: Rng + ?Sized>(rng: &mut R) -> Self {
-        let len = rng.sample(Uniform::new_inclusive(0, A::capacity()));
+        let len = rng.sample(Uniform::new_inclusive(0, N));
         let mut s = String::new();
         for _ in 0..len {
             let c = rng.gen::<char>();
@@ -201,8 +200,8 @@ impl Gen for TupleStruct {
 #[derive(H5Type, Clone, Debug, PartialEq)]
 #[repr(C)]
 pub struct FixedStruct {
-    fa: FixedAscii<[u8; 3]>,
-    fu: FixedUnicode<[u8; 11]>,
+    fa: FixedAscii<3>,
+    fu: FixedUnicode<11>,
     tuple: (i8, u64, f32),
     array: [TupleStruct; 2],
 }

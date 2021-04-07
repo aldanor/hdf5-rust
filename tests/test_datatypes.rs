@@ -31,8 +31,8 @@ pub fn test_datatype_roundtrip() {
     check_roundtrip!(bool, TD::Boolean);
     check_roundtrip!([bool; 5], TD::FixedArray(Box::new(TD::Boolean), 5));
     check_roundtrip!(VarLenArray<bool>, TD::VarLenArray(Box::new(TD::Boolean)));
-    check_roundtrip!(FixedAscii<[_; 5]>, TD::FixedAscii(5));
-    check_roundtrip!(FixedUnicode<[_; 5]>, TD::FixedUnicode(5));
+    check_roundtrip!(FixedAscii<5>, TD::FixedAscii(5));
+    check_roundtrip!(FixedUnicode<5>, TD::FixedUnicode(5));
     check_roundtrip!(VarLenAscii, TD::VarLenAscii);
     check_roundtrip!(VarLenUnicode, TD::VarLenUnicode);
 
