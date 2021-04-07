@@ -270,6 +270,7 @@ impl DatasetBuilder {
             builder: self.builder,
             data: data.into(),
             type_desc: type_desc.clone(),
+            conv: Conversion::Soft,
         }
     }
 }
@@ -314,6 +315,7 @@ pub struct DatasetBuilderData<'d, T, D> {
     builder: DatasetBuilderInner,
     data: ArrayView<'d, T, D>,
     type_desc: TypeDescriptor,
+    conv: Conversion,
 }
 
 impl<'d, T, D> DatasetBuilderData<'d, T, D>
@@ -321,6 +323,18 @@ where
     T: H5Type,
     D: ndarray::Dimension,
 {
+    /// Set maximum allowed conversion level.
+    pub fn conversion(mut self, conv: Conversion) -> Self {
+        self.conv = conv;
+        self
+    }
+
+    /// Disallow all conversions.
+    pub fn no_convert(mut self) -> Self {
+        self.conv = Conversion::NoOp;
+        self
+    }
+
     pub fn create<'n, N: Into<Maybe<&'n str>>>(&self, name: N) -> Result<Dataset> {
         ensure!(
             self.data.is_standard_layout(),
@@ -331,8 +345,7 @@ where
         h5lock!({
             let dtype_src = Datatype::from_type::<T>()?;
             let dtype_dst = Datatype::from_descriptor(&self.type_desc)?;
-            // TODO: soft conversion? hard? user-specifiable?
-            dtype_src.ensure_convertible(&dtype_dst, Conversion::Soft)?;
+            dtype_src.ensure_convertible(&dtype_dst, self.conv)?;
             let ds = self.builder.create(&self.type_desc, name, &extents)?;
             if let Err(err) = ds.write(self.data.view()) {
                 self.builder.try_unlink(name);
