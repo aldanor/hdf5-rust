@@ -46,7 +46,9 @@
 - Added methods to `Dataset`: `layout`, `dapl`, `access_plist`, `dcpl`, `create_plist`.
   
  ### Changed
-  
+
+- Required Rust compiler version is now `1.51`.
+- Removed the `num-integer` and `num-traits` dependencies.
 - `Dataspace` type has been reworked and can be now constructed from an extents object 
   and sliced with a selection object.
 - `Dataset::fill_value` now returns an object of the newly added `DynValue` type; this

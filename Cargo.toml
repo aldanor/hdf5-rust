@@ -27,8 +27,6 @@ lazy_static = "1.4"
 libc = "0.2"
 parking_lot = "0.11"
 ndarray = "0.15"
-num-integer = "0.1"
-num-traits = "0.2"
 mpi-sys = { version = "0.1", optional = true }
 errno = { version = "0.2", optional = true }
 hdf5-sys = { path = "hdf5-sys", version = "0.7.1" }  # !V

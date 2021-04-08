@@ -156,7 +156,7 @@ impl From<H5T_order_t> for ByteOrder {
 impl Datatype {
     /// Get the total size of the datatype in bytes.
     pub fn size(&self) -> usize {
-        h5call!(H5Tget_size(self.id())).unwrap_or(0) as usize
+        h5lock!(H5Tget_size(self.id())) as usize
     }
 
     /// Get the byte order of the datatype.
@@ -217,7 +217,7 @@ impl Datatype {
 
         h5lock!({
             let id = self.id();
-            let size = h5try!(H5Tget_size(id)) as usize;
+            let size = H5Tget_size(id) as usize;
             match H5Tget_class(id) {
                 H5T_class_t::H5T_INTEGER => {
                     let signed = match H5Tget_sign(id) {
@@ -261,7 +261,7 @@ impl Datatype {
                     let mut fields: Vec<CompoundField> = Vec::new();
                     for idx in 0..h5try!(H5Tget_nmembers(id)) as _ {
                         let name = H5Tget_member_name(id, idx);
-                        let offset = h5try!(H5Tget_member_offset(id, idx));
+                        let offset = H5Tget_member_offset(id, idx);
                         let ty = Self::from_id(h5try!(H5Tget_member_type(id, idx)))?;
                         fields.push(CompoundField {
                             name: string_from_cstr(name),
