@@ -14,9 +14,9 @@ build = "build.rs"
 h5-alloc = []
 
 [dependencies]
+hdf5-sys = { path = "../hdf5-sys" }
 ascii = "1.0"
 libc = "0.2"
-hdf5-sys = { version = "0.7.1", path = "../hdf5-sys" }  # !V
 cfg-if = "1.0.0"
 
 [dev-dependencies]

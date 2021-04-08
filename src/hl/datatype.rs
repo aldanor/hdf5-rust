@@ -206,10 +206,10 @@ impl Datatype {
                 required,
                 conv
             );
-            Ok(())
         } else {
             fail!("no conversion paths found")
         }
+        Ok(())
     }
 
     pub fn to_descriptor(&self) -> Result<TypeDescriptor> {

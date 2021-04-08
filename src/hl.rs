@@ -1,3 +1,4 @@
+pub mod attribute;
 pub mod container;
 pub mod dataset;
 pub mod dataspace;
@@ -12,6 +13,7 @@ pub mod plist;
 pub mod selection;
 
 pub use self::{
+    attribute::{Attribute, AttributeBuilder},
     container::{Container, Reader, Writer},
     dataset::{
         Dataset, DatasetBuilder, DatasetBuilderData, DatasetBuilderEmpty, DatasetBuilderEmptyShape,
