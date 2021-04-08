@@ -315,7 +315,14 @@ impl H5ErrorCode for herr_t {
         value < 0
     }
 }
+#[cfg(hdf5_1_10_0)]
 impl H5ErrorCode for hid_t {
+    fn is_err_code(value: Self) -> bool {
+        value < 0
+    }
+}
+#[cfg(not(hdf5_1_10_0))]
+impl H5ErrorCode for hdf5_sys::h5::hssize_t {
     fn is_err_code(value: Self) -> bool {
         value < 0
     }
