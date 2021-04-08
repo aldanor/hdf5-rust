@@ -9,6 +9,8 @@ use lazy_static::lazy_static;
 use ndarray::ShapeError;
 use parking_lot::Mutex;
 
+#[cfg(not(hdf5_1_10_0))]
+use hdf5_sys::h5::hssize_t;
 use hdf5_sys::h5e::{
     H5E_error2_t, H5Eclose_stack, H5Eget_current_stack, H5Eget_msg, H5Eprint2, H5Eset_auto2,
     H5Ewalk2, H5E_DEFAULT, H5E_WALK_DOWNWARD,
@@ -296,6 +298,7 @@ pub fn is_err_code<T: H5ErrorCode>(value: T) -> bool {
 
 pub trait H5ErrorCode: Copy {
     fn is_err_code(value: Self) -> bool;
+
     fn h5check(value: Self) -> Result<Self> {
         if Self::is_err_code(value) {
             Error::query().map_or_else(|| Ok(value), Err)
@@ -310,23 +313,27 @@ impl H5ErrorCode for hsize_t {
         value == 0
     }
 }
+
 impl H5ErrorCode for herr_t {
     fn is_err_code(value: Self) -> bool {
         value < 0
     }
 }
+
 #[cfg(hdf5_1_10_0)]
 impl H5ErrorCode for hid_t {
     fn is_err_code(value: Self) -> bool {
         value < 0
     }
 }
+
 #[cfg(not(hdf5_1_10_0))]
-impl H5ErrorCode for hdf5_sys::h5::hssize_t {
+impl H5ErrorCode for hssize_t {
     fn is_err_code(value: Self) -> bool {
         value < 0
     }
 }
+
 impl H5ErrorCode for libc::ssize_t {
     fn is_err_code(value: Self) -> bool {
         value < 0
