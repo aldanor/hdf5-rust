@@ -51,7 +51,8 @@ impl Attribute {
             _id: hid_t, attr_name: *const c_char, _info: *const H5A_info_t, op_data: *mut c_void,
         ) -> herr_t {
             std::panic::catch_unwind(|| {
-                let other_data: &mut Vec<String> = unsafe { &mut *(op_data.cast::<std::vec::Vec<std::string::String>>()) };
+                let other_data: &mut Vec<String> =
+                    unsafe { &mut *(op_data.cast::<std::vec::Vec<std::string::String>>()) };
                 other_data.push(string_from_cstr(attr_name));
                 0 // Continue iteration
             })
@@ -421,6 +422,21 @@ pub mod attribute_tests {
             let r: VarLenUnicode = read_attr.as_reader().read_scalar().unwrap();
 
             assert_eq!(r, s);
+        })
+    }
+
+    #[test]
+    pub fn test_list_names() {
+        with_tmp_file(|file| {
+            let arr1 = arr2(&[[123], [456]]);
+            let _attr1 = file.new_attribute_builder().with_data(&arr1).create("foo").unwrap();
+            let _attr2 = file.new_attribute_builder().with_data("string").create("bar").unwrap();
+
+            let attr_names = file.attribute_names().unwrap();
+
+            assert_eq!(attr_names.len(), 2);
+            assert!(attr_names.contains(&"foo".to_string()));
+            assert!(attr_names.contains(&"bar".to_string()));
         })
     }
 }
