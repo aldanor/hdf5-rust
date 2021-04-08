@@ -325,11 +325,6 @@ impl H5ErrorCode for libc::ssize_t {
         value < 0
     }
 }
-impl H5ErrorCode for size_t {
-    fn is_err_code(value: Self) -> bool {
-        value == 0
-    }
-}
 
 #[cfg(test)]
 pub mod tests {
