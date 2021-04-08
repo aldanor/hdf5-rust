@@ -51,7 +51,7 @@ impl Attribute {
             _id: hid_t, attr_name: *const c_char, _info: *const H5A_info_t, op_data: *mut c_void,
         ) -> herr_t {
             std::panic::catch_unwind(|| {
-                let other_data: &mut Vec<String> = unsafe { &mut *(op_data as *mut Vec<String>) };
+                let other_data: &mut Vec<String> = unsafe { &mut *(op_data.cast::<std::vec::Vec<std::string::String>>()) };
                 other_data.push(string_from_cstr(attr_name));
                 0 // Continue iteration
             })
@@ -61,7 +61,7 @@ impl Attribute {
         let callback_fn: H5A_operator2_t = Some(attributes_callback);
         let iteration_position: *mut hsize_t = &mut { 0_u64 };
         let mut result: Vec<String> = Vec::new();
-        let other_data: *mut c_void = &mut result as *mut _ as *mut c_void;
+        let other_data: *mut c_void = &mut result as *const _ as *mut c_void;
 
         h5call!(H5Aiterate2(
             obj.handle().id(),
@@ -165,7 +165,7 @@ pub struct AttributeBuilderEmptyShape {
 
 impl AttributeBuilderEmptyShape {
     pub fn create<'n, T: Into<&'n str>>(&self, name: T) -> Result<Attribute> {
-        h5lock!(self.builder.create(&self.type_desc, name.into().into(), &self.extents))
+        h5lock!(self.builder.create(&self.type_desc, name.into(), &self.extents))
     }
 
     #[inline]
@@ -208,7 +208,7 @@ where
             "input array is not in standard layout or is not contiguous"
         ); // TODO: relax this when it's supported in the writer
         let extents = Extents::from(self.data.shape());
-        let name = name.into().into();
+        let name = name.into();
 
         h5lock!({
             let dtype_src = Datatype::from_type::<T>()?;
