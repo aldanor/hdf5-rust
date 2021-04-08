@@ -734,27 +734,17 @@ impl From<&[Ix]> for Selection {
     }
 }
 
-macro_rules! impl_fixed {
-    () => ();
-
-    ($head:expr, $($tail:expr,)*) => (
-        impl From<[Ix; $head]> for Selection {
-            fn from(points: [Ix; $head]) -> Self {
-                points.as_ref().into()
-            }
-        }
-
-        impl From<&[Ix; $head]> for Selection {
-            fn from(points: &[Ix; $head]) -> Self {
-                points.as_ref().into()
-            }
-        }
-
-        impl_fixed! { $($tail,)* }
-    )
+impl<const N: usize> From<[Ix; N]> for Selection {
+    fn from(points: [Ix; N]) -> Self {
+        points.as_ref().into()
+    }
 }
 
-impl_fixed! { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, }
+impl<const N: usize> From<&[Ix; N]> for Selection {
+    fn from(points: &[Ix; N]) -> Self {
+        points.as_ref().into()
+    }
+}
 
 macro_rules! impl_tuple {
     () => ();
