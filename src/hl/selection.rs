@@ -1,4 +1,5 @@
 use std::borrow::Cow;
+use std::convert::{TryFrom, TryInto};
 use std::fmt::{self, Display};
 use std::mem;
 use std::ops::{Deref, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
@@ -267,18 +268,147 @@ impl SliceOrIndex {
     }
 }
 
-#[allow(clippy::fallible_impl_from)]
-impl<T: Into<ndarray::SliceInfoElem>> From<T> for SliceOrIndex {
-    fn from(slice: T) -> Self {
-        match slice.into() {
+impl TryFrom<ndarray::SliceInfoElem> for SliceOrIndex {
+    type Error = Error;
+    fn try_from(slice: ndarray::SliceInfoElem) -> Result<Self, Self::Error> {
+        Ok(match slice.into() {
             ndarray::SliceInfoElem::Index(index) => Self::Index(index),
             ndarray::SliceInfoElem::Slice { start, end, step } => {
                 Self::Slice { start, step, end, block: false }
             }
-            ndarray::SliceInfoElem::NewAxis => panic!("ndarray NewAxis can not be mapped to hdf5"),
-        }
+            ndarray::SliceInfoElem::NewAxis => fail!("ndarray NewAxis can not be mapped to hdf5"),
+        })
     }
 }
+
+macro_rules! impl_slice_or_index_scalar {
+    ($tp:ty) => {
+        impl From<$tp> for SliceOrIndex {
+            fn from(val: $tp) -> Self {
+                Self::Index(val as _)
+            }
+        }
+
+        impl From<$tp> for Hyperslab {
+            fn from(slice: $tp) -> Self {
+                (slice,).into()
+            }
+        }
+
+        impl From<$tp> for Selection {
+            fn from(slice: $tp) -> Self {
+                Hyperslab::from(slice).into()
+            }
+        }
+    };
+}
+
+impl_slice_or_index_scalar!(usize);
+impl_slice_or_index_scalar!(isize);
+impl_slice_or_index_scalar!(i32);
+
+macro_rules! impl_slice_or_index_ranges {
+    ($tp:ty) => {
+        impl From<Range<$tp>> for SliceOrIndex {
+            fn from(val: Range<$tp>) -> Self {
+                Self::Slice { start: 0, step: 1, end: Some(val.end as _), block: false }
+            }
+        }
+
+        impl From<Range<$tp>> for Hyperslab {
+            fn from(val: Range<$tp>) -> Self {
+                vec![val.into()].into()
+            }
+        }
+
+        impl From<Range<$tp>> for Selection {
+            fn from(val: Range<$tp>) -> Self {
+                Hyperslab::from(val).into()
+            }
+        }
+
+        impl From<RangeToInclusive<$tp>> for SliceOrIndex {
+            fn from(val: RangeToInclusive<$tp>) -> Self {
+                Self::Slice { start: 0, step: 1, end: Some(val.end as isize + 1), block: false }
+            }
+        }
+
+        impl From<RangeToInclusive<$tp>> for Hyperslab {
+            fn from(val: RangeToInclusive<$tp>) -> Self {
+                vec![val.into()].into()
+            }
+        }
+
+        impl From<RangeToInclusive<$tp>> for Selection {
+            fn from(val: RangeToInclusive<$tp>) -> Self {
+                Hyperslab::from(val).into()
+            }
+        }
+
+        impl From<RangeFrom<$tp>> for SliceOrIndex {
+            fn from(val: RangeFrom<$tp>) -> Self {
+                Self::Slice { start: val.start as _, step: 1, end: None, block: false }
+            }
+        }
+
+        impl From<RangeFrom<$tp>> for Hyperslab {
+            fn from(val: RangeFrom<$tp>) -> Self {
+                vec![val.into()].into()
+            }
+        }
+
+        impl From<RangeFrom<$tp>> for Selection {
+            fn from(val: RangeFrom<$tp>) -> Self {
+                Hyperslab::from(val).into()
+            }
+        }
+
+        impl From<RangeInclusive<$tp>> for SliceOrIndex {
+            fn from(val: RangeInclusive<$tp>) -> Self {
+                Self::Slice {
+                    start: *val.start() as _,
+                    step: 1,
+                    end: Some(*val.end() as isize + 1),
+                    block: false,
+                }
+            }
+        }
+
+        impl From<RangeInclusive<$tp>> for Hyperslab {
+            fn from(val: RangeInclusive<$tp>) -> Self {
+                vec![val.into()].into()
+            }
+        }
+
+        impl From<RangeInclusive<$tp>> for Selection {
+            fn from(val: RangeInclusive<$tp>) -> Self {
+                Hyperslab::from(val).into()
+            }
+        }
+
+        impl From<RangeTo<$tp>> for SliceOrIndex {
+            fn from(val: RangeTo<$tp>) -> Self {
+                Self::Slice { start: 0, step: 1, end: Some(val.end as _), block: false }
+            }
+        }
+
+        impl From<RangeTo<$tp>> for Hyperslab {
+            fn from(val: RangeTo<$tp>) -> Self {
+                vec![val.into()].into()
+            }
+        }
+
+        impl From<RangeTo<$tp>> for Selection {
+            fn from(val: RangeTo<$tp>) -> Self {
+                Hyperslab::from(val).into()
+            }
+        }
+    };
+}
+
+impl_slice_or_index_ranges!(usize);
+impl_slice_or_index_ranges!(isize);
+impl_slice_or_index_ranges!(i32);
 
 impl Display for SliceOrIndex {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -441,14 +571,22 @@ impl From<SliceOrIndex> for Hyperslab {
     }
 }
 
-impl<T, Din, Dout> From<ndarray::SliceInfo<T, Din, Dout>> for Hyperslab
+impl<T, Din, Dout> TryFrom<ndarray::SliceInfo<T, Din, Dout>> for Hyperslab
 where
     T: AsRef<[ndarray::SliceInfoElem]>,
     Din: ndarray::Dimension,
     Dout: ndarray::Dimension,
 {
-    fn from(slice: ndarray::SliceInfo<T, Din, Dout>) -> Self {
-        slice.deref().as_ref().iter().copied().map(Into::into).collect::<Vec<_>>().into()
+    type Error = Error;
+    fn try_from(slice: ndarray::SliceInfo<T, Din, Dout>) -> Result<Self, Self::Error> {
+        slice
+            .deref()
+            .as_ref()
+            .iter()
+            .cloned()
+            .map(TryInto::try_into)
+            .collect::<Result<Vec<_>>>()
+            .map(Into::into)
     }
 }
 
@@ -669,14 +807,15 @@ impl From<Hyperslab> for Selection {
     }
 }
 
-impl<T, Din, Dout> From<ndarray::SliceInfo<T, Din, Dout>> for Selection
+impl<T, Din, Dout> TryFrom<ndarray::SliceInfo<T, Din, Dout>> for Selection
 where
     T: AsRef<[ndarray::SliceInfoElem]>,
     Din: ndarray::Dimension,
     Dout: ndarray::Dimension,
 {
-    fn from(slice: ndarray::SliceInfo<T, Din, Dout>) -> Self {
-        Hyperslab::from(slice).into()
+    type Error = Error;
+    fn try_from(slice: ndarray::SliceInfo<T, Din, Dout>) -> Result<Self, Self::Error> {
+        Hyperslab::try_from(slice).map(Into::into)
     }
 }
 
@@ -686,14 +825,13 @@ impl From<Array2<Ix>> for Selection {
     }
 }
 
-#[allow(clippy::fallible_impl_from)]
 impl From<Array1<Ix>> for Selection {
     fn from(points: Array1<Ix>) -> Self {
         let n = points.len();
         Self::Points(if n == 0 {
             Array2::zeros((0, 0))
         } else {
-            points.into_shape((n, 1)).unwrap().into_dimensionality().unwrap()
+            points.insert_axis(ndarray::Axis(1))
         })
     }
 }
@@ -774,42 +912,6 @@ macro_rules! impl_tuple {
 }
 
 impl_tuple! { T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, }
-
-macro_rules! impl_slice_scalar {
-    ($tp:ty) => {
-        impl From<$tp> for Hyperslab {
-            fn from(slice: $tp) -> Self {
-                (slice,).into()
-            }
-        }
-
-        impl From<$tp> for Selection {
-            fn from(slice: $tp) -> Self {
-                Hyperslab::from(slice).into()
-            }
-        }
-    };
-}
-
-impl_slice_scalar!(isize);
-impl_slice_scalar!(usize);
-impl_slice_scalar!(i32);
-impl_slice_scalar!(ndarray::Slice);
-impl_slice_scalar!(ndarray::SliceInfoElem);
-
-macro_rules! impl_range_scalar {
-    ($index:ty) => {
-        impl_slice_scalar!(Range<$index>);
-        impl_slice_scalar!(RangeFrom<$index>);
-        impl_slice_scalar!(RangeInclusive<$index>);
-        impl_slice_scalar!(RangeTo<$index>);
-        impl_slice_scalar!(RangeToInclusive<$index>);
-    };
-}
-
-impl_range_scalar!(isize);
-impl_range_scalar!(usize);
-impl_range_scalar!(i32);
 
 #[cfg(test)]
 mod test {
