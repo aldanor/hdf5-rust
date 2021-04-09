@@ -785,7 +785,7 @@ fn test_dcpl_virtual_map() -> hdf5::Result<()> {
     let pl = DCB::new()
         .layout(Layout::Virtual)
         .virtual_map("foo", "bar", (3, 4..), (.., 1..), (10..=20, 10), (..3, 7..))
-        .virtual_map("x", "y", 100, 91.., 12, Hyperslab::new(s![2..;3]).set_block(0)?)
+        .virtual_map("x", "y", 100, 91.., 12, Hyperslab::try_new(s![2..;3])?.set_block(0, 1)?)
         .finish()?;
     let expected = vec![
         VirtualMapping {
@@ -802,7 +802,7 @@ fn test_dcpl_virtual_map() -> hdf5::Result<()> {
             src_extents: 100.into(),
             src_selection: (91..100).into(),
             vds_extents: 12.into(),
-            vds_selection: Hyperslab::new(s![2..11;3]).set_block(0)?.into(),
+            vds_selection: Hyperslab::try_new(s![2..11;3])?.set_block(0, 1)?.into(),
         },
     ];
     assert_eq!(pl.get_virtual_map()?, expected);
