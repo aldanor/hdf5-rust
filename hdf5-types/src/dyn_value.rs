@@ -732,14 +732,35 @@ impl OwnedDynValue {
         Self { tp, buf }
     }
 
-    #[doc(hidden)]
-    /// Use this if the values should still be used after the buffer has been
-    /// copied to the concrete type
-    pub fn drop_nonrecursive(mut self) {
-        // We can't take ownership of the contents of self,
-        // but we can replace the items with a zero-sized object
-        self.tp = <[u8; 0] as H5Type>::type_descriptor();
-        self.buf = Box::new([]);
+    /// Cast to the concrete type
+    ///
+    /// Will fail if the type-descriptors are not equal
+    pub fn cast<T: H5Type>(mut self) -> Result<T, Self> {
+        use std::mem::MaybeUninit;
+        if self.tp != T::type_descriptor() {
+            return Err(self);
+        }
+        debug_assert_eq!(self.tp.size(), self.buf.len());
+        let mut out = MaybeUninit::<T>::uninit();
+        unsafe {
+            ptr::copy_nonoverlapping(
+                self.buf.as_ptr(),
+                out.as_mut_ptr().cast::<u8>(),
+                self.buf.len(),
+            );
+        }
+        // For safety we must ensure any nested structures are not live at the same time,
+        // as this could cause a double free in `dyn_drop`.
+        // We must deallocate only the top level of Self
+
+        // The zero-sized array has a special case to not drop ptr if len is zero,
+        // so `dyn_drop` of `DynArray` is a nop
+        self.tp = <[u8; 0]>::type_descriptor();
+        // We must also swap out the buffer to ensure we can create the `DynValue`
+        let mut b: Box<[u8]> = Box::new([]);
+        std::mem::swap(&mut self.buf, &mut b);
+
+        Ok(unsafe { out.assume_init() })
     }
 }
 

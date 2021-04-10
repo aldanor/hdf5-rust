@@ -1,7 +1,6 @@
 //! Dataset creation properties.
 
 use std::fmt::{self, Debug};
-use std::mem;
 use std::ops::Deref;
 use std::ptr;
 
@@ -739,15 +738,13 @@ impl DatasetCreate {
     #[doc(hidden)]
     pub fn get_fill_value_as<T: H5Type>(&self) -> Result<Option<T>> {
         let dtype = Datatype::from_type::<T>()?;
-        Ok(self.get_fill_value(&dtype.to_descriptor()?)?.map(|value| unsafe {
-            let mut out: mem::MaybeUninit<T> = mem::MaybeUninit::uninit();
-            let buf = value.get_buf();
-            ptr::copy_nonoverlapping(buf.as_ptr(), out.as_mut_ptr().cast(), buf.len());
-            // Drop the Box<[u8]>, but not subfields
-            value.drop_nonrecursive();
-            // We now have exclusive access to all subfields
-            out.assume_init()
-        }))
+        self.get_fill_value(&dtype.to_descriptor()?)?
+            .map(|value| {
+                value
+                    .cast::<T>()
+                    .map_err(|_| "The fill value and requested types are not equal".into())
+            })
+            .transpose()
     }
 
     pub fn fill_value_as<T: H5Type>(&self) -> Option<T> {
