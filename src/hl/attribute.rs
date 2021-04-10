@@ -266,6 +266,8 @@ impl AttributeBuilderInner {
             name.as_ptr(),
             datatype.id(),
             dataspace.id(),
+            // these args are currently unused as if HDF5 1.12
+            // see details: https://portal.hdfgroup.org/display/HDF5/H5A_CREATE2
             H5P_DEFAULT,
             H5P_DEFAULT,
         )))
