@@ -102,8 +102,8 @@ impl Location {
         Attribute::from_id(h5try!(H5Aopen(self.id(), name.as_ptr(), H5P_DEFAULT)))
     }
 
-    pub fn attribute_names(&self) -> Result<Vec<String>> {
-        Attribute::attribute_names(self)
+    pub fn attr_names(&self) -> Result<Vec<String>> {
+        Attribute::attr_names(self)
     }
 }
 

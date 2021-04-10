@@ -46,7 +46,7 @@ impl Deref for Attribute {
 
 impl Attribute {
     /// Returns names of all the members in the group, non-recursively.
-    pub fn attribute_names(obj: &Location) -> Result<Vec<String>> {
+    pub fn attr_names(obj: &Location) -> Result<Vec<String>> {
         extern "C" fn attributes_callback(
             _id: hid_t, attr_name: *const c_char, _info: *const H5A_info_t, op_data: *mut c_void,
         ) -> herr_t {
@@ -306,12 +306,12 @@ pub mod attribute_tests {
     }
 
     #[test]
-    pub fn test_get_file_attribute_names() {
+    pub fn test_get_file_attr_names() {
         with_tmp_file(|file| {
             let _ = file.new_attribute::<f32>().shape((2, 3)).create("name1").unwrap();
             let _ = file.new_attribute::<u8>().shape(()).create("name2").unwrap();
 
-            let attr_names = file.attribute_names().unwrap();
+            let attr_names = file.attr_names().unwrap();
             assert_eq!(attr_names.len(), 2);
             assert!(attr_names.contains(&"name1".to_string()));
             assert!(attr_names.contains(&"name2".to_string()));
@@ -319,14 +319,14 @@ pub mod attribute_tests {
     }
 
     #[test]
-    pub fn test_get_dataset_attribute_names() {
+    pub fn test_get_dataset_attr_names() {
         with_tmp_file(|file| {
             let ds = file.new_dataset::<u32>().shape((10, 10)).create("d1").unwrap();
 
             let _ = ds.new_attribute::<f32>().shape((2, 3)).create("name1").unwrap();
             let _ = ds.new_attribute::<u8>().shape(()).create("name2").unwrap();
 
-            let attr_names = ds.attribute_names().unwrap();
+            let attr_names = ds.attr_names().unwrap();
             assert_eq!(attr_names.len(), 2);
             assert!(attr_names.contains(&"name1".to_string()));
             assert!(attr_names.contains(&"name2".to_string()));
@@ -434,7 +434,7 @@ pub mod attribute_tests {
             let _attr1 = file.new_attribute_builder().with_data(&arr1).create("foo").unwrap();
             let _attr2 = file.new_attribute_builder().with_data("string").create("bar").unwrap();
 
-            let attr_names = file.attribute_names().unwrap();
+            let attr_names = file.attr_names().unwrap();
 
             assert_eq!(attr_names.len(), 2);
             assert!(attr_names.contains(&"foo".to_string()));
