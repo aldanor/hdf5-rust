@@ -3,7 +3,7 @@ use std::ops::Deref;
 use std::ptr;
 
 use hdf5_sys::{
-    h5a::{H5Aexists, H5Aopen},
+    h5a::H5Aopen,
     h5f::H5Fget_name,
     h5i::{H5Iget_file_id, H5Iget_name},
     h5o::{H5Oget_comment, H5Oset_comment},
@@ -99,14 +99,7 @@ impl Location {
 
     pub fn attribute(&self, name: &str) -> Result<Attribute> {
         let name = to_cstring(name)?;
-        h5call!(H5Aexists(self.id(), name.as_ptr())).and_then(|r| {
-            if r > 0 {
-                Attribute::from_id(h5try!(H5Aopen(self.id(), name.as_ptr(), H5P_DEFAULT)))
-            } else {
-                let msg = format!("Attribute doesn't exist: {:?}", name);
-                Err(Error::Internal(msg))
-            }
-        })
+        Attribute::from_id(h5try!(H5Aopen(self.id(), name.as_ptr(), H5P_DEFAULT)))
     }
 
     pub fn attribute_names(&self) -> Result<Vec<String>> {

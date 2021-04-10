@@ -46,7 +46,7 @@ impl Deref for Attribute {
 
 impl Attribute {
     /// Returns names of all the members in the group, non-recursively.
-    pub fn attribute_names<T: ObjectClass>(obj: &T) -> Result<Vec<String>> {
+    pub fn attribute_names(obj: &Location) -> Result<Vec<String>> {
         extern "C" fn attributes_callback(
             _id: hid_t, attr_name: *const c_char, _info: *const H5A_info_t, op_data: *mut c_void,
         ) -> herr_t {
@@ -78,7 +78,7 @@ impl Attribute {
 }
 
 #[derive(Clone)]
-/// A dataset builder
+/// An attribute builder
 pub struct AttributeBuilder {
     builder: AttributeBuilderInner,
 }
@@ -130,7 +130,7 @@ impl AttributeBuilder {
 }
 
 #[derive(Clone)]
-/// A dataset builder with the type known
+/// An attribute builder with the type known
 pub struct AttributeBuilderEmpty {
     builder: AttributeBuilderInner,
     type_desc: TypeDescriptor,
@@ -157,7 +157,7 @@ impl AttributeBuilderEmpty {
 }
 
 #[derive(Clone)]
-/// A dataset builder with type and shape known
+/// An attribute builder with type and shape known
 pub struct AttributeBuilderEmptyShape {
     builder: AttributeBuilderInner,
     type_desc: TypeDescriptor,
@@ -178,7 +178,7 @@ impl AttributeBuilderEmptyShape {
 }
 
 #[derive(Clone)]
-/// A dataset builder with type, shape, and data known
+/// An attribute builder with type, shape, and data known
 pub struct AttributeBuilderData<'d, T, D> {
     builder: AttributeBuilderInner,
     data: ArrayView<'d, T, D>,

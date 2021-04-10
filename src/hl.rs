@@ -13,7 +13,10 @@ pub mod plist;
 pub mod selection;
 
 pub use self::{
-    attribute::{Attribute, AttributeBuilder},
+    attribute::{
+        Attribute, AttributeBuilder, AttributeBuilderData, AttributeBuilderEmpty,
+        AttributeBuilderEmptyShape,
+    },
     container::{Container, Reader, Writer},
     dataset::{
         Dataset, DatasetBuilder, DatasetBuilderData, DatasetBuilderEmpty, DatasetBuilderEmptyShape,

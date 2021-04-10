@@ -181,6 +181,8 @@ impl_string_traits!(FixedUnicode, FixedUnicode<A>, A: Array<Item = u8>);
 impl_string_traits!(VarLenAscii, VarLenAscii);
 impl_string_traits!(VarLenUnicode, VarLenUnicode);
 
+// ================================================================================
+
 #[repr(C)]
 pub struct VarLenAscii {
     ptr: *mut u8,
