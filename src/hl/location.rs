@@ -89,15 +89,15 @@ impl Location {
         h5call!(H5Oset_comment(self.id(), ptr::null_mut())).and(Ok(()))
     }
 
-    pub fn new_attribute<T: H5Type>(&self) -> AttributeBuilderEmpty {
+    pub fn new_attr<T: H5Type>(&self) -> AttributeBuilderEmpty {
         AttributeBuilder::new(self).empty::<T>()
     }
 
-    pub fn new_attribute_builder(&self) -> AttributeBuilder {
+    pub fn new_attr_builder(&self) -> AttributeBuilder {
         AttributeBuilder::new(self)
     }
 
-    pub fn attribute(&self, name: &str) -> Result<Attribute> {
+    pub fn attr(&self, name: &str) -> Result<Attribute> {
         let name = to_cstring(name)?;
         Attribute::from_id(h5try!(H5Aopen(self.id(), name.as_ptr(), H5P_DEFAULT)))
     }
