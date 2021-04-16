@@ -69,15 +69,12 @@ impl<'a> Reader<'a> {
     where
         T: H5Type,
         S: TryInto<Selection>,
+        Error: From<S::Error>,
         D: ndarray::Dimension,
     {
         ensure!(!self.obj.is_attr(), "Slicing cannot be used on attribute datasets");
 
-        let selection = if let Ok(selection) = selection.try_into() {
-            selection
-        } else {
-            fail!("Selection is not valid for hdf5")
-        };
+        let selection = selection.try_into()?;
         let obj_space = self.obj.space()?;
 
         let out_shape = selection.out_shape(&obj_space.shape())?;
@@ -153,6 +150,7 @@ impl<'a> Reader<'a> {
     where
         T: H5Type,
         S: TryInto<Selection>,
+        Error: From<S::Error>,
     {
         self.read_slice(selection)
     }
@@ -170,6 +168,7 @@ impl<'a> Reader<'a> {
     where
         T: H5Type,
         S: TryInto<Selection>,
+        Error: From<S::Error>,
     {
         self.read_slice(selection)
     }
@@ -242,15 +241,12 @@ impl<'a> Writer<'a> {
         A: Into<ArrayView<'b, T, D>>,
         T: H5Type,
         S: TryInto<Selection>,
+        Error: From<S::Error>,
         D: ndarray::Dimension,
     {
         ensure!(!self.obj.is_attr(), "Slicing cannot be used on attribute datasets");
 
-        let selection = if let Ok(selection) = selection.try_into() {
-            selection
-        } else {
-            fail!("Selection is not valid for hdf5")
-        };
+        let selection = selection.try_into()?;
         let obj_space = self.obj.space()?;
 
         let out_shape = selection.out_shape(&obj_space.shape())?;
@@ -477,6 +473,7 @@ impl Container {
     where
         T: H5Type,
         S: TryInto<Selection>,
+        Error: From<S::Error>,
     {
         self.as_reader().read_slice_1d(selection)
     }
@@ -494,6 +491,7 @@ impl Container {
     where
         T: H5Type,
         S: TryInto<Selection>,
+        Error: From<S::Error>,
     {
         self.as_reader().read_slice_2d(selection)
     }
@@ -512,6 +510,7 @@ impl Container {
     where
         T: H5Type,
         S: TryInto<Selection>,
+        Error: From<S::Error>,
         D: ndarray::Dimension,
     {
         self.as_reader().read_slice(selection)
@@ -558,6 +557,7 @@ impl Container {
         A: Into<ArrayView<'b, T, D>>,
         T: H5Type,
         S: TryInto<Selection>,
+        Error: From<S::Error>,
         D: ndarray::Dimension,
     {
         self.as_writer().write_slice(arr, selection)

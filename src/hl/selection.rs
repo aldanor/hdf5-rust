@@ -233,7 +233,7 @@ pub enum SliceOrIndex {
 
 impl PartialEq for SliceOrIndex {
     fn eq(&self, other: &Self) -> bool {
-        use SliceOrIndex::*;
+        use SliceOrIndex::{Index, SliceCount, SliceTo, Unlimited};
         match (self, other) {
             (Index(s), Index(o)) => s == o,
             (
@@ -255,7 +255,6 @@ impl PartialEq for SliceOrIndex {
                 if (sstart != ostart) | (sstep != ostep) | (sblock != oblock) {
                     return false;
                 }
-                eprintln!("COUNTS: {:?} {}", self.count(), ocount);
                 self.count().unwrap() == *ocount
             }
             (SliceCount { .. }, SliceTo { .. }) => other == self,
@@ -301,13 +300,13 @@ impl SliceOrIndex {
         })
     }
 
-    // Number of elements contained in the `SliceOrIndex`
+    /// Number of elements contained in the `SliceOrIndex`
     fn count(self) -> Option<usize> {
-        use SliceOrIndex::*;
+        use SliceOrIndex::{Index, SliceCount, SliceTo, Unlimited};
         match self {
             Index(_) => Some(1),
             SliceTo { start, step, end, block } => {
-                Some((start + (block - 1)..end).step_by(step).count())
+                Some((start + block.saturating_sub(1)..end).step_by(step).count())
             }
             SliceCount { count, .. } => Some(count),
             Unlimited { .. } => None,
@@ -516,7 +515,6 @@ impl Display for SliceOrIndex {
                 }
             }
             Self::Unlimited { start, step, block } => {
-                eprintln!("{:?}", self);
                 if start != 0 {
                     write!(f, "{}", start)?;
                 }
@@ -674,7 +672,6 @@ where
 
 /// Turns `SliceOrIndex` into real dimensions given `dim` as the maximum dimension
 fn slice_info_to_raw(axis: usize, slice: &SliceOrIndex, dim: Ix) -> Result<RawSlice> {
-    eprintln!("{:?} {}", slice, dim);
     let err_msg = || format!("out of bounds for axis {} with size {}", axis, dim);
     let (start, step, count, block) = match *slice {
         SliceOrIndex::Index(index) => {
@@ -692,13 +689,12 @@ fn slice_info_to_raw(axis: usize, slice: &SliceOrIndex, dim: Ix) -> Result<RawSl
         SliceOrIndex::SliceCount { start, step, count, block } => {
             ensure!(step >= 1, "Slice stride {} < 1 for axis {}", step, axis);
             ensure!(start <= dim as _, "Slice start {} {}", start, err_msg());
-            let end = start
-                + block.checked_sub(1).unwrap_or(0)
-                + step * count.checked_sub(1).unwrap_or(0);
-            ensure!(end <= dim, "End {} {}", end, err_msg());
+            let end = start + block.saturating_sub(1) + step * count.saturating_sub(1);
+            ensure!(end <= dim, "Slice end {} {}", end, err_msg());
             (start, step, count, block)
         }
         SliceOrIndex::Unlimited { start, step, block } => {
+            // Replace infinite slice with one limited by the current dimension
             return slice_info_to_raw(
                 axis,
                 &SliceOrIndex::SliceTo { start, step, end: dim, block },
@@ -821,10 +817,9 @@ impl Selection {
                 .filter_map(|(&r, &s)| match (r.count, s.is_index()) {
                     (Some(_), true) => None,
                     (Some(count), false) => Some(Ok(count * r.block)),
-                    (None, false) => {
+                    (None, _) => {
                         Some(Err("Unable to get the shape for unlimited hyperslab".into()))
                     }
-                    (None, true) => panic!(),
                 })
                 .collect(),
         }
@@ -1068,24 +1063,19 @@ mod test {
         assert!(s.is_slice());
         assert!(s.is_unlimited());
         assert_eq!(s.to_unlimited()?, s);
-        //assert_eq!(s.to_block()?, Unlimited { start: 3, step: 1, block: true });
 
         for (s, f) in &[
-            //(Index(-1), "-1"),
             (Unlimited { start: 0, step: 1, block: 1 }, "..∞"),
             (Unlimited { start: 0, step: 1, block: 2 }, "..∞(Bx2)"),
-            //(Slice { start: -1, step: 3, end: None, block: false }, "-1..;3"),
-            //(Slice { start: -1, step: 1, end: None, block: true }, "-1..(B)"),
             (SliceTo { start: 0, step: 1, end: 5, block: 1 }, "..5"),
             (SliceTo { start: 0, step: 3, end: 5, block: 2 }, "..5;3(Bx2)"),
-            //(Slice { start: -1, step: 1, end: Some(5), block: false }, "-1..5"),
-            //(Slice { start: -1, step: 1, end: Some(5), block: true }, "-1..5(B)"),
             (Unlimited { start: 0, step: 1, block: 1 }, "..∞"),
             (Unlimited { start: 0, step: 3, block: 2 }, "..∞;3(Bx2)"),
-            //(Unlimited { start: -1, step: 1, block: false }, "-1..∞"),
-            //(Unlimited { start: -1, step: 3, block: true }, "-1..∞;3(B)"),
+            (SliceCount { start: 1, step: 3, count: 5, block: 1 }, "1+5;3"),
+            (SliceCount { start: 0, step: 3, count: 5, block: 2 }, "+5;3(Bx2)"),
+            (SliceCount { start: 1, step: 3, count: 5, block: 2 }, "1+5;3(Bx2)"),
         ] {
-            assert_eq!(format!("{}", s), f.to_owned());
+            assert_eq!(&format!("{}", s), f);
         }
 
         Ok(())
@@ -1104,44 +1094,18 @@ mod test {
 
         check!((), vec![]);
         check!(Index(2), vec![Index(2)]);
-        /*
-        check!(
-            s![-1, 2..;3, ..4],
-            vec![
-                Index(-1),
-                Slice { start: 2, step: 3, end: None, block: false },
-                Slice { start: 0, step: 1, end: Some(4), block: false },
-            ]
-        );
-        */
-
-        /*
-        check!(
-            ndarray::Slice::new(-1, None, 2),
-            vec![Slice { start: -1, step: 2, end: None, block: false }]
-        );
-        */
         check!(ndarray::SliceInfoElem::Index(10), vec![Index(10)]);
-
-        //check!(-1, vec![Index(-1)]);
-        //check!(-1..2, vec![SliceTo { start: -1, step: 1, end: 2, block: 1 }]);
-        //check!(-1..=2, vec![SliceTo { start: -1, step: 1, end: 3, block: 1 }]);
         check!(3.., vec![Unlimited { start: 3, step: 1, block: 1 }]);
-        //check!(..-1, vec![Slice { start: 0, step: 1, end: Some(-1), block: 1 }]);
-        //check!(..=-1, vec![Unlimited { start: 0, step: 1, block: 1 }]);
-
-        /*
-        check!(
-            (-1..2, Index(-1)),
-            vec![SliceTo { start: -1, step: 1, end: 2, block: false }, Index(-1)]
-        );
-        */
 
         assert_eq!(
             Hyperslab::new(..).as_ref().to_owned(),
             vec![Unlimited { start: 0, step: 1, block: 1 }]
         );
         assert_eq!(Selection::new(..), Selection::All);
+
+        use std::convert::TryFrom;
+        assert!(Selection::try_from(s![-1, 2..;3, ..4]).is_err());
+        assert!(Selection::try_from(ndarray::Slice::new(-1, None, 2)).is_err());
     }
 
     #[test]
@@ -1285,7 +1249,7 @@ mod test {
         assert_eq!(format!("{}", h), "(1, 2..∞;3, ..4, 5..∞)");
         let s = Selection::new(h);
         assert_eq!(format!("{}", s), "(1, 2..∞;3, ..4, 5..∞)");
-        // assert_err!(s.out_shape(&[2, 3, 4, 5]), "Unable to get the shape for unlimited hyperslab");
+        assert_eq!(s.out_shape(&[2, 3, 4, 5]).unwrap(), &[1, 4, 0]);
     }
 
     #[test]
@@ -1300,50 +1264,23 @@ mod test {
             assert_err!(hyper.into_raw(shape.as_ref()), err);
         }
 
-        /*
-        check(
-            Hyperslab::new(vec![
-                Unlimited { start: 0, step: 1, block: 1 },
-                Unlimited { start: 0, step: 1, block: 1 },
-            ]),
-            &[1, 2],
-            "Expected at most 1 unlimited dimension, got 2",
-        );
-        */
-
         check(s![1, 2], &[1, 2, 3], "Slice ndim (2) != shape ndim (3)");
-
-        //check(s![0, ..;-1], &[1, 2], "Slice stride -1 < 1 for axis 1");
-
+        assert!(Hyperslab::try_new(s![0, ..;-1]).is_err());
         check(s![0, 0], &[0, 1], "Index 0 out of bounds for axis 0 with size 0");
         check(s![.., 1], &[0, 1], "Index 1 out of bounds for axis 1 with size 1");
-        //check(s![-3], &[2], "Index -3 out of bounds for axis 0 with size 2");
+        assert!(Hyperslab::try_new(s![-3]).is_err());
         check(s![2], &[2], "Index 2 out of bounds for axis 0 with size 2");
 
         check(s![0, 3..], &[1, 2], "Slice start 3 out of bounds for axis 1 with size 2");
-        //check(s![-2..;2, 0], &[1, 2], "Slice start -2 out of bounds for axis 0 with size 1");
+        assert!(Hyperslab::try_new(s![-2..;2, 0]).is_err());
         check(s![0, ..=3], &[1, 2], "Slice end 4 out of bounds for axis 1 with size 2");
-        //check(s![..-3;2, 0], &[1, 2], "Slice end -3 out of bounds for axis 0 with size 1");
+        assert!(Hyperslab::try_new(s![-2..;2, 0]).is_err());
 
-        /*
-        check(
-            (0, Unlimited { start: 0, step: -1, block: 1 }),
-            &[1, 2],
-            "Slice stride -1 < 1 for axis 1",
-        );
-        */
         check(
             (0, Unlimited { start: 3, step: 1, block: 1 }),
             &[1, 2],
             "Slice start 3 out of bounds for axis 1 with size 2",
         );
-        /*
-        check(
-            (Unlimited { start: -2, step: 2, block: 1 }, 0),
-            &[1, 2],
-            "Slice start -2 out of bounds for axis 0 with size 1",
-        );
-        */
 
         assert_err!(
             Hyperslab::from_raw(vec![RawSlice::new(0, 2, Some(1), 3)].into()),
@@ -1405,9 +1342,7 @@ mod test {
             assert_eq!(raw_sel2, raw_sel);
         }
 
-        eprintln!("HERE {}", line!());
         check(&[], (), vec![], Some(RawSelection::All), (), Some(Selection::All));
-        eprintln!("HERE {}", line!());
 
         check(
             &[5, 5, 5],
@@ -1417,7 +1352,6 @@ mod test {
             s![..5, ..5, ..5],
             Some(Selection::All),
         );
-        eprintln!("HERE {}", line!());
 
         check(
             &[0; 6],
@@ -1435,64 +1369,16 @@ mod test {
             Some(Selection::new(&[])),
         );
 
-        /*
-        check(
-            &[3; 10],
-            s![.., ..;2, 1.., 1..;2, -3..=1, -3..=-1;2, ..=-1, ..=-1;3, 0..-1, 2..=-1],
-            vec![
-                RawSlice::new(0, 1, Some(3), 1),
-                RawSlice::new(0, 2, Some(2), 1),
-                RawSlice::new(1, 1, Some(2), 1),
-                RawSlice::new(1, 2, Some(1), 1),
-                RawSlice::new(0, 1, Some(2), 1),
-                RawSlice::new(0, 2, Some(2), 1),
-                RawSlice::new(0, 1, Some(3), 1),
-                RawSlice::new(0, 3, Some(1), 1),
-                RawSlice::new(0, 1, Some(2), 1),
-                RawSlice::new(2, 1, Some(1), 1),
-            ],
-            None as Option<RawSelection>,
-            s![..3, ..3;2, 1..3, 1..2;2, ..=1, ..3;2, ..3, ..1;3, 0..2, 2..3],
-            None as Option<Selection>,
-        )?;
-        */
-
-        /*
-        check(
-            &[10; 4],
-            s![-5.., -10, 1..-1;2, 1],
-            vec![
-                RawSlice::new(5, 1, Some(5), 1),
-                RawSlice::new(0, 1, Some(1), 1),
-                RawSlice::new(1, 2, Some(4), 1),
-                RawSlice::new(1, 1, Some(1), 1),
-            ],
-            None as Option<RawSelection>,
-            s![5..10, 0..1, 1..8;2, 1..2],
-            None as Option<Selection>,
-        )?;
-        */
-
-        /*
-        check(
-            &[10; 3],
-            Hyperslab::try_new(s![-5..;2, -10, 1..-3;3])?
-                .set_unlimited(0)?
-                .set_block(0, 2)?
-                .set_block(2, 2)?,
-            vec![
-                RawSlice::new(5, 2, None, 2),
-                RawSlice::new(0, 1, Some(1), 1),
-                RawSlice::new(1, 3, Some(2), 3),
-            ],
-            None as Option<RawSelection>,
-            Hyperslab::try_new(s![5..;2, 0..1, 1..7;3])?
-                .set_unlimited(0)?
-                .set_block(0, 2)?
-                .set_block(2, 2)?,
-            None as Option<Selection>,
-        )?;
-        */
+        assert!(Hyperslab::try_new(
+            s![.., ..;2, 1.., 1..;2, -3..=1, -3..=-1;2, ..=-1, ..=-1;3, 0..-1, 2..=-1]
+        )
+        .is_err());
+        assert!(Hyperslab::try_new(
+            s![.., ..;2, 1.., 1..;2, -3..=1, -3..=-1;2, ..=-1, ..=-1;3, 0..-1, 2..=-1]
+        )
+        .is_err());
+        assert!(Hyperslab::try_new(s![-5.., -10, 1..-1;2, 1],).is_err());
+        assert!(Hyperslab::try_new(s![5..10, 0..1, 1..8;2, 1..2],).is_ok());
 
         check(
             &[7; 7],
@@ -1508,28 +1394,6 @@ mod test {
             ],
             None as Option<RawSelection>,
             Hyperslab::try_new(s![1..2;3, 1..2;3, 1..2;3, 1..5;3, 1..5;3, 1..5;3, ..7;3])?,
-            None as Option<Selection>,
-        );
-
-        check(
-            &[7; 4],
-            Hyperslab::try_new(s![1..4;3, 1..5;3, 1..6;3, 1..7;3])?
-                .set_block(0, 2)?
-                .set_block(1, 3)?
-                .set_block(2, 2)?
-                .set_block(3, 3)?,
-            vec![
-                RawSlice::new(1, 3, Some(1), 2),
-                RawSlice::new(1, 3, Some(1), 3),
-                RawSlice::new(1, 3, Some(2), 2),
-                RawSlice::new(1, 3, Some(2), 3),
-            ],
-            None as Option<RawSelection>,
-            Hyperslab::try_new(s![1..4;3, 1..4;3, 1..4;3, 1..7;3])?
-                .set_block(0, 2)?
-                .set_block(1, 3)?
-                .set_block(2, 2)?
-                .set_block(3, 3)?,
             None as Option<Selection>,
         );
 
@@ -1630,7 +1494,6 @@ mod test {
             None as Option<Selection>,
         )?;
         check(&[5, 6], s![1..1;2, 3], RawSelection::None, Some(&[]))?;
-        //check(&[5, 6], s![-5.., 0..], RawSelection::All, Some(..))?;
         check(
             &[5, 6],
             s![1..;2, 3],
