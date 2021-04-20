@@ -219,6 +219,47 @@ impl RawSelection {
     }
 }
 
+/// A selector of a one-dimensional array
+///
+/// The following examples will use an array of 11 elements
+/// to illustrate the various selections. The active elements
+/// are marked with an `s`.
+/// ```text
+/// // An array of 11 elements
+/// x x x x x x x x x x x
+/// ```
+///
+/// ```text
+/// Index(4)
+/// _ _ _ _ s _ _ _ _ _ _
+/// ```
+/// ```text
+/// Slice { start: 0, step: 3, end: 4, block: 1 }
+/// s _ _ s _ _ _ _ _ _ _
+/// ```
+/// ```text
+/// SliceTo { start: 2, step: 3, end: 8, block: 1 }
+/// _ _ s _ _ s _ _ _ _ _
+/// ```
+/// ```text
+/// SliceCount { start: 1, step: 3, count: 2, block: 1 }
+/// _ s _ _ s _ _ s _ _ _
+/// ```
+/// ```text
+/// Unlimited { start: 0, step: 3, block: 1 }
+/// s _ _ s _ _ s _ _ s _
+/// ```
+/// ```text
+/// Unlimited { start: 2, step: 3, block: 1 }
+/// _ _ s _ _ s _ _ s _ _
+/// ```
+/// ```text
+/// Unlimited { start: 0, step: 4, block: 2 }
+/// s s _ _ s s _ _ s s _
+/// ```
+///
+/// See also [`this hdf5 tutorial`](https://support.hdfgroup.org/HDF5/Tutor/select.html)
+/// for more information on hyperslab selections.
 #[derive(Clone, Copy, Debug, Eq)]
 pub enum SliceOrIndex {
     /// A single index
@@ -533,6 +574,11 @@ impl Display for SliceOrIndex {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
+/// A descriptor of a selection of an N-dimensional array.
+///
+/// The Hyperslab consists of [`slices`](SliceOrIndex) in N dimensions,
+/// spanning an N-dimensional hypercube. This type is used as a [`selector`](Selection)
+/// for retrieving and putting data to a [`Container`](Container).
 pub struct Hyperslab {
     dims: Vec<SliceOrIndex>,
 }
@@ -723,6 +769,7 @@ impl Display for Hyperslab {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
+/// A selection used for reading and writing to a [`Container`](Container).
 pub enum Selection {
     All,
     Points(Array2<Ix>),
