@@ -44,7 +44,10 @@
   also knows how to deallocate itself; it supports all of the HDF5 types including
   compound types, strings and arrays.
 - Added methods to `Dataset`: `layout`, `dapl`, `access_plist`, `dcpl`, `create_plist`.
-  
+- Added support for attributes. The Attribute API uses the new Dataset API. Attributes
+  only supports the same operations as `hdf5` (e.g. one can not perform partial IO,
+  but must read the entire attribute at once).
+ 
  ### Changed
 
 - Required Rust compiler version is now `1.51`.

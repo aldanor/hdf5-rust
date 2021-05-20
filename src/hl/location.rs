@@ -3,12 +3,15 @@ use std::ops::Deref;
 use std::ptr;
 
 use hdf5_sys::{
+    h5a::H5Aopen,
     h5f::H5Fget_name,
     h5i::{H5Iget_file_id, H5Iget_name},
     h5o::{H5Oget_comment, H5Oset_comment},
 };
 
 use crate::internal_prelude::*;
+
+use super::attribute::AttributeBuilderEmpty;
 
 /// Named location (file, group, dataset, named datatype).
 #[repr(transparent)]
@@ -84,6 +87,23 @@ impl Location {
     pub fn clear_comment(&self) -> Result<()> {
         // TODO: &mut self?
         h5call!(H5Oset_comment(self.id(), ptr::null_mut())).and(Ok(()))
+    }
+
+    pub fn new_attr<T: H5Type>(&self) -> AttributeBuilderEmpty {
+        AttributeBuilder::new(self).empty::<T>()
+    }
+
+    pub fn new_attr_builder(&self) -> AttributeBuilder {
+        AttributeBuilder::new(self)
+    }
+
+    pub fn attr(&self, name: &str) -> Result<Attribute> {
+        let name = to_cstring(name)?;
+        Attribute::from_id(h5try!(H5Aopen(self.id(), name.as_ptr(), H5P_DEFAULT)))
+    }
+
+    pub fn attr_names(&self) -> Result<Vec<String>> {
+        Attribute::attr_names(self)
     }
 }
 
