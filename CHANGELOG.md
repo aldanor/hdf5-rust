@@ -48,6 +48,8 @@
   only supports the same operations as `hdf5` (e.g. one can not perform partial IO,
   but must read the entire attribute at once).
  
+- Added support in `hdf5-sys` for the new functions in `hdf5` `1.10.6` and `1.10.7`.
+  
  ### Changed
 
 - Required Rust compiler version is now `1.51`.
@@ -67,6 +69,7 @@
 - The `ndarray` dependency has been updated to `0.15`.
 - `hdf5_types::Array` trait has been removed and replaced with const generics. String types
   are now generic over size only: `FixedAscii<N>` and `FixedUnicode<N>`.
+- The version of `hdf5` built in `hdf5-src` has been updated from `1.10.6` to `1.10.7`.
 
 ## 0.7.1
 
