@@ -47,7 +47,6 @@
 - Added support for attributes. The Attribute API uses the new Dataset API. Attributes
   only supports the same operations as `hdf5` (e.g. one can not perform partial IO,
   but must read the entire attribute at once).
- 
 - Added support in `hdf5-sys` for the new functions in `hdf5` `1.10.6` and `1.10.7`.
   
  ### Changed
@@ -70,6 +69,7 @@
 - `hdf5_types::Array` trait has been removed and replaced with const generics. String types
   are now generic over size only: `FixedAscii<N>` and `FixedUnicode<N>`.
 - The version of `hdf5` built in `hdf5-src` has been updated from `1.10.6` to `1.10.7`.
+- The `zlib` dependency is no longer included with `default-features`.
 
 ## 0.7.1
 

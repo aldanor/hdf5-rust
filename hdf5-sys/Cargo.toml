@@ -15,7 +15,7 @@ readme = "README.md"
 [dependencies]
 libc = "0.2"
 mpi-sys = { version = "0.1", optional = true }
-libz-sys = { version = "1.0.25", optional = true }
+libz-sys = { version = "1.0.25", optional = true, default-features = false }
 hdf5-src = { path = "../hdf5-src", version = "0.7.1", optional = true }  # !V
 
 # Please see README for further explanation of these feature flags
