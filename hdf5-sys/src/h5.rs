@@ -85,3 +85,23 @@ extern "C" {
 extern "C" {
     pub fn H5is_library_threadsafe(is_ts: *mut hbool_t) -> herr_t;
 }
+
+#[cfg(all(hdf5_1_10_7, not(hdf5_1_12_0)))]
+#[repr(C)]
+pub struct H5_alloc_stats_t {
+    total_alloc_bytes: c_ulonglong,
+    curr_alloc_bytes: size_t,
+    peak_alloc_bytes: size_t,
+    max_block_size: size_t,
+    total_alloc_blocks_count: size_t,
+    curr_alloc_blocks_count: size_t,
+    peak_alloc_blocks_count: size_t,
+}
+
+#[cfg(all(hdf5_1_10_7, not(hdf5_1_12_0)))]
+extern "C" {
+    pub fn H5get_alloc_stats(stats: *mut H5_alloc_stats_t) -> herr_t;
+    pub fn H5get_free_list_sizes(
+        reg_size: *mut size_t, arr_size: *mut size_t, blk_size: *mut size_t, fac_size: *mut size_t,
+    ) -> herr_t;
+}

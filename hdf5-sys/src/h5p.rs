@@ -764,6 +764,17 @@ extern "C" {
     pub fn H5Pset_dset_no_attrs_hint(dcpl_id: hid_t, minimize: hbool_t) -> herr_t;
 }
 
+#[cfg(all(hdf5_1_10_7, not(hdf5_1_12_0)))]
+extern "C" {
+    pub fn H5Pget_file_locking(
+        fapl_id: hid_t, use_file_locking: *mut hbool_t, ignore_when_disable: *mut hbool_t,
+    ) -> herr_t;
+    pub fn H5Pset_file_locking(
+        fapl_id: hid_t, use_file_locking: hbool_t, ignore_when_disable: hbool_t,
+    ) -> herr_t;
+
+}
+
 #[cfg(hdf5_1_12_0)]
 extern "C" {
     pub fn H5Pget_vol_id(plist_id: hid_t, vol_id: *mut hid_t) -> herr_t;
