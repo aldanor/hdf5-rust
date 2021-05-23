@@ -18,6 +18,7 @@ fn main() {
         "HDF5_BUILD_JAVA",
         "HDF5_BUILD_FORTRAN",
         "HDF5_BUILD_CPP_LIB",
+        "HDF5_BUILD_UTILS",
         "HDF5_ENABLE_PARALLEL",
     ] {
         cfg.define(option, "OFF");
