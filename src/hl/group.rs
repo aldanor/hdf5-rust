@@ -437,7 +437,7 @@ pub mod tests {
         with_tmp_dir(|dir| {
             let file1 = dir.join("foo.h5");
             let file1 = File::create(file1).unwrap();
-            let dset = file1.new_dataset::<i32>().create("foo", ()).unwrap();
+            let dset = file1.new_dataset::<i32>().create("foo").unwrap();
             dset.write_scalar(&13).unwrap();
 
             let file2 = dir.join("bar.h5");
