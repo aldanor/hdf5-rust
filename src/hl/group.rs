@@ -437,16 +437,22 @@ pub mod tests {
         with_tmp_dir(|dir| {
             let file1 = dir.join("foo.h5");
             let file1 = File::create(file1).unwrap();
-            let dset = file1.new_dataset::<i32>().create("foo").unwrap();
-            dset.write_scalar(&13).unwrap();
+            let dset1 = file1.new_dataset::<i32>().create("foo").unwrap();
+            dset1.write_scalar(&13).unwrap();
 
             let file2 = dir.join("bar.h5");
             let file2 = File::create(file2).unwrap();
             file2.link_external("foo.h5", "foo", "bar").unwrap();
-            assert_eq!(file2.dataset("bar").unwrap().read_scalar::<i32>().unwrap(), 13);
+            let dset2 = file2.dataset("bar").unwrap();
+            assert_eq!(dset2.read_scalar::<i32>().unwrap(), 13);
 
             file1.unlink("foo").unwrap();
+            assert!(file1.dataset("foo").is_err());
             assert!(file2.dataset("bar").is_err());
+
+            // foo is only weakly closed
+            assert_eq!(dset1.read_scalar::<i32>().unwrap(), 13);
+            assert_eq!(dset2.read_scalar::<i32>().unwrap(), 13);
         })
     }
 }
