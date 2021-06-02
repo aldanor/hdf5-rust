@@ -10,6 +10,7 @@ use hdf5_sys::{
         H5L_info_t, H5L_iterate_t, H5Lcreate_external, H5Lcreate_hard, H5Lcreate_soft, H5Ldelete,
         H5Lexists, H5Literate, H5Lmove, H5L_SAME_LOC,
     },
+    h5o::H5O_type_t::{self, H5O_TYPE_DATASET, H5O_TYPE_GROUP, H5O_TYPE_NAMED_DATATYPE},
     h5p::{H5Pcreate, H5Pset_create_intermediate_group},
 };
 
@@ -212,37 +213,196 @@ impl Group {
         let name = to_cstring(name)?;
         Dataset::from_id(h5try!(H5Dopen2(self.id(), name.as_ptr(), H5P_DEFAULT)))
     }
+}
 
-    /// Returns names of all the members in the group, non-recursively.
-    pub fn member_names(&self) -> Result<Vec<String>> {
-        extern "C" fn members_callback(
-            _id: hid_t, name: *const c_char, _info: *const H5L_info_t, op_data: *mut c_void,
-        ) -> herr_t {
+pub enum TraversalOrder {
+    Lexicographic,
+    Creation,
+}
+
+impl From<TraversalOrder> for H5_index_t {
+    fn from(v: TraversalOrder) -> Self {
+        use hdf5_sys::h5::{H5_INDEX_CRT_ORDER, H5_INDEX_NAME};
+        match v {
+            TraversalOrder::Lexicographic => H5_INDEX_NAME,
+            TraversalOrder::Creation => H5_INDEX_CRT_ORDER,
+        }
+    }
+}
+
+pub enum IterationOrder {
+    Increasing,
+    Decreasing,
+    Native,
+}
+
+impl From<IterationOrder> for H5_iter_order_t {
+    fn from(v: IterationOrder) -> Self {
+        use hdf5_sys::h5::{H5_ITER_DEC, H5_ITER_INC, H5_ITER_NATIVE};
+        match v {
+            IterationOrder::Increasing => H5_ITER_INC,
+            IterationOrder::Decreasing => H5_ITER_DEC,
+            IterationOrder::Native => H5_ITER_NATIVE,
+        }
+    }
+}
+
+/// Iteration methods
+impl Group {
+    /// Visits all objects in the group
+    pub fn iter_visit<F, G>(
+        &self, mut op: F, mut val: G, order: (IterationOrder, TraversalOrder),
+    ) -> Result<G>
+    where
+        F: Fn(&Self, &std::ffi::CStr, &H5L_info_t, &mut G) -> bool,
+    {
+        /// Struct used to pass a tuple
+        struct Vtable<'a, F, D> {
+            f: &'a mut F,
+            d: &'a mut D,
+        }
+        // Maps a closure to a C callback
+        //
+        // This function will be called multiple times, but never concurrently
+        extern "C" fn callback<F, G>(
+            id: hid_t, name: *const c_char, info: *const H5L_info_t, op_data: *mut c_void,
+        ) -> herr_t
+        where
+            F: FnMut(&Group, &std::ffi::CStr, &H5L_info_t, &mut G) -> bool,
+        {
             panic::catch_unwind(|| {
-                let other_data: &mut Vec<String> = unsafe { &mut *(op_data.cast::<Vec<String>>()) };
-
-                other_data.push(string_from_cstr(name));
-
-                0 // Continue iteration
+                let vtable = op_data.cast::<Vtable<F, G>>();
+                let vtable = unsafe { vtable.as_mut().expect("op_data is always non-null") };
+                let name = unsafe { std::ffi::CStr::from_ptr(name) };
+                let info = unsafe { info.as_ref().unwrap() };
+                let handle = Handle::try_new(id).unwrap();
+                handle.incref();
+                let group = Group::from_handle(handle);
+                if (vtable.f)(&group, name, info, vtable.d) {
+                    0
+                } else {
+                    1
+                }
             })
             .unwrap_or(-1)
         }
 
-        let callback_fn: H5L_iterate_t = Some(members_callback);
-        let iteration_position: *mut hsize_t = &mut { 0_u64 };
-        let mut result: Vec<String> = Vec::new();
-        let other_data: *mut c_void = (&mut result as *mut Vec<String>).cast::<c_void>();
+        let callback_fn: H5L_iterate_t = Some(callback::<F, G>);
+        let iter_pos: *mut hsize_t = &mut 0_u64;
+
+        // Store our references on the heap
+        let mut vtable = Vtable { f: &mut op, d: &mut val };
+        let other_data = (&mut vtable as *mut Vtable<_, _>).cast::<c_void>();
 
         h5call!(H5Literate(
             self.id(),
-            H5_index_t::H5_INDEX_NAME,
-            H5_iter_order_t::H5_ITER_INC,
-            iteration_position,
+            order.1.into(),
+            order.0.into(),
+            iter_pos,
             callback_fn,
             other_data
-        ))?;
+        ))
+        .map(|_| val)
+    }
 
-        Ok(result)
+    fn get_all_of_type(&self, typ: H5O_type_t) -> Result<Vec<Handle>> {
+        #[cfg(not(hdf5_1_10_3))]
+        use hdf5_sys::h5o::{H5Oget_info_by_name as H5Oget_info_by_name1, H5Oopen_by_addr};
+        #[cfg(all(hdf5_1_10_3, not(hdf5_1_12_0)))]
+        use hdf5_sys::h5o::{H5Oget_info_by_name2, H5Oopen_by_addr, H5O_INFO_BASIC};
+        #[cfg(hdf5_1_12_0)]
+        use hdf5_sys::h5o::{H5Oget_info_by_name3, H5Oopen_by_token, H5O_INFO_BASIC};
+
+        let objects = vec![];
+
+        self.iter_visit(
+            |group, name, _info, objects| {
+                let mut infobuf = std::mem::MaybeUninit::uninit();
+                #[cfg(hdf5_1_12_0)]
+                if h5call!(H5Oget_info_by_name3(
+                    group.id(),
+                    name.as_ptr(),
+                    infobuf.as_mut_ptr(),
+                    H5O_INFO_BASIC,
+                    H5P_DEFAULT
+                ))
+                .is_err()
+                {
+                    return true;
+                };
+                #[cfg(all(hdf5_1_10_3, not(hdf5_1_12_0)))]
+                if h5call!(H5Oget_info_by_name2(
+                    group.id(),
+                    name.as_ptr(),
+                    infobuf.as_mut_ptr(),
+                    H5O_INFO_BASIC,
+                    H5P_DEFAULT
+                ))
+                .is_err()
+                {
+                    return true;
+                };
+                #[cfg(not(hdf5_1_10_3))]
+                if h5call!(H5Oget_info_by_name1(
+                    group.id(),
+                    name.as_ptr(),
+                    infobuf.as_mut_ptr(),
+                    H5P_DEFAULT
+                ))
+                .is_err()
+                {
+                    return true;
+                };
+                let infobuf = unsafe { infobuf.assume_init() };
+                if infobuf.type_ == typ {
+                    #[cfg(hdf5_1_12_0)]
+                    if let Ok(id) = h5call!(H5Oopen_by_token(group.id(), infobuf.token)) {
+                        if let Ok(handle) = Handle::try_new(id) {
+                            objects.push(handle);
+                        }
+                    }
+                    #[cfg(not(hdf5_1_12_0))]
+                    if let Ok(id) = h5call!(H5Oopen_by_addr(group.id(), infobuf.addr)) {
+                        if let Ok(handle) = Handle::try_new(id) {
+                            objects.push(handle);
+                        }
+                    }
+                }
+                true
+            },
+            objects,
+            (IterationOrder::Native, TraversalOrder::Lexicographic),
+        )
+    }
+
+    /// Returns all groups in the group, non-recursively
+    pub fn groups(&self) -> Result<Vec<Self>> {
+        self.get_all_of_type(H5O_TYPE_GROUP)
+            .map(|vec| vec.into_iter().map(Self::from_handle).collect())
+    }
+
+    /// Returns all datasets in the group, non-recursively
+    pub fn datasets(&self) -> Result<Vec<Dataset>> {
+        self.get_all_of_type(H5O_TYPE_DATASET)
+            .map(|vec| vec.into_iter().map(Dataset::from_handle).collect())
+    }
+
+    /// Returns all named types in the group, non-recursively
+    pub fn datatypes(&self) -> Result<Vec<Datatype>> {
+        self.get_all_of_type(H5O_TYPE_NAMED_DATATYPE)
+            .map(|vec| vec.into_iter().map(Datatype::from_handle).collect())
+    }
+
+    /// Returns the names of all objects in the group, non-recursively.
+    pub fn member_names(&self) -> Result<Vec<String>> {
+        self.iter_visit(
+            |_, name, _, names| {
+                names.push(name.to_str().unwrap().to_owned());
+                true
+            },
+            vec![],
+            (IterationOrder::Native, TraversalOrder::Lexicographic),
+        )
     }
 }
 
@@ -469,6 +629,34 @@ pub mod tests {
             // foo is only weakly closed
             assert_eq!(dset1.read_scalar::<i32>().unwrap(), 13);
             assert_eq!(dset2.read_scalar::<i32>().unwrap(), 13);
+        })
+    }
+
+    #[test]
+    pub fn test_iterators() {
+        with_tmp_file(|file| {
+            file.create_group("a").unwrap();
+            file.create_group("b").unwrap();
+            let group_a = file.group("a").unwrap();
+            let _group_b = file.group("b").unwrap();
+            file.new_dataset::<u32>().shape((10, 20)).create("a/foo").unwrap();
+            file.new_dataset::<u32>().shape((10, 20)).create("a/123").unwrap();
+            file.new_dataset::<u32>().shape((10, 20)).create("a/bar").unwrap();
+
+            let groups = file.groups().unwrap();
+            assert_eq!(groups.len(), 2);
+            for group in groups {
+                assert!(matches!(group.name().as_ref(), "/a" | "/b"));
+            }
+
+            let datasets = file.datasets().unwrap();
+            assert_eq!(datasets.len(), 0);
+
+            let datasets = group_a.datasets().unwrap();
+            assert_eq!(datasets.len(), 3);
+            for dataset in datasets {
+                assert!(matches!(dataset.name().as_ref(), "/a/foo" | "/a/123" | "/a/bar"));
+            }
         })
     }
 }

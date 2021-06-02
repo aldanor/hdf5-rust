@@ -20,6 +20,7 @@
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::unnecessary_unwrap))]
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::unnecessary_wraps))]
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::upper_case_acronyms))]
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::missing_panics_doc))]
 #![cfg_attr(all(feature = "cargo-clippy", test), allow(clippy::cyclomatic_complexity))]
 #![cfg_attr(not(test), allow(dead_code))]
 

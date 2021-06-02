@@ -370,15 +370,15 @@ impl Default for H5O_token_t {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct H5O_info2_t {
-    fileno: c_ulong,
-    token: H5O_token_t,
-    type_: H5O_type_t,
-    rc: c_uint,
-    atime: time_t,
-    mtime: time_t,
-    ctime: time_t,
-    btime: time_t,
-    num_attrs: hsize_t,
+    pub fileno: c_ulong,
+    pub token: H5O_token_t,
+    pub type_: H5O_type_t,
+    pub rc: c_uint,
+    pub atime: time_t,
+    pub mtime: time_t,
+    pub ctime: time_t,
+    pub btime: time_t,
+    pub num_attrs: hsize_t,
 }
 
 #[cfg(hdf5_1_12_0)]
