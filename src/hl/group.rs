@@ -102,28 +102,37 @@ impl Group {
         Self::from_id(h5try!(H5Gopen2(self.id(), name.as_ptr(), H5P_DEFAULT)))
     }
 
-    /// Creates a soft link. Note: `src` and `dst` are relative to the current object.
-    pub fn link_soft(&self, src: &str, dst: &str) -> Result<()> {
+    /// Creates a soft link.
+    ///
+    /// A soft link does not require the linked object to exist.
+    /// Note: `target` and `link_name` are relative to the current object.
+    pub fn link_soft(&self, target: &str, link_name: &str) -> Result<()> {
         // TODO: &mut self?
         h5lock!({
             let lcpl = make_lcpl()?;
-            let src = to_cstring(src)?;
-            let dst = to_cstring(dst)?;
-            h5call!(H5Lcreate_soft(src.as_ptr(), self.id(), dst.as_ptr(), lcpl.id(), H5P_DEFAULT))
-                .and(Ok(()))
+            let target = to_cstring(target)?;
+            let link_name = to_cstring(link_name)?;
+            h5call!(H5Lcreate_soft(
+                target.as_ptr(),
+                self.id(),
+                link_name.as_ptr(),
+                lcpl.id(),
+                H5P_DEFAULT
+            ))
+            .and(Ok(()))
         })
     }
 
-    /// Creates a hard link. Note: `src` and `dst` are relative to the current object.
-    pub fn link_hard(&self, src: &str, dst: &str) -> Result<()> {
+    /// Creates a hard link. Note: `target` and `link_name` are relative to the current object.
+    pub fn link_hard(&self, target: &str, link_name: &str) -> Result<()> {
         // TODO: &mut self?
-        let src = to_cstring(src)?;
-        let dst = to_cstring(dst)?;
+        let target = to_cstring(target)?;
+        let link_name = to_cstring(link_name)?;
         h5call!(H5Lcreate_hard(
             self.id(),
-            src.as_ptr(),
+            target.as_ptr(),
             H5L_SAME_LOC,
-            dst.as_ptr(),
+            link_name.as_ptr(),
             H5P_DEFAULT,
             H5P_DEFAULT
         ))
@@ -132,21 +141,24 @@ impl Group {
 
     /// Creates an external link.
     ///
-    /// Note: `dst` is relative to the current object, `src` is relative to the root of the source file,
-    /// `src_file_path` is the path to the external file.
+    /// Note: `link_name` is relative to the current object,
+    /// `target` is relative to the root of the source file,
+    /// `target_file_name` is the path to the external file.
     ///
-    /// For a detailed explanation on how `src_file_path` is resolved, see
+    /// For a detailed explanation on how `target_file_name` is resolved, see
     /// [https://portal.hdfgroup.org/display/HDF5/H5L_CREATE_EXTERNAL](https://portal.hdfgroup.org/display/HDF5/H5L_CREATE_EXTERNAL)
-    pub fn link_external(&self, src_file_path: &str, src: &str, dst: &str) -> Result<()> {
+    pub fn link_external(
+        &self, target_file_name: &str, target: &str, link_name: &str,
+    ) -> Result<()> {
         // TODO: &mut self?
-        let src = to_cstring(src)?;
-        let src_file_name = to_cstring(src_file_path)?;
-        let dst = to_cstring(dst)?;
+        let target = to_cstring(target)?;
+        let target_file_name = to_cstring(target_file_name)?;
+        let link_name = to_cstring(link_name)?;
         h5call!(H5Lcreate_external(
-            src_file_name.as_ptr(),
-            src.as_ptr(),
+            target_file_name.as_ptr(),
+            target.as_ptr(),
             self.id(),
-            dst.as_ptr(),
+            link_name.as_ptr(),
             H5P_DEFAULT,
             H5P_DEFAULT,
         ))
