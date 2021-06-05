@@ -131,12 +131,16 @@ impl Group {
     }
 
     /// Creates an external link.
-    /// Note: `dst` is relative to the current object, `src` is relative to the root of the source file
-    /// `src_file_path` is relative to the current file path
-    pub fn link_external(&self, src_file_name: &str, src: &str, dst: &str) -> Result<()> {
+    ///
+    /// Note: `dst` is relative to the current object, `src` is relative to the root of the source file,
+    /// `src_file_path` is the path to the external file.
+    ///
+    /// For a detailed explanation on how `src_file_path` is resolved, see
+    /// [https://portal.hdfgroup.org/display/HDF5/H5L_CREATE_EXTERNAL](https://portal.hdfgroup.org/display/HDF5/H5L_CREATE_EXTERNAL)
+    pub fn link_external(&self, src_file_path: &str, src: &str, dst: &str) -> Result<()> {
         // TODO: &mut self?
         let src = to_cstring(src)?;
-        let src_file_name = to_cstring(src_file_name)?;
+        let src_file_name = to_cstring(src_file_path)?;
         let dst = to_cstring(dst)?;
         h5call!(H5Lcreate_external(
             src_file_name.as_ptr(),
