@@ -7,8 +7,8 @@ use hdf5_sys::{
     h5d::H5Dopen2,
     h5g::{H5G_info_t, H5Gcreate2, H5Gget_info, H5Gopen2},
     h5l::{
-        H5L_info_t, H5L_iterate_t, H5Lcreate_hard, H5Lcreate_soft, H5Ldelete, H5Lexists,
-        H5Literate, H5Lmove, H5L_SAME_LOC,
+        H5L_info_t, H5L_iterate_t, H5Lcreate_external, H5Lcreate_hard, H5Lcreate_soft, H5Ldelete,
+        H5Lexists, H5Literate, H5Lmove, H5L_SAME_LOC,
     },
     h5p::{H5Pcreate, H5Pset_create_intermediate_group},
 };
@@ -102,30 +102,65 @@ impl Group {
         Self::from_id(h5try!(H5Gopen2(self.id(), name.as_ptr(), H5P_DEFAULT)))
     }
 
-    /// Creates a soft link. Note: `src` and `dst` are relative to the current object.
-    pub fn link_soft(&self, src: &str, dst: &str) -> Result<()> {
+    /// Creates a soft link.
+    ///
+    /// A soft link does not require the linked object to exist.
+    /// Note: `target` and `link_name` are relative to the current object.
+    pub fn link_soft(&self, target: &str, link_name: &str) -> Result<()> {
         // TODO: &mut self?
         h5lock!({
             let lcpl = make_lcpl()?;
-            let src = to_cstring(src)?;
-            let dst = to_cstring(dst)?;
-            h5call!(H5Lcreate_soft(src.as_ptr(), self.id(), dst.as_ptr(), lcpl.id(), H5P_DEFAULT))
-                .and(Ok(()))
+            let target = to_cstring(target)?;
+            let link_name = to_cstring(link_name)?;
+            h5call!(H5Lcreate_soft(
+                target.as_ptr(),
+                self.id(),
+                link_name.as_ptr(),
+                lcpl.id(),
+                H5P_DEFAULT
+            ))
+            .and(Ok(()))
         })
     }
 
-    /// Creates a hard link. Note: `src` and `dst` are relative to the current object.
-    pub fn link_hard(&self, src: &str, dst: &str) -> Result<()> {
+    /// Creates a hard link. Note: `target` and `link_name` are relative to the current object.
+    pub fn link_hard(&self, target: &str, link_name: &str) -> Result<()> {
         // TODO: &mut self?
-        let src = to_cstring(src)?;
-        let dst = to_cstring(dst)?;
+        let target = to_cstring(target)?;
+        let link_name = to_cstring(link_name)?;
         h5call!(H5Lcreate_hard(
             self.id(),
-            src.as_ptr(),
+            target.as_ptr(),
             H5L_SAME_LOC,
-            dst.as_ptr(),
+            link_name.as_ptr(),
             H5P_DEFAULT,
             H5P_DEFAULT
+        ))
+        .and(Ok(()))
+    }
+
+    /// Creates an external link.
+    ///
+    /// Note: `link_name` is relative to the current object,
+    /// `target` is relative to the root of the source file,
+    /// `target_file_name` is the path to the external file.
+    ///
+    /// For a detailed explanation on how `target_file_name` is resolved, see
+    /// [https://portal.hdfgroup.org/display/HDF5/H5L_CREATE_EXTERNAL](https://portal.hdfgroup.org/display/HDF5/H5L_CREATE_EXTERNAL)
+    pub fn link_external(
+        &self, target_file_name: &str, target: &str, link_name: &str,
+    ) -> Result<()> {
+        // TODO: &mut self?
+        let target = to_cstring(target)?;
+        let target_file_name = to_cstring(target_file_name)?;
+        let link_name = to_cstring(link_name)?;
+        h5call!(H5Lcreate_external(
+            target_file_name.as_ptr(),
+            target.as_ptr(),
+            self.id(),
+            link_name.as_ptr(),
+            H5P_DEFAULT,
+            H5P_DEFAULT,
         ))
         .and(Ok(()))
     }
@@ -410,6 +445,30 @@ pub mod tests {
             assert_eq!(group_a.member_names().unwrap(), vec!["123", "bar", "foo"]);
             assert_eq!(group_b.member_names().unwrap().len(), 0);
             assert_eq!(file.member_names().unwrap(), vec!["a", "b"]);
+        })
+    }
+
+    #[test]
+    pub fn test_external_link() {
+        with_tmp_dir(|dir| {
+            let file1 = dir.join("foo.h5");
+            let file1 = File::create(file1).unwrap();
+            let dset1 = file1.new_dataset::<i32>().create("foo").unwrap();
+            dset1.write_scalar(&13).unwrap();
+
+            let file2 = dir.join("bar.h5");
+            let file2 = File::create(file2).unwrap();
+            file2.link_external("foo.h5", "foo", "bar").unwrap();
+            let dset2 = file2.dataset("bar").unwrap();
+            assert_eq!(dset2.read_scalar::<i32>().unwrap(), 13);
+
+            file1.unlink("foo").unwrap();
+            assert!(file1.dataset("foo").is_err());
+            assert!(file2.dataset("bar").is_err());
+
+            // foo is only weakly closed
+            assert_eq!(dset1.read_scalar::<i32>().unwrap(), 13);
+            assert_eq!(dset2.read_scalar::<i32>().unwrap(), 13);
         })
     }
 }
