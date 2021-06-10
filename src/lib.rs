@@ -30,7 +30,7 @@ mod export {
     pub use crate::{
         class::from_id,
         dim::{Dimension, Ix},
-        error::{silence_errors, Error, Result},
+        error::{silence_errors, Error, Result, SilenceErrors},
         hl::extents::{Extent, Extents, SimpleExtents},
         hl::selection::{Hyperslab, Selection, SliceOrIndex},
         hl::{
