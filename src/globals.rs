@@ -18,7 +18,10 @@ use crate::internal_prelude::*;
 
 lazy_static! {
     static ref LIBRARY_INIT: () = {
-        h5lock!(::hdf5_sys::h5::H5open());
+        h5lock!({
+            ::hdf5_sys::h5::H5dont_atexit();
+            ::hdf5_sys::h5::H5open();
+        });
         let _e = crate::hl::filters::register_filters();
     };
 }
