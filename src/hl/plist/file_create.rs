@@ -413,7 +413,9 @@ impl FileCreateBuilder {
                     FileSpaceStrategy::PageAggregation => {
                         (H5F_fspace_strategy_t::H5F_FSPACE_STRATEGY_AGGR, 0, 0)
                     }
-                    _ => (H5F_fspace_strategy_t::H5F_FSPACE_STRATEGY_NONE, 0, 0),
+                    FileSpaceStrategy::None => {
+                        (H5F_fspace_strategy_t::H5F_FSPACE_STRATEGY_NONE, 0, 0)
+                    }
                 };
                 h5try!(H5Pset_file_space_strategy(id, strategy, persist, threshold));
             }

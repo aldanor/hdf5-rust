@@ -729,7 +729,7 @@ impl DatasetCreate {
                 h5try!(H5Pget_fill_value(self.id(), dtype.id(), buf.as_mut_ptr().cast()));
                 Ok(Some(unsafe { OwnedDynValue::from_raw(tp.clone(), buf) }))
             }
-            _ => Ok(None),
+            FillValue::Undefined => Ok(None),
         }
     }
 
