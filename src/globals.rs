@@ -19,6 +19,8 @@ use crate::internal_prelude::*;
 lazy_static! {
     static ref LIBRARY_INIT: () = {
         h5lock!({
+            // Ensure hdf5 does not invalidate handles which might
+            // still be live on other threads on program exit
             ::hdf5_sys::h5::H5dont_atexit();
             ::hdf5_sys::h5::H5open();
         });
