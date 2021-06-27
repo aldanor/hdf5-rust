@@ -71,6 +71,7 @@
   are now generic over size only: `FixedAscii<N>` and `FixedUnicode<N>`.
 - The version of `hdf5` built in `hdf5-src` has been updated from `1.10.6` to `1.10.7`.
 - The `zlib` dependency is no longer included with `default-features`.
+- `hdf5` no longer calls `H5close` automatically on program exit.
 
 ## 0.7.1
 

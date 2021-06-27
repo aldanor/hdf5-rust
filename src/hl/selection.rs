@@ -448,7 +448,7 @@ where
     Dout: ndarray::Dimension,
 {
     fn from(slice: ndarray::SliceInfo<T, Din, Dout>) -> Self {
-        slice.deref().as_ref().iter().cloned().map(Into::into).collect::<Vec<_>>().into()
+        slice.deref().as_ref().iter().copied().map(Into::into).collect::<Vec<_>>().into()
     }
 }
 
