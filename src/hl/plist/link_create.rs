@@ -39,7 +39,6 @@ impl ObjectClass for LinkCreate {
 
 impl Debug for LinkCreate {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let _e = silence_errors();
         let mut formatter = f.debug_struct("LinkCreate");
         formatter.field("create_intermediate_group", &self.create_intermediate_group());
         formatter.field("char_encoding", &self.char_encoding());

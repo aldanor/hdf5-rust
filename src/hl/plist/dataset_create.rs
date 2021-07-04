@@ -66,7 +66,6 @@ impl ObjectClass for DatasetCreate {
 
 impl Debug for DatasetCreate {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let _e = silence_errors();
         let mut formatter = f.debug_struct("DatasetCreate");
         formatter.field("filters", &self.filters());
         formatter.field("alloc_time", &self.alloc_time());

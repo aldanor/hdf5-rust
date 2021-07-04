@@ -1,19 +1,15 @@
-use std::cell::RefCell;
 use std::error::Error as StdError;
 use std::fmt;
 use std::ops::Index;
 use std::panic;
 use std::ptr;
 
-use lazy_static::lazy_static;
 use ndarray::ShapeError;
-use parking_lot::Mutex;
 
 #[cfg(not(hdf5_1_10_0))]
 use hdf5_sys::h5::hssize_t;
 use hdf5_sys::h5e::{
-    H5E_error2_t, H5Eclose_stack, H5Eget_current_stack, H5Eget_msg, H5Eprint2, H5Eset_auto2,
-    H5Ewalk2, H5E_DEFAULT, H5E_WALK_DOWNWARD,
+    H5E_error2_t, H5Eclose_stack, H5Eget_current_stack, H5Eget_msg, H5Ewalk2, H5E_WALK_DOWNWARD,
 };
 
 use crate::internal_prelude::*;
@@ -128,59 +124,6 @@ impl ErrorFrame {
     pub fn detail(&self) -> Option<String> {
         Some(format!("Error in {}(): {} [{}: {}]", self.func, self.desc, self.major, self.minor))
     }
-}
-
-#[must_use]
-#[doc(hidden)]
-pub struct SilenceErrors;
-
-impl Default for SilenceErrors {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-lazy_static! {
-    static ref ERROR_HANDLER: Mutex<RefCell<usize>> = Mutex::default();
-}
-
-extern "C" fn default_error_handler(estack: hid_t, _cdata: *mut c_void) -> herr_t {
-    panic::catch_unwind(|| unsafe { H5Eprint2(estack, ptr::null_mut()) }).unwrap_or(-1)
-}
-
-impl SilenceErrors {
-    pub fn new() -> Self {
-        Self::silence(true);
-        Self
-    }
-
-    fn silence(on: bool) {
-        let guard = ERROR_HANDLER.lock();
-        let counter = &mut *guard.borrow_mut();
-        if on {
-            *counter += 1;
-            if *counter == 1 {
-                h5lock!(H5Eset_auto2(H5E_DEFAULT, None, ptr::null_mut()));
-            }
-        } else {
-            if *counter > 0 {
-                *counter -= 1;
-            }
-            if *counter == 0 {
-                h5lock!(H5Eset_auto2(H5E_DEFAULT, Some(default_error_handler), ptr::null_mut()));
-            }
-        }
-    }
-}
-
-impl Drop for SilenceErrors {
-    fn drop(&mut self) {
-        Self::silence(false);
-    }
-}
-
-pub fn silence_errors() -> SilenceErrors {
-    SilenceErrors::new()
 }
 
 #[derive(Clone, Debug)]
@@ -431,8 +374,6 @@ pub mod tests {
 
     #[test]
     pub fn test_error_stack() {
-        let _e = silence_errors();
-
         let result_no_error = h5lock!({
             let plist_id = H5Pcreate(*H5P_ROOT);
             H5Pclose(plist_id);
@@ -477,8 +418,6 @@ pub mod tests {
 
     #[test]
     pub fn test_h5call() {
-        let _e = silence_errors();
-
         let result_no_error = h5call!({
             let plist_id = H5Pcreate(*H5P_ROOT);
             H5Pclose(plist_id)
@@ -495,8 +434,6 @@ pub mod tests {
 
     #[test]
     pub fn test_h5try() {
-        let _e = silence_errors();
-
         fn f1() -> Result<herr_t> {
             h5try!(H5Pcreate(*H5P_ROOT));
             Ok(100)

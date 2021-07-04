@@ -145,7 +145,6 @@ fn test_fcpl_attr_phase_change() -> hdf5::Result<()> {
     assert_eq!(pl.get_attr_phase_change()?, expected);
     assert_eq!(pl.attr_phase_change(), expected);
     assert_eq!(FCB::from_plist(&pl)?.finish()?.get_attr_phase_change()?, expected);
-    let _e = hdf5::silence_errors();
     assert!(FCB::new().attr_phase_change(12, 34).finish().is_err());
     Ok(())
 }
@@ -156,7 +155,6 @@ fn test_fcpl_attr_creation_order() -> hdf5::Result<()> {
     assert_eq!(FC::try_new()?.attr_creation_order().bits(), 0);
     test_pl!(FC, attr_creation_order: AttrCreationOrder::TRACKED);
     test_pl!(FC, attr_creation_order: AttrCreationOrder::TRACKED | AttrCreationOrder::INDEXED);
-    let _e = hdf5::silence_errors();
     assert!(FCB::new().attr_creation_order(AttrCreationOrder::INDEXED).finish().is_err());
     Ok(())
 }
@@ -715,8 +713,6 @@ fn test_dcpl_fill_value() -> hdf5::Result<()> {
     assert_eq!(DC::try_new()?.get_fill_value_as::<f64>()?, Some(0.0));
     assert_eq!(DC::try_new()?.fill_value_as::<bool>(), Some(false));
 
-    let _e = hdf5::silence_errors();
-
     let mut b = DCB::new();
     b.fill_value(1.23);
     let pl = b.finish()?;
@@ -768,7 +764,6 @@ fn test_dcpl_external() -> hdf5::Result<()> {
     assert_eq!(pl.get_external()?, expected);
     assert_eq!(pl.external(), expected);
     assert_eq!(DCB::from_plist(&pl)?.finish()?.get_external()?, expected);
-    let _e = hdf5::silence_errors();
     assert!(DCB::new().external("a", 1, 0).external("b", 1, 2).finish().is_err());
     Ok(())
 }
@@ -778,8 +773,6 @@ fn test_dcpl_external() -> hdf5::Result<()> {
 fn test_dcpl_virtual_map() -> hdf5::Result<()> {
     use hdf5::Hyperslab;
     use ndarray::s;
-
-    let _e = hdf5::silence_errors();
 
     let pl = DC::try_new()?;
     assert!(pl.get_virtual_map().is_err());
@@ -851,7 +844,6 @@ fn test_dcpl_attr_phase_change() -> hdf5::Result<()> {
     assert_eq!(pl.get_attr_phase_change()?, expected);
     assert_eq!(pl.attr_phase_change(), expected);
     assert_eq!(DCB::from_plist(&pl)?.finish()?.get_attr_phase_change()?, expected);
-    let _e = hdf5::silence_errors();
     assert!(DCB::new().attr_phase_change(12, 34).finish().is_err());
     Ok(())
 }
@@ -862,7 +854,6 @@ fn test_dcpl_attr_creation_order() -> hdf5::Result<()> {
     assert_eq!(DC::try_new()?.attr_creation_order().bits(), 0);
     test_pl!(DC, attr_creation_order: AttrCreationOrder::TRACKED);
     test_pl!(DC, attr_creation_order: AttrCreationOrder::TRACKED | AttrCreationOrder::INDEXED);
-    let _e = hdf5::silence_errors();
     assert!(DCB::new().attr_creation_order(AttrCreationOrder::INDEXED).finish().is_err());
     Ok(())
 }

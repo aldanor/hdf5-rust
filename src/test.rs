@@ -7,7 +7,6 @@ use crate::internal_prelude::*;
 pub fn with_tmp_dir<F: Fn(PathBuf)>(func: F) {
     let dir = tempdir().unwrap();
     let path = dir.path().to_path_buf();
-    let _e = silence_errors();
     func(path);
 }
 

@@ -57,7 +57,6 @@ impl ObjectClass for FileCreate {
 
 impl Debug for FileCreate {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let _e = silence_errors();
         let mut formatter = f.debug_struct("FileCreate");
         formatter.field("userblock", &self.userblock());
         formatter.field("sizes", &self.sizes());

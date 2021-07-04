@@ -1423,8 +1423,6 @@ mod test {
             })
         }
 
-        let _e = silence_errors();
-
         check(&[1, 2], RawSelection::None, None)?;
         check(&[1, 2], RawSelection::All, None)?;
         check(&[1, 2], RawSelection::Points(arr2(&[[0, 1], [0, 0]])), None)?;

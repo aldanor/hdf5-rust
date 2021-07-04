@@ -208,7 +208,6 @@ mod tests {
 
     #[test]
     fn test_dataspace_err() {
-        let _e = silence_errors();
         assert_err!(Dataspace::from_id(H5I_INVALID_HID), "Invalid dataspace id");
     }
 
