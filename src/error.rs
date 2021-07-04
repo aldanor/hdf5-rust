@@ -40,7 +40,12 @@ pub mod h5 {
     }
 
     impl ErrorStack {
-        fn into_stack(self) -> Result<super::ErrorStack> {
+        pub(crate) fn from_current() -> Result<Self> {
+            let stack_id = h5lock!(H5Eget_current_stack());
+            Handle::try_new(stack_id).map(Self)
+        }
+
+        pub(crate) fn into_stack(self) -> Result<super::ErrorStack> {
             struct CallbackData {
                 stack: super::ErrorStack,
                 err: Option<Error>,
@@ -299,7 +304,7 @@ impl ErrorStack {
 #[derive(Clone)]
 pub enum Error {
     /// An error occurred in the C API of the HDF5 library. Full error stack is captured.
-    HDF5(ErrorStack),
+    HDF5(h5::ErrorStack),
     /// A user error occurred in the high-level Rust API (e.g., invalid user input).
     Internal(String),
 }
@@ -309,18 +314,11 @@ pub enum Error {
 pub type Result<T, E = Error> = ::std::result::Result<T, E>;
 
 impl Error {
-    pub fn query() -> Option<Self> {
-        match ErrorStack::query() {
-            Err(err) => Some(err),
-            Ok(Some(stack)) => Some(Self::HDF5(stack)),
-            Ok(None) => None,
-        }
-    }
-
-    pub fn description(&self) -> &str {
-        match *self {
-            Self::Internal(ref desc) => desc.as_ref(),
-            Self::HDF5(ref stack) => stack.description(),
+    pub fn query() -> Result<Self> {
+        if let Ok(stack) = h5::ErrorStack::from_current() {
+            Ok(Self::HDF5(stack))
+        } else {
+            Err(Self::Internal("Could not get errorstack".to_owned()))
         }
     }
 }
@@ -341,14 +339,23 @@ impl fmt::Debug for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Self::Internal(ref desc) => f.write_str(desc),
-            Self::HDF5(ref stack) => f.write_str(stack.description()),
+            Self::HDF5(ref stack) => match stack.clone().into_stack() {
+                Ok(stack) => f.write_str(stack.description()),
+                Err(_) => f.write_str("Could not get error stack"),
+            },
         }
     }
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str(self.description())
+        match *self {
+            Self::Internal(ref desc) => f.write_str(desc),
+            Self::HDF5(ref stack) => match stack.clone().into_stack() {
+                Ok(stack) => f.write_str(stack.description()),
+                Err(_) => f.write_str("Could not get error stack"),
+            },
+        }
     }
 }
 
@@ -374,7 +381,7 @@ pub trait H5ErrorCode: Copy {
 
     fn h5check(value: Self) -> Result<Self> {
         if Self::is_err_code(value) {
-            Error::query().map_or_else(|| Ok(value), Err)
+            Err(Error::query().unwrap_or_else(|e| e))
         } else {
             Ok(value)
         }

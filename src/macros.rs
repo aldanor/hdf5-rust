@@ -44,7 +44,7 @@ macro_rules! assert_err {
                 panic!("assertion failed: not an error in `{}`", stringify!($expr));
             }
             Err(ref value) => {
-                let desc = value.description().to_string();
+                let desc = value.to_string();
                 if !desc.contains($err) {
                     panic!(
                         "assertion failed: error message `{}` doesn't contain `{}` in `{}`",
@@ -70,7 +70,7 @@ macro_rules! assert_err_re {
             Err(ref value) => {
                 use regex::Regex;
                 let re = Regex::new($err).unwrap();
-                let desc = value.description().to_string();
+                let desc = value.to_string();
                 if !re.is_match(desc.as_ref()) {
                     panic!(
                         "assertion failed: error message `{}` doesn't match `{}` in `{}`",

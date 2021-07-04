@@ -201,7 +201,7 @@ impl PropertyList {
             let class_id = h5check(H5Pget_class(self.id()))?;
             let buf = H5Pget_class_name(class_id);
             if buf.is_null() {
-                return Err(Error::query().unwrap_or_else(|| "invalid property class".into()));
+                return Err(Error::query().unwrap_or_else(|_| "invalid property class".into()));
             }
             let name = string_from_cstr(buf);
             h5_free_memory(buf.cast());
