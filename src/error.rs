@@ -8,87 +8,79 @@ use ndarray::ShapeError;
 
 #[cfg(not(hdf5_1_10_0))]
 use hdf5_sys::h5::hssize_t;
-use hdf5_sys::h5e::{
-    H5E_error2_t, H5Eclose_stack, H5Eget_current_stack, H5Eget_msg, H5Ewalk2, H5E_WALK_DOWNWARD,
-};
+use hdf5_sys::h5e::{H5E_error2_t, H5Eget_current_stack, H5Eget_msg, H5Ewalk2, H5E_WALK_DOWNWARD};
 
 use crate::internal_prelude::*;
 
-pub mod h5 {
-    use super::*;
-    #[repr(transparent)]
-    #[derive(Clone)]
-    pub struct ErrorStack(Handle);
+#[repr(transparent)]
+#[derive(Clone)]
+pub struct ErrorStack(Handle);
 
-    impl ObjectClass for ErrorStack {
-        const NAME: &'static str = "errorstack";
-        const VALID_TYPES: &'static [H5I_type_t] = &[H5I_ERROR_STACK];
+impl ObjectClass for ErrorStack {
+    const NAME: &'static str = "errorstack";
+    const VALID_TYPES: &'static [H5I_type_t] = &[H5I_ERROR_STACK];
 
-        fn from_handle(handle: Handle) -> Self {
-            Self(handle)
-        }
-
-        fn handle(&self) -> &Handle {
-            &self.0
-        }
-
-        // TODO: short_repr()
+    fn from_handle(handle: Handle) -> Self {
+        Self(handle)
     }
 
-    impl ErrorStack {
-        pub(crate) fn from_current() -> Result<Self> {
-            let stack_id = h5lock!(H5Eget_current_stack());
-            Handle::try_new(stack_id).map(Self)
+    fn handle(&self) -> &Handle {
+        &self.0
+    }
+
+    // TODO: short_repr()
+}
+
+impl ErrorStack {
+    pub(crate) fn from_current() -> Result<Self> {
+        let stack_id = h5lock!(H5Eget_current_stack());
+        Handle::try_new(stack_id).map(Self)
+    }
+
+    pub(crate) fn expand(self) -> Result<ExpandedErrorStack> {
+        struct CallbackData {
+            stack: ExpandedErrorStack,
+            err: Option<Error>,
+        }
+        extern "C" fn callback(
+            _: c_uint, err_desc: *const H5E_error2_t, data: *mut c_void,
+        ) -> herr_t {
+            panic::catch_unwind(|| unsafe {
+                let data = &mut *(data.cast::<CallbackData>());
+                if data.err.is_some() {
+                    return 0;
+                }
+                let closure = |e: H5E_error2_t| -> Result<ErrorFrame> {
+                    let (desc, func) = (string_from_cstr(e.desc), string_from_cstr(e.func_name));
+                    let major = get_h5_str(|m, s| H5Eget_msg(e.maj_num, ptr::null_mut(), m, s))?;
+                    let minor = get_h5_str(|m, s| H5Eget_msg(e.min_num, ptr::null_mut(), m, s))?;
+                    Ok(ErrorFrame::new(&desc, &func, &major, &minor))
+                };
+                match closure(*err_desc) {
+                    Ok(frame) => {
+                        data.stack.push(frame);
+                    }
+                    Err(err) => {
+                        data.err = Some(err);
+                    }
+                }
+                0
+            })
+            .unwrap_or(-1)
         }
 
-        pub(crate) fn into_stack(self) -> Result<super::ErrorStack> {
-            struct CallbackData {
-                stack: super::ErrorStack,
-                err: Option<Error>,
-            }
-            extern "C" fn callback(
-                _: c_uint, err_desc: *const H5E_error2_t, data: *mut c_void,
-            ) -> herr_t {
-                panic::catch_unwind(|| unsafe {
-                    let data = &mut *(data.cast::<CallbackData>());
-                    if data.err.is_some() {
-                        return 0;
-                    }
-                    let closure = |e: H5E_error2_t| -> Result<ErrorFrame> {
-                        let (desc, func) =
-                            (string_from_cstr(e.desc), string_from_cstr(e.func_name));
-                        let major =
-                            get_h5_str(|m, s| H5Eget_msg(e.maj_num, ptr::null_mut(), m, s))?;
-                        let minor =
-                            get_h5_str(|m, s| H5Eget_msg(e.min_num, ptr::null_mut(), m, s))?;
-                        Ok(ErrorFrame::new(&desc, &func, &major, &minor))
-                    };
-                    match closure(*err_desc) {
-                        Ok(frame) => {
-                            data.stack.push(frame);
-                        }
-                        Err(err) => {
-                            data.err = Some(err);
-                        }
-                    }
-                    0
-                })
-                .unwrap_or(-1)
-            }
+        let mut data = CallbackData { stack: ExpandedErrorStack::new(), err: None };
+        let data_ptr: *mut c_void = (&mut data as *mut CallbackData).cast::<c_void>();
 
-            let mut data = CallbackData { stack: super::ErrorStack::new(), err: None };
-            let data_ptr: *mut c_void = (&mut data as *mut CallbackData).cast::<c_void>();
+        let stack_id = self.handle().id();
+        h5lock!({
+            H5Ewalk2(stack_id, H5E_WALK_DOWNWARD, Some(callback), data_ptr);
+        });
 
-            let stack_id = self.handle().id();
-            h5lock!({
-                H5Ewalk2(stack_id, H5E_WALK_DOWNWARD, Some(callback), data_ptr);
-            });
-
-            if let Some(err) = data.err {
-                Err(err)
-            } else {
-                Ok(data.stack)
-            }
+        if let Some(err) = data.err {
+            Err(err)
+        } else {
+            Ok(data.stack)
         }
     }
 }
@@ -127,12 +119,12 @@ impl ErrorFrame {
 }
 
 #[derive(Clone, Debug)]
-pub struct ErrorStack {
+pub struct ExpandedErrorStack {
     frames: Vec<ErrorFrame>,
     description: Option<String>,
 }
 
-impl Index<usize> for ErrorStack {
+impl Index<usize> for ExpandedErrorStack {
     type Output = ErrorFrame;
 
     fn index(&self, index: usize) -> &ErrorFrame {
@@ -140,64 +132,13 @@ impl Index<usize> for ErrorStack {
     }
 }
 
-impl Default for ErrorStack {
+impl Default for ExpandedErrorStack {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl ErrorStack {
-    // This low-level function is not thread-safe and has to be synchronized by the user
-    pub fn query() -> Result<Option<Self>> {
-        struct CallbackData {
-            stack: ErrorStack,
-            err: Option<Error>,
-        }
-        extern "C" fn callback(
-            _: c_uint, err_desc: *const H5E_error2_t, data: *mut c_void,
-        ) -> herr_t {
-            panic::catch_unwind(|| unsafe {
-                let data = &mut *(data.cast::<CallbackData>());
-                if data.err.is_some() {
-                    return 0;
-                }
-                let closure = |e: H5E_error2_t| -> Result<ErrorFrame> {
-                    let (desc, func) = (string_from_cstr(e.desc), string_from_cstr(e.func_name));
-                    let major = get_h5_str(|m, s| H5Eget_msg(e.maj_num, ptr::null_mut(), m, s))?;
-                    let minor = get_h5_str(|m, s| H5Eget_msg(e.min_num, ptr::null_mut(), m, s))?;
-                    Ok(ErrorFrame::new(&desc, &func, &major, &minor))
-                };
-                match closure(*err_desc) {
-                    Ok(frame) => {
-                        data.stack.push(frame);
-                    }
-                    Err(err) => {
-                        data.err = Some(err);
-                    }
-                }
-                0
-            })
-            .unwrap_or(-1)
-        }
-
-        let mut data = CallbackData { stack: Self::new(), err: None };
-        let data_ptr: *mut c_void = (&mut data as *mut CallbackData).cast::<c_void>();
-
-        // known HDF5 bug: H5Eget_msg() may corrupt the current stack, so we copy it first
-        let stack_id = h5lock!(H5Eget_current_stack());
-        ensure!(stack_id >= 0, "failed to copy the current error stack");
-        h5lock!({
-            H5Ewalk2(stack_id, H5E_WALK_DOWNWARD, Some(callback), data_ptr);
-            H5Eclose_stack(stack_id);
-        });
-
-        match (data.err, data.stack.is_empty()) {
-            (Some(err), _) => Err(err),
-            (None, false) => Ok(Some(data.stack)),
-            (None, true) => Ok(None),
-        }
-    }
-
+impl ExpandedErrorStack {
     pub fn new() -> Self {
         Self { frames: Vec::new(), description: None }
     }
@@ -247,7 +188,7 @@ impl ErrorStack {
 #[derive(Clone)]
 pub enum Error {
     /// An error occurred in the C API of the HDF5 library. Full error stack is captured.
-    HDF5(h5::ErrorStack),
+    HDF5(ErrorStack),
     /// A user error occurred in the high-level Rust API (e.g., invalid user input).
     Internal(String),
 }
@@ -257,8 +198,10 @@ pub enum Error {
 pub type Result<T, E = Error> = ::std::result::Result<T, E>;
 
 impl Error {
+    /// Obtain the current error stack. The stack might be empty, which
+    /// will result in a valid error stack
     pub fn query() -> Result<Self> {
-        if let Ok(stack) = h5::ErrorStack::from_current() {
+        if let Ok(stack) = ErrorStack::from_current() {
             Ok(Self::HDF5(stack))
         } else {
             Err(Self::Internal("Could not get errorstack".to_owned()))
@@ -282,7 +225,7 @@ impl fmt::Debug for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Self::Internal(ref desc) => f.write_str(desc),
-            Self::HDF5(ref stack) => match stack.clone().into_stack() {
+            Self::HDF5(ref stack) => match stack.clone().expand() {
                 Ok(stack) => f.write_str(stack.description()),
                 Err(_) => f.write_str("Could not get error stack"),
             },
@@ -294,7 +237,7 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Self::Internal(ref desc) => f.write_str(desc),
-            Self::HDF5(ref stack) => match stack.clone().into_stack() {
+            Self::HDF5(ref stack) => match stack.clone().expand() {
                 Ok(stack) => f.write_str(stack.description()),
                 Err(_) => f.write_str("Could not get error stack"),
             },
@@ -370,24 +313,37 @@ pub mod tests {
     use crate::globals::H5P_ROOT;
     use crate::internal_prelude::*;
 
-    use super::ErrorStack;
+    use super::ExpandedErrorStack;
 
     #[test]
     pub fn test_error_stack() {
-        let result_no_error = h5lock!({
+        let stack = h5lock!({
             let plist_id = H5Pcreate(*H5P_ROOT);
             H5Pclose(plist_id);
-            ErrorStack::query()
-        });
-        assert!(result_no_error.ok().unwrap().is_none());
+            Error::query()
+        })
+        .unwrap();
+        let stack = match stack {
+            Error::HDF5(stack) => stack,
+            Error::Internal(internal) => panic!("Expected hdf5 error, not {}", internal),
+        }
+        .expand()
+        .unwrap();
+        assert!(stack.is_empty());
 
-        let result_error = h5lock!({
+        let stack = h5lock!({
             let plist_id = H5Pcreate(*H5P_ROOT);
             H5Pclose(plist_id);
             H5Pclose(plist_id);
-            ErrorStack::query()
-        });
-        let stack = result_error.ok().unwrap().unwrap();
+            Error::query()
+        })
+        .unwrap();
+        let stack = match stack {
+            Error::HDF5(stack) => stack,
+            Error::Internal(internal) => panic!("Expected hdf5 error, not {}", internal),
+        }
+        .expand()
+        .unwrap();
         assert_eq!(stack.description(), "H5Pclose(): can't close: can't locate ID");
         assert_eq!(
             &stack.detail().unwrap(),
@@ -411,7 +367,7 @@ pub mod tests {
              [Object atom: Unable to find atom information (already closed?)]"
         );
 
-        let empty_stack = ErrorStack::new();
+        let empty_stack = ExpandedErrorStack::new();
         assert!(empty_stack.is_empty());
         assert_eq!(empty_stack.len(), 0);
     }
