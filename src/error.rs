@@ -80,11 +80,7 @@ impl ErrorStack {
             H5Ewalk2(stack_id, H5E_WALK_DOWNWARD, Some(callback), data_ptr);
         });
 
-        if let Some(err) = data.err {
-            Err(err)
-        } else {
-            Ok(data.stack)
-        }
+        data.err.map_or(Ok(data.stack), Err)
     }
 }
 
