@@ -37,6 +37,9 @@ impl ErrorStack {
         Handle::try_new(stack_id).map(Self)
     }
 
+    /// Expands the error stack to a format which is easier to handle
+    // known HDF5 bug: H5Eget_msg() used in this function may corrupt
+    // the current stack, so we use self over &self
     pub fn expand(self) -> Result<ExpandedErrorStack> {
         struct CallbackData {
             stack: ExpandedErrorStack,
