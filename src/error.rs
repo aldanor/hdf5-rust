@@ -1,6 +1,6 @@
 use std::error::Error as StdError;
 use std::fmt;
-use std::ops::Index;
+use std::ops::Deref;
 use std::panic;
 use std::ptr;
 
@@ -123,11 +123,11 @@ pub struct ExpandedErrorStack {
     description: Option<String>,
 }
 
-impl Index<usize> for ExpandedErrorStack {
-    type Output = ErrorFrame;
+impl Deref for ExpandedErrorStack {
+    type Target = [ErrorFrame];
 
-    fn index(&self, index: usize) -> &ErrorFrame {
-        &self.frames[index]
+    fn deref(&self) -> &Self::Target {
+        &self.frames
     }
 }
 
@@ -140,10 +140,6 @@ impl Default for ExpandedErrorStack {
 impl ExpandedErrorStack {
     pub(crate) fn new() -> Self {
         Self { frames: Vec::new(), description: None }
-    }
-
-    pub fn len(&self) -> usize {
-        self.frames.len()
     }
 
     pub(crate) fn push(&mut self, frame: ErrorFrame) {
@@ -159,16 +155,8 @@ impl ExpandedErrorStack {
         }
     }
 
-    pub fn is_empty(&self) -> bool {
-        self.frames.is_empty()
-    }
-
     pub fn top(&self) -> Option<&ErrorFrame> {
-        if self.is_empty() {
-            None
-        } else {
-            Some(&self.frames[0])
-        }
+        self.get(0)
     }
 
     pub fn description(&self) -> &str {
