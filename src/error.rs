@@ -37,7 +37,7 @@ impl ErrorStack {
         Handle::try_new(stack_id).map(Self)
     }
 
-    pub(crate) fn expand(self) -> Result<ExpandedErrorStack> {
+    pub fn expand(self) -> Result<ExpandedErrorStack> {
         struct CallbackData {
             stack: ExpandedErrorStack,
             err: Option<Error>,
@@ -95,7 +95,7 @@ pub struct ErrorFrame {
 }
 
 impl ErrorFrame {
-    pub fn new(desc: &str, func: &str, major: &str, minor: &str) -> Self {
+    pub(crate) fn new(desc: &str, func: &str, major: &str, minor: &str) -> Self {
         Self {
             desc: desc.into(),
             func: func.into(),
@@ -139,7 +139,7 @@ impl Default for ExpandedErrorStack {
 }
 
 impl ExpandedErrorStack {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self { frames: Vec::new(), description: None }
     }
 
@@ -147,7 +147,7 @@ impl ExpandedErrorStack {
         self.frames.len()
     }
 
-    pub fn push(&mut self, frame: ErrorFrame) {
+    pub(crate) fn push(&mut self, frame: ErrorFrame) {
         self.frames.push(frame);
         if !self.is_empty() {
             let top_desc = self.frames[0].description().to_owned();
