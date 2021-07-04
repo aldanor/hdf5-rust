@@ -8,9 +8,22 @@ use ndarray::ShapeError;
 
 #[cfg(not(hdf5_1_10_0))]
 use hdf5_sys::h5::hssize_t;
-use hdf5_sys::h5e::{H5E_error2_t, H5Eget_current_stack, H5Eget_msg, H5Ewalk2, H5E_WALK_DOWNWARD};
+use hdf5_sys::h5e::{
+    H5E_auto2_t, H5E_error2_t, H5Eget_current_stack, H5Eget_msg, H5Eprint2, H5Eset_auto2, H5Ewalk2,
+    H5E_DEFAULT, H5E_WALK_DOWNWARD,
+};
 
 use crate::internal_prelude::*;
+
+/// Silence errors emitted by `hdf5`
+pub fn silence_errors(silence: bool) {
+    // Cast function with different argument types. This is safe because H5Eprint2 is
+    // documented to support this interface
+    let h5eprint: Option<unsafe extern "C" fn(hid_t, *mut libc::FILE) -> herr_t> =
+        Some(H5Eprint2 as _);
+    let h5eprint: H5E_auto2_t = unsafe { std::mem::transmute(h5eprint) };
+    h5lock!(H5Eset_auto2(H5E_DEFAULT, if silence { None } else { h5eprint }, ptr::null_mut()));
+}
 
 #[repr(transparent)]
 #[derive(Clone)]

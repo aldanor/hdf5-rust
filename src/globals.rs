@@ -23,7 +23,7 @@ lazy_static! {
             // still be live on other threads on program exit
             ::hdf5_sys::h5::H5dont_atexit();
             ::hdf5_sys::h5::H5open();
-            ::hdf5_sys::h5e::H5Eset_auto2(::hdf5_sys::h5e::H5E_DEFAULT, None, core::ptr::null_mut());
+            crate::error::silence_errors(true);
         });
         let _e = crate::hl::filters::register_filters();
     };
