@@ -18,6 +18,80 @@ use hdf5_sys::h5e::{
 
 use crate::internal_prelude::*;
 
+pub mod h5 {
+    use super::*;
+    #[repr(transparent)]
+    #[derive(Clone)]
+    pub struct ErrorStack(Handle);
+
+    impl ObjectClass for ErrorStack {
+        const NAME: &'static str = "errorstack";
+        const VALID_TYPES: &'static [H5I_type_t] = &[H5I_ERROR_STACK];
+
+        fn from_handle(handle: Handle) -> Self {
+            Self(handle)
+        }
+
+        fn handle(&self) -> &Handle {
+            &self.0
+        }
+
+        // TODO: short_repr()
+    }
+
+    impl ErrorStack {
+        fn into_stack(self) -> Result<super::ErrorStack> {
+            struct CallbackData {
+                stack: super::ErrorStack,
+                err: Option<Error>,
+            }
+            extern "C" fn callback(
+                _: c_uint, err_desc: *const H5E_error2_t, data: *mut c_void,
+            ) -> herr_t {
+                panic::catch_unwind(|| unsafe {
+                    let data = &mut *(data.cast::<CallbackData>());
+                    if data.err.is_some() {
+                        return 0;
+                    }
+                    let closure = |e: H5E_error2_t| -> Result<ErrorFrame> {
+                        let (desc, func) =
+                            (string_from_cstr(e.desc), string_from_cstr(e.func_name));
+                        let major =
+                            get_h5_str(|m, s| H5Eget_msg(e.maj_num, ptr::null_mut(), m, s))?;
+                        let minor =
+                            get_h5_str(|m, s| H5Eget_msg(e.min_num, ptr::null_mut(), m, s))?;
+                        Ok(ErrorFrame::new(&desc, &func, &major, &minor))
+                    };
+                    match closure(*err_desc) {
+                        Ok(frame) => {
+                            data.stack.push(frame);
+                        }
+                        Err(err) => {
+                            data.err = Some(err);
+                        }
+                    }
+                    0
+                })
+                .unwrap_or(-1)
+            }
+
+            let mut data = CallbackData { stack: super::ErrorStack::new(), err: None };
+            let data_ptr: *mut c_void = (&mut data as *mut CallbackData).cast::<c_void>();
+
+            let stack_id = self.handle().id();
+            h5lock!({
+                H5Ewalk2(stack_id, H5E_WALK_DOWNWARD, Some(callback), data_ptr);
+            });
+
+            if let Some(err) = data.err {
+                Err(err)
+            } else {
+                Ok(data.stack)
+            }
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct ErrorFrame {
     desc: String,
@@ -124,14 +198,13 @@ impl Default for ErrorStack {
     }
 }
 
-struct CallbackData {
-    stack: ErrorStack,
-    err: Option<Error>,
-}
-
 impl ErrorStack {
     // This low-level function is not thread-safe and has to be synchronized by the user
     pub fn query() -> Result<Option<Self>> {
+        struct CallbackData {
+            stack: ErrorStack,
+            err: Option<Error>,
+        }
         extern "C" fn callback(
             _: c_uint, err_desc: *const H5E_error2_t, data: *mut c_void,
         ) -> herr_t {
