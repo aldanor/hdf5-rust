@@ -108,24 +108,24 @@ extern "C" {
     ) -> ssize_t;
     pub fn H5Eget_num(error_stack_id: hid_t) -> ssize_t;
 
-    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Epush2()")]
+    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Epush2")]
     pub fn H5Epush1(
         file: *const c_char, func: *const c_char, line: c_uint, maj: H5E_major_t, min: H5E_minor_t,
         str_: *const c_char,
     ) -> herr_t;
-    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Eprint2()")]
+    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Eprint2")]
     pub fn H5Eprint1(stream: *mut FILE) -> herr_t;
-    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Ewalk2()")]
+    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Ewalk2")]
     pub fn H5Ewalk1(
         direction: H5E_direction_t, func: H5E_walk1_t, client_data: *mut c_void,
     ) -> herr_t;
-    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Eget_auto2()")]
+    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Eget_auto2")]
     pub fn H5Eget_auto1(func: *mut H5E_auto1_t, client_data: *mut *mut c_void) -> herr_t;
-    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Eset_auto2()")]
+    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Eset_auto2")]
     pub fn H5Eset_auto1(func: H5E_auto1_t, client_data: *mut c_void) -> herr_t;
-    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Eclear2()")]
+    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Eclear2")]
     pub fn H5Eclear1() -> herr_t;
-    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Eget_msg()")]
+    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Eget_msg")]
     pub fn H5Eget_major(maj: H5E_major_t) -> *mut c_char;
     #[deprecated(note = "deprecated in HDF5 1.8.0")]
     pub fn H5Eget_minor(min: H5E_minor_t) -> *mut c_char;

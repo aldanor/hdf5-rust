@@ -64,44 +64,44 @@ extern "C" {
         n: hsize_t, ginfo: *mut H5G_info_t, lapl_id: hid_t,
     ) -> herr_t;
     pub fn H5Gclose(group_id: hid_t) -> herr_t;
-    #[deprecated(note = "Deprecated in HDF5 1.8.0, use H5Gcreate2()")]
+    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Gcreate2")]
     pub fn H5Gcreate1(loc_id: hid_t, name: *const c_char, size_hint: size_t) -> hid_t;
-    #[deprecated(note = "Deprecated in HDF5 1.8.0, use H5Oget_comment()")]
+    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Oget_comment")]
     pub fn H5Gget_comment(
         loc_id: hid_t, name: *const c_char, bufsize: size_t, buf: *mut c_char,
     ) -> c_int;
-    #[deprecated(note = "Deprecated in HDF5 1.8.0, use H5Lget_val()")]
+    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Lget_val")]
     pub fn H5Gget_linkval(loc_id: hid_t, name: *const c_char, comment: *const c_char) -> herr_t;
-    #[deprecated(note = "Deprecated in HDF5 1.8.0, use H5Gget_info()")]
+    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Gget_info")]
     pub fn H5Gget_num_objs(loc_id: hid_t, num_objs: *mut hsize_t) -> herr_t;
-    #[deprecated(note = "Deprecated in HDF5 1.8.0, use H5Oget_info() or H5Lget_info()")]
+    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Oget_info or H5Lget_info")]
     pub fn H5Gget_objinfo(
         loc_id: hid_t, name: *const c_char, follow_link: hbool_t, statubuf: *mut H5G_stat_t,
     ) -> herr_t;
-    #[deprecated(note = "Deprecated in HDF5 1.8.0, use H5Lget_name_by_idx()")]
+    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Lget_name_by_idx")]
     pub fn H5Gget_objname_by_idx(
         loc_id: hid_t, idx: hsize_t, name: *mut c_char, size: size_t,
     ) -> ssize_t;
-    #[deprecated(note = "Deprecated in HDF5 1.8.0, use H5Oget_info()")]
+    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Oget_info")]
     pub fn H5Gget_objtype_by_idx(loc_id: hid_t, idx: hsize_t) -> H5G_obj_t;
-    #[deprecated(note = "Deprecated in HDF5 1.8.0, use H5Lcreate_hard() or H5Lcreate_soft()")]
+    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Lcreate_hard or H5Lcreate_soft")]
     pub fn H5Glink(
         cur_loc_id: hid_t, type_: H5G_link_t, cur_name: *const c_char, new_name: *const c_char,
     ) -> herr_t;
-    #[deprecated(note = "Deprecated in HDF5 1.8.0, use H5Lcreate_hard() or H5Lcreate_soft()")]
+    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Lcreate_hard or H5Lcreate_soft")]
     pub fn H5Glink2(
         cur_loc_id: hid_t, cur_name: *const c_char, type_: H5G_link_t, new_loc_id: hid_t,
         new_name: *const c_char,
     ) -> herr_t;
-    #[deprecated(note = "Deprecated in HDF5 1.8.0, use H5Lmove()")]
+    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Lmove")]
     pub fn H5Gmove(src_loc_id: hid_t, src_name: *const c_char, dst_name: *const c_char) -> herr_t;
-    #[deprecated(note = "Deprecated in HDF5 1.8.0, use H5Lmove()")]
+    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Lmove")]
     pub fn H5Gmove2(
         src_loc_id: hid_t, src_name: *const c_char, dst_loc_id: hid_t, dst_name: *const c_char,
     ) -> herr_t;
-    #[deprecated(note = "Deprecated in HDF5 1.8.0, use H5Gopen2()")]
+    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Gopen2")]
     pub fn H5Gopen1(loc_id: hid_t, name: *const c_char) -> hid_t;
-    #[deprecated(note = "Deprecated in HDF5 1.8.0, use H5Ldelete()")]
+    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Ldelete")]
     pub fn H5Gunlink(loc_id: hid_t, name: *const c_char) -> herr_t;
 }
 

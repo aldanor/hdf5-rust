@@ -287,23 +287,23 @@ mod hdf5_1_10_3 {
             loc_id: hid_t, obj_name: *const c_char, idx_type: H5_index_t, order: H5_iter_order_t,
             op: H5O_iterate1_t, op_data: *mut c_void, fields: c_uint, lapl_id: hid_t,
         ) -> herr_t;
-        #[deprecated(note = "deprecated in HDF5 1.10.3, use H5Oget_info2()")]
+        #[deprecated(note = "deprecated in HDF5 1.10.3, use H5Oget_info2")]
         pub fn H5Oget_info1(loc_id: hid_t, oinfo: *mut H5O_info1_t) -> herr_t;
-        #[deprecated(note = "deprecated in HDF5 1.10.3, use H5Oget_info_by_name2()")]
+        #[deprecated(note = "deprecated in HDF5 1.10.3, use H5Oget_info_by_name2")]
         pub fn H5Oget_info_by_name1(
             loc_id: hid_t, name: *const c_char, oinfo: *mut H5O_info1_t, lapl_id: hid_t,
         ) -> herr_t;
-        #[deprecated(note = "deprecated in HDF5 1.10.3, use H5Oget_info_by_idx2()")]
+        #[deprecated(note = "deprecated in HDF5 1.10.3, use H5Oget_info_by_idx2")]
         pub fn H5Oget_info_by_idx1(
             loc_id: hid_t, group_name: *const c_char, idx_type: H5_index_t, order: H5_iter_order_t,
             n: hsize_t, oinfo: *mut H5O_info1_t, lapl_id: hid_t,
         ) -> herr_t;
-        #[deprecated(note = "deprecated in HDF5 1.10.3, use H5Ovisit2()")]
+        #[deprecated(note = "deprecated in HDF5 1.10.3, use H5Ovisit2")]
         pub fn H5Ovisit1(
             obj_id: hid_t, idx_type: H5_index_t, order: H5_iter_order_t, op: H5O_iterate1_t,
             op_data: *mut c_void,
         ) -> herr_t;
-        #[deprecated(note = "deprecated in HDF5 1.10.3, use H5Ovisit_by_name2()")]
+        #[deprecated(note = "deprecated in HDF5 1.10.3, use H5Ovisit_by_name2")]
         pub fn H5Ovisit_by_name1(
             loc_id: hid_t, obj_name: *const c_char, idx_type: H5_index_t, order: H5_iter_order_t,
             op: H5O_iterate1_t, op_data: *mut c_void, lapl_id: hid_t,
@@ -326,23 +326,23 @@ extern "C" {
     // They've messed up when introducing compatibility macros which broke ABI compatibility;
     // in 1.10.5 those APIs were copied over to old names in order to be compatible with
     // older library versions - so we can link to them directly again.
-    #[deprecated(note = "deprecated in HDF5 1.10.3, use H5Oget_info2()")]
+    #[deprecated(note = "deprecated in HDF5 1.10.3, use H5Oget_info2")]
     pub fn H5Oget_info(loc_id: hid_t, oinfo: *mut H5O_info1_t) -> herr_t;
-    #[deprecated(note = "deprecated in HDF5 1.10.3, use H5Oget_info_by_name2()")]
+    #[deprecated(note = "deprecated in HDF5 1.10.3, use H5Oget_info_by_name2")]
     pub fn H5Oget_info_by_name(
         loc_id: hid_t, name: *const c_char, oinfo: *mut H5O_info1_t, lapl_id: hid_t,
     ) -> herr_t;
-    #[deprecated(note = "deprecated in HDF5 1.10.3, use H5Oget_info_by_idx2()")]
+    #[deprecated(note = "deprecated in HDF5 1.10.3, use H5Oget_info_by_idx2")]
     pub fn H5Oget_info_by_idx(
         loc_id: hid_t, group_name: *const c_char, idx_type: H5_index_t, order: H5_iter_order_t,
         n: hsize_t, oinfo: *mut H5O_info1_t, lapl_id: hid_t,
     ) -> herr_t;
-    #[deprecated(note = "deprecated in HDF5 1.10.3, use H5Ovisit2()")]
+    #[deprecated(note = "deprecated in HDF5 1.10.3, use H5Ovisit2")]
     pub fn H5Ovisit(
         obj_id: hid_t, idx_type: H5_index_t, order: H5_iter_order_t, op: H5O_iterate1_t,
         op_data: *mut c_void,
     ) -> herr_t;
-    #[deprecated(note = "deprecated in HDF5 1.10.3, use H5Ovisit_by_name2()")]
+    #[deprecated(note = "deprecated in HDF5 1.10.3, use H5Ovisit_by_name2")]
     pub fn H5Ovisit_by_name(
         loc_id: hid_t, obj_name: *const c_char, idx_type: H5_index_t, order: H5_iter_order_t,
         op: H5O_iterate1_t, op_data: *mut c_void, lapl_id: hid_t,

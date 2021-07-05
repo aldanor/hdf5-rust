@@ -336,15 +336,15 @@ extern "C" {
         src_id: hid_t, dst_id: hid_t, nelmts: size_t, buf: *mut c_void, background: *mut c_void,
         plist_id: hid_t,
     ) -> herr_t;
-    #[deprecated(note = "Deprecated since HDF5 1.8.0, use H5Tcommit2()")]
+    #[deprecated(note = "deprecated since HDF5 1.8.0, use H5Tcommit2")]
     pub fn H5Tcommit1(loc_id: hid_t, name: *const c_char, type_id: hid_t) -> herr_t;
-    #[deprecated(note = "Deprecated since HDF5 1.8.0, use H5Tcommit2()")]
+    #[deprecated(note = "deprecated since HDF5 1.8.0, use H5Tcommit2")]
     pub fn H5Topen1(loc_id: hid_t, name: *const c_char) -> hid_t;
-    #[deprecated(note = "Deprecated since HDF5 1.8.0, use H5Tarray_create2()")]
+    #[deprecated(note = "deprecated since HDF5 1.8.0, use H5Tarray_create2")]
     pub fn H5Tarray_create1(
         base_id: hid_t, ndims: c_int, dim: *const hsize_t, perm: *const c_int,
     ) -> hid_t;
-    #[deprecated(note = "Deprecated since HDF5 1.8.0, use H5Tget_array_dims2()")]
+    #[deprecated(note = "deprecated since HDF5 1.8.0, use H5Tget_array_dims2")]
     pub fn H5Tget_array_dims1(type_id: hid_t, dims: *mut hsize_t, perm: *mut c_int) -> c_int;
 }
 

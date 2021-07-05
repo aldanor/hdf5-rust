@@ -41,7 +41,7 @@ extern "C" {
         space_id: hid_t,
     ) -> herr_t;
     pub fn H5Rget_region(dataset: hid_t, ref_type: H5R_type_t, ref_: *const c_void) -> hid_t;
-    #[deprecated(note = "Deprecated in HDF5 1.8.0, use H5Rget_obj_type2()")]
+    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Rget_obj_type2")]
     pub fn H5Rget_obj_type1(id: hid_t, ref_type: H5R_type_t, ref_: *const c_void) -> H5G_obj_t;
     pub fn H5Rget_obj_type2(
         id: hid_t, ref_type: H5R_type_t, ref_: *const c_void, obj_type: *mut H5O_type_t,
@@ -52,7 +52,7 @@ extern "C" {
 }
 
 extern "C" {
-    #[cfg_attr(hdf5_1_10_0, deprecated(note = "deprecated in HDF5 1.10.0, use H5Rdereference2()"))]
+    #[cfg_attr(hdf5_1_10_0, deprecated(note = "deprecated in HDF5 1.10.0, use H5Rdereference2"))]
     #[cfg_attr(not(hdf5_1_10_0), link_name = "H5Rdereference")]
     pub fn H5Rdereference1(obj_id: hid_t, ref_type: H5R_type_t, ref_: *const c_void) -> hid_t;
     #[cfg(hdf5_1_10_0)]

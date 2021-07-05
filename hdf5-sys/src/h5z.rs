@@ -151,7 +151,7 @@ extern "C" {
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-#[deprecated(note = "Deprecated in HDF5 1.8.0, use H5Z_class2_t")]
+#[deprecated(note = "deprecated in HDF5 1.8.0, use H5Z_class2_t")]
 pub struct H5Z_class1_t {
     id: H5Z_filter_t,
     name: *const c_char,

@@ -179,7 +179,7 @@ extern "C" {
         buf: *mut c_void, type_id: hid_t, space_id: hid_t, op: H5D_operator_t,
         operator_data: *mut c_void,
     ) -> herr_t;
-    #[cfg_attr(hdf5_1_12_0, deprecated(note = "Deprecated in HDF5 1.12.0, use H5Treclaim()"))]
+    #[cfg_attr(hdf5_1_12_0, deprecated(note = "deprecated in HDF5 1.12.0, use H5Treclaim"))]
     pub fn H5Dvlen_reclaim(
         type_id: hid_t, space_id: hid_t, plist_id: hid_t, buf: *mut c_void,
     ) -> herr_t;
@@ -192,11 +192,11 @@ extern "C" {
     pub fn H5Dset_extent(dset_id: hid_t, size: *const hsize_t) -> herr_t;
     pub fn H5Ddebug(dset_id: hid_t) -> herr_t;
 
-    #[deprecated(note = "Deprecated in HDF5 1.8.0, use H5Dcreate2()")]
+    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Dcreate2")]
     pub fn H5Dcreate1(
         file_id: hid_t, name: *const c_char, type_id: hid_t, space_id: hid_t, dcpl_id: hid_t,
     ) -> hid_t;
-    #[deprecated(note = "Deprecated in HDF5 1.8.0, use H5Dopen2()")]
+    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Dopen2")]
     pub fn H5Dopen1(file_id: hid_t, name: *const c_char) -> hid_t;
 }
 
