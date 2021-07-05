@@ -72,6 +72,10 @@
 - The version of `hdf5` built in `hdf5-src` has been updated from `1.10.6` to `1.10.7`.
 - The `zlib` dependency is no longer included with `default-features`.
 - `hdf5` no longer calls `H5close` automatically on program exit.
+- Errors are now silenced, and will not be written to `stderr` by default.
+- `silence_errors` now work globally and will not be reset on dropping `SilenceErrors`.
+- Errors are not expanded when encountered, but only when being used for printing or by
+  the library user.
 
 ## 0.7.1
 

@@ -53,7 +53,6 @@ impl ObjectClass for DatasetAccess {
 
 impl Debug for DatasetAccess {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let _e = silence_errors();
         let mut formatter = f.debug_struct("DatasetAccess");
         formatter.field("chunk_cache", &self.chunk_cache());
         #[cfg(hdf5_1_8_17)]

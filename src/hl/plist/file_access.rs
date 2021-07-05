@@ -109,7 +109,6 @@ impl ObjectClass for FileAccess {
 
 impl Debug for FileAccess {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let _e = silence_errors();
         let mut formatter = f.debug_struct("FileAccess");
         formatter.field("alignment", &self.alignment());
         formatter.field("chunk_cache", &self.chunk_cache());

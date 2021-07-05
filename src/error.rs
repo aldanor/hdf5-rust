@@ -1,137 +1,63 @@
-use std::cell::RefCell;
 use std::error::Error as StdError;
 use std::fmt;
-use std::ops::Index;
+use std::ops::Deref;
 use std::panic;
 use std::ptr;
 
-use lazy_static::lazy_static;
 use ndarray::ShapeError;
-use parking_lot::Mutex;
 
 #[cfg(not(hdf5_1_10_0))]
 use hdf5_sys::h5::hssize_t;
 use hdf5_sys::h5e::{
-    H5E_error2_t, H5Eclose_stack, H5Eget_current_stack, H5Eget_msg, H5Eprint2, H5Eset_auto2,
-    H5Ewalk2, H5E_DEFAULT, H5E_WALK_DOWNWARD,
+    H5E_auto2_t, H5E_error2_t, H5Eget_current_stack, H5Eget_msg, H5Eprint2, H5Eset_auto2, H5Ewalk2,
+    H5E_DEFAULT, H5E_WALK_DOWNWARD,
 };
 
 use crate::internal_prelude::*;
 
-#[derive(Clone, Debug)]
-pub struct ErrorFrame {
-    desc: String,
-    func: String,
-    major: String,
-    minor: String,
-    description: String,
+/// Silence errors emitted by `hdf5`
+pub fn silence_errors(silence: bool) {
+    // Cast function with different argument types. This is safe because H5Eprint2 is
+    // documented to support this interface
+    let h5eprint: Option<unsafe extern "C" fn(hid_t, *mut libc::FILE) -> herr_t> =
+        Some(H5Eprint2 as _);
+    let h5eprint: H5E_auto2_t = unsafe { std::mem::transmute(h5eprint) };
+    h5lock!(H5Eset_auto2(H5E_DEFAULT, if silence { None } else { h5eprint }, ptr::null_mut()));
 }
 
-impl ErrorFrame {
-    pub fn new(desc: &str, func: &str, major: &str, minor: &str) -> Self {
-        Self {
-            desc: desc.into(),
-            func: func.into(),
-            major: major.into(),
-            minor: minor.into(),
-            description: format!("{}(): {}", func, desc),
-        }
+#[repr(transparent)]
+#[derive(Clone)]
+pub struct ErrorStack(Handle);
+
+impl ObjectClass for ErrorStack {
+    const NAME: &'static str = "errorstack";
+    const VALID_TYPES: &'static [H5I_type_t] = &[H5I_ERROR_STACK];
+
+    fn from_handle(handle: Handle) -> Self {
+        Self(handle)
     }
 
-    pub fn desc(&self) -> &str {
-        self.desc.as_ref()
+    fn handle(&self) -> &Handle {
+        &self.0
     }
 
-    pub fn description(&self) -> &str {
-        self.description.as_ref()
-    }
-
-    pub fn detail(&self) -> Option<String> {
-        Some(format!("Error in {}(): {} [{}: {}]", self.func, self.desc, self.major, self.minor))
-    }
-}
-
-#[must_use]
-#[doc(hidden)]
-pub struct SilenceErrors;
-
-impl Default for SilenceErrors {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-lazy_static! {
-    static ref ERROR_HANDLER: Mutex<RefCell<usize>> = Mutex::default();
-}
-
-extern "C" fn default_error_handler(estack: hid_t, _cdata: *mut c_void) -> herr_t {
-    panic::catch_unwind(|| unsafe { H5Eprint2(estack, ptr::null_mut()) }).unwrap_or(-1)
-}
-
-impl SilenceErrors {
-    pub fn new() -> Self {
-        Self::silence(true);
-        Self
-    }
-
-    fn silence(on: bool) {
-        let guard = ERROR_HANDLER.lock();
-        let counter = &mut *guard.borrow_mut();
-        if on {
-            *counter += 1;
-            if *counter == 1 {
-                h5lock!(H5Eset_auto2(H5E_DEFAULT, None, ptr::null_mut()));
-            }
-        } else {
-            if *counter > 0 {
-                *counter -= 1;
-            }
-            if *counter == 0 {
-                h5lock!(H5Eset_auto2(H5E_DEFAULT, Some(default_error_handler), ptr::null_mut()));
-            }
-        }
-    }
-}
-
-impl Drop for SilenceErrors {
-    fn drop(&mut self) {
-        Self::silence(false);
-    }
-}
-
-pub fn silence_errors() -> SilenceErrors {
-    SilenceErrors::new()
-}
-
-#[derive(Clone, Debug)]
-pub struct ErrorStack {
-    frames: Vec<ErrorFrame>,
-    description: Option<String>,
-}
-
-impl Index<usize> for ErrorStack {
-    type Output = ErrorFrame;
-
-    fn index(&self, index: usize) -> &ErrorFrame {
-        &self.frames[index]
-    }
-}
-
-impl Default for ErrorStack {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-struct CallbackData {
-    stack: ErrorStack,
-    err: Option<Error>,
+    // TODO: short_repr()
 }
 
 impl ErrorStack {
-    // This low-level function is not thread-safe and has to be synchronized by the user
-    pub fn query() -> Result<Option<Self>> {
+    pub(crate) fn from_current() -> Result<Self> {
+        let stack_id = h5lock!(H5Eget_current_stack());
+        Handle::try_new(stack_id).map(Self)
+    }
+
+    /// Expands the error stack to a format which is easier to handle
+    // known HDF5 bug: H5Eget_msg() used in this function may corrupt
+    // the current stack, so we use self over &self
+    pub fn expand(self) -> Result<ExpandedErrorStack> {
+        struct CallbackData {
+            stack: ExpandedErrorStack,
+            err: Option<Error>,
+        }
         extern "C" fn callback(
             _: c_uint, err_desc: *const H5E_error2_t, data: *mut c_void,
         ) -> herr_t {
@@ -159,33 +85,77 @@ impl ErrorStack {
             .unwrap_or(-1)
         }
 
-        let mut data = CallbackData { stack: Self::new(), err: None };
+        let mut data = CallbackData { stack: ExpandedErrorStack::new(), err: None };
         let data_ptr: *mut c_void = (&mut data as *mut CallbackData).cast::<c_void>();
 
-        // known HDF5 bug: H5Eget_msg() may corrupt the current stack, so we copy it first
-        let stack_id = h5lock!(H5Eget_current_stack());
-        ensure!(stack_id >= 0, "failed to copy the current error stack");
+        let stack_id = self.handle().id();
         h5lock!({
             H5Ewalk2(stack_id, H5E_WALK_DOWNWARD, Some(callback), data_ptr);
-            H5Eclose_stack(stack_id);
         });
 
-        match (data.err, data.stack.is_empty()) {
-            (Some(err), _) => Err(err),
-            (None, false) => Ok(Some(data.stack)),
-            (None, true) => Ok(None),
+        data.err.map_or(Ok(data.stack), Err)
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct ErrorFrame {
+    desc: String,
+    func: String,
+    major: String,
+    minor: String,
+    description: String,
+}
+
+impl ErrorFrame {
+    pub(crate) fn new(desc: &str, func: &str, major: &str, minor: &str) -> Self {
+        Self {
+            desc: desc.into(),
+            func: func.into(),
+            major: major.into(),
+            minor: minor.into(),
+            description: format!("{}(): {}", func, desc),
         }
     }
 
-    pub fn new() -> Self {
+    pub fn desc(&self) -> &str {
+        self.desc.as_ref()
+    }
+
+    pub fn description(&self) -> &str {
+        self.description.as_ref()
+    }
+
+    pub fn detail(&self) -> Option<String> {
+        Some(format!("Error in {}(): {} [{}: {}]", self.func, self.desc, self.major, self.minor))
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct ExpandedErrorStack {
+    frames: Vec<ErrorFrame>,
+    description: Option<String>,
+}
+
+impl Deref for ExpandedErrorStack {
+    type Target = [ErrorFrame];
+
+    fn deref(&self) -> &Self::Target {
+        &self.frames
+    }
+}
+
+impl Default for ExpandedErrorStack {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl ExpandedErrorStack {
+    pub(crate) fn new() -> Self {
         Self { frames: Vec::new(), description: None }
     }
 
-    pub fn len(&self) -> usize {
-        self.frames.len()
-    }
-
-    pub fn push(&mut self, frame: ErrorFrame) {
+    pub(crate) fn push(&mut self, frame: ErrorFrame) {
         self.frames.push(frame);
         if !self.is_empty() {
             let top_desc = self.frames[0].description().to_owned();
@@ -198,16 +168,8 @@ impl ErrorStack {
         }
     }
 
-    pub fn is_empty(&self) -> bool {
-        self.frames.is_empty()
-    }
-
     pub fn top(&self) -> Option<&ErrorFrame> {
-        if self.is_empty() {
-            None
-        } else {
-            Some(&self.frames[0])
-        }
+        self.get(0)
     }
 
     pub fn description(&self) -> &str {
@@ -236,18 +198,13 @@ pub enum Error {
 pub type Result<T, E = Error> = ::std::result::Result<T, E>;
 
 impl Error {
-    pub fn query() -> Option<Self> {
-        match ErrorStack::query() {
-            Err(err) => Some(err),
-            Ok(Some(stack)) => Some(Self::HDF5(stack)),
-            Ok(None) => None,
-        }
-    }
-
-    pub fn description(&self) -> &str {
-        match *self {
-            Self::Internal(ref desc) => desc.as_ref(),
-            Self::HDF5(ref stack) => stack.description(),
+    /// Obtain the current error stack. The stack might be empty, which
+    /// will result in a valid error stack
+    pub fn query() -> Result<Self> {
+        if let Ok(stack) = ErrorStack::from_current() {
+            Ok(Self::HDF5(stack))
+        } else {
+            Err(Self::Internal("Could not get errorstack".to_owned()))
         }
     }
 }
@@ -268,14 +225,23 @@ impl fmt::Debug for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Self::Internal(ref desc) => f.write_str(desc),
-            Self::HDF5(ref stack) => f.write_str(stack.description()),
+            Self::HDF5(ref stack) => match stack.clone().expand() {
+                Ok(stack) => f.write_str(stack.description()),
+                Err(_) => f.write_str("Could not get error stack"),
+            },
         }
     }
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str(self.description())
+        match *self {
+            Self::Internal(ref desc) => f.write_str(desc),
+            Self::HDF5(ref stack) => match stack.clone().expand() {
+                Ok(stack) => f.write_str(stack.description()),
+                Err(_) => f.write_str("Could not get error stack"),
+            },
+        }
     }
 }
 
@@ -301,7 +267,7 @@ pub trait H5ErrorCode: Copy {
 
     fn h5check(value: Self) -> Result<Self> {
         if Self::is_err_code(value) {
-            Error::query().map_or_else(|| Ok(value), Err)
+            Err(Error::query().unwrap_or_else(|e| e))
         } else {
             Ok(value)
         }
@@ -347,26 +313,37 @@ pub mod tests {
     use crate::globals::H5P_ROOT;
     use crate::internal_prelude::*;
 
-    use super::ErrorStack;
+    use super::ExpandedErrorStack;
 
     #[test]
     pub fn test_error_stack() {
-        let _e = silence_errors();
-
-        let result_no_error = h5lock!({
+        let stack = h5lock!({
             let plist_id = H5Pcreate(*H5P_ROOT);
             H5Pclose(plist_id);
-            ErrorStack::query()
-        });
-        assert!(result_no_error.ok().unwrap().is_none());
+            Error::query()
+        })
+        .unwrap();
+        let stack = match stack {
+            Error::HDF5(stack) => stack,
+            Error::Internal(internal) => panic!("Expected hdf5 error, not {}", internal),
+        }
+        .expand()
+        .unwrap();
+        assert!(stack.is_empty());
 
-        let result_error = h5lock!({
+        let stack = h5lock!({
             let plist_id = H5Pcreate(*H5P_ROOT);
             H5Pclose(plist_id);
             H5Pclose(plist_id);
-            ErrorStack::query()
-        });
-        let stack = result_error.ok().unwrap().unwrap();
+            Error::query()
+        })
+        .unwrap();
+        let stack = match stack {
+            Error::HDF5(stack) => stack,
+            Error::Internal(internal) => panic!("Expected hdf5 error, not {}", internal),
+        }
+        .expand()
+        .unwrap();
         assert_eq!(stack.description(), "H5Pclose(): can't close: can't locate ID");
         assert_eq!(
             &stack.detail().unwrap(),
@@ -390,15 +367,13 @@ pub mod tests {
              [Object atom: Unable to find atom information (already closed?)]"
         );
 
-        let empty_stack = ErrorStack::new();
+        let empty_stack = ExpandedErrorStack::new();
         assert!(empty_stack.is_empty());
         assert_eq!(empty_stack.len(), 0);
     }
 
     #[test]
     pub fn test_h5call() {
-        let _e = silence_errors();
-
         let result_no_error = h5call!({
             let plist_id = H5Pcreate(*H5P_ROOT);
             H5Pclose(plist_id)
@@ -415,8 +390,6 @@ pub mod tests {
 
     #[test]
     pub fn test_h5try() {
-        let _e = silence_errors();
-
         fn f1() -> Result<herr_t> {
             h5try!(H5Pcreate(*H5P_ROOT));
             Ok(100)

@@ -30,7 +30,7 @@ mod export {
     pub use crate::{
         class::from_id,
         dim::{Dimension, Ix},
-        error::{silence_errors, Error, Result},
+        error::{silence_errors, Error, ErrorFrame, ErrorStack, ExpandedErrorStack, Result},
         hl::extents::{Extent, Extents, SimpleExtents},
         hl::selection::{Hyperslab, Selection, SliceOrIndex},
         hl::{
@@ -131,7 +131,7 @@ mod internal_prelude {
     pub use crate::{
         class::ObjectClass,
         dim::Dimension,
-        error::{h5check, silence_errors},
+        error::h5check,
         export::*,
         handle::{get_id_type, is_valid_user_id, Handle},
         hl::plist::PropertyListClass,
