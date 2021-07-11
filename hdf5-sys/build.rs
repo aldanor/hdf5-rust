@@ -91,7 +91,7 @@ fn get_runtime_version_single<P: AsRef<Path>>(path: P) -> Result<Version, Box<dy
     let H5get_libversion = unsafe { lib.get::<H5get_libversion_t>(b"H5get_libversion")? };
 
     let mut v: (c_uint, c_uint, c_uint) = (0, 0, 0);
-    unsafe {
+    let res = unsafe {
         if H5open() != 0 {
             Err("H5open()".into())
         } else if H5get_libversion(&mut v.0, &mut v.1, &mut v.2) != 0 {
@@ -99,7 +99,11 @@ fn get_runtime_version_single<P: AsRef<Path>>(path: P) -> Result<Version, Box<dy
         } else {
             Ok(Version::new(v.0 as _, v.1 as _, v.2 as _))
         }
-    }
+    };
+    // On macos libraries using TLS will corrupt TLS from rust. We delay closing
+    // the library until program exit by forgetting the library
+    std::mem::forget(lib);
+    res
 }
 
 fn validate_runtime_version(config: &Config) {
