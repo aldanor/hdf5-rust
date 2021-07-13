@@ -11,7 +11,6 @@ description = "Build script for compiling HDF5 C library from source."
 edition = "2018"
 links = "hdf5src"
 exclude = [
-    "ext/hdf5/bin/**",
     "ext/hdf5/c++/**",
     "ext/hdf5/examples/**",
     "ext/hdf5/fortran/**",
