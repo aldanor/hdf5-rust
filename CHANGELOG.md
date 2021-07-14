@@ -77,6 +77,9 @@
 - Errors are not expanded when encountered, but only when being used for printing or by
   the library user.
 
+## Fixed
+- Some build files were missing from the packaged crate, which made building fail on `macos`-based platforms in certain cases.
+
 ## 0.7.1
 
 ### Added
