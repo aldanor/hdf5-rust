@@ -131,6 +131,8 @@ jobs:
         with: {toolchain: '${{matrix.rust}}', profile: minimal, override: true}
       - name: Build and test all crates
         run: cargo test --workspace -v --features hdf5-sys/static,hdf5-sys/zlib,hdf5-src/hl --exclude hdf5-derive
+      - name: Package hdf5-src (dry-run)
+        run: cd hdf5-src && cargo publish --all-features --dry-run
 
   apt:
     name: apt
