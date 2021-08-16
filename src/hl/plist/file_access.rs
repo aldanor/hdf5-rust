@@ -1706,7 +1706,7 @@ impl FileAccess {
     }
 
     pub fn mdc_config(&self) -> MetadataCacheConfig {
-        self.get_mdc_config().ok().unwrap_or_else(MetadataCacheConfig::default)
+        self.get_mdc_config().ok().unwrap_or_default()
     }
 
     #[cfg(hdf5_1_10_1)]
@@ -1719,7 +1719,7 @@ impl FileAccess {
 
     #[cfg(hdf5_1_10_1)]
     pub fn mdc_image_config(&self) -> CacheImageConfig {
-        self.get_mdc_image_config().ok().unwrap_or_else(CacheImageConfig::default)
+        self.get_mdc_image_config().ok().unwrap_or_default()
     }
 
     #[cfg(hdf5_1_10_0)]
@@ -1752,7 +1752,7 @@ impl FileAccess {
 
     #[cfg(hdf5_1_10_0)]
     pub fn mdc_log_options(&self) -> CacheLogOptions {
-        self.get_mdc_log_options().ok().unwrap_or_else(CacheLogOptions::default)
+        self.get_mdc_log_options().ok().unwrap_or_default()
     }
 
     #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
@@ -1804,6 +1804,6 @@ impl FileAccess {
 
     #[cfg(hdf5_1_10_2)]
     pub fn libver_bounds(&self) -> LibVerBounds {
-        self.get_libver_bounds().ok().unwrap_or_else(LibVerBounds::default)
+        self.get_libver_bounds().ok().unwrap_or_default()
     }
 }

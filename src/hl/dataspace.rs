@@ -69,7 +69,7 @@ unsafe fn get_simple_extents(space_id: hid_t) -> Result<SimpleExtents> {
     for i in 0..ndim {
         let (dim, max) = (dims[i] as _, maxdims[i]);
         let max = if max == H5S_UNLIMITED { None } else { Some(max as _) };
-        extents.push(Extent::new(dim, max))
+        extents.push(Extent::new(dim, max));
     }
     Ok(SimpleExtents::from_vec(extents))
 }

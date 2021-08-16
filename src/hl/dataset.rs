@@ -714,7 +714,7 @@ impl DatasetBuilderInner {
     }
 
     pub fn fill_time(&mut self, fill_time: FillTime) {
-        self.with_dcpl(|pl| pl.fill_time(fill_time))
+        self.with_dcpl(|pl| pl.fill_time(fill_time));
     }
 
     pub fn fill_value<T: Into<OwnedDynValue>>(&mut self, fill_value: T) {

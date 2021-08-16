@@ -282,7 +282,7 @@ impl DatasetAccess {
 
     #[cfg(hdf5_1_10_0)]
     pub fn virtual_view(&self) -> VirtualView {
-        self.get_virtual_view().ok().unwrap_or_else(VirtualView::default)
+        self.get_virtual_view().ok().unwrap_or_default()
     }
 
     #[cfg(hdf5_1_10_0)]
