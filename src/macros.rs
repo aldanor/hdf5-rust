@@ -4,7 +4,7 @@ use crate::internal_prelude::*;
 
 macro_rules! fail {
     ($err:expr) => (
-        return Err(From::from($err));
+        return Err(From::from($err))
     );
 
     ($fmt:expr, $($arg:tt)*) => (
