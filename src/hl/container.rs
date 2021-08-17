@@ -100,7 +100,9 @@ impl<'a> Reader<'a> {
             let mspace = Dataspace::try_new(&out_shape)?;
             let mut buf = Vec::with_capacity(out_size);
             self.read_into_buf(buf.as_mut_ptr(), Some(&fspace), Some(&mspace))?;
-            unsafe { buf.set_len(out_size) };
+            unsafe {
+                buf.set_len(out_size);
+            };
             let arr = ArrayD::from_shape_vec(out_shape, buf)?;
             Ok(arr.into_dimensionality()?)
         }

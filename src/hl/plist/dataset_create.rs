@@ -818,7 +818,7 @@ impl DatasetCreate {
                     name: string_from_cstr(name.as_ptr()),
                     offset: offset as _,
                     size: if size >= H5F_UNLIMITED { 0 } else { size as _ },
-                })
+                });
             }
             Ok(external)
         })
@@ -857,7 +857,7 @@ impl DatasetCreate {
                     src_selection,
                     vds_extents,
                     vds_selection,
-                })
+                });
             }
 
             Ok(virtual_map)

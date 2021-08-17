@@ -338,7 +338,7 @@ impl<'a> DynArray<'a> {
         } else {
             [].as_ref()
         };
-        (0..len).map(move |i| DynValue::new(&self.tp, &buf[(i * size)..((i + 1) * size)]))
+        (0..len).map(move |i| DynValue::new(self.tp, &buf[(i * size)..((i + 1) * size)]))
     }
 }
 

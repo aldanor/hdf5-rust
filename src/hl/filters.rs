@@ -36,7 +36,6 @@ pub enum ScaleOffset {
 #[cfg(feature = "blosc")]
 mod blosc_impl {
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-    #[allow(clippy::pub_enum_variant_names)]
     pub enum Blosc {
         BloscLZ,
         LZ4,

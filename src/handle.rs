@@ -102,7 +102,7 @@ impl Handle {
             if !self.is_valid_user_id() && !self.is_valid_id() {
                 self.invalidate();
             }
-        })
+        });
     }
 
     /// Returns `true` if the object has a valid unlocked identifier (`false` for pre-defined

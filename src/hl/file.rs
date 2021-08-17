@@ -170,7 +170,7 @@ impl File {
                 self.0.decref();
             }
             self.0.decref();
-        })
+        });
     }
 
     /// Returns a copy of the file access property list.
