@@ -69,7 +69,7 @@ impl Handle {
             if self.is_valid_id() {
                 H5Idec_ref(self.id());
             }
-        })
+        });
     }
 
     /// Returns `true` if the object has a valid unlocked identifier (`false` for pre-defined
