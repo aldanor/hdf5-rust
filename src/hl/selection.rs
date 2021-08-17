@@ -709,7 +709,7 @@ where
             .deref()
             .as_ref()
             .iter()
-            .cloned()
+            .copied()
             .map(TryInto::try_into)
             .collect::<Result<Vec<_>>>()
             .map(Into::into)
