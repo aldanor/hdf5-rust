@@ -139,7 +139,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {ubuntu: 16.04, mpi: serial, rust: nightly}
           - {ubuntu: 18.04, mpi: mpich, rust: beta}
           - {ubuntu: 20.04, mpi: openmpi, rust: stable}
     steps:
