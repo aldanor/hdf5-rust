@@ -235,9 +235,9 @@ extern "C" {
         src_loc_id: hid_t, src_name: *const c_char, dst_loc_id: hid_t, dst_name: *const c_char,
         ocpypl_id: hid_t, lcpl_id: hid_t,
     ) -> herr_t;
-    #[deprecated(note = "Function is deprecated in favor of object attributes")]
+    #[deprecated(note = "function is deprecated in favor of object attributes")]
     pub fn H5Oset_comment(obj_id: hid_t, comment: *const c_char) -> herr_t;
-    #[deprecated(note = "Function is deprecated in favor of object attributes")]
+    #[deprecated(note = "function is deprecated in favor of object attributes")]
     pub fn H5Oset_comment_by_name(
         loc_id: hid_t, name: *const c_char, comment: *const c_char, lapl_id: hid_t,
     ) -> herr_t;

@@ -79,7 +79,7 @@ impl Location {
     }
 
     /// Set or the commment attached to the named object.
-    #[deprecated(note = "Attributes are preferred to comments")]
+    #[deprecated(note = "attributes are preferred to comments")]
     pub fn set_comment(&self, comment: &str) -> Result<()> {
         // TODO: &mut self?
         let comment = to_cstring(comment)?;
@@ -88,7 +88,7 @@ impl Location {
     }
 
     /// Clear the commment attached to the named object.
-    #[deprecated(note = "Attributes are preferred to comments")]
+    #[deprecated(note = "attributes are preferred to comments")]
     pub fn clear_comment(&self) -> Result<()> {
         // TODO: &mut self?
         #[allow(deprecated)]
