@@ -3,6 +3,7 @@ use std::mem;
 pub use self::H5Z_EDC_t::*;
 pub use self::H5Z_SO_scale_type_t::*;
 pub use self::H5Z_cb_return_t::*;
+pub use self::H5Z_class2_t as H5Z_class_t;
 
 use crate::internal_prelude::*;
 
@@ -146,4 +147,15 @@ extern "C" {
     pub fn H5Zunregister(id: H5Z_filter_t) -> herr_t;
     pub fn H5Zfilter_avail(id: H5Z_filter_t) -> htri_t;
     pub fn H5Zget_filter_info(filter: H5Z_filter_t, filter_config_flags: *mut c_uint) -> herr_t;
+}
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+#[deprecated(note = "deprecated in HDF5 1.8.0, use H5Z_class2_t")]
+pub struct H5Z_class1_t {
+    id: H5Z_filter_t,
+    name: *const c_char,
+    can_apply: H5Z_can_apply_func_t,
+    set_local: H5Z_set_local_func_t,
+    filter: H5Z_func_t,
 }

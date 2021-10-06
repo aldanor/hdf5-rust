@@ -4,6 +4,16 @@ pub use self::H5F_close_degree_t::*;
 pub use self::H5F_libver_t::*;
 pub use self::H5F_mem_t::*;
 pub use self::H5F_scope_t::*;
+#[cfg(not(hdf5_1_10_0))]
+pub use {
+    H5F_info1_t as H5F_info_t, H5F_info1_t__sohm as H5F_info_t__sohm, H5Fget_info1 as H5Fget_info,
+};
+#[cfg(hdf5_1_10_0)]
+pub use {
+    H5F_info2_t as H5F_info_t, H5F_info2_t__free as H5F_info_t__free,
+    H5F_info2_t__sohm as H5F_info_t__sohm, H5F_info2_t__super as H5F_info_t__super,
+    H5Fget_info2 as H5Fget_info,
+};
 
 use crate::internal_prelude::*;
 
@@ -60,12 +70,12 @@ impl Default for H5F_close_degree_t {
 #[cfg_attr(hdf5_1_10_0, deprecated(note = "deprecated in HDF5 1.10.0, use H5F_info2_t"))]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct H5F_info_t {
+pub struct H5F_info1_t {
     pub super_ext_size: hsize_t,
-    pub sohm: H5F_info_t__sohm,
+    pub sohm: H5F_info1_t__sohm,
 }
 
-impl Default for H5F_info_t {
+impl Default for H5F_info1_t {
     fn default() -> Self {
         unsafe { mem::zeroed() }
     }
@@ -74,12 +84,12 @@ impl Default for H5F_info_t {
 #[cfg_attr(hdf5_1_10_0, deprecated(note = "deprecated in HDF5 1.10.0, use H5F_info2_t"))]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct H5F_info_t__sohm {
+pub struct H5F_info1_t__sohm {
     pub hdr_size: hsize_t,
     pub msgs_info: H5_ih_info_t,
 }
 
-impl Default for H5F_info_t__sohm {
+impl Default for H5F_info1_t__sohm {
     fn default() -> Self {
         unsafe { mem::zeroed() }
     }
@@ -125,11 +135,6 @@ impl Default for H5F_libver_t {
     fn default() -> Self {
         H5F_LIBVER_LATEST
     }
-}
-
-#[cfg(not(hdf5_1_10_0))]
-extern "C" {
-    pub fn H5Fget_info(obj_id: hid_t, bh_info: *mut H5F_info_t) -> herr_t;
 }
 
 extern "C" {
@@ -308,14 +313,13 @@ mod hdf5_1_10_0 {
         ) -> ssize_t;
         pub fn H5Fformat_convert(fid: hid_t) -> herr_t;
         pub fn H5Fget_info2(obj_id: hid_t, finfo: *mut H5F_info2_t) -> herr_t;
-        #[deprecated(note = "deprecated in HDF5 1.10.0, use H5Fget_info2")]
-        pub fn H5Fget_info1(obj_id: hid_t, finfo: *mut H5F_info1_t) -> herr_t;
     }
+}
 
-    pub use super::{
-        H5F_info_t as H5F_info1_t, H5F_info_t__sohm as H5F_info1_t__sohm,
-        H5Fget_info1 as H5Fget_info,
-    };
+extern "C" {
+    #[cfg_attr(hdf5_1_10_0, deprecated(note = "deprecated in HDF5 1.10.0, use H5Fget_info2"))]
+    #[cfg_attr(not(hdf5_1_10_0), link_name = "H5Fget_info")]
+    pub fn H5Fget_info1(obj_id: hid_t, finfo: *mut H5F_info1_t) -> herr_t;
 }
 
 #[cfg(hdf5_1_10_0)]

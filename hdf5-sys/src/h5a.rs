@@ -3,6 +3,10 @@ use std::mem;
 use crate::internal_prelude::*;
 
 use crate::h5o::H5O_msg_crt_idx_t;
+pub use {
+    H5A_operator2_t as H5A_operator_t, H5A_operator2_t as H5A_operator_r, H5Acreate2 as H5Acreate,
+    H5Aiterate2 as H5Aiterate,
+};
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -18,6 +22,15 @@ impl Default for H5A_info_t {
         unsafe { mem::zeroed() }
     }
 }
+
+#[deprecated(note = "deprecated in HDF5 1.8.0, use H5A_operator2_t")]
+pub type H5A_operator1_t = Option<
+    extern "C" fn(
+        location_id: hid_t,
+        attr_name: *const c_char,
+        operator_data: *mut c_void,
+    ) -> herr_t,
+>;
 
 pub type H5A_operator2_t = Option<
     extern "C" fn(
@@ -92,4 +105,19 @@ extern "C" {
     pub fn H5Aexists_by_name(
         obj_id: hid_t, obj_name: *const c_char, attr_name: *const c_char, lapl_id: hid_t,
     ) -> htri_t;
+
+    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Aget_info")]
+    pub fn H5Aget_num_attrs(loc_id: hid_t) -> c_int;
+    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Aopen_by_idx")]
+    pub fn H5Aopen_idx(loc_id: hid_t, idx: c_uint) -> hid_t;
+    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Aopen_by_name")]
+    pub fn H5Aopen_name(loc_id: hid_t, name: *const c_char) -> hid_t;
+    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Acreate2")]
+    pub fn H5Acreate1(
+        loc_id: hid_t, name: *const c_char, type_id: hid_t, space_id: hid_t, acpl_id: hid_t,
+    ) -> hid_t;
+    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Aiterate2")]
+    pub fn H5Aiterate1(
+        loc_id: hid_t, attr_num: *mut c_uint, op: H5A_operator1_t, op_data: *mut c_void,
+    ) -> herr_t;
 }

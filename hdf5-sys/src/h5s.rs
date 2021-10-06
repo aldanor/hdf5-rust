@@ -1,6 +1,10 @@
 pub use self::H5S_class_t::*;
 pub use self::H5S_sel_type::*;
 pub use self::H5S_seloper_t::*;
+#[cfg(not(hdf5_1_12_0))]
+pub use self::H5Sencode1 as H5Sencode;
+#[cfg(hdf5_1_12_0)]
+pub use self::H5Sencode2 as H5Sencode;
 
 use crate::internal_prelude::*;
 
@@ -97,11 +101,6 @@ extern "C" {
     pub fn H5Sget_select_bounds(spaceid: hid_t, start: *mut hsize_t, end: *mut hsize_t) -> herr_t;
     pub fn H5Sget_select_type(spaceid: hid_t) -> H5S_sel_type;
 }
-
-#[cfg(not(hdf5_1_12_0))]
-pub use self::H5Sencode1 as H5Sencode;
-#[cfg(hdf5_1_12_0)]
-pub use self::H5Sencode2 as H5Sencode;
 
 #[cfg(hdf5_1_10_0)]
 extern "C" {

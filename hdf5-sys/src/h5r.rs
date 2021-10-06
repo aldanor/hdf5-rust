@@ -1,7 +1,12 @@
 pub use self::H5R_type_t::*;
+#[cfg(not(hdf5_1_10_0))]
+pub use H5Rdereference1 as H5Rdereference;
+#[cfg(hdf5_1_10_0)]
+pub use H5Rdereference2 as H5Rdereference;
 
 use crate::internal_prelude::*;
 
+use crate::h5g::H5G_obj_t;
 use crate::h5o::H5O_type_t;
 
 #[repr(C)]
@@ -30,17 +35,14 @@ pub enum H5R_type_t {
 pub type hobj_ref_t = haddr_t;
 pub type hdset_reg_ref_t = [c_uchar; 12usize];
 
-#[cfg(not(hdf5_1_10_0))]
-extern "C" {
-    pub fn H5Rdereference(dataset: hid_t, ref_type: H5R_type_t, ref_: *const c_void) -> hid_t;
-}
-
 extern "C" {
     pub fn H5Rcreate(
         ref_: *mut c_void, loc_id: hid_t, name: *const c_char, ref_type: H5R_type_t,
         space_id: hid_t,
     ) -> herr_t;
     pub fn H5Rget_region(dataset: hid_t, ref_type: H5R_type_t, ref_: *const c_void) -> hid_t;
+    #[deprecated(note = "deprecated in HDF5 1.8.0, use H5Rget_obj_type2")]
+    pub fn H5Rget_obj_type1(id: hid_t, ref_type: H5R_type_t, ref_: *const c_void) -> H5G_obj_t;
     pub fn H5Rget_obj_type2(
         id: hid_t, ref_type: H5R_type_t, ref_: *const c_void, obj_type: *mut H5O_type_t,
     ) -> herr_t;
@@ -49,17 +51,15 @@ extern "C" {
     ) -> ssize_t;
 }
 
-#[cfg(hdf5_1_10_0)]
 extern "C" {
-    #[deprecated(note = "deprecated in HDF5 1.10.0, use H5Rdereference2()")]
+    #[cfg_attr(hdf5_1_10_0, deprecated(note = "deprecated in HDF5 1.10.0, use H5Rdereference2"))]
+    #[cfg_attr(not(hdf5_1_10_0), link_name = "H5Rdereference")]
     pub fn H5Rdereference1(obj_id: hid_t, ref_type: H5R_type_t, ref_: *const c_void) -> hid_t;
+    #[cfg(hdf5_1_10_0)]
     pub fn H5Rdereference2(
         obj_id: hid_t, oapl_id: hid_t, ref_type: H5R_type_t, ref_: *const c_void,
     ) -> hid_t;
 }
-
-#[cfg(hdf5_1_10_0)]
-pub use self::H5Rdereference1 as H5Rdereference;
 
 #[cfg(hdf5_1_12_0)]
 pub const H5R_REF_BUF_SIZE: usize = 64;
