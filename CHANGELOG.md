@@ -51,7 +51,7 @@
 - Added support for creating external links on a `Group` with `link_external`.
 - Added `Location` methods: `get_info`, `get_info_by_name`, `loc_type`, and `open_by_token`.
 - Added `Group` methods: `iter_visit`, `iter_visit_default`, `get_all_of_type`, `datasets`, `groups`, and `named_datatypes`.
-  
+
  ### Changed
 
 - Required Rust compiler version is now `1.51`.
@@ -78,6 +78,7 @@
 - `silence_errors` now work globally and will not be reset on dropping `SilenceErrors`.
 - Errors are not expanded when encountered, but only when being used for printing or by
   the library user.
+- Handles to `hdf5` identifiers are no longer tracked via a registry and is instead handled by stricter semantics of ownership.
 
 ### Fixed
 
