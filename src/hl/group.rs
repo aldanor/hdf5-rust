@@ -307,7 +307,7 @@ impl Group {
 
     fn get_all_of_type(&self, typ: H5O_type_t) -> Result<Vec<Handle>> {
         #[cfg(not(hdf5_1_10_3))]
-        use hdf5_sys::h5o::{H5Oget_info_by_name as H5Oget_info_by_name1, H5Oopen_by_addr};
+        use hdf5_sys::h5o::{H5Oget_info_by_name1, H5Oopen_by_addr};
         #[cfg(all(hdf5_1_10_3, not(hdf5_1_12_0)))]
         use hdf5_sys::h5o::{H5Oget_info_by_name2, H5Oopen_by_addr, H5O_INFO_BASIC};
         #[cfg(hdf5_1_12_0)]
