@@ -215,6 +215,7 @@ impl Group {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TraversalOrder {
     Lexicographic,
     Creation,
@@ -230,6 +231,7 @@ impl From<TraversalOrder> for H5_index_t {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum IterationOrder {
     Increasing,
     Decreasing,
