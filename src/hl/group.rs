@@ -287,7 +287,8 @@ impl From<&H5L_info_t> for LinkInfo {
 impl Group {
     /// Visits all objects in the group
     pub fn iter_visit<F, G>(
-        &self, mut op: F, mut val: G, order: (IterationOrder, TraversalOrder),
+        &self, iteration_order: IterationOrder, traversal_order: TraversalOrder, mut val: G,
+        mut op: F,
     ) -> Result<G>
     where
         F: Fn(&Self, &std::ffi::CStr, LinkInfo, &mut G) -> bool,
@@ -332,8 +333,8 @@ impl Group {
 
         h5call!(H5Literate(
             self.id(),
-            order.1.into(),
-            order.0.into(),
+            traversal_order.into(),
+            iteration_order.into(),
             iter_pos,
             callback_fn,
             other_data
@@ -349,9 +350,10 @@ impl Group {
         #[cfg(hdf5_1_12_0)]
         use hdf5_sys::h5o::{H5Oget_info_by_name3, H5Oopen_by_token, H5O_INFO_BASIC};
 
-        let objects = vec![];
-
         self.iter_visit(
+            IterationOrder::Native,
+            TraversalOrder::Lexicographic,
+            vec![],
             |group, name, _info, objects| {
                 let mut infobuf = std::mem::MaybeUninit::uninit();
                 #[cfg(hdf5_1_12_0)]
@@ -406,8 +408,6 @@ impl Group {
                 }
                 true
             },
-            objects,
-            (IterationOrder::Native, TraversalOrder::Lexicographic),
         )
     }
 
@@ -432,12 +432,13 @@ impl Group {
     /// Returns the names of all objects in the group, non-recursively.
     pub fn member_names(&self) -> Result<Vec<String>> {
         self.iter_visit(
+            IterationOrder::Native,
+            TraversalOrder::Lexicographic,
+            vec![],
             |_, name, _, names| {
                 names.push(name.to_str().unwrap().to_owned());
                 true
             },
-            vec![],
-            (IterationOrder::Native, TraversalOrder::Lexicographic),
         )
     }
 }
