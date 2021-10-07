@@ -7,11 +7,12 @@ use hdf5_sys::{
     h5d::H5Dopen2,
     h5g::{H5G_info_t, H5Gcreate2, H5Gget_info, H5Gopen2},
     h5l::{
-        H5L_info_t, H5L_iterate_t, H5Lcreate_external, H5Lcreate_hard, H5Lcreate_soft, H5Ldelete,
-        H5Lexists, H5Literate, H5Lmove, H5L_SAME_LOC,
+        H5L_info_t, H5L_iterate_t, H5L_type_t, H5Lcreate_external, H5Lcreate_hard, H5Lcreate_soft,
+        H5Ldelete, H5Lexists, H5Literate, H5Lmove, H5L_SAME_LOC,
     },
     h5o::H5O_type_t::{self, H5O_TYPE_DATASET, H5O_TYPE_GROUP, H5O_TYPE_NAMED_DATATYPE},
     h5p::{H5Pcreate, H5Pset_create_intermediate_group},
+    h5t::H5T_cset_t,
 };
 
 use crate::globals::H5P_LINK_CREATE;
@@ -249,6 +250,39 @@ impl From<IterationOrder> for H5_iter_order_t {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum LinkType {
+    Hard,
+    Soft,
+    External,
+}
+
+impl From<H5L_type_t> for LinkType {
+    fn from(link_type: H5L_type_t) -> Self {
+        match link_type {
+            H5L_type_t::H5L_TYPE_HARD => Self::Hard,
+            H5L_type_t::H5L_TYPE_SOFT => Self::Soft,
+            _ => Self::External,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct LinkInfo {
+    link_type: LinkType,
+    creation_order: Option<i64>,
+    is_utf8: bool,
+}
+
+impl From<&H5L_info_t> for LinkInfo {
+    fn from(link: &H5L_info_t) -> Self {
+        let link_type = link.type_.into();
+        let creation_order = if link.corder_valid == 1 { Some(link.corder) } else { None };
+        let is_utf8 = link.cset == H5T_cset_t::H5T_CSET_UTF8;
+        Self { link_type, creation_order, is_utf8 }
+    }
+}
+
 /// Iteration methods
 impl Group {
     /// Visits all objects in the group
@@ -256,7 +290,7 @@ impl Group {
         &self, mut op: F, mut val: G, order: (IterationOrder, TraversalOrder),
     ) -> Result<G>
     where
-        F: Fn(&Self, &std::ffi::CStr, &H5L_info_t, &mut G) -> bool,
+        F: Fn(&Self, &std::ffi::CStr, LinkInfo, &mut G) -> bool,
     {
         /// Struct used to pass a tuple
         struct Vtable<'a, F, D> {
@@ -270,7 +304,7 @@ impl Group {
             id: hid_t, name: *const c_char, info: *const H5L_info_t, op_data: *mut c_void,
         ) -> herr_t
         where
-            F: FnMut(&Group, &std::ffi::CStr, &H5L_info_t, &mut G) -> bool,
+            F: FnMut(&Group, &std::ffi::CStr, LinkInfo, &mut G) -> bool,
         {
             panic::catch_unwind(|| {
                 let vtable = op_data.cast::<Vtable<F, G>>();
@@ -280,7 +314,7 @@ impl Group {
                 let handle = Handle::try_new(id).unwrap();
                 handle.incref();
                 let group = Group::from_handle(handle);
-                if (vtable.f)(&group, name, info, vtable.d) {
+                if (vtable.f)(&group, name, info.into(), vtable.d) {
                     0
                 } else {
                     1
