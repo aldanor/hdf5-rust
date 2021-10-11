@@ -279,9 +279,9 @@ impl From<H5L_type_t> for LinkType {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct LinkInfo {
-    link_type: LinkType,
-    creation_order: Option<i64>,
-    is_utf8: bool,
+    pub link_type: LinkType,
+    pub creation_order: Option<i64>,
+    pub is_utf8: bool,
 }
 
 impl From<&H5L_info_t> for LinkInfo {
