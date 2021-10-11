@@ -176,16 +176,22 @@ impl From<H5O_type_t> for LocationType {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+/// Information about a [`Location`]
 pub struct LocationInfo {
     pub fileno: u64,
     pub token: LocationToken,
     pub loc_type: LocationType,
     pub refcount: usize,
-    pub atime: i64,
-    pub mtime: i64,
-    pub ctime: i64,
-    pub btime: i64,
-    pub num_attrs: usize,
+    /// Not available when requesting only basic info
+    atime: i64,
+    /// Not available when requesting only basic info
+    mtime: i64,
+    /// Not available when requesting only basic info
+    ctime: i64,
+    /// Not available when requesting only basic info
+    btime: i64,
+    /// Not available when requesting only basic info
+    num_attrs: usize,
 }
 
 #[cfg(not(hdf5_1_12_0))]
@@ -296,6 +302,42 @@ pub mod tests {
             assert_eq!(file.comment().unwrap(), "foo");
             assert!(file.clear_comment().is_ok());
             assert!(file.comment().is_none());
+        })
+    }
+
+    #[test]
+    pub fn test_location_info() {
+        with_tmp_file(|file| {
+            let token;
+            {
+                let group = file.create_group("group").unwrap();
+                let info = group.get_info().unwrap();
+                assert_eq!(info.refcount, 1);
+                assert_eq!(info.loc_type, LocationType::Group);
+                token = info.token;
+            }
+            let group = file.open_by_token(token).unwrap();
+            assert_eq!(group.name(), "/group");
+            let token;
+            {
+                let var = file.new_dataset::<i8>().create("var").unwrap();
+                var.new_attr::<i16>().create("attr").unwrap();
+                let info = var.get_info().unwrap();
+                assert_eq!(info.refcount, 1);
+                assert_eq!(info.loc_type, LocationType::Dataset);
+                token = info.token;
+            }
+            let var = file.open_by_token(token).unwrap();
+            assert_eq!(var.name(), "/var");
+
+            let info = file.get_info_by_name("group").unwrap();
+            let group = file.open_by_token(info.token).unwrap();
+            assert_eq!(group.name(), "/group");
+            let info = file.get_info_by_name("var").unwrap();
+            let var = file.open_by_token(info.token).unwrap();
+            assert_eq!(var.name(), "/var");
+
+            assert!(file.get_info_by_name("gibberish").is_err());
         })
     }
 }
