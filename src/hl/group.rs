@@ -222,6 +222,12 @@ pub enum TraversalOrder {
     Creation,
 }
 
+impl Default for TraversalOrder {
+    fn default() -> Self {
+        TraversalOrder::Lexicographic
+    }
+}
+
 impl From<TraversalOrder> for H5_index_t {
     fn from(v: TraversalOrder) -> Self {
         use hdf5_sys::h5::{H5_INDEX_CRT_ORDER, H5_INDEX_NAME};
@@ -237,6 +243,12 @@ pub enum IterationOrder {
     Increasing,
     Decreasing,
     Native,
+}
+
+impl Default for IterationOrder {
+    fn default() -> Self {
+        IterationOrder::Native
+    }
 }
 
 impl From<IterationOrder> for H5_iter_order_t {
