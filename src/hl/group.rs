@@ -218,13 +218,13 @@ impl Group {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TraversalOrder {
-    Lexicographic,
+    Name,
     Creation,
 }
 
 impl Default for TraversalOrder {
     fn default() -> Self {
-        TraversalOrder::Lexicographic
+        TraversalOrder::Name
     }
 }
 
@@ -232,7 +232,7 @@ impl From<TraversalOrder> for H5_index_t {
     fn from(v: TraversalOrder) -> Self {
         use hdf5_sys::h5::{H5_INDEX_CRT_ORDER, H5_INDEX_NAME};
         match v {
-            TraversalOrder::Lexicographic => H5_INDEX_NAME,
+            TraversalOrder::Name => H5_INDEX_NAME,
             TraversalOrder::Creation => H5_INDEX_CRT_ORDER,
         }
     }
