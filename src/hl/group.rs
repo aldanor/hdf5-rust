@@ -10,13 +10,13 @@ use hdf5_sys::{
         H5L_info_t, H5L_iterate_t, H5L_type_t, H5Lcreate_external, H5Lcreate_hard, H5Lcreate_soft,
         H5Ldelete, H5Lexists, H5Literate, H5Lmove, H5L_SAME_LOC,
     },
-    h5o::H5O_type_t::{self, H5O_TYPE_DATASET, H5O_TYPE_GROUP, H5O_TYPE_NAMED_DATATYPE},
     h5p::{H5Pcreate, H5Pset_create_intermediate_group},
     h5t::H5T_cset_t,
 };
 
 use crate::globals::H5P_LINK_CREATE;
 use crate::internal_prelude::*;
+use crate::{Location, LocationType};
 
 /// Represents the HDF5 group object.
 #[repr(transparent)]
@@ -291,7 +291,7 @@ impl Group {
         mut op: F,
     ) -> Result<G>
     where
-        F: Fn(&Self, &std::ffi::CStr, LinkInfo, &mut G) -> bool,
+        F: Fn(&Self, &str, LinkInfo, &mut G) -> bool,
     {
         /// Struct used to pass a tuple
         struct Vtable<'a, F, D> {
@@ -305,7 +305,7 @@ impl Group {
             id: hid_t, name: *const c_char, info: *const H5L_info_t, op_data: *mut c_void,
         ) -> herr_t
         where
-            F: FnMut(&Group, &std::ffi::CStr, LinkInfo, &mut G) -> bool,
+            F: FnMut(&Group, &str, LinkInfo, &mut G) -> bool,
         {
             panic::catch_unwind(|| {
                 let vtable = op_data.cast::<Vtable<F, G>>();
@@ -315,7 +315,7 @@ impl Group {
                 let handle = Handle::try_new(id).unwrap();
                 handle.incref();
                 let group = Group::from_handle(handle);
-                if (vtable.f)(&group, name, info.into(), vtable.d) {
+                if (vtable.f)(&group, name.to_string_lossy().as_ref(), info.into(), vtable.d) {
                     0
                 } else {
                     1
@@ -342,91 +342,44 @@ impl Group {
         .map(|_| val)
     }
 
-    fn get_all_of_type(&self, typ: H5O_type_t) -> Result<Vec<Handle>> {
-        #[cfg(not(hdf5_1_10_3))]
-        use hdf5_sys::h5o::{H5Oget_info_by_name1, H5Oopen_by_addr};
-        #[cfg(all(hdf5_1_10_3, not(hdf5_1_12_0)))]
-        use hdf5_sys::h5o::{H5Oget_info_by_name2, H5Oopen_by_addr, H5O_INFO_BASIC};
-        #[cfg(hdf5_1_12_0)]
-        use hdf5_sys::h5o::{H5Oget_info_by_name3, H5Oopen_by_token, H5O_INFO_BASIC};
-
+    fn get_all_of_type(&self, loc_type: LocationType) -> Result<Vec<Location>> {
         self.iter_visit(
             IterationOrder::Native,
             TraversalOrder::Lexicographic,
             vec![],
             |group, name, _info, objects| {
-                let mut infobuf = std::mem::MaybeUninit::uninit();
-                #[cfg(hdf5_1_12_0)]
-                if h5call!(H5Oget_info_by_name3(
-                    group.id(),
-                    name.as_ptr(),
-                    infobuf.as_mut_ptr(),
-                    H5O_INFO_BASIC,
-                    H5P_DEFAULT
-                ))
-                .is_err()
-                {
-                    return true;
-                };
-                #[cfg(all(hdf5_1_10_3, not(hdf5_1_12_0)))]
-                if h5call!(H5Oget_info_by_name2(
-                    group.id(),
-                    name.as_ptr(),
-                    infobuf.as_mut_ptr(),
-                    H5O_INFO_BASIC,
-                    H5P_DEFAULT
-                ))
-                .is_err()
-                {
-                    return true;
-                };
-                #[cfg(not(hdf5_1_10_3))]
-                if h5call!(H5Oget_info_by_name1(
-                    group.id(),
-                    name.as_ptr(),
-                    infobuf.as_mut_ptr(),
-                    H5P_DEFAULT
-                ))
-                .is_err()
-                {
-                    return true;
-                };
-                let infobuf = unsafe { infobuf.assume_init() };
-                if infobuf.type_ == typ {
-                    #[cfg(hdf5_1_12_0)]
-                    if let Ok(id) = h5call!(H5Oopen_by_token(group.id(), infobuf.token)) {
-                        if let Ok(handle) = Handle::try_new(id) {
-                            objects.push(handle);
+                // TODO: pass &str here
+                if let Ok(info) = group.get_info_by_name(name) {
+                    if info.loc_type == loc_type {
+                        if let Ok(loc) = group.open_by_token(info.token) {
+                            objects.push(loc);
+                            return true; // ok, object extracted and pushed
                         }
-                    }
-                    #[cfg(not(hdf5_1_12_0))]
-                    if let Ok(id) = h5call!(H5Oopen_by_addr(group.id(), infobuf.addr)) {
-                        if let Ok(handle) = Handle::try_new(id) {
-                            objects.push(handle);
-                        }
+                    } else {
+                        return true; // ok, object is of another type, skipped
                     }
                 }
-                true
+                false // an error occured somewhere along the way
             },
         )
     }
 
     /// Returns all groups in the group, non-recursively
     pub fn groups(&self) -> Result<Vec<Self>> {
-        self.get_all_of_type(H5O_TYPE_GROUP)
-            .map(|vec| vec.into_iter().map(Self::from_handle).collect())
+        self.get_all_of_type(LocationType::Group)
+            .map(|vec| vec.into_iter().map(|obj| unsafe { obj.cast() }).collect())
     }
 
     /// Returns all datasets in the group, non-recursively
     pub fn datasets(&self) -> Result<Vec<Dataset>> {
-        self.get_all_of_type(H5O_TYPE_DATASET)
-            .map(|vec| vec.into_iter().map(Dataset::from_handle).collect())
+        self.get_all_of_type(LocationType::Dataset)
+            .map(|vec| vec.into_iter().map(|obj| unsafe { obj.cast() }).collect())
     }
 
     /// Returns all named types in the group, non-recursively
-    pub fn datatypes(&self) -> Result<Vec<Datatype>> {
-        self.get_all_of_type(H5O_TYPE_NAMED_DATATYPE)
-            .map(|vec| vec.into_iter().map(Datatype::from_handle).collect())
+    pub fn named_datatypes(&self) -> Result<Vec<Datatype>> {
+        self.get_all_of_type(LocationType::NamedDatatype)
+            .map(|vec| vec.into_iter().map(|obj| unsafe { obj.cast() }).collect())
     }
 
     /// Returns the names of all objects in the group, non-recursively.
@@ -436,7 +389,7 @@ impl Group {
             TraversalOrder::Lexicographic,
             vec![],
             |_, name, _, names| {
-                names.push(name.to_str().unwrap().to_owned());
+                names.push(name.to_owned());
                 true
             },
         )
