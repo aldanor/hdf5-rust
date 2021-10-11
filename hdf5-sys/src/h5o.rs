@@ -362,7 +362,7 @@ extern "C" {
 pub const H5O_MAX_TOKEN_SIZE: usize = 16;
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg(hdf5_1_12_0)]
 pub struct H5O_token_t {
     __data: [u8; H5O_MAX_TOKEN_SIZE],

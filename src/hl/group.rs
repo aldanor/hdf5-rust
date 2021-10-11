@@ -7,15 +7,16 @@ use hdf5_sys::{
     h5d::H5Dopen2,
     h5g::{H5G_info_t, H5Gcreate2, H5Gget_info, H5Gopen2},
     h5l::{
-        H5L_info_t, H5L_iterate_t, H5Lcreate_external, H5Lcreate_hard, H5Lcreate_soft, H5Ldelete,
-        H5Lexists, H5Literate, H5Lmove, H5L_SAME_LOC,
+        H5L_info_t, H5L_iterate_t, H5L_type_t, H5Lcreate_external, H5Lcreate_hard, H5Lcreate_soft,
+        H5Ldelete, H5Lexists, H5Literate, H5Lmove, H5L_SAME_LOC,
     },
-    h5o::H5O_type_t::{self, H5O_TYPE_DATASET, H5O_TYPE_GROUP, H5O_TYPE_NAMED_DATATYPE},
     h5p::{H5Pcreate, H5Pset_create_intermediate_group},
+    h5t::H5T_cset_t,
 };
 
 use crate::globals::H5P_LINK_CREATE;
 use crate::internal_prelude::*;
+use crate::{Location, LocationType};
 
 /// Represents the HDF5 group object.
 #[repr(transparent)]
@@ -215,35 +216,80 @@ impl Group {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TraversalOrder {
-    Lexicographic,
+    Name,
     Creation,
+}
+
+impl Default for TraversalOrder {
+    fn default() -> Self {
+        TraversalOrder::Name
+    }
 }
 
 impl From<TraversalOrder> for H5_index_t {
     fn from(v: TraversalOrder) -> Self {
-        use hdf5_sys::h5::{H5_INDEX_CRT_ORDER, H5_INDEX_NAME};
         match v {
-            TraversalOrder::Lexicographic => H5_INDEX_NAME,
-            TraversalOrder::Creation => H5_INDEX_CRT_ORDER,
+            TraversalOrder::Name => H5_index_t::H5_INDEX_NAME,
+            TraversalOrder::Creation => H5_index_t::H5_INDEX_CRT_ORDER,
         }
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum IterationOrder {
     Increasing,
     Decreasing,
     Native,
 }
 
+impl Default for IterationOrder {
+    fn default() -> Self {
+        IterationOrder::Native
+    }
+}
+
 impl From<IterationOrder> for H5_iter_order_t {
     fn from(v: IterationOrder) -> Self {
-        use hdf5_sys::h5::{H5_ITER_DEC, H5_ITER_INC, H5_ITER_NATIVE};
         match v {
-            IterationOrder::Increasing => H5_ITER_INC,
-            IterationOrder::Decreasing => H5_ITER_DEC,
-            IterationOrder::Native => H5_ITER_NATIVE,
+            IterationOrder::Increasing => H5_iter_order_t::H5_ITER_INC,
+            IterationOrder::Decreasing => H5_iter_order_t::H5_ITER_DEC,
+            IterationOrder::Native => H5_iter_order_t::H5_ITER_NATIVE,
         }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum LinkType {
+    Hard,
+    Soft,
+    External,
+}
+
+impl From<H5L_type_t> for LinkType {
+    fn from(link_type: H5L_type_t) -> Self {
+        match link_type {
+            H5L_type_t::H5L_TYPE_HARD => Self::Hard,
+            H5L_type_t::H5L_TYPE_SOFT => Self::Soft,
+            _ => Self::External,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct LinkInfo {
+    pub link_type: LinkType,
+    pub creation_order: Option<i64>,
+    pub is_utf8: bool,
+}
+
+impl From<&H5L_info_t> for LinkInfo {
+    fn from(link: &H5L_info_t) -> Self {
+        let link_type = link.type_.into();
+        let creation_order = if link.corder_valid == 1 { Some(link.corder) } else { None };
+        let is_utf8 = link.cset == H5T_cset_t::H5T_CSET_UTF8;
+        Self { link_type, creation_order, is_utf8 }
     }
 }
 
@@ -251,10 +297,11 @@ impl From<IterationOrder> for H5_iter_order_t {
 impl Group {
     /// Visits all objects in the group
     pub fn iter_visit<F, G>(
-        &self, mut op: F, mut val: G, order: (IterationOrder, TraversalOrder),
+        &self, iteration_order: IterationOrder, traversal_order: TraversalOrder, mut val: G,
+        mut op: F,
     ) -> Result<G>
     where
-        F: Fn(&Self, &std::ffi::CStr, &H5L_info_t, &mut G) -> bool,
+        F: Fn(&Self, &str, LinkInfo, &mut G) -> bool,
     {
         /// Struct used to pass a tuple
         struct Vtable<'a, F, D> {
@@ -268,17 +315,18 @@ impl Group {
             id: hid_t, name: *const c_char, info: *const H5L_info_t, op_data: *mut c_void,
         ) -> herr_t
         where
-            F: FnMut(&Group, &std::ffi::CStr, &H5L_info_t, &mut G) -> bool,
+            F: FnMut(&Group, &str, LinkInfo, &mut G) -> bool,
         {
             panic::catch_unwind(|| {
                 let vtable = op_data.cast::<Vtable<F, G>>();
-                let vtable = unsafe { vtable.as_mut().expect("op_data is always non-null") };
+                let vtable = unsafe { vtable.as_mut().expect("iter_visit: null op_data ptr") };
+                unsafe { name.as_ref().expect("iter_visit: null name ptr") };
                 let name = unsafe { std::ffi::CStr::from_ptr(name) };
-                let info = unsafe { info.as_ref().unwrap() };
-                let handle = Handle::try_new(id).unwrap();
+                let info = unsafe { info.as_ref().expect("iter_vist: null info ptr") };
+                let handle = Handle::try_new(id).expect("iter_visit: unable to create a handle");
                 handle.incref();
                 let group = Group::from_handle(handle);
-                if (vtable.f)(&group, name, info, vtable.d) {
+                if (vtable.f)(&group, name.to_string_lossy().as_ref(), info.into(), vtable.d) {
                     0
                 } else {
                     1
@@ -296,8 +344,8 @@ impl Group {
 
         h5call!(H5Literate(
             self.id(),
-            order.1.into(),
-            order.0.into(),
+            traversal_order.into(),
+            iteration_order.into(),
             iter_pos,
             callback_fn,
             other_data
@@ -305,104 +353,54 @@ impl Group {
         .map(|_| val)
     }
 
-    fn get_all_of_type(&self, typ: H5O_type_t) -> Result<Vec<Handle>> {
-        #[cfg(not(hdf5_1_10_3))]
-        use hdf5_sys::h5o::{H5Oget_info_by_name1, H5Oopen_by_addr};
-        #[cfg(all(hdf5_1_10_3, not(hdf5_1_12_0)))]
-        use hdf5_sys::h5o::{H5Oget_info_by_name2, H5Oopen_by_addr, H5O_INFO_BASIC};
-        #[cfg(hdf5_1_12_0)]
-        use hdf5_sys::h5o::{H5Oget_info_by_name3, H5Oopen_by_token, H5O_INFO_BASIC};
+    /// Visits all objects in the group using default iteration/traversal order.
+    pub fn iter_visit_default<F, G>(&self, val: G, op: F) -> Result<G>
+    where
+        F: Fn(&Self, &str, LinkInfo, &mut G) -> bool,
+    {
+        self.iter_visit(IterationOrder::default(), TraversalOrder::default(), val, op)
+    }
 
-        let objects = vec![];
-
-        self.iter_visit(
-            |group, name, _info, objects| {
-                let mut infobuf = std::mem::MaybeUninit::uninit();
-                #[cfg(hdf5_1_12_0)]
-                if h5call!(H5Oget_info_by_name3(
-                    group.id(),
-                    name.as_ptr(),
-                    infobuf.as_mut_ptr(),
-                    H5O_INFO_BASIC,
-                    H5P_DEFAULT
-                ))
-                .is_err()
-                {
-                    return true;
-                };
-                #[cfg(all(hdf5_1_10_3, not(hdf5_1_12_0)))]
-                if h5call!(H5Oget_info_by_name2(
-                    group.id(),
-                    name.as_ptr(),
-                    infobuf.as_mut_ptr(),
-                    H5O_INFO_BASIC,
-                    H5P_DEFAULT
-                ))
-                .is_err()
-                {
-                    return true;
-                };
-                #[cfg(not(hdf5_1_10_3))]
-                if h5call!(H5Oget_info_by_name1(
-                    group.id(),
-                    name.as_ptr(),
-                    infobuf.as_mut_ptr(),
-                    H5P_DEFAULT
-                ))
-                .is_err()
-                {
-                    return true;
-                };
-                let infobuf = unsafe { infobuf.assume_init() };
-                if infobuf.type_ == typ {
-                    #[cfg(hdf5_1_12_0)]
-                    if let Ok(id) = h5call!(H5Oopen_by_token(group.id(), infobuf.token)) {
-                        if let Ok(handle) = Handle::try_new(id) {
-                            objects.push(handle);
-                        }
+    fn get_all_of_type(&self, loc_type: LocationType) -> Result<Vec<Location>> {
+        self.iter_visit_default(vec![], |group, name, _info, objects| {
+            if let Ok(info) = group.get_info_by_name(name) {
+                if info.loc_type == loc_type {
+                    if let Ok(loc) = group.open_by_token(info.token) {
+                        objects.push(loc);
+                        return true; // ok, object extracted and pushed
                     }
-                    #[cfg(not(hdf5_1_12_0))]
-                    if let Ok(id) = h5call!(H5Oopen_by_addr(group.id(), infobuf.addr)) {
-                        if let Ok(handle) = Handle::try_new(id) {
-                            objects.push(handle);
-                        }
-                    }
+                } else {
+                    return true; // ok, object is of another type, skipped
                 }
-                true
-            },
-            objects,
-            (IterationOrder::Native, TraversalOrder::Lexicographic),
-        )
+            }
+            false // an error occured somewhere along the way
+        })
     }
 
     /// Returns all groups in the group, non-recursively
     pub fn groups(&self) -> Result<Vec<Self>> {
-        self.get_all_of_type(H5O_TYPE_GROUP)
-            .map(|vec| vec.into_iter().map(Self::from_handle).collect())
+        self.get_all_of_type(LocationType::Group)
+            .map(|vec| vec.into_iter().map(|obj| unsafe { obj.cast() }).collect())
     }
 
     /// Returns all datasets in the group, non-recursively
     pub fn datasets(&self) -> Result<Vec<Dataset>> {
-        self.get_all_of_type(H5O_TYPE_DATASET)
-            .map(|vec| vec.into_iter().map(Dataset::from_handle).collect())
+        self.get_all_of_type(LocationType::Dataset)
+            .map(|vec| vec.into_iter().map(|obj| unsafe { obj.cast() }).collect())
     }
 
     /// Returns all named types in the group, non-recursively
-    pub fn datatypes(&self) -> Result<Vec<Datatype>> {
-        self.get_all_of_type(H5O_TYPE_NAMED_DATATYPE)
-            .map(|vec| vec.into_iter().map(Datatype::from_handle).collect())
+    pub fn named_datatypes(&self) -> Result<Vec<Datatype>> {
+        self.get_all_of_type(LocationType::NamedDatatype)
+            .map(|vec| vec.into_iter().map(|obj| unsafe { obj.cast() }).collect())
     }
 
     /// Returns the names of all objects in the group, non-recursively.
     pub fn member_names(&self) -> Result<Vec<String>> {
-        self.iter_visit(
-            |_, name, _, names| {
-                names.push(name.to_str().unwrap().to_owned());
-                true
-            },
-            vec![],
-            (IterationOrder::Native, TraversalOrder::Lexicographic),
-        )
+        self.iter_visit_default(vec![], |_, name, _, names| {
+            names.push(name.to_owned());
+            true
+        })
     }
 }
 
