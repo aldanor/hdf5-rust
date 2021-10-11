@@ -319,10 +319,10 @@ impl Group {
         {
             panic::catch_unwind(|| {
                 let vtable = op_data.cast::<Vtable<F, G>>();
-                let vtable = unsafe { vtable.as_mut().expect("op_data is always non-null") };
+                let vtable = unsafe { vtable.as_mut().expect("iter_visit: null op_data ptr") };
                 let name = unsafe { std::ffi::CStr::from_ptr(name) };
-                let info = unsafe { info.as_ref().unwrap() };
-                let handle = Handle::try_new(id).unwrap();
+                let info = unsafe { info.as_ref().expect("iter_vist: null info ptr") };
+                let handle = Handle::try_new(id).expect("iter_visit: unable to create a handle");
                 handle.incref();
                 let group = Group::from_handle(handle);
                 if (vtable.f)(&group, name.to_string_lossy().as_ref(), info.into(), vtable.d) {
