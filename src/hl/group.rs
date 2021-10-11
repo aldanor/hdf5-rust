@@ -224,15 +224,15 @@ pub enum TraversalOrder {
 
 impl Default for TraversalOrder {
     fn default() -> Self {
-        TraversalOrder::Name
+        Self::Name
     }
 }
 
 impl From<TraversalOrder> for H5_index_t {
     fn from(v: TraversalOrder) -> Self {
         match v {
-            TraversalOrder::Name => H5_index_t::H5_INDEX_NAME,
-            TraversalOrder::Creation => H5_index_t::H5_INDEX_CRT_ORDER,
+            TraversalOrder::Name => Self::H5_INDEX_NAME,
+            TraversalOrder::Creation => Self::H5_INDEX_CRT_ORDER,
         }
     }
 }
@@ -246,16 +246,16 @@ pub enum IterationOrder {
 
 impl Default for IterationOrder {
     fn default() -> Self {
-        IterationOrder::Native
+        Self::Native
     }
 }
 
 impl From<IterationOrder> for H5_iter_order_t {
     fn from(v: IterationOrder) -> Self {
         match v {
-            IterationOrder::Increasing => H5_iter_order_t::H5_ITER_INC,
-            IterationOrder::Decreasing => H5_iter_order_t::H5_ITER_DEC,
-            IterationOrder::Native => H5_iter_order_t::H5_ITER_NATIVE,
+            IterationOrder::Increasing => Self::H5_ITER_INC,
+            IterationOrder::Decreasing => Self::H5_ITER_DEC,
+            IterationOrder::Native => Self::H5_ITER_NATIVE,
         }
     }
 }

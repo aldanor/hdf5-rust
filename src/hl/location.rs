@@ -138,7 +138,7 @@ impl Location {
         H5O_get_info_by_name(self.id(), name.as_ptr())
     }
 
-    pub fn open_by_token(&self, token: LocationToken) -> Result<Location> {
+    pub fn open_by_token(&self, token: LocationToken) -> Result<Self> {
         H5O_open_by_token(self.id(), token)
     }
 }
