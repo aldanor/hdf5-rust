@@ -320,6 +320,7 @@ impl Group {
             panic::catch_unwind(|| {
                 let vtable = op_data.cast::<Vtable<F, G>>();
                 let vtable = unsafe { vtable.as_mut().expect("iter_visit: null op_data ptr") };
+                unsafe { name.as_ref().expect("iter_visit: null name ptr") };
                 let name = unsafe { std::ffi::CStr::from_ptr(name) };
                 let info = unsafe { info.as_ref().expect("iter_vist: null info ptr") };
                 let handle = Handle::try_new(id).expect("iter_visit: unable to create a handle");
