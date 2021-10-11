@@ -258,7 +258,7 @@ fn H5O_open_by_token(loc_id: hid_t, token: LocationToken) -> Result<Location> {
     }
     #[cfg(hdf5_1_12_0)]
     {
-        Location::from_id(h5call!(H5Oopen_by_token(loc_id, token.0)))
+        Location::from_id(h5call!(H5Oopen_by_token(loc_id, token.0))?)
     }
 }
 
