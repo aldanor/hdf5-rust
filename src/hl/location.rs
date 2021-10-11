@@ -4,11 +4,15 @@ use std::ptr;
 
 #[allow(deprecated)]
 use hdf5_sys::h5o::H5Oset_comment;
+#[cfg(hdf5_1_12_0)]
+use hdf5_sys::h5o::{H5O_info2_t, H5O_token_t};
+#[cfg(not(hdf5_1_12_0))]
+use hdf5_sys::{h5::haddr_t, h5o::H5O_info1_t};
 use hdf5_sys::{
     h5a::H5Aopen,
     h5f::H5Fget_name,
     h5i::{H5Iget_file_id, H5Iget_name},
-    h5o::H5Oget_comment,
+    h5o::{H5O_type_t, H5Oget_comment},
 };
 
 use crate::internal_prelude::*;
@@ -110,6 +114,85 @@ impl Location {
 
     pub fn attr_names(&self) -> Result<Vec<String>> {
         Attribute::attr_names(self)
+    }
+}
+
+#[cfg(hdf5_1_12_0)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct LocationToken(H5O_token_t);
+
+#[cfg(not(hdf5_1_12_0))]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct LocationToken(haddr_t);
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum LocationType {
+    Group,
+    Dataset,
+    NamedDatatype,
+    #[cfg(hdf5_1_12_0)]
+    TypeMap,
+}
+
+impl From<H5O_type_t> for LocationType {
+    fn from(loc_type: H5O_type_t) -> Self {
+        // we're assuming here that if a C API call returns H5O_TYPE_UNKNOWN (-1), then
+        // an error has occured anyway and has been pushed on the error stack so we'll
+        // catch it, and the value of -1 will never reach this conversion function
+        match loc_type {
+            H5O_type_t::H5O_TYPE_DATASET => Self::Dataset,
+            H5O_type_t::H5O_TYPE_NAMED_DATATYPE => Self::NamedDatatype,
+            #[cfg(hdf5_1_12_0)]
+            H5O_type_t::H5O_TYPE_MAP => Self::TypeMap,
+            _ => Self::Group, // see the comment above
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct LocationInfo {
+    pub fileno: u64,
+    pub token: LocationToken,
+    pub loc_type: LocationType,
+    pub refcount: usize,
+    pub atime: i64,
+    pub mtime: i64,
+    pub ctime: i64,
+    pub btime: i64,
+    pub num_attrs: usize,
+}
+
+#[cfg(not(hdf5_1_12_0))]
+impl From<H5O_info1_t> for LocationInfo {
+    fn from(info: H5O_info1_t) -> Self {
+        Self {
+            fileno: info.fileno as _,
+            token: LocationToken(info.addr),
+            loc_type: info.type_.into(),
+            refcount: info.rc as _,
+            atime: info.atime as _,
+            mtime: info.mtime as _,
+            ctime: info.ctime as _,
+            btime: info.btime as _,
+            num_attrs: info.num_attrs as _,
+        }
+    }
+}
+
+#[cfg(hdf5_1_12_0)]
+impl From<H5O_info2_t> for LocationInfo {
+    fn from(info: H5O_info2_t) -> Self {
+        Self {
+            fileno: info.fileno as _,
+            token: LocationToken(info.token),
+            loc_type: info.type_.into(),
+            refcount: info.rc as _,
+            atime: info.atime as _,
+            mtime: info.mtime as _,
+            ctime: info.ctime as _,
+            btime: info.btime as _,
+            num_attrs: info.num_attrs as _,
+        }
     }
 }
 
