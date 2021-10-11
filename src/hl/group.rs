@@ -230,10 +230,9 @@ impl Default for TraversalOrder {
 
 impl From<TraversalOrder> for H5_index_t {
     fn from(v: TraversalOrder) -> Self {
-        use hdf5_sys::h5::{H5_INDEX_CRT_ORDER, H5_INDEX_NAME};
         match v {
-            TraversalOrder::Name => H5_INDEX_NAME,
-            TraversalOrder::Creation => H5_INDEX_CRT_ORDER,
+            TraversalOrder::Name => H5_index_t::H5_INDEX_NAME,
+            TraversalOrder::Creation => H5_index_t::H5_INDEX_CRT_ORDER,
         }
     }
 }
@@ -253,11 +252,10 @@ impl Default for IterationOrder {
 
 impl From<IterationOrder> for H5_iter_order_t {
     fn from(v: IterationOrder) -> Self {
-        use hdf5_sys::h5::{H5_ITER_DEC, H5_ITER_INC, H5_ITER_NATIVE};
         match v {
-            IterationOrder::Increasing => H5_ITER_INC,
-            IterationOrder::Decreasing => H5_ITER_DEC,
-            IterationOrder::Native => H5_ITER_NATIVE,
+            IterationOrder::Increasing => H5_iter_order_t::H5_ITER_INC,
+            IterationOrder::Decreasing => H5_iter_order_t::H5_ITER_DEC,
+            IterationOrder::Native => H5_iter_order_t::H5_ITER_NATIVE,
         }
     }
 }
