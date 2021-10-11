@@ -11,8 +11,9 @@ pub use {
 pub use {H5O_info2_t as H5O_info_t, H5O_iterate2_t as H5O_iterate_t};
 #[cfg(not(hdf5_1_10_3))]
 pub use {
-    H5Oget_info_by_idx1 as H5Oget_info_by_idx, H5Oget_info_by_name1 as H5Oget_info_by_name,
-    H5Ovisit1 as H5Ovisit, H5Ovisit_by_name1 as H5Ovisit_by_name,
+    H5Oget_info1 as H5Oget_info, H5Oget_info_by_idx1 as H5Oget_info_by_idx,
+    H5Oget_info_by_name1 as H5Oget_info_by_name, H5Ovisit1 as H5Ovisit,
+    H5Ovisit_by_name1 as H5Ovisit_by_name,
 };
 
 use crate::internal_prelude::*;
@@ -206,7 +207,8 @@ pub type H5O_mcdt_search_cb_t =
 
 #[cfg(not(hdf5_1_10_3))]
 extern "C" {
-    pub fn H5Oget_info(loc_id: hid_t, oinfo: *mut H5O_info1_t) -> herr_t;
+    #[link_name = "H5Oget_info"]
+    pub fn H5Oget_info1(loc_id: hid_t, oinfo: *mut H5O_info1_t) -> herr_t;
     #[link_name = "H5Oget_info_by_name"]
     pub fn H5Oget_info_by_name1(
         loc_id: hid_t, name: *const c_char, oinfo: *mut H5O_info1_t, lapl_id: hid_t,
