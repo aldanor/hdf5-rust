@@ -25,7 +25,7 @@ pub use self::{
     datatype::{Conversion, Datatype},
     file::{File, FileBuilder, OpenMode},
     group::Group,
-    location::Location,
+    location::{Location, LocationInfo, LocationToken, LocationType},
     object::Object,
     plist::PropertyList,
 };
