@@ -354,26 +354,29 @@ impl Group {
         .map(|_| val)
     }
 
+    /// Visits all objects in the group using default iteration/traversal order.
+    pub fn iter_visit_default<F, G>(&self, val: G, op: F) -> Result<G>
+    where
+        F: Fn(&Self, &str, LinkInfo, &mut G) -> bool,
+    {
+        self.iter_visit(IterationOrder::default(), TraversalOrder::default(), val, op)
+    }
+
     fn get_all_of_type(&self, loc_type: LocationType) -> Result<Vec<Location>> {
-        self.iter_visit(
-            IterationOrder::Native,
-            TraversalOrder::Lexicographic,
-            vec![],
-            |group, name, _info, objects| {
-                // TODO: pass &str here
-                if let Ok(info) = group.get_info_by_name(name) {
-                    if info.loc_type == loc_type {
-                        if let Ok(loc) = group.open_by_token(info.token) {
-                            objects.push(loc);
-                            return true; // ok, object extracted and pushed
-                        }
-                    } else {
-                        return true; // ok, object is of another type, skipped
+        self.iter_visit_default(vec![], |group, name, _info, objects| {
+            // TODO: pass &str here
+            if let Ok(info) = group.get_info_by_name(name) {
+                if info.loc_type == loc_type {
+                    if let Ok(loc) = group.open_by_token(info.token) {
+                        objects.push(loc);
+                        return true; // ok, object extracted and pushed
                     }
+                } else {
+                    return true; // ok, object is of another type, skipped
                 }
-                false // an error occured somewhere along the way
-            },
-        )
+            }
+            false // an error occured somewhere along the way
+        })
     }
 
     /// Returns all groups in the group, non-recursively
@@ -396,15 +399,10 @@ impl Group {
 
     /// Returns the names of all objects in the group, non-recursively.
     pub fn member_names(&self) -> Result<Vec<String>> {
-        self.iter_visit(
-            IterationOrder::Native,
-            TraversalOrder::Lexicographic,
-            vec![],
-            |_, name, _, names| {
-                names.push(name.to_owned());
-                true
-            },
-        )
+        self.iter_visit_default(vec![], |_, name, _, names| {
+            names.push(name.to_owned());
+            true
+        })
     }
 }
 
