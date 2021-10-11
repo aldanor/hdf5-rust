@@ -363,7 +363,6 @@ impl Group {
 
     fn get_all_of_type(&self, loc_type: LocationType) -> Result<Vec<Location>> {
         self.iter_visit_default(vec![], |group, name, _info, objects| {
-            // TODO: pass &str here
             if let Ok(info) = group.get_info_by_name(name) {
                 if info.loc_type == loc_type {
                     if let Ok(loc) = group.open_by_token(info.token) {
