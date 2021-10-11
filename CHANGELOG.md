@@ -49,6 +49,8 @@
   but must read the entire attribute at once).
 - Added support in `hdf5-sys` for the new functions in `hdf5` `1.10.6` and `1.10.7`.
 - Added support for creating external links on a `Group` with `link_external`.
+- Added `Location` methods: `get_info`, `get_info_by_name`, `loc_type`, and `open_by_token`.
+- Added `Group` methods: `iter_visit`, `iter_visit_default`, `get_all_of_type`, `datasets`, `groups`, and `named_datatypes`.
   
  ### Changed
 
