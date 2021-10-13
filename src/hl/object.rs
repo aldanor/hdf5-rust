@@ -136,6 +136,7 @@ pub mod tests {
 
     #[test]
     pub fn test_incref_decref_drop() {
+        use std::mem::ManuallyDrop;
         let mut obj = TestObject::from_id(h5call!(H5Pcreate(*H5P_FILE_ACCESS)).unwrap()).unwrap();
         let obj_id = obj.id();
         obj = TestObject::from_id(h5call!(H5Pcreate(*H5P_FILE_ACCESS)).unwrap()).unwrap();
@@ -157,12 +158,12 @@ pub mod tests {
 
         // obj is already owned, we must ensure we do not call drop on this without
         // an incref
-        let mut obj2 = std::mem::ManuallyDrop::new(TestObject::from_id(obj.id()).unwrap());
+        let mut obj2 = ManuallyDrop::new(TestObject::from_id(obj.id()).unwrap());
         assert_eq!(obj.refcount(), 1);
 
         obj2.incref();
         // We can now take, as we have exactly two handles
-        let obj2 = unsafe { std::mem::ManuallyDrop::take(&mut obj2) };
+        let obj2 = unsafe { ManuallyDrop::take(&mut obj2) };
 
         h5lock!({
             // We must hold a lock here to prevent another thread creating an object
