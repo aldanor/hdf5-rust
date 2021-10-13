@@ -104,10 +104,7 @@ impl Handle {
 
 impl Clone for Handle {
     fn clone(&self) -> Self {
-        h5lock!({
-            self.incref();
-            Self::try_new(self.id()).unwrap_or_else(|_| Self::invalid())
-        })
+        Self::try_borrow(self.id()).unwrap_or_else(|_| Self::invalid())
     }
 }
 
