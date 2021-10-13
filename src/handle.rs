@@ -84,7 +84,7 @@ impl Handle {
 
     /// Return the reference count of the object
     pub fn refcount(&self) -> u32 {
-        refcount(self.id).unwrap_or(0) as u32
+        refcount(self.id).unwrap_or(0) as _
     }
 }
 
