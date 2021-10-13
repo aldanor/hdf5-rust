@@ -1,4 +1,5 @@
 use std::fmt::{self, Debug};
+use std::mem;
 use std::ops::Deref;
 use std::path::Path;
 
@@ -154,7 +155,7 @@ impl File {
     pub fn close(self) -> Result<()> {
         let id = self.id();
         // Ensure we only decref once
-        std::mem::forget(self.0);
+        mem::forget(self.0);
         h5call!(H5Fclose(id)).map(|_| ())
     }
 
