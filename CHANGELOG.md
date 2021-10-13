@@ -79,6 +79,7 @@
 - Errors are not expanded when encountered, but only when being used for printing or by
   the library user.
 - Handles to `hdf5` identifiers are no longer tracked via a registry and is instead handled by stricter semantics of ownership.
+- The handle to a `File` will not close all objects in a `File` when dropped, but instead uses a weak file close degree. For the old behaviour see `FileCloseDegree::Strong`.
 
 ### Fixed
 
