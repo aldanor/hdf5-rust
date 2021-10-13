@@ -736,7 +736,7 @@ impl OwnedDynValue {
     ///
     /// Will fail if the type-descriptors are not equal
     pub fn cast<T: H5Type>(mut self) -> Result<T, Self> {
-        use std::mem::MaybeUninit;
+        use mem::MaybeUninit;
         if self.tp != T::type_descriptor() {
             return Err(self);
         }
@@ -758,7 +758,7 @@ impl OwnedDynValue {
         self.tp = <[u8; 0]>::type_descriptor();
         // We must also swap out the buffer to ensure we can create the `DynValue`
         let mut b: Box<[u8]> = Box::new([]);
-        std::mem::swap(&mut self.buf, &mut b);
+        mem::swap(&mut self.buf, &mut b);
 
         Ok(unsafe { out.assume_init() })
     }
