@@ -20,6 +20,7 @@
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::unnecessary_unwrap))]
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::unnecessary_wraps))]
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::upper_case_acronyms))]
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::missing_panics_doc))]
 #![cfg_attr(all(feature = "cargo-clippy", test), allow(clippy::cyclomatic_complexity))]
 #![cfg_attr(not(test), allow(dead_code))]
 
@@ -37,7 +38,8 @@ mod export {
             Attribute, AttributeBuilder, AttributeBuilderData, AttributeBuilderEmpty,
             AttributeBuilderEmptyShape, Container, Conversion, Dataset, DatasetBuilder,
             DatasetBuilderData, DatasetBuilderEmpty, DatasetBuilderEmptyShape, Dataspace, Datatype,
-            File, FileBuilder, Group, Location, Object, PropertyList, Reader, Writer,
+            File, FileBuilder, Group, LinkInfo, LinkType, Location, LocationInfo, LocationToken,
+            LocationType, Object, PropertyList, Reader, Writer,
         },
     };
 

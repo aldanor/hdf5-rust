@@ -9,6 +9,12 @@ pub use {
 };
 #[cfg(hdf5_1_12_0)]
 pub use {H5O_info2_t as H5O_info_t, H5O_iterate2_t as H5O_iterate_t};
+#[cfg(not(hdf5_1_10_3))]
+pub use {
+    H5Oget_info1 as H5Oget_info, H5Oget_info_by_idx1 as H5Oget_info_by_idx,
+    H5Oget_info_by_name1 as H5Oget_info_by_name, H5Ovisit1 as H5Ovisit,
+    H5Ovisit_by_name1 as H5Ovisit_by_name,
+};
 
 use crate::internal_prelude::*;
 
@@ -201,19 +207,24 @@ pub type H5O_mcdt_search_cb_t =
 
 #[cfg(not(hdf5_1_10_3))]
 extern "C" {
-    pub fn H5Oget_info(loc_id: hid_t, oinfo: *mut H5O_info1_t) -> herr_t;
-    pub fn H5Oget_info_by_name(
+    #[link_name = "H5Oget_info"]
+    pub fn H5Oget_info1(loc_id: hid_t, oinfo: *mut H5O_info1_t) -> herr_t;
+    #[link_name = "H5Oget_info_by_name"]
+    pub fn H5Oget_info_by_name1(
         loc_id: hid_t, name: *const c_char, oinfo: *mut H5O_info1_t, lapl_id: hid_t,
     ) -> herr_t;
-    pub fn H5Oget_info_by_idx(
+    #[link_name = "H5Oget_info_by_idx"]
+    pub fn H5Oget_info_by_idx1(
         loc_id: hid_t, group_name: *const c_char, idx_type: H5_index_t, order: H5_iter_order_t,
         n: hsize_t, oinfo: *mut H5O_info1_t, lapl_id: hid_t,
     ) -> herr_t;
-    pub fn H5Ovisit(
+    #[link_name = "H5Ovisit"]
+    pub fn H5Ovisit1(
         obj_id: hid_t, idx_type: H5_index_t, order: H5_iter_order_t, op: H5O_iterate1_t,
         op_data: *mut c_void,
     ) -> herr_t;
-    pub fn H5Ovisit_by_name(
+    #[link_name = "H5Ovisit_by_name"]
+    pub fn H5Ovisit_by_name1(
         loc_id: hid_t, obj_name: *const c_char, idx_type: H5_index_t, order: H5_iter_order_t,
         op: H5O_iterate1_t, op_data: *mut c_void, lapl_id: hid_t,
     ) -> herr_t;
@@ -353,7 +364,7 @@ extern "C" {
 pub const H5O_MAX_TOKEN_SIZE: usize = 16;
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg(hdf5_1_12_0)]
 pub struct H5O_token_t {
     __data: [u8; H5O_MAX_TOKEN_SIZE],
@@ -370,15 +381,15 @@ impl Default for H5O_token_t {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct H5O_info2_t {
-    fileno: c_ulong,
-    token: H5O_token_t,
-    type_: H5O_type_t,
-    rc: c_uint,
-    atime: time_t,
-    mtime: time_t,
-    ctime: time_t,
-    btime: time_t,
-    num_attrs: hsize_t,
+    pub fileno: c_ulong,
+    pub token: H5O_token_t,
+    pub type_: H5O_type_t,
+    pub rc: c_uint,
+    pub atime: time_t,
+    pub mtime: time_t,
+    pub ctime: time_t,
+    pub btime: time_t,
+    pub num_attrs: hsize_t,
 }
 
 #[cfg(hdf5_1_12_0)]
