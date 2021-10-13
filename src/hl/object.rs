@@ -50,13 +50,7 @@ impl Object {
     }
 
     pub(crate) fn try_borrow(&self) -> Result<Handle> {
-        h5lock!({
-            let handle = Handle::try_new(self.id());
-            if let Ok(ref handle) = handle {
-                handle.incref();
-            }
-            handle
-        })
+        Handle::try_borrow(self.id())
     }
 }
 

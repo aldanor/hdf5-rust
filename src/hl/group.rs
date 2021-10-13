@@ -323,8 +323,7 @@ impl Group {
                 unsafe { name.as_ref().expect("iter_visit: null name ptr") };
                 let name = unsafe { std::ffi::CStr::from_ptr(name) };
                 let info = unsafe { info.as_ref().expect("iter_vist: null info ptr") };
-                let handle = Handle::try_new(id).expect("iter_visit: unable to create a handle");
-                handle.incref();
+                let handle = Handle::try_borrow(id).expect("iter_visit: unable to create a handle");
                 let group = Group::from_handle(handle);
                 if (vtable.f)(&group, name.to_string_lossy().as_ref(), info.into(), vtable.d) {
                     0

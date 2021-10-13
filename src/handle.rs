@@ -47,6 +47,18 @@ impl Handle {
         })
     }
 
+    /// Create a handle from object ID by cloning it
+    pub fn try_borrow(id: hid_t) -> Result<Self> {
+        h5lock!({
+            if is_valid_user_id(id) {
+                h5call!(H5Iinc_ref(id))?;
+                Ok(Self { id })
+            } else {
+                Err(From::from(format!("Invalid handle id: {}", id)))
+            }
+        })
+    }
+
     pub const fn invalid() -> Self {
         Self { id: H5I_INVALID_HID }
     }
