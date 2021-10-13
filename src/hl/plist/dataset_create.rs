@@ -1,7 +1,6 @@
 //! Dataset creation properties.
 
 use std::fmt::{self, Debug};
-use std::mem;
 use std::ops::Deref;
 use std::ptr;
 
@@ -722,11 +721,11 @@ impl DatasetCreate {
             FillValue::Default | FillValue::UserDefined => {
                 let dtype = Datatype::from_descriptor(tp)?;
                 let mut buf: Vec<u8> = Vec::with_capacity(tp.size());
+                h5try!(H5Pget_fill_value(self.id(), dtype.id(), buf.as_mut_ptr().cast()));
                 unsafe {
                     buf.set_len(tp.size());
                 }
-                h5try!(H5Pget_fill_value(self.id(), dtype.id(), buf.as_mut_ptr().cast()));
-                Ok(Some(unsafe { OwnedDynValue::from_raw(tp.clone(), buf) }))
+                Ok(Some(unsafe { OwnedDynValue::from_raw(tp.clone(), buf.into_boxed_slice()) }))
             }
             FillValue::Undefined => Ok(None),
         }
@@ -739,13 +738,13 @@ impl DatasetCreate {
     #[doc(hidden)]
     pub fn get_fill_value_as<T: H5Type>(&self) -> Result<Option<T>> {
         let dtype = Datatype::from_type::<T>()?;
-        Ok(self.get_fill_value(&dtype.to_descriptor()?)?.map(|value| unsafe {
-            let mut out: T = mem::zeroed();
-            let buf = value.get_buf();
-            ptr::copy_nonoverlapping(buf.as_ptr(), (&mut out as *mut T).cast(), buf.len());
-            mem::forget(value);
-            out
-        }))
+        self.get_fill_value(&dtype.to_descriptor()?)?
+            .map(|value| {
+                value
+                    .cast::<T>()
+                    .map_err(|_| "The fill value and requested types are not equal".into())
+            })
+            .transpose()
     }
 
     pub fn fill_value_as<T: H5Type>(&self) -> Option<T> {

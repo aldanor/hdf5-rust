@@ -1,12 +1,12 @@
 use std::fmt::{self, Debug};
+use std::mem;
 use std::ops::Deref;
 use std::path::Path;
 
 use hdf5_sys::h5f::{
     H5Fclose, H5Fcreate, H5Fflush, H5Fget_access_plist, H5Fget_create_plist, H5Fget_filesize,
     H5Fget_freespace, H5Fget_intent, H5Fget_obj_count, H5Fget_obj_ids, H5Fopen, H5F_ACC_DEFAULT,
-    H5F_ACC_EXCL, H5F_ACC_RDONLY, H5F_ACC_RDWR, H5F_ACC_TRUNC, H5F_OBJ_ALL, H5F_OBJ_FILE,
-    H5F_SCOPE_LOCAL,
+    H5F_ACC_EXCL, H5F_ACC_RDONLY, H5F_ACC_RDWR, H5F_ACC_TRUNC, H5F_SCOPE_LOCAL,
 };
 
 use crate::hl::plist::{
@@ -133,6 +133,7 @@ impl File {
     }
 
     /// Returns objects IDs of the contained objects. NOTE: these are borrowed references.
+    #[allow(unused)]
     fn get_obj_ids(&self, types: c_uint) -> Vec<hid_t> {
         h5lock!({
             let count = h5call!(H5Fget_obj_count(self.id(), types)).unwrap_or(0) as size_t;
@@ -151,26 +152,11 @@ impl File {
     }
 
     /// Closes the file and invalidates all open handles for contained objects.
-    pub fn close(self) {
-        h5lock!({
-            let file_ids = self.get_obj_ids(H5F_OBJ_FILE);
-            let object_ids = self.get_obj_ids(H5F_OBJ_ALL & !H5F_OBJ_FILE);
-            for file_id in &file_ids {
-                if let Ok(handle) = Handle::try_new(*file_id) {
-                    handle.decref_full();
-                }
-            }
-            for object_id in &object_ids {
-                if let Ok(handle) = Handle::try_new(*object_id) {
-                    handle.decref_full();
-                }
-            }
-            H5Fclose(self.id());
-            while self.is_valid() {
-                self.0.decref();
-            }
-            self.0.decref();
-        });
+    pub fn close(self) -> Result<()> {
+        let id = self.id();
+        // Ensure we only decref once
+        mem::forget(self.0);
+        h5call!(H5Fclose(id)).map(|_| ())
     }
 
     /// Returns a copy of the file access property list.
@@ -500,6 +486,77 @@ pub mod tests {
     }
 
     #[test]
+    fn test_strong_close() {
+        use crate::hl::plist::file_access::FileCloseDegree;
+        with_tmp_path(|path| {
+            let file = File::with_options()
+                .with_fapl(|fapl| fapl.fclose_degree(FileCloseDegree::Strong))
+                .create(&path)
+                .unwrap();
+            assert_eq!(file.refcount(), 1);
+            let fileid = file.id();
+
+            let group = file.create_group("foo").unwrap();
+            assert_eq!(file.refcount(), 1);
+            assert_eq!(group.refcount(), 1);
+
+            let file_copy = group.file().unwrap();
+            assert_eq!(group.refcount(), 1);
+            assert_eq!(file.refcount(), 2);
+            assert_eq!(file_copy.refcount(), 2);
+
+            drop(file);
+            assert_eq!(crate::handle::refcount(fileid).unwrap(), 1);
+            assert_eq!(group.refcount(), 1);
+            assert_eq!(file_copy.refcount(), 1);
+
+            h5lock!({
+                // Lock to ensure fileid does not get overwritten
+                let groupid = group.id();
+                drop(file_copy);
+                assert!(crate::handle::refcount(fileid).is_err());
+                assert!(crate::handle::refcount(groupid).is_err());
+                assert!(!group.is_valid());
+                drop(group);
+            });
+        });
+    }
+
+    #[test]
+    fn test_weak_close() {
+        use crate::hl::plist::file_access::FileCloseDegree;
+        with_tmp_path(|path| {
+            let file = File::with_options()
+                .with_fapl(|fapl| fapl.fclose_degree(FileCloseDegree::Weak))
+                .create(&path)
+                .unwrap();
+            assert_eq!(file.refcount(), 1);
+            let fileid = file.id();
+
+            let group = file.create_group("foo").unwrap();
+            assert_eq!(file.refcount(), 1);
+            assert_eq!(group.refcount(), 1);
+
+            let file_copy = group.file().unwrap();
+            assert_eq!(group.refcount(), 1);
+            assert_eq!(file.refcount(), 2);
+            assert_eq!(file_copy.refcount(), 2);
+
+            drop(file);
+            assert_eq!(crate::handle::refcount(fileid).unwrap(), 1);
+            assert_eq!(group.refcount(), 1);
+            assert_eq!(file_copy.refcount(), 1);
+
+            h5lock!({
+                // Lock to ensure fileid does not get overwritten
+                drop(file_copy);
+                assert!(crate::handle::refcount(fileid).is_err());
+            });
+            assert_eq!(group.refcount(), 1);
+        });
+    }
+
+    #[test]
     pub fn test_close_automatic() {
         // File going out of scope should just close its own handle
         with_tmp_path(|path| {
@@ -513,26 +570,13 @@ pub mod tests {
     }
 
     #[test]
-    pub fn test_close_manual() {
-        // File::close() should close handles of all related objects
-        with_tmp_path(|path| {
-            let file = File::create(&path).unwrap();
-            let group = file.create_group("foo").unwrap();
-            let file_copy = group.file().unwrap();
-            file.close();
-            assert!(!group.is_valid());
-            assert!(!file_copy.is_valid());
-        })
-    }
-
-    #[test]
     pub fn test_core_fd_non_filebacked() {
         with_tmp_path(|path| {
             let file =
                 FileBuilder::new().with_fapl(|p| p.core_filebacked(false)).create(&path).unwrap();
             file.create_group("x").unwrap();
             assert!(file.is_valid());
-            file.close();
+            file.close().unwrap();
             assert!(fs::metadata(&path).is_err());
             assert_err!(
                 FileBuilder::new().with_fapl(|p| p.core()).open(&path),
@@ -548,7 +592,7 @@ pub mod tests {
                 FileBuilder::new().with_fapl(|p| p.core_filebacked(true)).create(&path).unwrap();
             assert!(file.is_valid());
             file.create_group("bar").unwrap();
-            file.close();
+            file.close().unwrap();
             assert!(fs::metadata(&path).is_ok());
             File::open(&path).unwrap().group("bar").unwrap();
         })
@@ -594,8 +638,8 @@ pub mod tests {
             let path = dir.join("qwe.h5");
             let file = File::create(&path).unwrap();
             assert_eq!(format!("{:?}", file), "<HDF5 file: \"qwe.h5\" (read/write)>");
-            let root = file.file().unwrap();
-            file.close();
+            file.close().unwrap();
+            let root = File::from_handle(Handle::invalid());
             assert_eq!(format!("{:?}", root), "<HDF5 file: invalid id>");
             let file = File::open(&path).unwrap();
             assert_eq!(format!("{:?}", file), "<HDF5 file: \"qwe.h5\" (read-only)>");

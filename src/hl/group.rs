@@ -323,8 +323,7 @@ impl Group {
                 unsafe { name.as_ref().expect("iter_visit: null name ptr") };
                 let name = unsafe { std::ffi::CStr::from_ptr(name) };
                 let info = unsafe { info.as_ref().expect("iter_vist: null info ptr") };
-                let handle = Handle::try_new(id).expect("iter_visit: unable to create a handle");
-                handle.incref();
+                let handle = Handle::try_borrow(id).expect("iter_visit: unable to create a handle");
                 let group = Group::from_handle(handle);
                 if (vtable.f)(&group, name.to_string_lossy().as_ref(), info.into(), vtable.d) {
                     0
@@ -410,7 +409,12 @@ pub mod tests {
 
     #[test]
     pub fn test_debug() {
-        with_tmp_file(|file| {
+        use crate::hl::plist::file_access::FileCloseDegree;
+        with_tmp_path(|path| {
+            let file = File::with_options()
+                .with_fapl(|fapl| fapl.fclose_degree(FileCloseDegree::Strong))
+                .create(&path)
+                .unwrap();
             file.create_group("a/b/c").unwrap();
             file.create_group("/a/d").unwrap();
             let a = file.group("a").unwrap();
@@ -419,8 +423,13 @@ pub mod tests {
             assert_eq!(format!("{:?}", a), "<HDF5 group: \"/a\" (2 members)>");
             assert_eq!(format!("{:?}", ab), "<HDF5 group: \"/a/b\" (1 member)>");
             assert_eq!(format!("{:?}", abc), "<HDF5 group: \"/a/b/c\" (empty)>");
-            file.close();
-            assert_eq!(format!("{:?}", a), "<HDF5 group: invalid id>");
+            h5lock!({
+                file.close().unwrap();
+                assert_eq!(format!("{:?}", a), "<HDF5 group: invalid id>");
+                drop(a);
+                drop(ab);
+                drop(abc);
+            })
         })
     }
 

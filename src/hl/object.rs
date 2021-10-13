@@ -1,7 +1,5 @@
 use std::fmt::{self, Debug};
 
-use hdf5_sys::h5i::H5Iget_ref;
-
 use crate::internal_prelude::*;
 
 /// Any HDF5 object that can be referenced through an identifier.
@@ -37,11 +35,7 @@ impl Object {
 
     /// Returns reference count if the handle is valid and 0 otherwise.
     pub fn refcount(&self) -> u32 {
-        if self.is_valid() {
-            h5call!(H5Iget_ref(self.id())).unwrap_or(0) as _
-        } else {
-            0
-        }
+        self.handle().refcount()
     }
 
     /// Returns `true` if the object has a valid unlocked identifier (`false` for pre-defined
@@ -56,13 +50,7 @@ impl Object {
     }
 
     pub(crate) fn try_borrow(&self) -> Result<Handle> {
-        h5lock!({
-            let handle = Handle::try_new(self.id());
-            if let Ok(ref handle) = handle {
-                handle.incref();
-            }
-            handle
-        })
+        Handle::try_borrow(self.id())
     }
 }
 
@@ -130,15 +118,19 @@ pub mod tests {
         obj.decref();
         assert_eq!(obj.refcount(), 1);
         obj.decref();
-        obj.decref();
-        assert_eq!(obj.refcount(), 0);
-        assert!(!obj.is_valid());
-        assert!(!is_valid_user_id(obj.id()));
-        assert!(!is_valid_id(obj.id()));
+        h5lock!({
+            obj.decref();
+            assert_eq!(obj.refcount(), 0);
+            assert!(!obj.is_valid());
+            assert!(!is_valid_user_id(obj.id()));
+            assert!(!is_valid_id(obj.id()));
+            drop(obj);
+        });
     }
 
     #[test]
     pub fn test_incref_decref_drop() {
+        use std::mem::ManuallyDrop;
         let mut obj = TestObject::from_id(h5call!(H5Pcreate(*H5P_FILE_ACCESS)).unwrap()).unwrap();
         let obj_id = obj.id();
         obj = TestObject::from_id(h5call!(H5Pcreate(*H5P_FILE_ACCESS)).unwrap()).unwrap();
@@ -148,18 +140,40 @@ pub mod tests {
         assert!(is_valid_id(obj.id()));
         assert!(is_valid_user_id(obj.id()));
         assert_eq!(obj.refcount(), 1);
-        let mut obj2 = TestObject::from_id(obj.id()).unwrap();
+
+        let obj2 = TestObject::from_id(obj.id()).unwrap();
         obj2.incref();
         assert_eq!(obj.refcount(), 2);
         assert_eq!(obj2.refcount(), 2);
+
         drop(obj2);
         assert!(obj.is_valid());
         assert_eq!(obj.refcount(), 1);
-        obj2 = TestObject::from_id(obj.id()).unwrap();
+
+        // obj is already owned, we must ensure we do not call drop on this without
+        // an incref
+        let mut obj2 = ManuallyDrop::new(TestObject::from_id(obj.id()).unwrap());
+        assert_eq!(obj.refcount(), 1);
+
         obj2.incref();
-        obj.decref();
-        obj.decref();
-        assert_eq!(obj.id(), H5I_INVALID_HID);
-        assert_eq!(obj2.id(), H5I_INVALID_HID);
+        // We can now take, as we have exactly two handles
+        let obj2 = unsafe { ManuallyDrop::take(&mut obj2) };
+
+        h5lock!({
+            // We must hold a lock here to prevent another thread creating an object
+            // with the same identifier as the one we just owned. Failing to do this
+            // might lead to the wrong object being dropped.
+            obj.decref();
+            obj.decref();
+            // We here have to dangling identifiers stored in obj and obj2. As this part
+            // is locked we know some other object is not going to created with these
+            // identifiers
+            assert!(!obj.is_valid());
+            assert!(!obj2.is_valid());
+            // By manually dropping we don't close some other unrelated objects.
+            // Dropping/closing an invalid object is allowed
+            drop(obj);
+            drop(obj2);
+        });
     }
 }

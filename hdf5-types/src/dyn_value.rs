@@ -702,7 +702,7 @@ impl Display for DynValue<'_> {
 
 pub struct OwnedDynValue {
     tp: TypeDescriptor,
-    buf: Vec<u8>,
+    buf: Box<[u8]>,
 }
 
 impl OwnedDynValue {
@@ -711,7 +711,7 @@ impl OwnedDynValue {
         let len = mem::size_of_val(&value);
         let buf = unsafe { std::slice::from_raw_parts(ptr, len) };
         mem::forget(value);
-        Self { tp: T::type_descriptor(), buf: buf.to_owned() }
+        Self { tp: T::type_descriptor(), buf: buf.to_owned().into_boxed_slice() }
     }
 
     pub fn get(&self) -> DynValue {
@@ -728,8 +728,39 @@ impl OwnedDynValue {
     }
 
     #[doc(hidden)]
-    pub unsafe fn from_raw(tp: TypeDescriptor, buf: Vec<u8>) -> Self {
+    pub unsafe fn from_raw(tp: TypeDescriptor, buf: Box<[u8]>) -> Self {
         Self { tp, buf }
+    }
+
+    /// Cast to the concrete type
+    ///
+    /// Will fail if the type-descriptors are not equal
+    pub fn cast<T: H5Type>(mut self) -> Result<T, Self> {
+        use mem::MaybeUninit;
+        if self.tp != T::type_descriptor() {
+            return Err(self);
+        }
+        debug_assert_eq!(self.tp.size(), self.buf.len());
+        let mut out = MaybeUninit::<T>::uninit();
+        unsafe {
+            ptr::copy_nonoverlapping(
+                self.buf.as_ptr(),
+                out.as_mut_ptr().cast::<u8>(),
+                self.buf.len(),
+            );
+        }
+        // For safety we must ensure any nested structures are not live at the same time,
+        // as this could cause a double free in `dyn_drop`.
+        // We must deallocate only the top level of Self
+
+        // The zero-sized array has a special case to not drop ptr if len is zero,
+        // so `dyn_drop` of `DynArray` is a nop
+        self.tp = <[u8; 0]>::type_descriptor();
+        // We must also swap out the buffer to ensure we can create the `DynValue`
+        let mut b: Box<[u8]> = Box::new([]);
+        mem::swap(&mut self.buf, &mut b);
+
+        Ok(unsafe { out.assume_init() })
     }
 }
 

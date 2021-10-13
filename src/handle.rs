@@ -1,10 +1,4 @@
-use std::collections::HashMap;
-use std::sync::Arc;
-
-use lazy_static::lazy_static;
-use parking_lot::{Mutex, RwLock};
-
-use hdf5_sys::h5i::{H5I_type_t, H5Idec_ref, H5Iget_type, H5Iinc_ref, H5Iis_valid};
+use hdf5_sys::h5i::{H5I_type_t, H5Idec_ref, H5Iget_ref, H5Iget_type, H5Iinc_ref, H5Iis_valid};
 
 use crate::internal_prelude::*;
 
@@ -20,6 +14,10 @@ pub fn get_id_type(id: hid_t) -> H5I_type_t {
     })
 }
 
+pub(crate) fn refcount(id: hid_t) -> Result<hsize_t> {
+    h5call!(H5Iget_ref(id)).map(|x| x as _)
+}
+
 pub fn is_valid_id(id: hid_t) -> bool {
     h5lock!({
         let tp = get_id_type(id);
@@ -31,76 +29,59 @@ pub fn is_valid_user_id(id: hid_t) -> bool {
     h5lock!({ H5Iis_valid(id) == 1 })
 }
 
-struct Registry {
-    registry: Mutex<HashMap<hid_t, Arc<RwLock<hid_t>>>>,
-}
-
-impl Default for Registry {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl Registry {
-    pub fn new() -> Self {
-        Self { registry: Mutex::new(HashMap::new()) }
-    }
-
-    pub fn new_handle(&self, id: hid_t) -> Arc<RwLock<hid_t>> {
-        let mut registry = self.registry.lock();
-        let handle = registry.entry(id).or_insert_with(|| Arc::new(RwLock::new(id)));
-        if *handle.read() != id {
-            // an id may be left dangling by previous invalidation of a linked handle
-            *handle = Arc::new(RwLock::new(id));
-        }
-        handle.clone()
-    }
-}
-
+/// A handle to an HDF5 object
+#[derive(Debug)]
 pub struct Handle {
-    id: Arc<RwLock<hid_t>>,
+    id: hid_t,
 }
 
 impl Handle {
+    /// Create a handle from object ID, taking ownership of it
     pub fn try_new(id: hid_t) -> Result<Self> {
-        lazy_static! {
-            static ref REGISTRY: Registry = Registry::new();
-        }
         h5lock!({
             if is_valid_user_id(id) {
-                Ok(Self { id: REGISTRY.new_handle(id) })
+                Ok(Self { id })
             } else {
                 Err(From::from(format!("Invalid handle id: {}", id)))
             }
         })
     }
 
-    pub fn invalid() -> Self {
-        Self { id: Arc::new(RwLock::new(H5I_INVALID_HID)) }
+    /// Create a handle from object ID by cloning it
+    pub fn try_borrow(id: hid_t) -> Result<Self> {
+        h5lock!({
+            if is_valid_user_id(id) {
+                h5call!(H5Iinc_ref(id))?;
+                Ok(Self { id })
+            } else {
+                Err(From::from(format!("Invalid handle id: {}", id)))
+            }
+        })
     }
 
-    pub fn id(&self) -> hid_t {
-        *self.id.read()
+    pub const fn invalid() -> Self {
+        Self { id: H5I_INVALID_HID }
     }
 
-    pub fn invalidate(&self) {
-        *self.id.write() = H5I_INVALID_HID;
+    pub const fn id(&self) -> hid_t {
+        self.id
     }
 
+    /// Increment the reference count of the handle
     pub fn incref(&self) {
         if is_valid_user_id(self.id()) {
             h5lock!(H5Iinc_ref(self.id()));
         }
     }
 
+    /// Decrease the reference count of the handle
+    ///
+    /// Note: This function should only be used if `incref` has been
+    /// previously called.
     pub fn decref(&self) {
         h5lock!({
             if self.is_valid_id() {
                 H5Idec_ref(self.id());
-            }
-            // must invalidate all linked IDs because the library reuses them internally
-            if !self.is_valid_user_id() && !self.is_valid_id() {
-                self.invalidate();
             }
         });
     }
@@ -115,19 +96,15 @@ impl Handle {
         is_valid_id(self.id())
     }
 
-    pub fn decref_full(&self) {
-        while self.is_valid_user_id() {
-            self.decref();
-        }
+    /// Return the reference count of the object
+    pub fn refcount(&self) -> u32 {
+        refcount(self.id).unwrap_or(0) as _
     }
 }
 
 impl Clone for Handle {
     fn clone(&self) -> Self {
-        h5lock!({
-            self.incref();
-            Self::try_new(self.id()).unwrap_or_else(|_| Self::invalid())
-        })
+        Self::try_borrow(self.id()).unwrap_or_else(|_| Self::invalid())
     }
 }
 
