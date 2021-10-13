@@ -1,4 +1,4 @@
-use hdf5_sys::h5i::{H5I_type_t, H5Idec_ref, H5Iget_type, H5Iinc_ref, H5Iis_valid};
+use hdf5_sys::h5i::{H5I_type_t, H5Idec_ref, H5Iget_ref, H5Iget_type, H5Iinc_ref, H5Iis_valid};
 
 use crate::internal_prelude::*;
 
@@ -15,7 +15,7 @@ pub fn get_id_type(id: hid_t) -> H5I_type_t {
 }
 
 pub(crate) fn refcount(id: hid_t) -> Result<hsize_t> {
-    h5call!(hdf5_sys::h5i::H5Iget_ref(id)).map(|x| x as _)
+    h5call!(H5Iget_ref(id)).map(|x| x as _)
 }
 
 pub fn is_valid_id(id: hid_t) -> bool {
@@ -29,13 +29,14 @@ pub fn is_valid_user_id(id: hid_t) -> bool {
     h5lock!({ H5Iis_valid(id) == 1 })
 }
 
-/// A handle to a `hdf5` object
+/// A handle to an HDF5 object
+#[derive(Debug)]
 pub struct Handle {
     id: hid_t,
 }
 
 impl Handle {
-    /// Take ownership of the object id
+    /// Create a handle from object ID, taking ownership of it
     pub fn try_new(id: hid_t) -> Result<Self> {
         h5lock!({
             if is_valid_user_id(id) {
@@ -46,11 +47,11 @@ impl Handle {
         })
     }
 
-    pub fn invalid() -> Self {
+    pub const fn invalid() -> Self {
         Self { id: H5I_INVALID_HID }
     }
 
-    pub fn id(&self) -> hid_t {
+    pub const fn id(&self) -> hid_t {
         self.id
     }
 
@@ -63,7 +64,8 @@ impl Handle {
 
     /// Decrease the reference count of the handle
     ///
-    /// This function should only be used if `incref` has been used
+    /// Note: This function should only be used if `incref` has been
+    /// previously called.
     pub fn decref(&self) {
         h5lock!({
             if self.is_valid_id() {
