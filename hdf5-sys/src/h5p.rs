@@ -1,3 +1,4 @@
+//! Creating and manipulating property lists to control HDF5 library behaviour
 use crate::internal_prelude::*;
 
 use crate::h5ac::H5AC_cache_config_t;

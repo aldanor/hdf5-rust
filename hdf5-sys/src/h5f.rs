@@ -1,3 +1,4 @@
+//! Creating and manipulating HDF5 files
 use std::mem;
 
 pub use self::H5F_close_degree_t::*;

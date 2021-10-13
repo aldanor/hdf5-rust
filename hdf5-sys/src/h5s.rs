@@ -1,3 +1,4 @@
+//! Creating and manipulating dataspaces in which to store elements of a dataset
 pub use self::H5S_class_t::*;
 pub use self::H5S_sel_type::*;
 pub use self::H5S_seloper_t::*;

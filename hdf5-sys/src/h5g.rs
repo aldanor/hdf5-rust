@@ -1,3 +1,4 @@
+//! Creating and manipulating groups of objects inside an HDF5 file
 use std::mem;
 
 pub use self::H5G_storage_type_t::*;

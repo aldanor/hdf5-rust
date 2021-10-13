@@ -1,3 +1,4 @@
+//! Creating and manipulating datatypes which describe elements of a dataset
 use std::mem;
 
 pub use self::H5T_bkg_t::*;

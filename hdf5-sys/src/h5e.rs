@@ -1,3 +1,4 @@
+//! Functions for handling errors that occur within HDF5
 use std::mem;
 
 pub use self::H5E_direction_t::*;

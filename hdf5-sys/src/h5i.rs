@@ -1,3 +1,4 @@
+//! Manipulating object identifiers and object names
 pub use self::H5I_type_t::*;
 
 use crate::internal_prelude::*;

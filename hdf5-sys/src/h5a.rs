@@ -1,3 +1,4 @@
+//! Creating and manipulating HDF5 attributes
 use std::mem;
 
 use crate::internal_prelude::*;

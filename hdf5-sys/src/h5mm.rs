@@ -1,3 +1,4 @@
+//! Memory managment
 use crate::internal_prelude::*;
 
 pub type H5MM_allocate_t =

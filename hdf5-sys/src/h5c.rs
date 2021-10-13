@@ -1,3 +1,4 @@
+//! Cache functionality
 pub use self::H5C_cache_decr_mode::*;
 pub use self::H5C_cache_flash_incr_mode::*;
 pub use self::H5C_cache_incr_mode::*;
