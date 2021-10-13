@@ -51,6 +51,8 @@
 - Added support for creating external links on a `Group` with `link_external`.
 - Added `Location` methods: `get_info`, `get_info_by_name`, `loc_type`, and `open_by_token`.
 - Added `Group` methods: `iter_visit`, `iter_visit_default`, `get_all_of_type`, `datasets`, `groups`, and `named_datatypes`.
+- Added `Debug` for `Handle`.
+- Added method `try_borrow` on `Handle` for not taking ownership of an HDF5 object.
 
  ### Changed
 
