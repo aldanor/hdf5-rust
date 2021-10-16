@@ -19,7 +19,7 @@ use crate::internal_prelude::*;
 ///
 /// Safety: This version is not thread-safe and must be syncronised
 /// with other calls to `hdf5`
-pub(crate) unsafe fn silence_errors_unsynced(silence: bool) {
+pub(crate) unsafe fn silence_errors_no_sync(silence: bool) {
     // Cast function with different argument types. This is safe because H5Eprint2 is
     // documented to support this interface
     let h5eprint: Option<unsafe extern "C" fn(hid_t, *mut libc::FILE) -> herr_t> =
@@ -30,7 +30,7 @@ pub(crate) unsafe fn silence_errors_unsynced(silence: bool) {
 
 /// Silence errors emitted by `hdf5`
 pub fn silence_errors(silence: bool) {
-    h5lock!(silence_errors_unsynced(silence));
+    h5lock!(silence_errors_no_sync(silence));
 }
 
 #[repr(transparent)]

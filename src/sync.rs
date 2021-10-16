@@ -11,7 +11,7 @@ lazy_static! {
             ::hdf5_sys::h5::H5dont_atexit();
             ::hdf5_sys::h5::H5open();
             // Ignore errors on stdout
-            crate::error::silence_errors_unsynced(true);
+            crate::error::silence_errors_no_sync(true);
             // Register filters lzf/blosc if available
             crate::hl::filters::register_filters();
         }
@@ -58,6 +58,7 @@ mod tests {
     pub fn lock_part1() {
         let _ = *crate::globals::H5P_ROOT;
     }
+
     #[test]
     // Test for locking behaviour on initialisation
     pub fn lock_part2() {
