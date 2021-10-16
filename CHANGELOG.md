@@ -82,10 +82,12 @@
   the library user.
 - Handles to `hdf5` identifiers are no longer tracked via a registry and is instead handled by stricter semantics of ownership.
 - The handle to a `File` will not close all objects in a `File` when dropped, but instead uses a weak file close degree. For the old behaviour see `FileCloseDegree::Strong`.
+- Globals no longer creates a `lazy_static` per global.
 
 ### Fixed
 
 - A memory leak of handles has been identified and fixed.
+- A race condition on libary initialisation from different threads was identified and fixed.
 
 ## 0.7.1
 

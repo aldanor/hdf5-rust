@@ -37,17 +37,17 @@ const BLOSC_FILTER_INFO: H5Z_class2_t = H5Z_class2_t {
 };
 
 lazy_static! {
-    static ref BLOSC_INIT: Result<()> = {
-        h5try!({
-            blosc_init();
-            let ret = H5Zregister((&BLOSC_FILTER_INFO as *const H5Z_class2_t).cast());
-            h5maybe_err!(ret, "Can't register Blosc filter", H5E_PLIST, H5E_CANTREGISTER)
-        });
+    static ref BLOSC_INIT: Result<(), &'static str> = {
+        blosc_init();
+        let ret = H5Zregister((&BLOSC_FILTER_INFO as *const H5Z_class2_t).cast());
+        if ret.is_err_code() {
+            return Err("Can't register Blosc filter");
+        }
         Ok(())
     };
 }
 
-pub fn register_blosc() -> Result<()> {
+pub fn register_blosc() -> Result<(), &'static str> {
     (*BLOSC_INIT).clone()
 }
 
