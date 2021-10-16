@@ -110,13 +110,16 @@ pub struct FilterInfo {
     pub decode_enabled: bool,
 }
 
-#[cfg_attr(not(any(feature = "lzf", feature = "blosc")), allow(clippy::unnecessary_unwrap))]
-pub(crate) fn register_filters() -> Result<()> {
+/// This function requires a synchronisation with other calls to `hdf5`
+pub(crate) fn register_filters() {
     #[cfg(feature = "lzf")]
-    lzf::register_lzf()?;
+    if let Err(e) = lzf::register_lzf() {
+        eprintln!("{}", e);
+    }
     #[cfg(feature = "blosc")]
-    blosc::register_blosc()?;
-    Ok(())
+    if let Err(e) = lzf::register_blosc() {
+        eprintln!("{}", e);
+    }
 }
 
 /// Returns `true` if gzip filter is available.

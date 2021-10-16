@@ -16,19 +16,6 @@ use hdf5_sys::{h5e, h5p, h5t};
 
 use crate::internal_prelude::*;
 
-lazy_static! {
-    static ref LIBRARY_INIT: () = {
-        h5lock!({
-            // Ensure hdf5 does not invalidate handles which might
-            // still be live on other threads on program exit
-            ::hdf5_sys::h5::H5dont_atexit();
-            ::hdf5_sys::h5::H5open();
-            crate::error::silence_errors(true);
-        });
-        let _e = crate::hl::filters::register_filters();
-    };
-}
-
 #[cfg(h5_dll_indirection)]
 pub struct H5GlobalConstant(&'static usize);
 #[cfg(not(h5_dll_indirection))]
@@ -37,7 +24,7 @@ pub struct H5GlobalConstant(&'static hdf5_sys::h5i::hid_t);
 impl std::ops::Deref for H5GlobalConstant {
     type Target = hdf5_sys::h5i::hid_t;
     fn deref(&self) -> &Self::Target {
-        lazy_static::initialize(&LIBRARY_INIT);
+        lazy_static::initialize(&crate::sync::LIBRARY_INIT);
         cfg_if::cfg_if! {
             if #[cfg(h5_dll_indirection)] {
                 let dll_ptr = self.0 as *const usize;

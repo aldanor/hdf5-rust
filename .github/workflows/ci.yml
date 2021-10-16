@@ -158,6 +158,12 @@ jobs:
         run: |
           [ "${{matrix.mpi}}" != "serial" ] && FEATURES=mpio
           cargo test -vv --features="$FEATURES"
+      - name: Test crate for locking on synchronisation
+        run: |
+          [ "${{matrix.mpi}}" != "serial" ] && FEATURES=mpio
+          cargo test -vv --features="$FEATURES" -- lock_part
+          cargo test -vv --features="$FEATURES" -- lock_part
+          cargo test -vv --features="$FEATURES" -- lock_part
 
   msi:
     name: msi

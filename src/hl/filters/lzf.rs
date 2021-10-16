@@ -27,16 +27,16 @@ const LZF_FILTER_INFO: H5Z_class2_t = H5Z_class2_t {
 };
 
 lazy_static! {
-    static ref LZF_INIT: Result<()> = {
-        h5try!({
-            let ret = H5Zregister((&LZF_FILTER_INFO as *const H5Z_class2_t).cast());
-            h5maybe_err!(ret, "Can't register LZF filter", H5E_PLIST, H5E_CANTREGISTER)
-        });
+    static ref LZF_INIT: Result<(), &'static str> = {
+        let ret = H5Zregister((&LZF_FILTER_INFO as *const H5Z_class2_t).cast());
+        if ret.is_err_code() {
+            return Err("Can't register LZF filter");
+        }
         Ok(())
     };
 }
 
-pub fn register_lzf() -> Result<()> {
+pub fn register_lzf() -> Result<(), &'static str> {
     (*LZF_INIT).clone()
 }
 

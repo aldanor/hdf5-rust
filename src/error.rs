@@ -16,13 +16,21 @@ use hdf5_sys::h5e::{
 use crate::internal_prelude::*;
 
 /// Silence errors emitted by `hdf5`
-pub fn silence_errors(silence: bool) {
+///
+/// Safety: This version is not thread-safe and must be syncronised
+/// with other calls to `hdf5`
+pub(crate) unsafe fn silence_errors_unsynced(silence: bool) {
     // Cast function with different argument types. This is safe because H5Eprint2 is
     // documented to support this interface
     let h5eprint: Option<unsafe extern "C" fn(hid_t, *mut libc::FILE) -> herr_t> =
         Some(H5Eprint2 as _);
-    let h5eprint: H5E_auto2_t = unsafe { std::mem::transmute(h5eprint) };
-    h5lock!(H5Eset_auto2(H5E_DEFAULT, if silence { None } else { h5eprint }, ptr::null_mut()));
+    let h5eprint: H5E_auto2_t = std::mem::transmute(h5eprint);
+    H5Eset_auto2(H5E_DEFAULT, if silence { None } else { h5eprint }, ptr::null_mut());
+}
+
+/// Silence errors emitted by `hdf5`
+pub fn silence_errors(silence: bool) {
+    h5lock!(silence_errors_unsynced(silence));
 }
 
 #[repr(transparent)]
