@@ -3,15 +3,14 @@ use hdf5_sys::h5i::{H5I_type_t, H5Idec_ref, H5Iget_ref, H5Iget_type, H5Iinc_ref,
 use crate::internal_prelude::*;
 
 pub fn get_id_type(id: hid_t) -> H5I_type_t {
-    h5lock!({
-        let tp = h5lock!(H5Iget_type(id));
-        let valid = id > 0 && tp > H5I_BADID && tp < H5I_NTYPES;
-        if valid {
-            tp
-        } else {
-            H5I_BADID
+    if id <= 0 {
+        H5I_BADID
+    } else {
+        match h5lock!(H5Iget_type(id)) {
+            tp if tp > H5I_BADID && tp < H5I_NTYPES => tp,
+            _ => H5I_BADID,
         }
-    })
+    }
 }
 
 pub(crate) fn refcount(id: hid_t) -> Result<hsize_t> {
