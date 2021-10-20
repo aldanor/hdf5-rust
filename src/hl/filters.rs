@@ -117,7 +117,7 @@ pub(crate) fn register_filters() {
         eprintln!("{}", e);
     }
     #[cfg(feature = "blosc")]
-    if let Err(e) = lzf::register_blosc() {
+    if let Err(e) = blosc::register_blosc() {
         eprintln!("{}", e);
     }
 }

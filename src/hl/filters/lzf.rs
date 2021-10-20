@@ -7,7 +7,7 @@ use hdf5_sys::h5p::{H5Pget_chunk, H5Pget_filter_by_id2, H5Pmodify_filter};
 use hdf5_sys::h5t::H5Tget_size;
 use hdf5_sys::h5z::{H5Z_class2_t, H5Z_filter_t, H5Zregister, H5Z_CLASS_T_VERS, H5Z_FLAG_REVERSE};
 
-use crate::globals::{H5E_CALLBACK, H5E_CANTREGISTER, H5E_PLIST};
+use crate::globals::{H5E_CALLBACK, H5E_PLIST};
 use crate::internal_prelude::*;
 use lzf_sys::{lzf_compress, lzf_decompress, LZF_VERSION};
 
@@ -28,8 +28,8 @@ const LZF_FILTER_INFO: H5Z_class2_t = H5Z_class2_t {
 
 lazy_static! {
     static ref LZF_INIT: Result<(), &'static str> = {
-        let ret = H5Zregister((&LZF_FILTER_INFO as *const H5Z_class2_t).cast());
-        if ret.is_err_code() {
+        let ret = unsafe { H5Zregister((&LZF_FILTER_INFO as *const H5Z_class2_t).cast()) };
+        if H5ErrorCode::is_err_code(ret) {
             return Err("Can't register LZF filter");
         }
         Ok(())

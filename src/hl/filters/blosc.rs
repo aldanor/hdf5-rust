@@ -7,7 +7,7 @@ use hdf5_sys::h5p::{H5Pget_chunk, H5Pget_filter_by_id2, H5Pmodify_filter};
 use hdf5_sys::h5t::{H5Tclose, H5Tget_class, H5Tget_size, H5Tget_super, H5T_ARRAY};
 use hdf5_sys::h5z::{H5Z_class2_t, H5Z_filter_t, H5Zregister, H5Z_CLASS_T_VERS, H5Z_FLAG_REVERSE};
 
-use crate::globals::{H5E_CALLBACK, H5E_CANTREGISTER, H5E_PLIST};
+use crate::globals::{H5E_CALLBACK, H5E_PLIST};
 use crate::internal_prelude::*;
 
 pub use blosc_sys::{
@@ -38,9 +38,11 @@ const BLOSC_FILTER_INFO: H5Z_class2_t = H5Z_class2_t {
 
 lazy_static! {
     static ref BLOSC_INIT: Result<(), &'static str> = {
-        blosc_init();
-        let ret = H5Zregister((&BLOSC_FILTER_INFO as *const H5Z_class2_t).cast());
-        if ret.is_err_code() {
+        unsafe {
+            blosc_init();
+        }
+        let ret = unsafe { H5Zregister((&BLOSC_FILTER_INFO as *const H5Z_class2_t).cast()) };
+        if H5ErrorCode::is_err_code(ret) {
             return Err("Can't register Blosc filter");
         }
         Ok(())

@@ -133,7 +133,7 @@ mod internal_prelude {
     pub use crate::{
         class::ObjectClass,
         dim::Dimension,
-        error::h5check,
+        error::{h5check, H5ErrorCode},
         export::*,
         handle::{get_id_type, is_valid_user_id, Handle},
         hl::plist::PropertyListClass,

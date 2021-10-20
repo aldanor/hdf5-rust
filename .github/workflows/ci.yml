@@ -131,6 +131,8 @@ jobs:
         with: {toolchain: '${{matrix.rust}}', profile: minimal, override: true}
       - name: Build and test all crates
         run: cargo test --workspace -v --features hdf5-sys/static,hdf5-sys/zlib --exclude hdf5-derive
+      - name: Build and test with compression featuers
+        run: cargo test --workspace -v --features hdf5-sys/static,hdf5-sys/zlib,lzf,blosc --exclude hdf5-derive
 
   apt:
     name: apt
