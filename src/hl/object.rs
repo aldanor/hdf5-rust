@@ -41,7 +41,7 @@ impl Object {
     /// Returns `true` if the object has a valid unlocked identifier (`false` for pre-defined
     /// locked identifiers like property list classes).
     pub fn is_valid(&self) -> bool {
-        is_valid_user_id(self.id())
+        self.handle().is_valid_user_id()
     }
 
     /// Returns type of the object.
@@ -61,7 +61,7 @@ pub mod tests {
     use hdf5_sys::{h5i::H5I_type_t, h5p::H5Pcreate};
 
     use crate::globals::H5P_FILE_ACCESS;
-    use crate::handle::{is_valid_id, is_valid_user_id};
+    use crate::handle::is_valid_id;
     use crate::internal_prelude::*;
 
     pub struct TestObject(Handle);
@@ -109,7 +109,6 @@ pub mod tests {
         assert!(obj.id() > 0);
         assert!(obj.is_valid());
         assert!(is_valid_id(obj.id()));
-        assert!(is_valid_user_id(obj.id()));
         assert_eq!(obj.id_type(), H5I_type_t::H5I_GENPROP_LST);
 
         assert_eq!(obj.refcount(), 1);
@@ -122,7 +121,6 @@ pub mod tests {
             obj.decref();
             assert_eq!(obj.refcount(), 0);
             assert!(!obj.is_valid());
-            assert!(!is_valid_user_id(obj.id()));
             assert!(!is_valid_id(obj.id()));
             drop(obj);
         });
@@ -138,7 +136,6 @@ pub mod tests {
         assert!(obj.id() > 0);
         assert!(obj.is_valid());
         assert!(is_valid_id(obj.id()));
-        assert!(is_valid_user_id(obj.id()));
         assert_eq!(obj.refcount(), 1);
 
         let obj2 = TestObject::from_id(obj.id()).unwrap();

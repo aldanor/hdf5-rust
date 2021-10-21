@@ -24,8 +24,8 @@ pub fn is_valid_id(id: hid_t) -> bool {
     }
 }
 
-pub fn is_valid_user_id(id: hid_t) -> bool {
-    h5lock!({ H5Iis_valid(id) == 1 })
+fn is_valid_user_id(id: hid_t) -> bool {
+    h5lock!(H5Iis_valid(id)) == 1
 }
 
 /// A handle to an HDF5 object

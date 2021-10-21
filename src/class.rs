@@ -71,7 +71,7 @@ pub trait ObjectClass: Sized {
     fn debug_fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // TODO: this can moved out if/when specialization lands in stable
         h5lock!({
-            if !is_valid_user_id(self.handle().id()) {
+            if !self.handle().is_valid_user_id() {
                 write!(f, "<HDF5 {}: invalid id>", Self::NAME)
             } else if let Some(d) = self.short_repr() {
                 write!(f, "<HDF5 {}: {}>", Self::NAME, d)

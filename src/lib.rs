@@ -135,7 +135,7 @@ mod internal_prelude {
         dim::Dimension,
         error::{h5check, H5ErrorCode},
         export::*,
-        handle::{is_valid_user_id, Handle},
+        handle::Handle,
         hl::plist::PropertyListClass,
         sync::sync,
         util::{
