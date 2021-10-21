@@ -506,7 +506,7 @@ pub mod tests {
             assert_eq!(file_copy.refcount(), 2);
 
             drop(file);
-            assert_eq!(crate::handle::refcount(fileid).unwrap(), 1);
+            assert_eq!(crate::handle::get_refcount(fileid).unwrap(), 1);
             assert_eq!(group.refcount(), 1);
             assert_eq!(file_copy.refcount(), 1);
 
@@ -514,8 +514,8 @@ pub mod tests {
                 // Lock to ensure fileid does not get overwritten
                 let groupid = group.id();
                 drop(file_copy);
-                assert!(crate::handle::refcount(fileid).is_err());
-                assert!(crate::handle::refcount(groupid).is_err());
+                assert!(crate::handle::get_refcount(fileid).is_err());
+                assert!(crate::handle::get_refcount(groupid).is_err());
                 assert!(!group.is_valid());
                 drop(group);
             });
@@ -543,14 +543,14 @@ pub mod tests {
             assert_eq!(file_copy.refcount(), 2);
 
             drop(file);
-            assert_eq!(crate::handle::refcount(fileid).unwrap(), 1);
+            assert_eq!(crate::handle::get_refcount(fileid).unwrap(), 1);
             assert_eq!(group.refcount(), 1);
             assert_eq!(file_copy.refcount(), 1);
 
             h5lock!({
                 // Lock to ensure fileid does not get overwritten
                 drop(file_copy);
-                assert!(crate::handle::refcount(fileid).is_err());
+                assert!(crate::handle::get_refcount(fileid).is_err());
             });
             assert_eq!(group.refcount(), 1);
         });

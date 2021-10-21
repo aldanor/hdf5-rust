@@ -13,7 +13,7 @@ pub(crate) fn get_id_type(id: hid_t) -> H5I_type_t {
     }
 }
 
-pub(crate) fn refcount(id: hid_t) -> Result<hsize_t> {
+pub(crate) fn get_refcount(id: hid_t) -> Result<hsize_t> {
     h5call!(H5Iget_ref(id)).map(|x| x as _)
 }
 
@@ -97,7 +97,7 @@ impl Handle {
 
     /// Return the reference count of the object
     pub fn refcount(&self) -> u32 {
-        refcount(self.id).unwrap_or(0) as _
+        get_refcount(self.id).unwrap_or(0) as _
     }
 
     /// Get HDF5 object type as a native enum.
