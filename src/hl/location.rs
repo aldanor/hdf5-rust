@@ -324,35 +324,75 @@ pub mod tests {
 
     #[test]
     pub fn test_location_info() {
-        with_tmp_file(|file| {
-            let token;
+        use crate::plist::file_access::LibraryVersion;
+        let new_file = |path| {
+            #[cfg(hdf5_1_10_2)]
             {
+                File::with_options()
+                    .with_fapl(|p| {
+                        p.libver_bounds(LibraryVersion::latest(), LibraryVersion::latest())
+                    })
+                    .create(path)
+            }
+            #[cfg(not(hdf5_1_10_2))]
+            File::create(path)
+        };
+        with_tmp_path(|path| {
+            let file = new_file(path).unwrap();
+            let token = {
                 let group = file.create_group("group").unwrap();
                 let info = group.get_info().unwrap();
-                assert_eq!(info.refcount, 1);
+                assert_eq!(info.num_links, 1);
                 assert_eq!(info.loc_type, LocationType::Group);
-                token = info.token;
-            }
-            let group = file.open_by_token(token).unwrap();
+                assert!(info.btime > 0);
+                assert!(
+                    info.btime == info.mtime
+                        && info.btime == info.atime
+                        && info.btime == info.ctime
+                );
+                assert_eq!(info.num_attrs, 0);
+                info.token
+            };
+            let group = file.open_by_token(token).unwrap().as_group().unwrap();
             assert_eq!(group.name(), "/group");
-            let token;
-            {
-                let var = file.new_dataset::<i8>().create("var").unwrap();
-                var.new_attr::<i16>().create("attr").unwrap();
+            let token = {
+                let var = group
+                    .new_dataset_builder()
+                    .obj_track_times(true)
+                    .empty::<i8>()
+                    .create("var")
+                    .unwrap();
+                var.new_attr::<i16>().create("attr1").unwrap();
+                var.new_attr::<i32>().create("attr2").unwrap();
+                group.link_hard("var", "hard1").unwrap();
+                group.link_hard("var", "hard2").unwrap();
+                group.link_hard("var", "hard3").unwrap();
+                group.link_hard("var", "hard4").unwrap();
+                group.link_hard("var", "hard5").unwrap();
+                group.link_soft("var", "soft1").unwrap();
+                group.link_soft("var", "soft2").unwrap();
+                group.link_soft("var", "soft3").unwrap();
                 let info = var.get_info().unwrap();
-                assert_eq!(info.refcount, 1);
+                assert_eq!(info.num_links, 6); // 1 + 5
                 assert_eq!(info.loc_type, LocationType::Dataset);
-                token = info.token;
-            }
+                assert!(info.btime > 0);
+                assert!(
+                    info.btime == info.mtime
+                        && info.btime == info.atime
+                        && info.btime == info.ctime
+                );
+                assert_eq!(info.num_attrs, 2);
+                info.token
+            };
             let var = file.open_by_token(token).unwrap();
-            assert_eq!(var.name(), "/var");
+            assert_eq!(var.name(), "/group/hard5"); // will open the last hard-linked object
 
             let info = file.get_info_by_name("group").unwrap();
             let group = file.open_by_token(info.token).unwrap();
             assert_eq!(group.name(), "/group");
-            let info = file.get_info_by_name("var").unwrap();
+            let info = file.get_info_by_name("/group/var").unwrap();
             let var = file.open_by_token(info.token).unwrap();
-            assert_eq!(var.name(), "/var");
+            assert_eq!(var.name(), "/group/hard5");
 
             assert!(file.get_info_by_name("gibberish").is_err());
         })
