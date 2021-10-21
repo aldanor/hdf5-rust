@@ -59,6 +59,15 @@ pub trait ObjectClass: Sized {
         obj
     }
 
+    fn cast<T: ObjectClass>(self) -> Result<T> {
+        let id_type = self.handle().id_type();
+        if Self::is_valid_id_type(id_type) {
+            Ok(unsafe { self.cast_unchecked() })
+        } else {
+            Err(format!("unable to cast {} ({:?}) into {}", Self::NAME, id_type, T::NAME).into())
+        }
+    }
+
     fn debug_fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // TODO: this can moved out if/when specialization lands in stable
         h5lock!({
