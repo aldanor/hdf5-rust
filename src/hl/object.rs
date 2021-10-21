@@ -46,7 +46,7 @@ impl Object {
 
     /// Returns type of the object.
     pub fn id_type(&self) -> H5I_type_t {
-        get_id_type(self.id())
+        self.handle().id_type()
     }
 
     pub(crate) fn try_borrow(&self) -> Result<Handle> {

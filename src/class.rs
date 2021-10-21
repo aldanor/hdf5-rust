@@ -2,6 +2,7 @@ use std::fmt;
 use std::mem;
 use std::ptr;
 
+use crate::handle::get_id_type;
 use crate::internal_prelude::*;
 
 pub trait ObjectClass: Sized {

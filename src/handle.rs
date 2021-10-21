@@ -2,7 +2,7 @@ use hdf5_sys::h5i::{H5I_type_t, H5Idec_ref, H5Iget_ref, H5Iget_type, H5Iinc_ref,
 
 use crate::internal_prelude::*;
 
-pub fn get_id_type(id: hid_t) -> H5I_type_t {
+pub(crate) fn get_id_type(id: hid_t) -> H5I_type_t {
     if id <= 0 {
         H5I_BADID
     } else {
@@ -18,10 +18,10 @@ pub(crate) fn refcount(id: hid_t) -> Result<hsize_t> {
 }
 
 pub fn is_valid_id(id: hid_t) -> bool {
-    h5lock!({
-        let tp = get_id_type(id);
-        tp > H5I_BADID && tp < H5I_NTYPES
-    })
+    match h5lock!(get_id_type(id)) {
+        tp if tp > H5I_BADID && tp < H5I_NTYPES => true,
+        _ => false,
+    }
 }
 
 pub fn is_valid_user_id(id: hid_t) -> bool {
@@ -98,6 +98,11 @@ impl Handle {
     /// Return the reference count of the object
     pub fn refcount(&self) -> u32 {
         refcount(self.id).unwrap_or(0) as _
+    }
+
+    /// Get HDF5 object type as a native enum.
+    pub fn id_type(&self) -> H5I_type_t {
+        get_id_type(self.id)
     }
 }
 
