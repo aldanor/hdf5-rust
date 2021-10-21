@@ -208,7 +208,7 @@ mod tests {
 
     #[test]
     fn test_dataspace_err() {
-        assert_err!(Dataspace::from_id(H5I_INVALID_HID), "Invalid dataspace id");
+        assert_err!(Dataspace::from_id(H5I_INVALID_HID), "Invalid handle id");
     }
 
     #[test]

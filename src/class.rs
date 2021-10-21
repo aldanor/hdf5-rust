@@ -2,7 +2,6 @@ use std::fmt;
 use std::mem;
 use std::ptr;
 
-use crate::handle::get_id_type;
 use crate::internal_prelude::*;
 
 pub trait ObjectClass: Sized {
@@ -25,8 +24,8 @@ pub trait ObjectClass: Sized {
 
     fn from_id(id: hid_t) -> Result<Self> {
         h5lock!({
-            if Self::is_valid_id_type(get_id_type(id)) {
-                let handle = Handle::try_new(id)?;
+            let handle = Handle::try_new(id)?;
+            if Self::is_valid_id_type(handle.id_type()) {
                 let obj = Self::from_handle(handle);
                 obj.validate().map(|_| obj)
             } else {
