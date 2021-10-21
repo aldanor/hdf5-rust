@@ -159,7 +159,7 @@ impl Eq for FileAccess {}
 
 impl Clone for FileAccess {
     fn clone(&self) -> Self {
-        unsafe { self.deref().clone().cast() }
+        unsafe { self.deref().clone().cast_unchecked() }
     }
 }
 
@@ -1474,7 +1474,7 @@ impl FileAccess {
     }
 
     pub fn copy(&self) -> Self {
-        unsafe { self.deref().copy().cast() }
+        unsafe { self.deref().copy().cast_unchecked() }
     }
 
     pub fn build() -> FileAccessBuilder {

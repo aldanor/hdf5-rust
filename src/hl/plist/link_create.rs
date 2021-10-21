@@ -64,7 +64,7 @@ impl Eq for LinkCreate {}
 
 impl Clone for LinkCreate {
     fn clone(&self) -> Self {
-        unsafe { self.deref().clone().cast() }
+        unsafe { self.deref().clone().cast_unchecked() }
     }
 }
 
@@ -138,7 +138,7 @@ impl LinkCreate {
     }
 
     pub fn copy(&self) -> Self {
-        unsafe { self.deref().copy().cast() }
+        unsafe { self.deref().copy().cast_unchecked() }
     }
 
     pub fn build() -> LinkCreateBuilder {
