@@ -5,8 +5,6 @@ use std::ptr;
 
 #[allow(deprecated)]
 use hdf5_sys::h5o::H5Oset_comment;
-#[cfg(hdf5_1_10_3)]
-use hdf5_sys::h5o::H5O_INFO_BASIC;
 #[cfg(hdf5_1_12_0)]
 use hdf5_sys::h5o::{
     H5O_info2_t, H5O_token_t, H5Oget_info3, H5Oget_info_by_name3, H5Oopen_by_token,
@@ -15,6 +13,8 @@ use hdf5_sys::h5o::{
 use hdf5_sys::h5o::{H5Oget_info1, H5Oget_info_by_name1};
 #[cfg(all(hdf5_1_10_3, not(hdf5_1_12_0)))]
 use hdf5_sys::h5o::{H5Oget_info2, H5Oget_info_by_name2};
+#[cfg(hdf5_1_10_3)]
+use hdf5_sys::h5o::{H5O_INFO_BASIC, H5O_INFO_NUM_ATTRS, H5O_INFO_TIME};
 #[cfg(not(hdf5_1_12_0))]
 use hdf5_sys::{h5::haddr_t, h5o::H5O_info1_t, h5o::H5Oopen_by_addr};
 use hdf5_sys::{
@@ -126,16 +126,21 @@ impl Location {
     }
 
     pub fn get_info(&self) -> Result<LocationInfo> {
-        H5O_get_info(self.id())
+        H5O_get_info(self.id(), true)
     }
 
     pub fn loc_type(&self) -> Result<LocationType> {
-        Ok(self.get_info()?.loc_type)
+        Ok(H5O_get_info(self.id(), false)?.loc_type)
     }
 
     pub fn get_info_by_name(&self, name: &str) -> Result<LocationInfo> {
         let name = to_cstring(name)?;
-        H5O_get_info_by_name(self.id(), name.as_ptr())
+        H5O_get_info_by_name(self.id(), name.as_ptr(), true)
+    }
+
+    pub fn loc_type_by_name(&self, name: &str) -> Result<LocationType> {
+        let name = to_cstring(name)?;
+        Ok(H5O_get_info_by_name(self.id(), name.as_ptr(), false)?.loc_type)
     }
 
     pub fn open_by_token(&self, token: LocationToken) -> Result<Self> {
@@ -176,22 +181,26 @@ impl From<H5O_type_t> for LocationType {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-/// Information about a [`Location`]
+/// Metadata information describing a [`Location`]
 pub struct LocationInfo {
+    /// Number of file where the object is located
     pub fileno: u64,
+    /// Object address in file, or a token identifier
     pub token: LocationToken,
+    /// Basic location type of the object
     pub loc_type: LocationType,
-    pub refcount: usize,
-    /// Not available when requesting only basic info
-    atime: i64,
-    /// Not available when requesting only basic info
-    mtime: i64,
-    /// Not available when requesting only basic info
-    ctime: i64,
-    /// Not available when requesting only basic info
-    btime: i64,
-    /// Not available when requesting only basic info
-    num_attrs: usize,
+    /// Number of hard links to the object
+    pub num_links: usize,
+    /// Access time
+    pub atime: i64,
+    /// Modification time
+    pub mtime: i64,
+    /// Change time
+    pub ctime: i64,
+    /// Birth time
+    pub btime: i64,
+    /// Number of attributes attached to the object
+    pub num_attrs: usize,
 }
 
 #[cfg(not(hdf5_1_12_0))]
@@ -201,7 +210,7 @@ impl From<H5O_info1_t> for LocationInfo {
             fileno: info.fileno as _,
             token: LocationToken(info.addr),
             loc_type: info.type_.into(),
-            refcount: info.rc as _,
+            num_links: info.rc as _,
             atime: info.atime as _,
             mtime: info.mtime as _,
             ctime: info.ctime as _,
@@ -218,7 +227,7 @@ impl From<H5O_info2_t> for LocationInfo {
             fileno: info.fileno as _,
             token: LocationToken(info.token),
             loc_type: info.type_.into(),
-            refcount: info.rc as _,
+            num_links: info.rc as _,
             atime: info.atime as _,
             mtime: info.mtime as _,
             ctime: info.ctime as _,
@@ -228,14 +237,22 @@ impl From<H5O_info2_t> for LocationInfo {
     }
 }
 
+fn info_fields(full: bool) -> c_uint {
+    if full {
+        H5O_INFO_BASIC | H5O_INFO_NUM_ATTRS | H5O_INFO_TIME
+    } else {
+        H5O_INFO_BASIC
+    }
+}
+
 #[allow(non_snake_case)]
-fn H5O_get_info(loc_id: hid_t) -> Result<LocationInfo> {
+fn H5O_get_info(loc_id: hid_t, full: bool) -> Result<LocationInfo> {
     let mut info_buf = MaybeUninit::uninit();
     let info_ptr = info_buf.as_mut_ptr();
     #[cfg(hdf5_1_12_0)]
-    h5call!(H5Oget_info3(loc_id, info_ptr, H5O_INFO_BASIC))?;
+    h5call!(H5Oget_info3(loc_id, info_ptr, info_fields(full)))?;
     #[cfg(all(hdf5_1_10_3, not(hdf5_1_12_0)))]
-    h5call!(H5Oget_info2(loc_id, info_ptr, H5O_INFO_BASIC))?;
+    h5call!(H5Oget_info2(loc_id, info_ptr, info_fields(full)))?;
     #[cfg(not(hdf5_1_10_3))]
     h5call!(H5Oget_info1(loc_id, info_ptr))?;
     let info = unsafe { info_buf.assume_init() };
@@ -243,13 +260,13 @@ fn H5O_get_info(loc_id: hid_t) -> Result<LocationInfo> {
 }
 
 #[allow(non_snake_case)]
-fn H5O_get_info_by_name(loc_id: hid_t, name: *const c_char) -> Result<LocationInfo> {
+fn H5O_get_info_by_name(loc_id: hid_t, name: *const c_char, full: bool) -> Result<LocationInfo> {
     let mut info_buf = MaybeUninit::uninit();
     let info_ptr = info_buf.as_mut_ptr();
     #[cfg(hdf5_1_12_0)]
-    h5call!(H5Oget_info_by_name3(loc_id, name, info_ptr, H5O_INFO_BASIC, H5P_DEFAULT))?;
+    h5call!(H5Oget_info_by_name3(loc_id, name, info_ptr, info_fields(full), H5P_DEFAULT))?;
     #[cfg(all(hdf5_1_10_3, not(hdf5_1_12_0)))]
-    h5call!(H5Oget_info_by_name2(loc_id, name, info_ptr, H5O_INFO_BASIC, H5P_DEFAULT))?;
+    h5call!(H5Oget_info_by_name2(loc_id, name, info_ptr, info_fields(full), H5P_DEFAULT))?;
     #[cfg(not(hdf5_1_10_3))]
     h5call!(H5Oget_info_by_name1(loc_id, name, info_ptr, H5P_DEFAULT))?;
     let info = unsafe { info_buf.assume_init() };
