@@ -54,6 +54,27 @@ impl Object {
     }
 }
 
+macro_rules! impl_downcast {
+    ($func:ident, $tp:ty) => {
+        impl Object {
+            #[doc = "Downcast the object into $tp if possible."]
+            pub fn $func(&self) -> Result<$tp> {
+                self.clone().cast()
+            }
+        }
+    };
+}
+
+impl_downcast!(as_file, File);
+impl_downcast!(as_group, Group);
+impl_downcast!(as_dataset, Dataset);
+impl_downcast!(as_location, Location);
+impl_downcast!(as_attr, Attribute);
+impl_downcast!(as_container, Container);
+impl_downcast!(as_datatype, Datatype);
+impl_downcast!(as_dataspace, Dataspace);
+impl_downcast!(as_plist, PropertyList);
+
 #[cfg(test)]
 pub mod tests {
     use std::ops::Deref;
