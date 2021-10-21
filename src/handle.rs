@@ -68,8 +68,8 @@ impl Handle {
 
     /// Increment the reference count of the handle
     pub fn incref(&self) {
-        if is_valid_user_id(self.id()) {
-            h5lock!(H5Iinc_ref(self.id()));
+        if is_valid_user_id(self.id) {
+            h5lock!(H5Iinc_ref(self.id));
         }
     }
 
@@ -80,7 +80,7 @@ impl Handle {
     pub fn decref(&self) {
         h5lock!({
             if self.is_valid_id() {
-                H5Idec_ref(self.id());
+                H5Idec_ref(self.id);
             }
         });
     }
@@ -88,11 +88,11 @@ impl Handle {
     /// Returns `true` if the object has a valid unlocked identifier (`false` for pre-defined
     /// locked identifiers like property list classes).
     pub fn is_valid_user_id(&self) -> bool {
-        is_valid_user_id(self.id())
+        is_valid_user_id(self.id)
     }
 
     pub fn is_valid_id(&self) -> bool {
-        is_valid_id(self.id())
+        is_valid_id(self.id)
     }
 
     /// Return the reference count of the object
@@ -108,7 +108,7 @@ impl Handle {
 
 impl Clone for Handle {
     fn clone(&self) -> Self {
-        Self::try_borrow(self.id()).unwrap_or_else(|_| Self::invalid())
+        Self::try_borrow(self.id).unwrap_or_else(|_| Self::invalid())
     }
 }
 
