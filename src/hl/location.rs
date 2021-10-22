@@ -182,6 +182,19 @@ impl From<H5O_type_t> for LocationType {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 /// Metadata information describing a [`Location`]
+///
+/// # Notes
+///
+/// In order for all timestamps to be filled out, a few conditions must hold:
+///
+/// - Minimum HDF5 library version is 1.10.3.
+/// - Library version lower bound in the file access plist must be set to a least 1.10. This
+///   can be done via `FileAccessBuilder::libver_v110` or `FileAccessBuilder::libver_latest`.
+/// - For datasets, additionally, time tracking must be enabled (which is disabled
+///   by default to improve access performance). This can be done via
+///   `DatasetBuilder::track_times`. If tracking is enabled, ctime timestamp will likely be
+///   filled out even if library version lower bound is not set), but the other three will
+///   be zero.
 pub struct LocationInfo {
     /// Number of file where the object is located
     pub fileno: u64,
