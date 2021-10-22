@@ -1166,7 +1166,6 @@ impl FileAccessBuilder {
         self.libver_bounds(LibraryVersion::latest(), LibraryVersion::latest())
     }
 
-    #[cfg(hdf5_1_10_2)]
     pub fn driver(&mut self, file_driver: &FileDriver) -> &mut Self {
         self.file_driver = Some(file_driver.clone());
         self
