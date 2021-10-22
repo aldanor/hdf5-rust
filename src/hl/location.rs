@@ -378,15 +378,15 @@ pub mod tests {
                 let info = var.loc_info().unwrap();
                 assert_eq!(info.num_links, 6); // 1 + 5
                 assert_eq!(info.loc_type, LocationType::Dataset);
+                assert!(info.ctime > 0);
                 cfg_if::cfg_if! {
                     if #[cfg(hdf5_1_10_2)] {
-                        assert!(info.btime > 0);
+                        assert_eq!(info.btime, info.ctime);
                     } else {
                         assert_eq!(info.btime, 0);
                     }
                 }
                 assert_eq!(info.btime, info.mtime);
-                assert_eq!(info.btime, info.ctime);
                 assert_eq!(info.btime, info.atime);
                 assert_eq!(info.num_attrs, 2);
                 info.token
