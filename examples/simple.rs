@@ -1,5 +1,5 @@
 #[cfg(feature = "blosc")]
-use hdf5::filters::{blosc_set_nthreads, Blosc};
+use hdf5::filters::blosc_set_nthreads;
 use hdf5::{File, H5Type, Result};
 use ndarray::{arr2, s};
 
@@ -26,7 +26,7 @@ fn main() -> Result<()> {
         blosc_set_nthreads(2); // set number of threads for compressing/decompressing chunks
         let builder = group.new_dataset_builder();
         #[cfg(feature = "blosc")]
-        let builder = builder.blosc(Blosc::ZStd, 9, true); // enable zstd compression with shuffling
+        let builder = builder.blosc_zstd(9, true); // enable zstd compression with shuffling
         let ds = builder
             .with_data(&arr2(&[
                 // write a 2-D array of data
