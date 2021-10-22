@@ -349,11 +349,9 @@ pub mod tests {
                         assert_eq!(info.btime, 0);
                     }
                 }
-                assert!(
-                    info.btime == info.mtime
-                        && info.btime == info.atime
-                        && info.btime == info.ctime
-                );
+                assert_eq!(info.btime, info.mtime);
+                assert_eq!(info.btime, info.ctime);
+                assert_eq!(info.btime, info.atime);
                 assert_eq!(info.num_attrs, 0);
                 info.token
             };
@@ -387,11 +385,9 @@ pub mod tests {
                         assert_eq!(info.btime, 0);
                     }
                 }
-                assert!(
-                    info.btime == info.mtime
-                        && info.btime == info.atime
-                        && info.btime == info.ctime
-                );
+                assert_eq!(info.btime, info.mtime);
+                assert_eq!(info.btime, info.ctime);
+                assert_eq!(info.btime, info.atime);
                 assert_eq!(info.num_attrs, 2);
                 info.token
             };
