@@ -125,7 +125,7 @@ impl Location {
         Attribute::attr_names(self)
     }
 
-    pub fn get_info(&self) -> Result<LocationInfo> {
+    pub fn loc_info(&self) -> Result<LocationInfo> {
         H5O_get_info(self.id(), true)
     }
 
@@ -133,7 +133,7 @@ impl Location {
         Ok(H5O_get_info(self.id(), false)?.loc_type)
     }
 
-    pub fn get_info_by_name(&self, name: &str) -> Result<LocationInfo> {
+    pub fn loc_info_by_name(&self, name: &str) -> Result<LocationInfo> {
         let name = to_cstring(name)?;
         H5O_get_info_by_name(self.id(), name.as_ptr(), true)
     }
@@ -339,7 +339,7 @@ pub mod tests {
             let token = {
                 let group = file.create_group("group").unwrap();
                 assert_eq!(file.loc_type_by_name("group").unwrap(), LocationType::Group);
-                let info = group.get_info().unwrap();
+                let info = group.loc_info().unwrap();
                 assert_eq!(info.num_links, 1);
                 assert_eq!(info.loc_type, LocationType::Group);
                 cfg_if::cfg_if! {
@@ -377,7 +377,7 @@ pub mod tests {
                 group.link_soft("var", "soft2").unwrap();
                 group.link_soft("var", "soft3").unwrap();
                 assert_eq!(file.loc_type_by_name("/group/var").unwrap(), LocationType::Dataset);
-                let info = var.get_info().unwrap();
+                let info = var.loc_info().unwrap();
                 assert_eq!(info.num_links, 6); // 1 + 5
                 assert_eq!(info.loc_type, LocationType::Dataset);
                 cfg_if::cfg_if! {
@@ -399,14 +399,14 @@ pub mod tests {
             // will open either the first or the last hard-linked object
             assert!(var.name().starts_with("/group/hard"));
 
-            let info = file.get_info_by_name("group").unwrap();
+            let info = file.loc_info_by_name("group").unwrap();
             let group = file.open_by_token(info.token).unwrap();
             assert_eq!(group.name(), "/group");
-            let info = file.get_info_by_name("/group/var").unwrap();
+            let info = file.loc_info_by_name("/group/var").unwrap();
             let var = file.open_by_token(info.token).unwrap();
             assert!(var.name().starts_with("/group/hard"));
 
-            assert!(file.get_info_by_name("gibberish").is_err());
+            assert!(file.loc_info_by_name("gibberish").is_err());
         })
     }
 }
