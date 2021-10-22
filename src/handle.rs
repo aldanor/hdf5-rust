@@ -17,6 +17,8 @@ impl Handle {
         if handle.is_valid_user_id() {
             Ok(handle)
         } else {
+            // Drop on an invalid handle could cause closing an unrelated object
+            // in the destructor, hence it's important to prevent the drop here.
             mem::forget(handle);
             Err(From::from(format!("Invalid handle id: {}", id)))
         }
@@ -24,14 +26,10 @@ impl Handle {
 
     /// Create a handle from object ID by cloning it
     pub fn try_borrow(id: hid_t) -> Result<Self> {
-        let handle = Self { id };
-        if handle.is_valid_user_id() {
-            handle.incref();
-            Ok(handle)
-        } else {
-            mem::forget(handle);
-            Err(From::from(format!("Invalid handle id: {}", id)))
-        }
+        // It's ok to just call try_new() since it may not decref the object
+        let handle = Self::try_new(id)?;
+        handle.incref();
+        Ok(handle)
     }
 
     pub const fn invalid() -> Self {
