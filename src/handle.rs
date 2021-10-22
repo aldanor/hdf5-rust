@@ -68,10 +68,7 @@ impl Handle {
     }
 
     pub fn is_valid_id(&self) -> bool {
-        match self.id_type() {
-            tp if tp > H5I_BADID && tp < H5I_NTYPES => true,
-            _ => false,
-        }
+        matches!(self.id_type(), tp if tp > H5I_BADID && tp < H5I_NTYPES)
     }
 
     /// Return the reference count of the object
