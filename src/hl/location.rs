@@ -237,6 +237,7 @@ impl From<H5O_info2_t> for LocationInfo {
     }
 }
 
+#[cfg(hdf5_1_10_3)]
 fn info_fields(full: bool) -> c_uint {
     if full {
         H5O_INFO_BASIC | H5O_INFO_NUM_ATTRS | H5O_INFO_TIME
