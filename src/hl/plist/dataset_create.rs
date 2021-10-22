@@ -102,7 +102,7 @@ impl Eq for DatasetCreate {}
 
 impl Clone for DatasetCreate {
     fn clone(&self) -> Self {
-        unsafe { self.deref().clone().cast() }
+        unsafe { self.deref().clone().cast_unchecked() }
     }
 }
 
@@ -664,7 +664,7 @@ impl DatasetCreate {
     }
 
     pub fn copy(&self) -> Self {
-        unsafe { self.deref().copy().cast() }
+        unsafe { self.deref().copy().cast_unchecked() }
     }
 
     pub fn build() -> DatasetCreateBuilder {

@@ -86,7 +86,7 @@ impl Eq for DatasetAccess {}
 
 impl Clone for DatasetAccess {
     fn clone(&self) -> Self {
-        unsafe { self.deref().clone().cast() }
+        unsafe { self.deref().clone().cast_unchecked() }
     }
 }
 
@@ -241,7 +241,7 @@ impl DatasetAccess {
     }
 
     pub fn copy(&self) -> Self {
-        unsafe { self.deref().copy().cast() }
+        unsafe { self.deref().copy().cast_unchecked() }
     }
 
     pub fn build() -> DatasetAccessBuilder {

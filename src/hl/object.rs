@@ -41,18 +41,39 @@ impl Object {
     /// Returns `true` if the object has a valid unlocked identifier (`false` for pre-defined
     /// locked identifiers like property list classes).
     pub fn is_valid(&self) -> bool {
-        is_valid_user_id(self.id())
+        self.handle().is_valid_user_id()
     }
 
     /// Returns type of the object.
     pub fn id_type(&self) -> H5I_type_t {
-        get_id_type(self.id())
+        self.handle().id_type()
     }
 
     pub(crate) fn try_borrow(&self) -> Result<Handle> {
         Handle::try_borrow(self.id())
     }
 }
+
+macro_rules! impl_downcast {
+    ($func:ident, $tp:ty) => {
+        impl Object {
+            #[doc = "Downcast the object into $tp if possible."]
+            pub fn $func(&self) -> Result<$tp> {
+                self.clone().cast()
+            }
+        }
+    };
+}
+
+impl_downcast!(as_file, File);
+impl_downcast!(as_group, Group);
+impl_downcast!(as_dataset, Dataset);
+impl_downcast!(as_location, Location);
+impl_downcast!(as_attr, Attribute);
+impl_downcast!(as_container, Container);
+impl_downcast!(as_datatype, Datatype);
+impl_downcast!(as_dataspace, Dataspace);
+impl_downcast!(as_plist, PropertyList);
 
 #[cfg(test)]
 pub mod tests {
@@ -61,7 +82,6 @@ pub mod tests {
     use hdf5_sys::{h5i::H5I_type_t, h5p::H5Pcreate};
 
     use crate::globals::H5P_FILE_ACCESS;
-    use crate::handle::{is_valid_id, is_valid_user_id};
     use crate::internal_prelude::*;
 
     pub struct TestObject(Handle);
@@ -108,8 +128,7 @@ pub mod tests {
         let obj = TestObject::from_id(h5call!(H5Pcreate(*H5P_FILE_ACCESS)).unwrap()).unwrap();
         assert!(obj.id() > 0);
         assert!(obj.is_valid());
-        assert!(is_valid_id(obj.id()));
-        assert!(is_valid_user_id(obj.id()));
+        assert!(obj.handle().is_valid_id());
         assert_eq!(obj.id_type(), H5I_type_t::H5I_GENPROP_LST);
 
         assert_eq!(obj.refcount(), 1);
@@ -122,8 +141,7 @@ pub mod tests {
             obj.decref();
             assert_eq!(obj.refcount(), 0);
             assert!(!obj.is_valid());
-            assert!(!is_valid_user_id(obj.id()));
-            assert!(!is_valid_id(obj.id()));
+            assert!(!obj.handle().is_valid_id());
             drop(obj);
         });
     }
@@ -137,8 +155,7 @@ pub mod tests {
         assert_ne!(obj_id, obj.id());
         assert!(obj.id() > 0);
         assert!(obj.is_valid());
-        assert!(is_valid_id(obj.id()));
-        assert!(is_valid_user_id(obj.id()));
+        assert!(obj.handle().is_valid_id());
         assert_eq!(obj.refcount(), 1);
 
         let obj2 = TestObject::from_id(obj.id()).unwrap();

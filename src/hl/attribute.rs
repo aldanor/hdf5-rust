@@ -397,7 +397,6 @@ pub mod attribute_tests {
     pub fn test_missing() {
         with_tmp_file(|file| {
             let _ = file.new_attr::<u32>().shape((1, 2)).create("foo").unwrap();
-
             let missing_result = file.attr("bar");
             assert!(missing_result.is_err());
         })
@@ -407,22 +406,11 @@ pub mod attribute_tests {
     pub fn test_write_read_str() {
         with_tmp_file(|file| {
             let s = VarLenUnicode::from_str("var len foo").unwrap();
-
-            println!("file.new_attribute");
             let attr = file.new_attr::<VarLenUnicode>().shape(()).create("foo").unwrap();
-
-            println!("write attribute");
             attr.as_writer().write_scalar(&s).unwrap();
-
-            println!("get attribute");
             let read_attr = file.attr("foo").unwrap();
-
-            println!("attribute shape");
             assert_eq!(read_attr.shape(), []);
-
-            println!("read attribute");
             let r: VarLenUnicode = read_attr.as_reader().read_scalar().unwrap();
-
             assert_eq!(r, s);
         })
     }
@@ -433,9 +421,7 @@ pub mod attribute_tests {
             let arr1 = arr2(&[[123], [456]]);
             let _attr1 = file.new_attr_builder().with_data(&arr1).create("foo").unwrap();
             let _attr2 = file.new_attr_builder().with_data("string").create("bar").unwrap();
-
             let attr_names = file.attr_names().unwrap();
-
             assert_eq!(attr_names.len(), 2);
             assert!(attr_names.contains(&"foo".to_string()));
             assert!(attr_names.contains(&"bar".to_string()));

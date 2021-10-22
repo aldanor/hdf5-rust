@@ -362,7 +362,7 @@ impl Group {
 
     fn get_all_of_type(&self, loc_type: LocationType) -> Result<Vec<Location>> {
         self.iter_visit_default(vec![], |group, name, _info, objects| {
-            if let Ok(info) = group.get_info_by_name(name) {
+            if let Ok(info) = group.loc_info_by_name(name) {
                 if info.loc_type == loc_type {
                     if let Ok(loc) = group.open_by_token(info.token) {
                         objects.push(loc);
@@ -379,19 +379,19 @@ impl Group {
     /// Returns all groups in the group, non-recursively
     pub fn groups(&self) -> Result<Vec<Self>> {
         self.get_all_of_type(LocationType::Group)
-            .map(|vec| vec.into_iter().map(|obj| unsafe { obj.cast() }).collect())
+            .map(|vec| vec.into_iter().map(|obj| unsafe { obj.cast_unchecked() }).collect())
     }
 
     /// Returns all datasets in the group, non-recursively
     pub fn datasets(&self) -> Result<Vec<Dataset>> {
         self.get_all_of_type(LocationType::Dataset)
-            .map(|vec| vec.into_iter().map(|obj| unsafe { obj.cast() }).collect())
+            .map(|vec| vec.into_iter().map(|obj| unsafe { obj.cast_unchecked() }).collect())
     }
 
     /// Returns all named types in the group, non-recursively
     pub fn named_datatypes(&self) -> Result<Vec<Datatype>> {
         self.get_all_of_type(LocationType::NamedDatatype)
-            .map(|vec| vec.into_iter().map(|obj| unsafe { obj.cast() }).collect())
+            .map(|vec| vec.into_iter().map(|obj| unsafe { obj.cast_unchecked() }).collect())
     }
 
     /// Returns the names of all objects in the group, non-recursively.

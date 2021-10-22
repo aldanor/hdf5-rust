@@ -526,6 +526,20 @@ fn test_fapl_set_libver_bounds() -> hdf5::Result<()> {
     test_pl!(FA, libver_bounds: low = LibraryVersion::V18, high = LibraryVersion::V18);
     test_pl!(FA, libver_bounds: low = LibraryVersion::V18, high = LibraryVersion::V110);
     test_pl!(FA, libver_bounds: low = LibraryVersion::V110, high = LibraryVersion::V110);
+    let make_lvb = |lv| LibVerBounds { low: lv, high: LibraryVersion::latest() };
+    let mut b = FAB::new();
+    b.libver_earliest();
+    assert_eq!(b.finish()?.libver_bounds(), make_lvb(LibraryVersion::Earliest));
+    assert_eq!(b.finish()?.libver(), LibraryVersion::Earliest);
+    b.libver_v18();
+    assert_eq!(b.finish()?.libver_bounds(), make_lvb(LibraryVersion::V18));
+    assert_eq!(b.finish()?.libver(), LibraryVersion::V18);
+    b.libver_v110();
+    assert_eq!(b.finish()?.libver_bounds(), make_lvb(LibraryVersion::V110));
+    assert_eq!(b.finish()?.libver(), LibraryVersion::V110);
+    b.libver_latest();
+    assert_eq!(b.finish()?.libver_bounds(), make_lvb(LibraryVersion::latest()));
+    assert_eq!(b.finish()?.libver(), LibraryVersion::latest());
     Ok(())
 }
 

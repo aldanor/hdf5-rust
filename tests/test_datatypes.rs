@@ -88,7 +88,7 @@ pub fn test_datatype_roundtrip() {
 
 #[test]
 pub fn test_invalid_datatype() {
-    assert_err!(from_id::<Datatype>(H5I_INVALID_HID), "Invalid datatype id");
+    assert_err!(from_id::<Datatype>(H5I_INVALID_HID), "Invalid handle id");
 }
 
 #[test]

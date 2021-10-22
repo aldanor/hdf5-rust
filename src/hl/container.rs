@@ -380,7 +380,7 @@ impl Deref for Container {
 
 impl Container {
     pub(crate) fn is_attr(&self) -> bool {
-        get_id_type(self.id()) == H5I_ATTR
+        self.handle().id_type() == H5I_ATTR
     }
 
     /// Creates a reader wrapper for this dataset/attribute, allowing to

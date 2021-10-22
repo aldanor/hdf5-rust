@@ -485,6 +485,10 @@ pub mod tests {
         })
     }
 
+    fn rc(id: hid_t) -> Result<hsize_t> {
+        h5call!(hdf5_sys::h5i::H5Iget_ref(id)).map(|x| x as _)
+    }
+
     #[test]
     fn test_strong_close() {
         use crate::hl::plist::file_access::FileCloseDegree;
@@ -506,7 +510,7 @@ pub mod tests {
             assert_eq!(file_copy.refcount(), 2);
 
             drop(file);
-            assert_eq!(crate::handle::refcount(fileid).unwrap(), 1);
+            assert_eq!(rc(fileid).unwrap(), 1);
             assert_eq!(group.refcount(), 1);
             assert_eq!(file_copy.refcount(), 1);
 
@@ -514,8 +518,8 @@ pub mod tests {
                 // Lock to ensure fileid does not get overwritten
                 let groupid = group.id();
                 drop(file_copy);
-                assert!(crate::handle::refcount(fileid).is_err());
-                assert!(crate::handle::refcount(groupid).is_err());
+                assert!(rc(fileid).is_err());
+                assert!(rc(groupid).is_err());
                 assert!(!group.is_valid());
                 drop(group);
             });
@@ -543,14 +547,14 @@ pub mod tests {
             assert_eq!(file_copy.refcount(), 2);
 
             drop(file);
-            assert_eq!(crate::handle::refcount(fileid).unwrap(), 1);
+            assert_eq!(rc(fileid).unwrap(), 1);
             assert_eq!(group.refcount(), 1);
             assert_eq!(file_copy.refcount(), 1);
 
             h5lock!({
                 // Lock to ensure fileid does not get overwritten
                 drop(file_copy);
-                assert!(crate::handle::refcount(fileid).is_err());
+                assert!(rc(fileid).is_err());
             });
             assert_eq!(group.refcount(), 1);
         });

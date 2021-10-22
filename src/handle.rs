@@ -1,33 +1,8 @@
+use std::mem;
+
 use hdf5_sys::h5i::{H5I_type_t, H5Idec_ref, H5Iget_ref, H5Iget_type, H5Iinc_ref, H5Iis_valid};
 
 use crate::internal_prelude::*;
-
-pub fn get_id_type(id: hid_t) -> H5I_type_t {
-    h5lock!({
-        let tp = h5lock!(H5Iget_type(id));
-        let valid = id > 0 && tp > H5I_BADID && tp < H5I_NTYPES;
-        if valid {
-            tp
-        } else {
-            H5I_BADID
-        }
-    })
-}
-
-pub(crate) fn refcount(id: hid_t) -> Result<hsize_t> {
-    h5call!(H5Iget_ref(id)).map(|x| x as _)
-}
-
-pub fn is_valid_id(id: hid_t) -> bool {
-    h5lock!({
-        let tp = get_id_type(id);
-        tp > H5I_BADID && tp < H5I_NTYPES
-    })
-}
-
-pub fn is_valid_user_id(id: hid_t) -> bool {
-    h5lock!({ H5Iis_valid(id) == 1 })
-}
 
 /// A handle to an HDF5 object
 #[derive(Debug)]
@@ -38,25 +13,23 @@ pub struct Handle {
 impl Handle {
     /// Create a handle from object ID, taking ownership of it
     pub fn try_new(id: hid_t) -> Result<Self> {
-        h5lock!({
-            if is_valid_user_id(id) {
-                Ok(Self { id })
-            } else {
-                Err(From::from(format!("Invalid handle id: {}", id)))
-            }
-        })
+        let handle = Self { id };
+        if handle.is_valid_user_id() {
+            Ok(handle)
+        } else {
+            // Drop on an invalid handle could cause closing an unrelated object
+            // in the destructor, hence it's important to prevent the drop here.
+            mem::forget(handle);
+            Err(From::from(format!("Invalid handle id: {}", id)))
+        }
     }
 
     /// Create a handle from object ID by cloning it
     pub fn try_borrow(id: hid_t) -> Result<Self> {
-        h5lock!({
-            if is_valid_user_id(id) {
-                h5call!(H5Iinc_ref(id))?;
-                Ok(Self { id })
-            } else {
-                Err(From::from(format!("Invalid handle id: {}", id)))
-            }
-        })
+        // It's ok to just call try_new() since it may not decref the object
+        let handle = Self::try_new(id)?;
+        handle.incref();
+        Ok(handle)
     }
 
     pub const fn invalid() -> Self {
@@ -69,8 +42,8 @@ impl Handle {
 
     /// Increment the reference count of the handle
     pub fn incref(&self) {
-        if is_valid_user_id(self.id()) {
-            h5lock!(H5Iinc_ref(self.id()));
+        if self.is_valid_user_id() {
+            h5lock!(H5Iinc_ref(self.id));
         }
     }
 
@@ -81,7 +54,7 @@ impl Handle {
     pub fn decref(&self) {
         h5lock!({
             if self.is_valid_id() {
-                H5Idec_ref(self.id());
+                H5Idec_ref(self.id);
             }
         });
     }
@@ -89,22 +62,34 @@ impl Handle {
     /// Returns `true` if the object has a valid unlocked identifier (`false` for pre-defined
     /// locked identifiers like property list classes).
     pub fn is_valid_user_id(&self) -> bool {
-        is_valid_user_id(self.id())
+        h5lock!(H5Iis_valid(self.id)) == 1
     }
 
     pub fn is_valid_id(&self) -> bool {
-        is_valid_id(self.id())
+        matches!(self.id_type(), tp if tp > H5I_BADID && tp < H5I_NTYPES)
     }
 
     /// Return the reference count of the object
     pub fn refcount(&self) -> u32 {
-        refcount(self.id).unwrap_or(0) as _
+        h5call!(H5Iget_ref(self.id)).map(|x| x as _).unwrap_or(0) as _
+    }
+
+    /// Get HDF5 object type as a native enum.
+    pub fn id_type(&self) -> H5I_type_t {
+        if self.id <= 0 {
+            H5I_BADID
+        } else {
+            match h5lock!(H5Iget_type(self.id)) {
+                tp if tp > H5I_BADID && tp < H5I_NTYPES => tp,
+                _ => H5I_BADID,
+            }
+        }
     }
 }
 
 impl Clone for Handle {
     fn clone(&self) -> Self {
-        Self::try_borrow(self.id()).unwrap_or_else(|_| Self::invalid())
+        Self::try_borrow(self.id).unwrap_or_else(|_| Self::invalid())
     }
 }
 

@@ -24,8 +24,8 @@ pub trait ObjectClass: Sized {
 
     fn from_id(id: hid_t) -> Result<Self> {
         h5lock!({
-            if Self::is_valid_id_type(get_id_type(id)) {
-                let handle = Handle::try_new(id)?;
+            let handle = Handle::try_new(id)?;
+            if Self::is_valid_id_type(handle.id_type()) {
                 let obj = Self::from_handle(handle);
                 obj.validate().map(|_| obj)
             } else {
@@ -50,17 +50,27 @@ pub trait ObjectClass: Sized {
         &mut *(self as *mut Self).cast::<T>()
     }
 
-    unsafe fn cast<T: ObjectClass>(self) -> T {
+    unsafe fn cast_unchecked<T: ObjectClass>(self) -> T {
         // This method requires you to be 18 years or older to use it
+        // (note: if it wasn't a trait method, it could be marked as const)
         let obj = ptr::read((&self as *const Self).cast());
         mem::forget(self);
         obj
     }
 
+    fn cast<T: ObjectClass>(self) -> Result<T> {
+        let id_type = self.handle().id_type();
+        if Self::is_valid_id_type(id_type) {
+            Ok(unsafe { self.cast_unchecked() })
+        } else {
+            Err(format!("unable to cast {} ({:?}) into {}", Self::NAME, id_type, T::NAME).into())
+        }
+    }
+
     fn debug_fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // TODO: this can moved out if/when specialization lands in stable
         h5lock!({
-            if !is_valid_user_id(self.handle().id()) {
+            if !self.handle().is_valid_user_id() {
                 write!(f, "<HDF5 {}: invalid id>", Self::NAME)
             } else if let Some(d) = self.short_repr() {
                 write!(f, "<HDF5 {}: {}>", Self::NAME, d)
