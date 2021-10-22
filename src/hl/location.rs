@@ -324,18 +324,14 @@ pub mod tests {
 
     #[test]
     pub fn test_location_info() {
-        use crate::plist::file_access::LibraryVersion;
         let new_file = |path| {
-            #[cfg(hdf5_1_10_2)]
-            {
-                File::with_options()
-                    .with_fapl(|p| {
-                        p.libver_bounds(LibraryVersion::latest(), LibraryVersion::latest())
-                    })
-                    .create(path)
+            cfg_if::cfg_if! {
+                if #[cfg(hdf5_1_10_2)] {
+                    File::with_options().with_fapl(|p| p.libver_v110()).create(path)
+                } else {
+                    File::create(path)
+                }
             }
-            #[cfg(not(hdf5_1_10_2))]
-            File::create(path)
         };
         with_tmp_path(|path| {
             let file = new_file(path).unwrap();
@@ -344,7 +340,13 @@ pub mod tests {
                 let info = group.get_info().unwrap();
                 assert_eq!(info.num_links, 1);
                 assert_eq!(info.loc_type, LocationType::Group);
-                assert!(info.btime > 0);
+                cfg_if::cfg_if! {
+                    if #[cfg(hdf5_1_10_2)] {
+                        assert!(info.btime > 0);
+                    } else {
+                        assert_eq!(info.btime, 0);
+                    }
+                }
                 assert!(
                     info.btime == info.mtime
                         && info.btime == info.atime
@@ -375,7 +377,13 @@ pub mod tests {
                 let info = var.get_info().unwrap();
                 assert_eq!(info.num_links, 6); // 1 + 5
                 assert_eq!(info.loc_type, LocationType::Dataset);
-                assert!(info.btime > 0);
+                cfg_if::cfg_if! {
+                    if #[cfg(hdf5_1_10_2)] {
+                        assert!(info.btime > 0);
+                    } else {
+                        assert_eq!(info.btime, 0);
+                    }
+                }
                 assert!(
                     info.btime == info.mtime
                         && info.btime == info.atime
@@ -385,14 +393,15 @@ pub mod tests {
                 info.token
             };
             let var = file.open_by_token(token).unwrap();
-            assert_eq!(var.name(), "/group/hard5"); // will open the last hard-linked object
+            // will open either the first or the last hard-linked object
+            assert!(var.name().starts_with("/group/hard"));
 
             let info = file.get_info_by_name("group").unwrap();
             let group = file.open_by_token(info.token).unwrap();
             assert_eq!(group.name(), "/group");
             let info = file.get_info_by_name("/group/var").unwrap();
             let var = file.open_by_token(info.token).unwrap();
-            assert_eq!(var.name(), "/group/hard5");
+            assert!(var.name().starts_with("/group/hard"));
 
             assert!(file.get_info_by_name("gibberish").is_err());
         })
