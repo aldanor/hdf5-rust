@@ -337,6 +337,7 @@ pub mod tests {
             let file = new_file(path).unwrap();
             let token = {
                 let group = file.create_group("group").unwrap();
+                assert_eq!(file.loc_type_by_name("group").unwrap(), LocationType::Group);
                 let info = group.get_info().unwrap();
                 assert_eq!(info.num_links, 1);
                 assert_eq!(info.loc_type, LocationType::Group);
@@ -374,6 +375,7 @@ pub mod tests {
                 group.link_soft("var", "soft1").unwrap();
                 group.link_soft("var", "soft2").unwrap();
                 group.link_soft("var", "soft3").unwrap();
+                assert_eq!(file.loc_type_by_name("/group/var").unwrap(), LocationType::Dataset);
                 let info = var.get_info().unwrap();
                 assert_eq!(info.num_links, 6); // 1 + 5
                 assert_eq!(info.loc_type, LocationType::Dataset);
