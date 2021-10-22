@@ -246,7 +246,7 @@ fn info_fields(full: bool) -> c_uint {
     }
 }
 
-#[allow(non_snake_case)]
+#[allow(non_snake_case, unused_variables)]
 fn H5O_get_info(loc_id: hid_t, full: bool) -> Result<LocationInfo> {
     let mut info_buf = MaybeUninit::uninit();
     let info_ptr = info_buf.as_mut_ptr();
@@ -260,7 +260,7 @@ fn H5O_get_info(loc_id: hid_t, full: bool) -> Result<LocationInfo> {
     Ok(info.into())
 }
 
-#[allow(non_snake_case)]
+#[allow(non_snake_case, unused_variables)]
 fn H5O_get_info_by_name(loc_id: hid_t, name: *const c_char, full: bool) -> Result<LocationInfo> {
     let mut info_buf = MaybeUninit::uninit();
     let info_ptr = info_buf.as_mut_ptr();
