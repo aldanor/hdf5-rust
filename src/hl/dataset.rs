@@ -692,13 +692,45 @@ impl DatasetBuilderInner {
     /// Apply a `blosc` filter
     ///
     /// This requires the `blosc` crate feature
-    pub fn blosc<T>(&mut self, complib: Blosc, clevel: u8, shuffle: T)
-    where
-        T: Into<BloscShuffle>,
-    {
+    pub fn blosc(&mut self, complib: Blosc, clevel: u8, shuffle: impl Into<BloscShuffle>) {
         let shuffle = shuffle.into();
-        // TODO: add all the blosc_*() variants here as well?
         self.with_dcpl(|pl| pl.blosc(complib, clevel, shuffle));
+    }
+
+    #[cfg(feature = "blosc")]
+    pub fn blosc_blosclz(&mut self, clevel: u8, shuffle: impl Into<BloscShuffle>) {
+        let shuffle = shuffle.into();
+        self.with_dcpl(|pl| pl.blosc_blosclz(clevel, shuffle));
+    }
+
+    #[cfg(feature = "blosc")]
+    pub fn blosc_lz4(&mut self, clevel: u8, shuffle: impl Into<BloscShuffle>) {
+        let shuffle = shuffle.into();
+        self.with_dcpl(|pl| pl.blosc_lz4(clevel, shuffle));
+    }
+
+    #[cfg(feature = "blosc")]
+    pub fn blosc_lz4hc(&mut self, clevel: u8, shuffle: impl Into<BloscShuffle>) {
+        let shuffle = shuffle.into();
+        self.with_dcpl(|pl| pl.blosc_lz4hc(clevel, shuffle));
+    }
+
+    #[cfg(feature = "blosc")]
+    pub fn blosc_snappy(&mut self, clevel: u8, shuffle: impl Into<BloscShuffle>) {
+        let shuffle = shuffle.into();
+        self.with_dcpl(|pl| pl.blosc_snappy(clevel, shuffle));
+    }
+
+    #[cfg(feature = "blosc")]
+    pub fn blosc_zlib(&mut self, clevel: u8, shuffle: impl Into<BloscShuffle>) {
+        let shuffle = shuffle.into();
+        self.with_dcpl(|pl| pl.blosc_zlib(clevel, shuffle));
+    }
+
+    #[cfg(feature = "blosc")]
+    pub fn blosc_zstd(&mut self, clevel: u8, shuffle: impl Into<BloscShuffle>) {
+        let shuffle = shuffle.into();
+        self.with_dcpl(|pl| pl.blosc_zstd(clevel, shuffle));
     }
 
     pub fn add_filter(&mut self, id: H5Z_filter_t, cdata: &[c_uint]) {
@@ -1037,11 +1069,58 @@ macro_rules! impl_builder_stuff {
         #[cfg(feature = "blosc")]
         #[inline]
         #[must_use]
-        pub fn blosc<T>(mut self, complib: Blosc, clevel: u8, shuffle: T) -> Self
-        where
-            T: Into<BloscShuffle>,
-        {
+        pub fn blosc(
+            mut self, complib: Blosc, clevel: u8, shuffle: impl Into<BloscShuffle>,
+        ) -> Self {
             self.builder.blosc(complib, clevel, shuffle);
+            self
+        }
+
+        #[cfg(feature = "blosc")]
+        #[inline]
+        #[must_use]
+        pub fn blosc_blosclz(mut self, clevel: u8, shuffle: impl Into<BloscShuffle>) -> Self {
+            self.builder.blosc_blosclz(clevel, shuffle);
+            self
+        }
+
+        #[cfg(feature = "blosc")]
+        #[inline]
+        #[must_use]
+        pub fn blosc_lz4(mut self, clevel: u8, shuffle: impl Into<BloscShuffle>) -> Self {
+            self.builder.blosc_lz4(clevel, shuffle);
+            self
+        }
+
+        #[cfg(feature = "blosc")]
+        #[inline]
+        #[must_use]
+        pub fn blosc_lz4hc(mut self, clevel: u8, shuffle: impl Into<BloscShuffle>) -> Self {
+            self.builder.blosc_lz4hc(clevel, shuffle);
+            self
+        }
+
+        #[cfg(feature = "blosc")]
+        #[inline]
+        #[must_use]
+        pub fn blosc_snappy(mut self, clevel: u8, shuffle: impl Into<BloscShuffle>) -> Self {
+            self.builder.blosc_snappy(clevel, shuffle);
+            self
+        }
+
+        #[cfg(feature = "blosc")]
+        #[inline]
+        #[must_use]
+        pub fn blosc_zlib(mut self, clevel: u8, shuffle: impl Into<BloscShuffle>) -> Self {
+            self.builder.blosc_zlib(clevel, shuffle);
+            self
+        }
+
+        #[cfg(feature = "blosc")]
+        #[inline]
+        #[must_use]
+        pub fn blosc_zstd(mut self, clevel: u8, shuffle: impl Into<BloscShuffle>) -> Self {
+            self.builder.blosc_zstd(clevel, shuffle);
             self
         }
 
