@@ -924,9 +924,21 @@ mod libver {
         pub high: LibraryVersion,
     }
 
+    impl LibVerBounds {
+        pub const fn new(low: LibraryVersion, high: LibraryVersion) -> Self {
+            Self { low, high }
+        }
+    }
+
     impl Default for LibVerBounds {
         fn default() -> Self {
             Self { low: LibraryVersion::Earliest, high: LibraryVersion::latest() }
+        }
+    }
+
+    impl From<LibraryVersion> for LibVerBounds {
+        fn from(version: LibraryVersion) -> Self {
+            Self { low: version, high: LibraryVersion::latest() }
         }
     }
 }
@@ -1134,6 +1146,27 @@ impl FileAccessBuilder {
         self
     }
 
+    #[cfg(hdf5_1_10_2)]
+    pub fn libver_earliest(&mut self) -> &mut Self {
+        self.libver_bounds(LibraryVersion::Earliest, LibraryVersion::latest())
+    }
+
+    #[cfg(hdf5_1_10_2)]
+    pub fn libver_v18(&mut self) -> &mut Self {
+        self.libver_bounds(LibraryVersion::V18, LibraryVersion::latest())
+    }
+
+    #[cfg(hdf5_1_10_2)]
+    pub fn libver_v110(&mut self) -> &mut Self {
+        self.libver_bounds(LibraryVersion::V110, LibraryVersion::latest())
+    }
+
+    #[cfg(hdf5_1_10_2)]
+    pub fn libver_latest(&mut self) -> &mut Self {
+        self.libver_bounds(LibraryVersion::latest(), LibraryVersion::latest())
+    }
+
+    #[cfg(hdf5_1_10_2)]
     pub fn driver(&mut self, file_driver: &FileDriver) -> &mut Self {
         self.file_driver = Some(file_driver.clone());
         self
@@ -1815,5 +1848,10 @@ impl FileAccess {
     #[cfg(hdf5_1_10_2)]
     pub fn libver_bounds(&self) -> LibVerBounds {
         self.get_libver_bounds().ok().unwrap_or_default()
+    }
+
+    #[cfg(hdf5_1_10_2)]
+    pub fn libver(&self) -> LibraryVersion {
+        self.get_libver_bounds().ok().unwrap_or_default().low
     }
 }
