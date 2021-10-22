@@ -49,10 +49,18 @@
   but must read the entire attribute at once).
 - Added support in `hdf5-sys` for the new functions in `hdf5` `1.10.6` and `1.10.7`.
 - Added support for creating external links on a `Group` with `link_external`.
-- Added `Location` methods: `get_info`, `get_info_by_name`, `loc_type`, and `open_by_token`.
+- Added `Location` methods returning `LocationInfo`: `loc_info`, `loc_info_by_name`.
+- Added `Location` methods returning `LocationType`: `loc_type`, `loc_type_by_name`.
+- Added `Location::open_by_token` that can open any object by its physical address.
 - Added `Group` methods: `iter_visit`, `iter_visit_default`, `get_all_of_type`, `datasets`, `groups`, and `named_datatypes`.
 - Added `Debug` for `Handle`.
 - Added method `try_borrow` on `Handle` for not taking ownership of an HDF5 object.
+- Added `Handle::id_type()` method.
+- Added `ObjectClass::cast()` method (safe counterpart to `cast_unchecked`).
+- Added downcast methods to `Object`: `as_file`, `as_group`, `as_datatype`, `as_dataspace`,
+  `as_dataset`, `as_attr`, `as_location`, `as_container`, `as_plist`.
+- Simplify setting min library version in `FileAccess` plist: `libver_earliest`, `libver_v18`,
+  `libver_v110`, `libver_latest`; getting min library version can be done via `libver`.
 
  ### Changed
 
@@ -83,11 +91,18 @@
 - Handles to `hdf5` identifiers are no longer tracked via a registry and is instead handled by stricter semantics of ownership.
 - The handle to a `File` will not close all objects in a `File` when dropped, but instead uses a weak file close degree. For the old behaviour see `FileCloseDegree::Strong`.
 - Globals no longer creates a `lazy_static` per global.
+- Unsafe `ObjectClass::cast()` has been renamed to `ObjectClass::cast_unchecked()`.
+- Bump `winreg` (Windows only) to 0.10, `pretty_assertions` (dev) to 1.0.
 
 ### Fixed
 
 - A memory leak of handles has been identified and fixed.
 - A race condition on libary initialisation from different threads was identified and fixed.
+
+### Removed
+
+- Free-standing functions `get_id_type`, `is_valid_id`, `is_valid_user_id` have been removed,
+  but they are all accessible via `Handle`.
 
 ## 0.7.1
 
