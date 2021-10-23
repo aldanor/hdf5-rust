@@ -134,6 +134,9 @@ jobs:
       - name: Build and test with filters
         run: cargo test --workspace -v --features hdf5-sys/static,hdf5-sys/zlib,lzf,blosc --exclude hdf5-derive
         if: matrix.rust != 'stable-gnu'
+      - name: Run example
+        run: cargo r --example simple --features hdf5-sys/static,hdf5-sys/zlib,lzf,blosc
+        if: matrix.rust != 'stable-gnu'
 
   apt:
     name: apt

@@ -692,13 +692,45 @@ impl DatasetBuilderInner {
     /// Apply a `blosc` filter
     ///
     /// This requires the `blosc` crate feature
-    pub fn blosc<T>(&mut self, complib: Blosc, clevel: u8, shuffle: T)
-    where
-        T: Into<BloscShuffle>,
-    {
+    pub fn blosc(&mut self, complib: Blosc, clevel: u8, shuffle: impl Into<BloscShuffle>) {
         let shuffle = shuffle.into();
-        // TODO: add all the blosc_*() variants here as well?
         self.with_dcpl(|pl| pl.blosc(complib, clevel, shuffle));
+    }
+
+    #[cfg(feature = "blosc")]
+    pub fn blosc_blosclz(&mut self, clevel: u8, shuffle: impl Into<BloscShuffle>) {
+        let shuffle = shuffle.into();
+        self.with_dcpl(|pl| pl.blosc_blosclz(clevel, shuffle));
+    }
+
+    #[cfg(feature = "blosc")]
+    pub fn blosc_lz4(&mut self, clevel: u8, shuffle: impl Into<BloscShuffle>) {
+        let shuffle = shuffle.into();
+        self.with_dcpl(|pl| pl.blosc_lz4(clevel, shuffle));
+    }
+
+    #[cfg(feature = "blosc")]
+    pub fn blosc_lz4hc(&mut self, clevel: u8, shuffle: impl Into<BloscShuffle>) {
+        let shuffle = shuffle.into();
+        self.with_dcpl(|pl| pl.blosc_lz4hc(clevel, shuffle));
+    }
+
+    #[cfg(feature = "blosc")]
+    pub fn blosc_snappy(&mut self, clevel: u8, shuffle: impl Into<BloscShuffle>) {
+        let shuffle = shuffle.into();
+        self.with_dcpl(|pl| pl.blosc_snappy(clevel, shuffle));
+    }
+
+    #[cfg(feature = "blosc")]
+    pub fn blosc_zlib(&mut self, clevel: u8, shuffle: impl Into<BloscShuffle>) {
+        let shuffle = shuffle.into();
+        self.with_dcpl(|pl| pl.blosc_zlib(clevel, shuffle));
+    }
+
+    #[cfg(feature = "blosc")]
+    pub fn blosc_zstd(&mut self, clevel: u8, shuffle: impl Into<BloscShuffle>) {
+        let shuffle = shuffle.into();
+        self.with_dcpl(|pl| pl.blosc_zstd(clevel, shuffle));
     }
 
     pub fn add_filter(&mut self, id: H5Z_filter_t, cdata: &[c_uint]) {
@@ -829,439 +861,171 @@ impl DatasetBuilderInner {
     }
 }
 
-macro_rules! impl_builder_stuff {
+macro_rules! impl_builder {
+    ($plist:ident: $name:ident/$short:ident) => {
+        paste::paste! {
+            #[inline] #[must_use]
+            pub fn [<set_ $name _plist>](mut self, $short: &$plist) -> Self {
+                self.builder.[<set_ $name _plist>]($short); self
+            }
+
+            #[inline] #[must_use]
+            pub fn [<set_ $short>](mut self, $short: &$plist) -> Self {
+                self.builder.[<set_ $short>]($short); self
+            }
+
+            #[inline]
+            pub fn [<$name _plist>](&mut self) -> &mut [<$plist Builder>] {
+                self.builder.[<$name _plist>]()
+            }
+
+            #[inline]
+            pub fn $short(&mut self) -> &mut [<$plist Builder>] {
+                self.builder.$short()
+            }
+
+            #[inline] #[must_use]
+            pub fn [<with_ $name _plist>]<F>(mut self, func: F) -> Self
+            where
+                F: Fn(&mut [<$plist Builder>]) -> &mut [<$plist Builder>],
+            {
+                self.builder.[<with_ $name _plist>](func); self
+            }
+
+            #[inline] #[must_use]
+            pub fn [<with_ $short>]<F>(mut self, func: F) -> Self
+            where
+                F: Fn(&mut [<$plist Builder>]) -> &mut [<$plist Builder>],
+            {
+                self.builder.[<with_ $short>](func); self
+            }
+        }
+    };
+    (*: $name:ident($($var:ident: $ty:ty),*)) => {
+        #[inline] #[must_use]
+        pub fn $name(mut self $(, $var: $ty)*) -> Self {
+            self.builder.$name($($var),*); self
+        }
+    };
+    ($plist:ident: $name:ident($($var:ident: $ty:ty),*)) => {
+        paste::paste! {
+            #[inline] #[must_use] #[doc =
+                "\u{21b3} [`" $plist "Builder::" $name "`]"
+                "(crate::plist::" $plist "Builder::" $name ")"
+            ]
+            pub fn $name(mut self $(, $var: $ty)*) -> Self {
+                self.builder.$name($($var),*); self
+            }
+        }
+    };
+    ($plist:ident: $name:ident<$($gid:ident: $gty:path),+>($($var:ident: $ty:ty),*)) => {
+        paste::paste! {
+            #[inline] #[must_use] #[doc =
+                "\u{21b3} [`" $plist "Builder::" $name "`]"
+                "(crate::plist::" $plist "Builder::" $name ")"
+            ]
+            pub fn $name<$($gid: $gty),+>(mut self $(, $var: $ty)*) -> Self {
+                self.builder.$name($($var),*); self
+            }
+        }
+    };
+}
+
+macro_rules! impl_builder_methods {
     () => {
-        #[inline]
-        #[must_use]
-        pub fn packed(mut self, packed: bool) -> Self {
-            self.builder.packed(packed);
-            self
-        }
+        impl_builder!(*: packed(packed: bool));
 
-        ////////////////////
-        // DatasetAccess  //
-        ////////////////////
+        impl_builder!(DatasetAccess: access/dapl);
 
-        #[inline]
-        #[must_use]
-        pub fn set_access_plist(mut self, dapl: &DatasetAccess) -> Self {
-            self.builder.set_access_plist(dapl);
-            self
-        }
-
-        #[inline]
-        #[must_use]
-        pub fn set_dapl(mut self, dapl: &DatasetAccess) -> Self {
-            self.builder.set_dapl(dapl);
-            self
-        }
-
-        #[inline]
-        pub fn access_plist(&mut self) -> &mut DatasetAccessBuilder {
-            self.builder.access_plist()
-        }
-
-        #[inline]
-        pub fn dapl(&mut self) -> &mut DatasetAccessBuilder {
-            self.builder.dapl()
-        }
-
-        #[inline]
-        #[must_use]
-        pub fn with_access_plist<F>(mut self, func: F) -> Self
-        where
-            F: Fn(&mut DatasetAccessBuilder) -> &mut DatasetAccessBuilder,
-        {
-            self.builder.with_access_plist(func);
-            self
-        }
-
-        #[inline]
-        #[must_use]
-        pub fn with_dapl<F>(mut self, func: F) -> Self
-        where
-            F: Fn(&mut DatasetAccessBuilder) -> &mut DatasetAccessBuilder,
-        {
-            self.builder.with_dapl(func);
-            self
-        }
-
-        // DAPL properties
-
-        #[inline]
-        #[must_use]
-        pub fn chunk_cache(mut self, nslots: usize, nbytes: usize, w0: f64) -> Self {
-            self.builder.chunk_cache(nslots, nbytes, w0);
-            self
-        }
-
+        impl_builder!(DatasetAccess: chunk_cache(nslots: usize, nbytes: usize, w0: f64));
         #[cfg(hdf5_1_8_17)]
-        #[inline]
-        #[must_use]
-        pub fn efile_prefix(mut self, prefix: &str) -> Self {
-            self.builder.efile_prefix(prefix);
-            self
-        }
-
+        impl_builder!(DatasetAccess: efile_prefix(prefix: &str));
         #[cfg(hdf5_1_10_0)]
-        #[inline]
-        #[must_use]
-        pub fn virtual_view(mut self, view: VirtualView) -> Self {
-            self.builder.virtual_view(view);
-            self
-        }
-
+        impl_builder!(DatasetAccess: virtual_view(view: VirtualView));
         #[cfg(hdf5_1_10_0)]
-        #[inline]
-        #[must_use]
-        pub fn virtual_printf_gap(mut self, gap_size: usize) -> Self {
-            self.builder.virtual_printf_gap(gap_size);
-            self
-        }
-
+        impl_builder!(DatasetAccess: virtual_printf_gap(gap_size: usize));
         #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
-        #[inline]
-        #[must_use]
-        pub fn all_coll_metadata_ops(mut self, is_collective: bool) -> Self {
-            self.builder.all_coll_metadata_ops(is_collective);
-            self
-        }
+        impl_builder!(DatasetAccess: all_coll_metadata_ops(is_collective: bool));
 
-        ////////////////////
-        // DatasetCreate  //
-        ////////////////////
+        impl_builder!(DatasetCreate: create/dcpl);
 
-        #[inline]
-        #[must_use]
-        pub fn set_create_plist(mut self, dcpl: &DatasetCreate) -> Self {
-            self.builder.set_create_plist(dcpl);
-            self
-        }
-
-        #[inline]
-        #[must_use]
-        pub fn set_dcpl(mut self, dcpl: &DatasetCreate) -> Self {
-            self.builder.set_dcpl(dcpl);
-            self
-        }
-
-        #[inline]
-        pub fn create_plist(&mut self) -> &mut DatasetCreateBuilder {
-            self.builder.create_plist()
-        }
-
-        #[inline]
-        pub fn dcpl(&mut self) -> &mut DatasetCreateBuilder {
-            self.builder.dcpl()
-        }
-
-        #[inline]
-        #[must_use]
-        pub fn with_create_plist<F>(mut self, func: F) -> Self
-        where
-            F: Fn(&mut DatasetCreateBuilder) -> &mut DatasetCreateBuilder,
-        {
-            self.builder.with_create_plist(func);
-            self
-        }
-
-        #[inline]
-        #[must_use]
-        pub fn with_dcpl<F>(mut self, func: F) -> Self
-        where
-            F: Fn(&mut DatasetCreateBuilder) -> &mut DatasetCreateBuilder,
-        {
-            self.builder.with_dcpl(func);
-            self
-        }
-
-        // DCPL properties
-
-        #[inline]
-        #[must_use]
-        pub fn set_filters(mut self, filters: &[Filter]) -> Self {
-            self.builder.set_filters(filters);
-            self
-        }
-
-        #[inline]
-        #[must_use]
-        pub fn deflate(mut self, level: u8) -> Self {
-            self.builder.deflate(level);
-            self
-        }
-
-        #[inline]
-        #[must_use]
-        pub fn shuffle(mut self) -> Self {
-            self.builder.shuffle();
-            self
-        }
-
-        #[inline]
-        #[must_use]
-        pub fn fletcher32(mut self) -> Self {
-            self.builder.fletcher32();
-            self
-        }
-
-        #[inline]
-        #[must_use]
-        pub fn szip(mut self, coding: SZip, px_per_block: u8) -> Self {
-            self.builder.szip(coding, px_per_block);
-            self
-        }
-
-        #[inline]
-        #[must_use]
-        pub fn nbit(mut self) -> Self {
-            self.builder.nbit();
-            self
-        }
-
-        #[inline]
-        #[must_use]
-        pub fn scale_offset(mut self, mode: ScaleOffset) -> Self {
-            self.builder.scale_offset(mode);
-            self
-        }
-
+        impl_builder!(DatasetCreate: set_filters(filters: &[Filter]));
+        impl_builder!(DatasetCreate: deflate(level: u8));
+        impl_builder!(DatasetCreate: shuffle());
+        impl_builder!(DatasetCreate: fletcher32());
+        impl_builder!(DatasetCreate: szip(coding: SZip, px_per_block: u8));
+        impl_builder!(DatasetCreate: nbit());
+        impl_builder!(DatasetCreate: scale_offset(mode: ScaleOffset));
         #[cfg(feature = "lzf")]
-        #[inline]
-        #[must_use]
-        pub fn lzf(mut self) -> Self {
-            self.builder.lzf();
-            self
-        }
-
+        impl_builder!(DatasetCreate: lzf());
         #[cfg(feature = "blosc")]
-        #[inline]
-        #[must_use]
-        pub fn blosc<T>(mut self, complib: Blosc, clevel: u8, shuffle: T) -> Self
-        where
-            T: Into<BloscShuffle>,
-        {
-            self.builder.blosc(complib, clevel, shuffle);
-            self
-        }
-
-        #[inline]
-        #[must_use]
-        pub fn add_filter(mut self, id: H5Z_filter_t, cdata: &[c_uint]) -> Self {
-            self.builder.add_filter(id, cdata);
-            self
-        }
-
-        #[inline]
-        #[must_use]
-        pub fn clear_filters(mut self) -> Self {
-            self.builder.clear_filters();
-            self
-        }
-
-        #[inline]
-        #[must_use]
-        pub fn alloc_time(mut self, alloc_time: Option<AllocTime>) -> Self {
-            self.builder.alloc_time(alloc_time);
-            self
-        }
-
-        #[inline]
-        #[must_use]
-        pub fn fill_time(mut self, fill_time: FillTime) -> Self {
-            self.builder.fill_time(fill_time);
-            self
-        }
-
-        #[inline]
-        #[must_use]
-        pub fn fill_value<T: Into<OwnedDynValue>>(mut self, fill_value: T) -> Self {
-            self.builder.fill_value(fill_value);
-            self
-        }
-
-        #[inline]
-        #[must_use]
-        pub fn no_fill_value(mut self) -> Self {
-            self.builder.no_fill_value();
-            self
-        }
-
-        #[inline]
-        #[must_use]
-        pub fn chunk<D: Dimension>(mut self, chunk: D) -> Self {
-            self.builder.chunk(chunk);
-            self
-        }
-
-        #[inline]
-        #[must_use]
-        pub fn chunk_min_kb(mut self, size: usize) -> Self {
-            self.builder.chunk_min_kb(size);
-            self
-        }
-
-        #[inline]
-        #[must_use]
-        pub fn no_chunk(mut self) -> Self {
-            self.builder.no_chunk();
-            self
-        }
-
-        #[inline]
-        #[must_use]
-        pub fn layout(mut self, layout: Layout) -> Self {
-            self.builder.layout(layout);
-            self
-        }
-
+        impl_builder!(
+            DatasetCreate: blosc(complib: Blosc, clevel: u8, shuffle: impl Into<BloscShuffle>)
+        );
+        #[cfg(feature = "blosc")]
+        impl_builder!(DatasetCreate: blosc_blosclz(clevel: u8, shuffle: impl Into<BloscShuffle>));
+        #[cfg(feature = "blosc")]
+        impl_builder!(DatasetCreate: blosc_lz4(clevel: u8, shuffle: impl Into<BloscShuffle>));
+        #[cfg(feature = "blosc")]
+        impl_builder!(DatasetCreate: blosc_lz4hc(clevel: u8, shuffle: impl Into<BloscShuffle>));
+        #[cfg(feature = "blosc")]
+        impl_builder!(DatasetCreate: blosc_snappy(clevel: u8, shuffle: impl Into<BloscShuffle>));
+        #[cfg(feature = "blosc")]
+        impl_builder!(DatasetCreate: blosc_zlib(clevel: u8, shuffle: impl Into<BloscShuffle>));
+        #[cfg(feature = "blosc")]
+        impl_builder!(DatasetCreate: blosc_zstd(clevel: u8, shuffle: impl Into<BloscShuffle>));
+        impl_builder!(DatasetCreate: add_filter(id: H5Z_filter_t, cdata: &[c_uint]));
+        impl_builder!(DatasetCreate: clear_filters());
+        impl_builder!(DatasetCreate: alloc_time(alloc_time: Option<AllocTime>));
+        impl_builder!(DatasetCreate: fill_time(fill_time: FillTime));
+        impl_builder!(DatasetCreate: fill_value<T: Into<OwnedDynValue>>(fill_value: T));
+        impl_builder!(DatasetCreate: no_fill_value());
+        impl_builder!(DatasetCreate: chunk<D: Dimension>(chunk: D));
+        impl_builder!(*: chunk_min_kb(size: usize));
+        impl_builder!(DatasetCreate: no_chunk());
+        impl_builder!(DatasetCreate: layout(layout: Layout));
         #[cfg(hdf5_1_10_0)]
-        #[inline]
-        #[must_use]
-        pub fn chunk_opts(mut self, opts: ChunkOpts) -> Self {
-            self.builder.chunk_opts(opts);
-            self
-        }
-
-        #[inline]
-        #[must_use]
-        pub fn external(mut self, name: &str, offset: usize, size: usize) -> Self {
-            self.builder.external(name, offset, size);
-            self
-        }
-
+        impl_builder!(DatasetCreate: chunk_opts(opts: ChunkOpts));
+        impl_builder!(DatasetCreate: external(name: &str, offset: usize, size: usize));
         #[cfg(hdf5_1_10_0)]
-        #[inline]
-        #[must_use]
-        pub fn virtual_map<F, D, E1, S1, E2, S2>(
-            mut self, src_filename: F, src_dataset: D, src_extents: E1, src_selection: S1,
-            vds_extents: E2, vds_selection: S2,
-        ) -> Self
-        where
-            F: AsRef<str>,
-            D: AsRef<str>,
-            E1: Into<Extents>,
-            S1: Into<Selection>,
-            E2: Into<Extents>,
-            S2: Into<Selection>,
-        {
-            self.builder.virtual_map(
-                src_filename,
-                src_dataset,
-                src_extents,
-                src_selection,
-                vds_extents,
-                vds_selection,
-            );
-            self
-        }
+        impl_builder!(
+            DatasetCreate: virtual_map<
+                F: AsRef<str>, D: AsRef<str>,
+                E1: Into<Extents>, S1: Into<Selection>, E2: Into<Extents>, S2: Into<Selection>
+            >(
+                src_filename: F, src_dataset: D,
+                src_extents: E1, src_selection: S1, vds_extents: E2, vds_selection: S2
+            )
+        );
+        impl_builder!(DatasetCreate: obj_track_times(track_times: bool));
+        impl_builder!(DatasetCreate: attr_phase_change(max_compact: u32, min_dense: u32));
+        impl_builder!(DatasetCreate: attr_creation_order(attr_creation_order: AttrCreationOrder));
 
-        #[inline]
-        #[must_use]
-        pub fn obj_track_times(mut self, track_times: bool) -> Self {
-            self.builder.obj_track_times(track_times);
-            self
-        }
+        impl_builder!(LinkCreate: link_create/lcpl);
 
-        #[inline]
-        #[must_use]
-        pub fn attr_phase_change(mut self, max_compact: u32, min_dense: u32) -> Self {
-            self.builder.attr_phase_change(max_compact, min_dense);
-            self
-        }
-
-        #[inline]
-        #[must_use]
-        pub fn attr_creation_order(mut self, attr_creation_order: AttrCreationOrder) -> Self {
-            self.builder.attr_creation_order(attr_creation_order);
-            self
-        }
-
-        ////////////////////
-        // LinkCreate     //
-        ////////////////////
-
-        #[inline]
-        #[must_use]
-        pub fn set_link_create_plist(mut self, lcpl: &LinkCreate) -> Self {
-            self.builder.set_link_create_plist(lcpl);
-            self
-        }
-
-        #[inline]
-        #[must_use]
-        pub fn set_lcpl(mut self, lcpl: &LinkCreate) -> Self {
-            self.builder.set_lcpl(lcpl);
-            self
-        }
-
-        #[inline]
-        pub fn link_create_plist(&mut self) -> &mut LinkCreateBuilder {
-            self.builder.link_create_plist()
-        }
-
-        #[inline]
-        pub fn lcpl(&mut self) -> &mut LinkCreateBuilder {
-            self.builder.lcpl()
-        }
-
-        #[inline]
-        #[must_use]
-        pub fn with_link_create_plist<F>(mut self, func: F) -> Self
-        where
-            F: Fn(&mut LinkCreateBuilder) -> &mut LinkCreateBuilder,
-        {
-            self.builder.with_link_create_plist(func);
-            self
-        }
-
-        #[inline]
-        #[must_use]
-        pub fn with_lcpl<F>(mut self, func: F) -> Self
-        where
-            F: Fn(&mut LinkCreateBuilder) -> &mut LinkCreateBuilder,
-        {
-            self.builder.with_lcpl(func);
-            self
-        }
-
-        // LCPL properties
-
-        #[inline]
-        #[must_use]
-        pub fn create_intermediate_group(mut self, create: bool) -> Self {
-            self.builder.create_intermediate_group(create);
-            self
-        }
-
-        #[inline]
-        #[must_use]
-        pub fn char_encoding(mut self, encoding: CharEncoding) -> Self {
-            self.builder.char_encoding(encoding);
-            self
-        }
+        impl_builder!(LinkCreate: create_intermediate_group(create: bool));
+        impl_builder!(LinkCreate: char_encoding(encoding: CharEncoding));
     };
 }
 
 /// These methods are common to all dataset builders
 impl DatasetBuilder {
-    impl_builder_stuff!();
+    impl_builder_methods!();
 }
-/// These methods are common to all dataset builders
+
+/// The following methods are common to all dataset builders.
 impl DatasetBuilderEmpty {
-    impl_builder_stuff!();
+    impl_builder_methods!();
 }
-/// These methods are common to all dataset builders
+
+/// The following methods are common to all dataset builders.
 impl DatasetBuilderEmptyShape {
-    impl_builder_stuff!();
+    impl_builder_methods!();
 }
-/// These methods are common to all dataset builders
-impl<'d, T2, D2> DatasetBuilderData<'d, T2, D2>
-where
-    T2: H5Type,
-    D2: ndarray::Dimension,
-{
-    impl_builder_stuff!();
+
+/// The following methods are common to all dataset builders.
+impl<'d, T2: H5Type, D2: ndarray::Dimension> DatasetBuilderData<'d, T2, D2> {
+    impl_builder_methods!();
 }
 
 #[test]
