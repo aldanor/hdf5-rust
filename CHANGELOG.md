@@ -93,6 +93,7 @@
 - Globals no longer creates a `lazy_static` per global.
 - Unsafe `ObjectClass::cast()` has been renamed to `ObjectClass::cast_unchecked()`.
 - Bump `winreg` (Windows only) to 0.10, `pretty_assertions` (dev) to 1.0.
+- Updated the example in the readme to showcase the new features.
 
 ### Fixed
 
