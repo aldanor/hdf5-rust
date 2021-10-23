@@ -4,8 +4,8 @@
 
 ### Added
 
-- Conversion from `Infallible` to `Error` to allow infallible conversion to
-  extents.
+- `Error` now implements `From<Infallible>`, which allows passing convertible
+  extents (like tuples of integers) where `impl TryInto<Extents>` is required.
 
 ## 0.8.0
 
