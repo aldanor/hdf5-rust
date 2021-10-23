@@ -229,6 +229,12 @@ impl From<String> for Error {
     }
 }
 
+impl From<core::convert::Infallible> for Error {
+    fn from(_v: core::convert::Infallible) -> Self {
+        unreachable!("Infallible error can never be constructed")
+    }
+}
+
 impl fmt::Debug for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {

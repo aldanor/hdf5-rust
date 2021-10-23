@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- Conversion from `Infallible` to `Error` to allow infallible conversion to
+  extents.
+
 ## 0.8.0
 
 Release date: Oct 23, 2021.
