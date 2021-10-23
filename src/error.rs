@@ -1,3 +1,4 @@
+use std::convert::Infallible;
 use std::error::Error as StdError;
 use std::fmt;
 use std::ops::Deref;
@@ -229,8 +230,8 @@ impl From<String> for Error {
     }
 }
 
-impl From<core::convert::Infallible> for Error {
-    fn from(_v: core::convert::Infallible) -> Self {
+impl From<Infallible> for Error {
+    fn from(_: Infallible) -> Self {
         unreachable!("Infallible error can never be constructed")
     }
 }

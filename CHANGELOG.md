@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Added
+
 - Conversion from `Infallible` to `Error` to allow infallible conversion to
   extents.
 
