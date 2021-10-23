@@ -1,7 +1,6 @@
-use hdf5::{
-    filters::{blosc_set_nthreads, Blosc},
-    {File, H5Type, Result},
-};
+#[cfg(feature = "blosc")]
+use hdf5::filters::{blosc_set_nthreads, Blosc};
+use hdf5::{File, H5Type, Result};
 use ndarray::{arr2, s};
 
 #[derive(H5Type, Clone, PartialEq, Debug)] // map the HDF5 type for this enum
@@ -23,11 +22,14 @@ fn main() -> Result<()> {
     {
         let file = File::create("pixels.h5")?; // open the file for writing
         let group = file.create_group("dir")?; // create a group
+        #[cfg(feature = "blosc")]
         blosc_set_nthreads(2); // set number of threads for compressing/decompressing chunks
-        let ds = group
-            .new_dataset_builder()
-            .blosc(Blosc::ZStd, 9, true) // enable zstd compression with shuffling
-            .with_data(&arr2(&[ // write a 2-D array of data
+        let builder = group.new_dataset_builder();
+        #[cfg(feature = "blosc")]
+        let builder = builder.blosc(Blosc::ZStd, 9, true); // enable zstd compression with shuffling
+        let ds = builder
+            .with_data(&arr2(&[
+                // write a 2-D array of data
                 [Pixel { xy: (1, 2), color: Color::R }, Pixel { xy: (2, 3), color: Color::B }],
                 [Pixel { xy: (3, 4), color: Color::G }, Pixel { xy: (4, 5), color: Color::R }],
                 [Pixel { xy: (5, 6), color: Color::B }, Pixel { xy: (6, 7), color: Color::G }],
