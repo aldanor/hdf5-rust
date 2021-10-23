@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.8.0
+
+Release date: Oct 23, 2021.
 
 ### Added
 
