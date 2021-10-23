@@ -204,7 +204,7 @@ unsafe fn filter_blosc_compress(
     blosc_set_compressor(cfg.compname);
     let status =
         blosc_compress(cfg.clevel, cfg.doshuffle, cfg.typesize, nbytes, *buf, outbuf, nbytes);
-    if status >= 0 {
+    if status > 0 {
         libc::free(*buf);
         *buf = outbuf;
         status as _
