@@ -31,55 +31,73 @@ use hdf5::filters::blosc_set_nthreads;
 use hdf5::{File, H5Type, Result};
 use ndarray::{arr2, s};
 
-#[derive(H5Type, Clone, PartialEq, Debug)] // map the HDF5 type for this enum
+#[derive(H5Type, Clone, PartialEq, Debug)] // register with HDF5
 #[repr(u8)]
 pub enum Color {
-  R = 1,
-  G = 2,
-  B = 3,
+    R = 1,
+    G = 2,
+    B = 3,
 }
 
-#[derive(H5Type, Clone, PartialEq, Debug)] // register this struct with HDF5
+#[derive(H5Type, Clone, PartialEq, Debug)] // register with HDF5
 #[repr(C)]
 pub struct Pixel {
-  xy: (i64, i64),
-  color: Color,
+    xy: (i64, i64),
+    color: Color,
+}
+
+impl Pixel {
+    pub fn new(x: i64, y: i64, color: Color) -> Self {
+        Self { xy: (x, y), color }
+    }
+}
+
+fn write_hdf5() -> Result<()> {
+    use Color::*;
+    let file = File::create("pixels.h5")?; // open for writing
+    let group = file.create_group("dir")?; // create a group
+    #[cfg(feature = "blosc")]
+    blosc_set_nthreads(2); // set number of blosc threads
+    let builder = group.new_dataset_builder();
+    #[cfg(feature = "blosc")]
+    let builder = builder.blosc_zstd(9, true); // zstd + shuffle
+    let ds = builder
+        .with_data(&arr2(&[
+            // write a 2-D array of data
+            [Pixel::new(1, 2, R), Pixel::new(2, 3, B)],
+            [Pixel::new(3, 4, G), Pixel::new(4, 5, R)],
+            [Pixel::new(5, 6, B), Pixel::new(6, 7, G)],
+        ]))
+        // finalize and write the dataset
+        .create("pixels")?;
+    // create an attr with fixed shape but don't write the data
+    let attr = ds.new_attr::<Color>().shape([3]).create("colors")?;
+    // write the attr data
+    attr.write(&[R, G, B])?;
+    Ok(())
+}
+
+fn read_hdf5() -> Result<()> {
+    use Color::*;
+    let file = File::open("pixels.h5")?; // open for reading
+    let ds = file.dataset("dir/pixels")?; // open the dataset
+    assert_eq!(
+        // read a slice of the 2-D dataset and verify it
+        ds.read_slice::<Pixel, _, _>(s![1.., ..])?,
+        arr2(&[
+            [Pixel::new(3, 4, G), Pixel::new(4, 5, R)],
+            [Pixel::new(5, 6, B), Pixel::new(6, 7, G)],
+        ])
+    );
+    let attr = ds.attr("colors")?; // open the attribute
+    assert_eq!(attr.read_1d::<Color>()?.as_slice().unwrap(), &[R, G, B]);
+    Ok(())
 }
 
 fn main() -> Result<()> {
-  {
-    let file = File::create("pixels.h5")?; // open the file for writing
-    let group = file.create_group("dir")?; // create a group
-    #[cfg(feature = "blosc")]
-            blosc_set_nthreads(2); // set number of threads for compressing/decompressing chunks
-    let builder = group.new_dataset_builder();
-    #[cfg(feature = "blosc")]
-            let builder = builder.blosc_zstd(9, true); // enable zstd compression with shuffling
-    let ds = builder
-            .with_data(&arr2(&[
-              // write a 2-D array of data
-              [Pixel { xy: (1, 2), color: Color::R }, Pixel { xy: (2, 3), color: Color::B }],
-              [Pixel { xy: (3, 4), color: Color::G }, Pixel { xy: (4, 5), color: Color::R }],
-              [Pixel { xy: (5, 6), color: Color::B }, Pixel { xy: (6, 7), color: Color::G }],
-            ]))
-            .create("pixels")?; // finalize and write the dataset
-    let attr = ds.new_attr::<Color>().shape([3]).create("colors")?; // create an attribute
-    attr.write(&[Color::R, Color::G, Color::B])?;
-  }
-  {
-    let file = File::open("pixels.h5")?; // open the file for reading
-    let ds = file.dataset("dir/pixels")?; // open the dataset object
-    assert_eq!(
-      ds.read_slice::<Pixel, _, _>(s![1.., ..])?, // read a slice of the 2-D dataset
-      arr2(&[
-        [Pixel { xy: (3, 4), color: Color::G }, Pixel { xy: (4, 5), color: Color::R }],
-        [Pixel { xy: (5, 6), color: Color::B }, Pixel { xy: (6, 7), color: Color::G }],
-      ])
-    );
-    let attr = ds.attr("colors")?; // open the attribute
-    assert_eq!(attr.read_1d::<Color>()?.as_slice().unwrap(), &[Color::R, Color::G, Color::B]);
-  }
-  Ok(())
+    write_hdf5()?;
+    read_hdf5()?;
+    Ok(())
 }
 ```
 
