@@ -7,6 +7,7 @@ HDF5 for Rust.
 [![Documentation](https://docs.rs/hdf5/badge.svg)](https://docs.rs/hdf5)
 [![Changelog](https://img.shields.io/github/v/release/aldanor/hdf5-rust)](https://github.com/aldanor/hdf5-rust/blob/master/CHANGELOG.md)
 ![hdf5: rustc 1.51+](https://img.shields.io/badge/hdf5-rustc_1.51+-lightblue.svg)
+[![Total Lines](https://tokei.rs/b1/github/aldanor/hdf5-rust)](https://github.com/aldanor/hdf5-rust)
 [![Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
