@@ -19,4 +19,4 @@ syn = { version = "^1.0.5", features = ["derive", "extra-traits"]}
 
 [dev-dependencies]
 trybuild = "1.0"
-hdf5 = { version = ">=0.6", path = ".." }
+hdf5 = { version = ">=0.8", path = ".." }
