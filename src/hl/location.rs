@@ -362,9 +362,9 @@ pub mod tests {
                         assert_eq!(info.btime, 0);
                     }
                 }
-                assert_eq!(info.btime, info.mtime);
-                assert_eq!(info.btime, info.ctime);
-                assert_eq!(info.btime, info.atime);
+                assert_eq!(info.btime == 0, info.mtime == 0);
+                assert_eq!(info.btime == 0, info.ctime == 0);
+                assert_eq!(info.btime == 0, info.atime == 0);
                 assert_eq!(info.num_attrs, 0);
                 info.token
             };
@@ -394,13 +394,13 @@ pub mod tests {
                 assert!(info.ctime > 0);
                 cfg_if::cfg_if! {
                     if #[cfg(hdf5_1_10_2)] {
-                        assert_eq!(info.btime, info.ctime);
+                        assert!(info.btime > 0);
                     } else {
                         assert_eq!(info.btime, 0);
                     }
                 }
-                assert_eq!(info.btime, info.mtime);
-                assert_eq!(info.btime, info.atime);
+                assert_eq!(info.btime == 0, info.mtime == 0);
+                assert_eq!(info.btime == 0, info.atime == 0);
                 assert_eq!(info.num_attrs, 2);
                 info.token
             };
