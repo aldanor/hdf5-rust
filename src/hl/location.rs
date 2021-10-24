@@ -148,13 +148,11 @@ impl Location {
     }
 }
 
-#[cfg(feature = "1.12.0")]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct LocationToken(H5O_token_t);
-
-#[cfg(not(feature = "1.12.0"))]
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct LocationToken(haddr_t);
+pub struct LocationToken(
+    #[cfg(not(feature = "1.12.0"))] haddr_t,
+    #[cfg(feature = "1.12.0")] H5O_token_t,
+);
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum LocationType {

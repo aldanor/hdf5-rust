@@ -36,6 +36,7 @@ pub enum ScaleOffset {
 #[cfg(feature = "blosc")]
 mod blosc_impl {
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    #[cfg(feature = "blosc")]
     pub enum Blosc {
         BloscLZ,
         LZ4,
@@ -46,18 +47,21 @@ mod blosc_impl {
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    #[cfg(feature = "blosc")]
     pub enum BloscShuffle {
         None,
         Byte,
         Bit,
     }
 
+    #[cfg(feature = "blosc")]
     impl Default for BloscShuffle {
         fn default() -> Self {
             Self::Byte
         }
     }
 
+    #[cfg(feature = "blosc")]
     impl From<bool> for BloscShuffle {
         fn from(shuffle: bool) -> Self {
             if shuffle {
@@ -68,16 +72,19 @@ mod blosc_impl {
         }
     }
 
+    #[cfg(feature = "blosc")]
     impl Default for Blosc {
         fn default() -> Self {
             Self::BloscLZ
         }
     }
 
+    #[cfg(feature = "blosc")]
     pub fn blosc_get_nthreads() -> u8 {
         h5lock!(super::blosc::blosc_get_nthreads()).max(0).min(255) as _
     }
 
+    #[cfg(feature = "blosc")]
     pub fn blosc_set_nthreads(num_threads: u8) -> u8 {
         use std::os::raw::c_int;
         let nthreads = h5lock!(super::blosc::blosc_set_nthreads(c_int::from(num_threads)));
