@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- `Error` now implements `From<Infallible>`, which allows passing convertible
+  extents (like tuples of integers) where `impl TryInto<Extents>` is required.
+
 ## 0.8.0
 
 Release date: Oct 23, 2021.

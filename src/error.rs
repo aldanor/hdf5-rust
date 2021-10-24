@@ -1,3 +1,4 @@
+use std::convert::Infallible;
 use std::error::Error as StdError;
 use std::fmt;
 use std::ops::Deref;
@@ -226,6 +227,12 @@ impl From<&str> for Error {
 impl From<String> for Error {
     fn from(desc: String) -> Self {
         Self::Internal(desc)
+    }
+}
+
+impl From<Infallible> for Error {
+    fn from(_: Infallible) -> Self {
+        unreachable!("Infallible error can never be constructed")
     }
 }
 
