@@ -47,3 +47,4 @@ tempfile = "3.2"
 
 [package.metadata.docs.rs]
 features = ["hdf5-sys/static", "hdf5-sys/zlib", "blosc", "lzf"]
+rustdoc-args = ["--cfg", "docsrs"]

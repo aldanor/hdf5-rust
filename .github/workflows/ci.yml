@@ -37,6 +37,18 @@ jobs:
           command: ${{matrix.command}}
           args: "${{matrix.command == 'fmt' && '--all -- --check' || '-- -D warnings'}}"
 
+  doc: # This task should mirror the procedure on docs.rs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with: {submodules: true}
+      - name: Install Rust (${{matrix.rust}})
+        uses: actions-rs/toolchain@v1
+        with: {toolchain: nightly, profile: minimal, override: true}
+      - name: Document workspace
+        run: env RUSTDOCFLAGS="--cfg docsrs" cargo doc --features hdf5-sys/static,hdf5-sys/zlib,blosc,lzf
+
   brew:
     name: brew
     runs-on: macos-latest
