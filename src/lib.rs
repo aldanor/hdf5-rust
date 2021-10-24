@@ -23,6 +23,9 @@
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::missing_panics_doc))]
 #![cfg_attr(all(feature = "cargo-clippy", test), allow(clippy::cyclomatic_complexity))]
 #![cfg_attr(not(test), allow(dead_code))]
+// To build docs locally:
+// RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --features blosc,lzf
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 #[cfg(all(feature = "mpio", not(h5_have_parallel)))]
 compile_error!("Enabling \"mpio\" feature requires HDF5 library built with MPI support");
