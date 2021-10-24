@@ -10,11 +10,11 @@ use crate::h5mm::{H5MM_allocate_t, H5MM_free_t};
 use crate::h5t::{H5T_conv_except_func_t, H5T_cset_t};
 use crate::h5z::{H5Z_EDC_t, H5Z_SO_scale_type_t, H5Z_filter_func_t, H5Z_filter_t};
 
-#[cfg(hdf5_1_8_9)]
+#[cfg(feature = "1.8.9")]
 use crate::h5fd::H5FD_file_image_callbacks_t;
-#[cfg(hdf5_1_8_9)]
+#[cfg(feature = "1.8.9")]
 use crate::h5o::H5O_mcdt_search_cb_t;
-#[cfg(hdf5_1_10_1)]
+#[cfg(feature = "1.10.1")]
 use crate::{h5ac::H5AC_cache_image_config_t, h5f::H5F_fspace_strategy_t};
 
 pub const H5P_CRT_ORDER_TRACKED: c_uint = 0x0001;
@@ -46,7 +46,7 @@ pub type H5P_iterate_t =
 
 pub use self::globals::*;
 
-#[cfg(all(not(hdf5_1_8_14), not(all(target_env = "msvc", not(feature = "static")))))]
+#[cfg(all(not(feature = "1.8.14"), not(all(target_env = "msvc", not(feature = "static")))))]
 mod globals {
     pub use crate::h5i::hid_t as id_t;
 
@@ -86,7 +86,7 @@ mod globals {
     extern_static!(H5P_LST_LINK_ACCESS, H5P_LST_LINK_ACCESS_g);
 }
 
-#[cfg(all(hdf5_1_8_14, not(all(target_env = "msvc", not(feature = "static")))))]
+#[cfg(all(feature = "1.8.14", not(all(target_env = "msvc", not(feature = "static")))))]
 mod globals {
     pub use crate::h5i::hid_t as id_t;
 
@@ -125,7 +125,7 @@ mod globals {
     extern_static!(H5P_LST_LINK_CREATE, H5P_LST_LINK_CREATE_ID_g);
     extern_static!(H5P_LST_LINK_ACCESS, H5P_LST_LINK_ACCESS_ID_g);
 
-    #[cfg(hdf5_1_12_0)]
+    #[cfg(feature = "1.12.0")]
     #[allow(clippy::module_inception)]
     pub mod globals {
         use super::*;
@@ -138,11 +138,11 @@ mod globals {
         extern_static!(H5P_VOL_INITIALIZE_DEFAULT, H5P_LST_VOL_INITIALIZE_ID_g);
         extern_static!(H5P_REFERENCE_ACCESS_DEFAULT, H5P_LST_REFERENCE_ACCESS_ID_g);
     }
-    #[cfg(hdf5_1_12_0)]
+    #[cfg(feature = "1.12.0")]
     pub use globals::*;
 }
 
-#[cfg(all(not(hdf5_1_8_14), all(target_env = "msvc", not(feature = "static"))))]
+#[cfg(all(not(feature = "1.8.14"), all(target_env = "msvc", not(feature = "static"))))]
 mod globals {
     // dllimport hack
     pub type id_t = usize;
@@ -183,7 +183,7 @@ mod globals {
     extern_static!(H5P_LST_LINK_ACCESS, __imp_H5P_LST_LINK_ACCESS_g);
 }
 
-#[cfg(all(hdf5_1_8_14, all(target_env = "msvc", not(feature = "static"))))]
+#[cfg(all(feature = "1.8.14", all(target_env = "msvc", not(feature = "static"))))]
 mod globals {
     // dllimport hack
     pub type id_t = usize;
@@ -223,7 +223,7 @@ mod globals {
     extern_static!(H5P_LST_LINK_CREATE, __imp_H5P_LST_LINK_CREATE_ID_g);
     extern_static!(H5P_LST_LINK_ACCESS, __imp_H5P_LST_LINK_ACCESS_ID_g);
 
-    #[cfg(hdf5_1_12_0)]
+    #[cfg(feature = "1.12.0")]
     #[allow(clippy::module_inception)]
     pub mod globals {
         use super::*;
@@ -236,7 +236,7 @@ mod globals {
         extern_static!(H5P_VOL_INITIALIZE_DEFAULT, __imp_H5P_LST_VOL_INITIALIZE_ID_g);
         extern_static!(H5P_REFERENCE_ACCESS_DEFAULT, __imp_H5P_LST_REFERENCE_ACCESS_ID_g);
     }
-    #[cfg(hdf5_1_12_0)]
+    #[cfg(feature = "1.12.0")]
     pub use globals::*;
 }
 
@@ -467,7 +467,10 @@ extern "C" {
     ) -> herr_t;
     pub fn H5Pset_copy_object(plist_id: hid_t, crt_intmd: c_uint) -> herr_t;
     pub fn H5Pget_copy_object(plist_id: hid_t, crt_intmd: *mut c_uint) -> herr_t;
-    #[cfg_attr(hdf5_1_10_0, deprecated(note = "deprecated in HDF5 1.10.0, use H5Fget_info2()"))]
+    #[cfg_attr(
+        feature = "1.10.0",
+        deprecated(note = "deprecated in HDF5 1.10.0, use H5Fget_info2()")
+    )]
     pub fn H5Pget_version(
         plist_id: hid_t, boot: *mut c_uint, freelist: *mut c_uint, stab: *mut c_uint,
         shhdr: *mut c_uint,
@@ -592,13 +595,13 @@ extern "C" {
     pub fn H5Pset_fapl_windows(fapl_id: hid_t) -> herr_t;
 }
 
-#[cfg(hdf5_1_8_7)]
+#[cfg(feature = "1.8.7")]
 extern "C" {
     pub fn H5Pset_elink_file_cache_size(plist_id: hid_t, efc_size: c_uint) -> herr_t;
     pub fn H5Pget_elink_file_cache_size(plist_id: hid_t, efc_size: *mut c_uint) -> herr_t;
 }
 
-#[cfg(hdf5_1_8_9)]
+#[cfg(feature = "1.8.9")]
 extern "C" {
     pub fn H5Pset_file_image(fapl_id: hid_t, buf_ptr: *mut c_void, buf_len: size_t) -> herr_t;
     pub fn H5Pget_file_image(
@@ -620,7 +623,7 @@ extern "C" {
     pub fn H5Pfree_merge_committed_dtype_paths(plist_id: hid_t) -> herr_t;
 }
 
-#[cfg(hdf5_1_8_13)]
+#[cfg(feature = "1.8.13")]
 extern "C" {
     pub fn H5Pset_core_write_tracking(
         fapl_id: hid_t, is_enabled: hbool_t, page_size: size_t,
@@ -630,19 +633,19 @@ extern "C" {
     ) -> herr_t;
 }
 
-#[cfg(hdf5_1_8_17)]
+#[cfg(feature = "1.8.17")]
 extern "C" {
     pub fn H5Pset_efile_prefix(dapl_id: hid_t, prefix: *const c_char) -> herr_t;
     pub fn H5Pget_efile_prefix(dapl_id: hid_t, prefix: *const c_char, size: size_t) -> ssize_t;
 }
 
-#[cfg(hdf5_1_10_0)]
+#[cfg(feature = "1.10.0")]
 use crate::{
     h5d::{H5D_append_cb_t, H5D_vds_view_t},
     h5f::{H5F_file_space_type_t, H5F_flush_cb_t},
 };
 
-#[cfg(hdf5_1_10_0)]
+#[cfg(feature = "1.10.0")]
 extern "C" {
     pub fn H5Pset_append_flush(
         plist_id: hid_t, ndims: c_uint, boundary: *const hsize_t, func: H5D_append_cb_t,
@@ -689,10 +692,13 @@ extern "C" {
     pub fn H5Pset_virtual_view(plist_id: hid_t, view: H5D_vds_view_t) -> herr_t;
     pub fn H5Pget_chunk_opts(plist_id: hid_t, opts: *mut c_uint) -> herr_t;
     pub fn H5Pset_chunk_opts(plist_id: hid_t, opts: c_uint) -> herr_t;
-    #[cfg_attr(hdf5_1_12_0, deprecated(note = "deprecated in HDF5 1.12.0, use H5Pencode2()"))]
-    #[cfg_attr(not(hdf5_1_12_0), link_name = "H5Pencode")]
+    #[cfg_attr(
+        feature = "1.12.0",
+        deprecated(note = "deprecated in HDF5 1.12.0, use H5Pencode2()")
+    )]
+    #[cfg_attr(not(feature = "1.12.0"), link_name = "H5Pencode")]
     pub fn H5Pencode1(plist_id: hid_t, buf: *mut c_void, nalloc: *mut size_t) -> herr_t;
-    #[cfg(hdf5_1_12_0)]
+    #[cfg(feature = "1.12.0")]
     pub fn H5Pencode2(
         plist_id: hid_t, buf: *mut c_void, nalloc: *mut size_t, fapl_id: hid_t,
     ) -> herr_t;
@@ -713,12 +719,12 @@ extern "C" {
     ) -> herr_t;
 }
 
-#[cfg(all(hdf5_1_10_0, not(hdf5_1_12_0)))]
+#[cfg(all(feature = "1.10.0", not(feature = "1.12.0")))]
 pub use self::H5Pencode1 as H5Pencode;
-#[cfg(hdf5_1_12_0)]
+#[cfg(feature = "1.12.0")]
 pub use self::H5Pencode2 as H5Pencode;
 
-#[cfg(all(hdf5_1_10_0, h5_have_parallel))]
+#[cfg(all(feature = "1.10.0", h5_have_parallel))]
 extern "C" {
     pub fn H5Pset_coll_metadata_write(fapl_id: hid_t, is_collective: hbool_t) -> herr_t;
     pub fn H5Pget_coll_metadata_write(fapl_id: hid_t, is_collective: *mut hbool_t) -> herr_t;
@@ -726,7 +732,7 @@ extern "C" {
     pub fn H5Pget_all_coll_metadata_ops(accpl_id: hid_t, is_collective: *mut hbool_t) -> herr_t;
 }
 
-#[cfg(hdf5_1_10_1)]
+#[cfg(feature = "1.10.1")]
 extern "C" {
     pub fn H5Pset_evict_on_close(fapl_id: hid_t, evict_on_close: hbool_t) -> herr_t;
     pub fn H5Pget_evict_on_close(fapl_id: hid_t, evict_on_close: *mut hbool_t) -> herr_t;
@@ -753,19 +759,19 @@ extern "C" {
     pub fn H5Pget_file_space_page_size(plist_id: hid_t, fsp_size: *mut hsize_t) -> herr_t;
 }
 
-#[cfg(hdf5_1_10_2)]
+#[cfg(feature = "1.10.2")]
 extern "C" {
     pub fn H5Pset_virtual_prefix(dapl_id: hid_t, prefix: *const c_char) -> herr_t;
     pub fn H5Pget_virtual_prefix(dapl_id: hid_t, prefix: *mut c_char, size: size_t) -> ssize_t;
 }
 
-#[cfg(hdf5_1_10_5)]
+#[cfg(feature = "1.10.5")]
 extern "C" {
     pub fn H5Pget_dset_no_attrs_hint(dcpl_id: hid_t, minimize: *mut hbool_t) -> herr_t;
     pub fn H5Pset_dset_no_attrs_hint(dcpl_id: hid_t, minimize: hbool_t) -> herr_t;
 }
 
-#[cfg(all(hdf5_1_10_7, not(hdf5_1_12_0)))]
+#[cfg(all(feature = "1.10.7", not(feature = "1.12.0")))]
 extern "C" {
     pub fn H5Pget_file_locking(
         fapl_id: hid_t, use_file_locking: *mut hbool_t, ignore_when_disable: *mut hbool_t,
@@ -776,7 +782,7 @@ extern "C" {
 
 }
 
-#[cfg(hdf5_1_12_0)]
+#[cfg(feature = "1.12.0")]
 extern "C" {
     pub fn H5Pget_vol_id(plist_id: hid_t, vol_id: *mut hid_t) -> herr_t;
     pub fn H5Pget_vol_info(plist_id: hid_t, vol_info: *mut *mut c_void) -> herr_t;

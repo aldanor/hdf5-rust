@@ -3,14 +3,14 @@ use std::mem;
 
 pub use self::H5O_mcdt_search_ret_t::*;
 pub use self::H5O_type_t::*;
-#[cfg(not(hdf5_1_12_0))]
+#[cfg(not(feature = "1.12.0"))]
 pub use {
     H5O_info1_t as H5O_info_t, H5O_info1_t__meta_size as H5O_info_t_meta_size,
     H5O_iterate1_t as H5O_iterate_t,
 };
-#[cfg(hdf5_1_12_0)]
+#[cfg(feature = "1.12.0")]
 pub use {H5O_info2_t as H5O_info_t, H5O_iterate2_t as H5O_iterate_t};
-#[cfg(not(hdf5_1_10_3))]
+#[cfg(not(feature = "1.10.3"))]
 pub use {
     H5Oget_info1 as H5Oget_info, H5Oget_info_by_idx1 as H5Oget_info_by_idx,
     H5Oget_info_by_name1 as H5Oget_info_by_name, H5Ovisit1 as H5Ovisit,
@@ -25,11 +25,11 @@ pub const H5O_COPY_EXPAND_EXT_LINK_FLAG: c_uint = 0x0004;
 pub const H5O_COPY_EXPAND_REFERENCE_FLAG: c_uint = 0x0008;
 pub const H5O_COPY_WITHOUT_ATTR_FLAG: c_uint = 0x0010;
 pub const H5O_COPY_PRESERVE_NULL_FLAG: c_uint = 0x0020;
-#[cfg(not(hdf5_1_8_9))]
+#[cfg(not(feature = "1.8.9"))]
 pub const H5O_COPY_ALL: c_uint = 0x003F;
-#[cfg(hdf5_1_8_9)]
+#[cfg(feature = "1.8.9")]
 pub const H5O_COPY_MERGE_COMMITTED_DTYPE_FLAG: c_uint = 0x0040;
-#[cfg(hdf5_1_8_9)]
+#[cfg(feature = "1.8.9")]
 pub const H5O_COPY_ALL: c_uint = 0x007F;
 
 pub const H5O_SHMESG_NONE_FLAG: c_uint = 0x0000;
@@ -58,27 +58,27 @@ pub const H5O_HDR_ALL_FLAGS: c_uint = H5O_HDR_CHUNK0_SIZE
 pub const H5O_SHMESG_MAX_NINDEXES: c_uint = 8;
 pub const H5O_SHMESG_MAX_LIST_SIZE: c_uint = 5000;
 
-#[cfg(hdf5_1_10_3)]
+#[cfg(feature = "1.10.3")]
 pub const H5O_INFO_BASIC: c_uint = 0x0001;
-#[cfg(hdf5_1_10_3)]
+#[cfg(feature = "1.10.3")]
 pub const H5O_INFO_TIME: c_uint = 0x0002;
-#[cfg(hdf5_1_10_3)]
+#[cfg(feature = "1.10.3")]
 pub const H5O_INFO_NUM_ATTRS: c_uint = 0x0004;
-#[cfg(all(hdf5_1_10_3, not(hdf5_1_12_0)))]
+#[cfg(all(feature = "1.10.3", not(feature = "1.12.0")))]
 pub const H5O_INFO_HDR: c_uint = 0x0008;
-#[cfg(all(hdf5_1_10_3, not(hdf5_1_12_0)))]
+#[cfg(all(feature = "1.10.3", not(feature = "1.12.0")))]
 pub const H5O_INFO_META_SIZE: c_uint = 0x0010;
-#[cfg(all(hdf5_1_10_3, not(hdf5_1_12_0)))]
+#[cfg(all(feature = "1.10.3", not(feature = "1.12.0")))]
 pub const H5O_INFO_ALL: c_uint =
     H5O_INFO_BASIC | H5O_INFO_TIME | H5O_INFO_NUM_ATTRS | H5O_INFO_HDR | H5O_INFO_META_SIZE;
-#[cfg(hdf5_1_12_0)]
+#[cfg(feature = "1.12.0")]
 pub const H5O_INFO_ALL: c_uint = H5O_INFO_BASIC | H5O_INFO_TIME | H5O_INFO_NUM_ATTRS;
 
-#[cfg(hdf5_1_12_0)]
+#[cfg(feature = "1.12.0")]
 pub const H5O_NATIVE_INFO_HDR: c_uint = 0x0008;
-#[cfg(hdf5_1_12_0)]
+#[cfg(feature = "1.12.0")]
 pub const H5O_NATIVE_INFO_META_SIZE: c_uint = 0x0010;
-#[cfg(hdf5_1_12_0)]
+#[cfg(feature = "1.12.0")]
 pub const H5O_NATIVE_INFO_ALL: c_uint = H5O_NATIVE_INFO_HDR | H5O_NATIVE_INFO_META_SIZE;
 
 #[repr(C)]
@@ -88,7 +88,7 @@ pub enum H5O_type_t {
     H5O_TYPE_GROUP,
     H5O_TYPE_DATASET,
     H5O_TYPE_NAMED_DATATYPE,
-    #[cfg(hdf5_1_12_0)]
+    #[cfg(feature = "1.12.0")]
     H5O_TYPE_MAP,
     H5O_TYPE_NTYPES,
 }
@@ -184,7 +184,7 @@ pub type H5O_iterate1_t = Option<
     ) -> herr_t,
 >;
 
-#[cfg(hdf5_1_12_0)]
+#[cfg(feature = "1.12.0")]
 pub type H5O_iterate2_t = Option<
     extern "C" fn(
         obj: hid_t,
@@ -202,11 +202,11 @@ pub enum H5O_mcdt_search_ret_t {
     H5O_MCDT_SEARCH_STOP = 1,
 }
 
-#[cfg(hdf5_1_8_9)]
+#[cfg(feature = "1.8.9")]
 pub type H5O_mcdt_search_cb_t =
     Option<extern "C" fn(op_data: *mut c_void) -> H5O_mcdt_search_ret_t>;
 
-#[cfg(not(hdf5_1_10_3))]
+#[cfg(not(feature = "1.10.3"))]
 extern "C" {
     #[link_name = "H5Oget_info"]
     pub fn H5Oget_info1(loc_id: hid_t, oinfo: *mut H5O_info1_t) -> herr_t;
@@ -260,15 +260,15 @@ extern "C" {
     pub fn H5Oclose(object_id: hid_t) -> herr_t;
 }
 
-#[cfg(hdf5_1_8_5)]
+#[cfg(feature = "1.8.5")]
 use crate::h5::htri_t;
 
-#[cfg(hdf5_1_8_5)]
+#[cfg(feature = "1.8.5")]
 extern "C" {
     pub fn H5Oexists_by_name(loc_id: hid_t, name: *const c_char, lapl_id: hid_t) -> htri_t;
 }
 
-#[cfg(hdf5_1_10_0)]
+#[cfg(feature = "1.10.0")]
 extern "C" {
     pub fn H5Odisable_mdc_flushes(object_id: hid_t) -> herr_t;
     pub fn H5Oenable_mdc_flushes(object_id: hid_t) -> herr_t;
@@ -277,7 +277,7 @@ extern "C" {
     pub fn H5Orefresh(oid: hid_t) -> herr_t;
 }
 
-#[cfg(hdf5_1_10_3)]
+#[cfg(feature = "1.10.3")]
 mod hdf5_1_10_3 {
     use super::*;
 
@@ -322,7 +322,7 @@ mod hdf5_1_10_3 {
         ) -> herr_t;
     }
 
-    #[cfg(not(hdf5_1_10_5))]
+    #[cfg(not(feature = "1.10.5"))]
     pub use self::{
         H5Oget_info1 as H5Oget_info, H5Oget_info_by_idx1 as H5Oget_info_by_idx,
         H5Oget_info_by_name1 as H5Oget_info_by_name, H5Ovisit1 as H5Ovisit,
@@ -330,10 +330,10 @@ mod hdf5_1_10_3 {
     };
 }
 
-#[cfg(hdf5_1_10_3)]
+#[cfg(feature = "1.10.3")]
 pub use self::hdf5_1_10_3::*;
 
-#[cfg(hdf5_1_10_5)]
+#[cfg(feature = "1.10.5")]
 extern "C" {
     // They've messed up when introducing compatibility macros which broke ABI compatibility;
     // in 1.10.5 those APIs were copied over to old names in order to be compatible with
@@ -361,24 +361,24 @@ extern "C" {
     ) -> herr_t;
 }
 
-#[cfg(hdf5_1_12_0)]
+#[cfg(feature = "1.12.0")]
 pub const H5O_MAX_TOKEN_SIZE: usize = 16;
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-#[cfg(hdf5_1_12_0)]
+#[cfg(feature = "1.12.0")]
 pub struct H5O_token_t {
     __data: [u8; H5O_MAX_TOKEN_SIZE],
 }
 
-#[cfg(hdf5_1_12_0)]
+#[cfg(feature = "1.12.0")]
 impl Default for H5O_token_t {
     fn default() -> Self {
         *H5O_TOKEN_UNDEF
     }
 }
 
-#[cfg(hdf5_1_12_0)]
+#[cfg(feature = "1.12.0")]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct H5O_info2_t {
@@ -393,7 +393,7 @@ pub struct H5O_info2_t {
     pub num_attrs: hsize_t,
 }
 
-#[cfg(hdf5_1_12_0)]
+#[cfg(feature = "1.12.0")]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct H5O_native_info_meta_size_t {
@@ -401,7 +401,7 @@ pub struct H5O_native_info_meta_size_t {
     attr: H5_ih_info_t,
 }
 
-#[cfg(hdf5_1_12_0)]
+#[cfg(feature = "1.12.0")]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct H5O_native_info_t {
@@ -418,7 +418,7 @@ pub struct H5O_stat_t {
     nchunks: c_uint,
 }
 
-#[cfg(hdf5_1_12_0)]
+#[cfg(feature = "1.12.0")]
 extern "C" {
     pub fn H5Oget_info3(loc_id: hid_t, oinfo: *mut H5O_info2_t, fields: c_uint) -> herr_t;
     pub fn H5Oget_info_by_idx3(
@@ -460,16 +460,16 @@ extern "C" {
     ) -> herr_t;
 }
 
-#[cfg(hdf5_1_12_0)]
+#[cfg(feature = "1.12.0")]
 pub use self::globals::*;
 
-#[cfg(all(not(all(target_env = "msvc", not(feature = "static"))), hdf5_1_12_0))]
+#[cfg(all(not(all(target_env = "msvc", not(feature = "static"))), feature = "1.12.0"))]
 mod globals {
     use super::H5O_token_t as id_t;
     extern_static!(H5O_TOKEN_UNDEF, H5O_TOKEN_UNDEF_g);
 }
 
-#[cfg(all(target_env = "msvc", not(feature = "static"), hdf5_1_12_0))]
+#[cfg(all(target_env = "msvc", not(feature = "static"), feature = "1.12.0"))]
 mod globals {
     // TODO: special DLL handling?
     use super::H5O_token_t as id_t;

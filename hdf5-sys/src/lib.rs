@@ -40,7 +40,7 @@ pub mod h5t;
 pub mod h5vl;
 pub mod h5z;
 
-#[cfg(hdf5_1_8_15)]
+#[cfg(feature = "1.8.15")]
 pub mod h5pl;
 
 #[allow(non_camel_case_types)]

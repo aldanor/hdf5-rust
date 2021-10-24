@@ -616,7 +616,7 @@ impl Config {
         vs.extend((0..=7).map(|v| Version::new(1, 10, v))); // 1.10.[0-7]
         vs.push(Version::new(1, 12, 0)); // 1.12.0
         for v in vs.into_iter().filter(|&v| version >= v) {
-            println!("cargo:rustc-cfg=hdf5_{}_{}_{}", v.major, v.minor, v.micro);
+            println!("cargo:rustc-cfg=feature=\"{}.{}.{}\"", v.major, v.minor, v.micro);
             println!("cargo:version_{}_{}_{}=1", v.major, v.minor, v.micro);
         }
         if self.header.have_stdbool_h {

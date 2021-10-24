@@ -430,9 +430,9 @@ pub mod tests {
             assert!(file.size() > 0);
             let orig_size = fs::metadata(file.filename()).unwrap().len();
             assert!(file.size() > orig_size);
-            #[cfg(hdf5_1_10_0)]
+            #[cfg(feature = "1.10.0")]
             assert_ne!(orig_size, 0);
-            #[cfg(not(hdf5_1_10_0))]
+            #[cfg(not(feature = "1.10.0"))]
             assert_eq!(orig_size, 0);
             assert!(file.flush().is_ok());
             assert!(file.size() > 0);

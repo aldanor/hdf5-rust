@@ -553,9 +553,9 @@ pub mod tests {
             assert!(group.link_exists("c"));
             assert!(!group.link_exists("a"));
             assert!(!group.link_exists("soft"));
-            #[cfg(not(hdf5_1_10_0))]
+            #[cfg(not(feature = "1.10.0"))]
             assert!(!group.link_exists("/"));
-            #[cfg(hdf5_1_10_0)]
+            #[cfg(feature = "1.10.0")]
             assert!(group.link_exists("/"));
         })
     }

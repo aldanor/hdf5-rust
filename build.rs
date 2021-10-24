@@ -10,7 +10,7 @@ fn main() {
             "DEP_HDF5_MSVC_DLL_INDIRECTION" => "h5_dll_indirection".into(),
             key if key.starts_with("DEP_HDF5_VERSION_") => {
                 let version = key.trim_start_matches("DEP_HDF5_VERSION_");
-                format!("hdf5_{}", version)
+                format!("feature=\"{}\"", version.replace("_", "."))
             }
             _ => continue,
         };

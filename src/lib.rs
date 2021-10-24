@@ -57,7 +57,7 @@ mod export {
     }
 
     pub mod dataset {
-        #[cfg(hdf5_1_10_5)]
+        #[cfg(feature = "1.10.5")]
         pub use crate::hl::dataset::ChunkInfo;
         pub use crate::hl::dataset::{Chunk, Dataset, DatasetBuilder};
         pub use crate::hl::plist::dataset_access::*;
@@ -166,14 +166,14 @@ pub fn library_version() -> (u8, u8, u8) {
 
 /// Returns true if the HDF5 library is threadsafe.
 pub fn is_library_threadsafe() -> bool {
-    #[cfg(hdf5_1_8_16)]
+    #[cfg(feature = "1.8.16")]
     {
         use self::internal_prelude::hbool_t;
         use hdf5_sys::h5::H5is_library_threadsafe;
         let mut ts: hbool_t = 0;
         h5call!(H5is_library_threadsafe(&mut ts)).map(|_| ts > 0).unwrap_or(false)
     }
-    #[cfg(not(hdf5_1_8_16))]
+    #[cfg(not(feature = "1.8.16"))]
     {
         cfg!(h5_have_threadsafe)
     }

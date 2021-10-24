@@ -7,7 +7,7 @@ use std::ptr;
 
 use ndarray::ShapeError;
 
-#[cfg(not(hdf5_1_10_0))]
+#[cfg(not(feature = "1.10.0"))]
 use hdf5_sys::h5::hssize_t;
 use hdf5_sys::h5e::{
     H5E_auto2_t, H5E_error2_t, H5Eget_current_stack, H5Eget_msg, H5Eprint2, H5Eset_auto2, H5Ewalk2,
@@ -301,14 +301,14 @@ impl H5ErrorCode for herr_t {
     }
 }
 
-#[cfg(hdf5_1_10_0)]
+#[cfg(feature = "1.10.0")]
 impl H5ErrorCode for hid_t {
     fn is_err_code(value: Self) -> bool {
         value < 0
     }
 }
 
-#[cfg(not(hdf5_1_10_0))]
+#[cfg(not(feature = "1.10.0"))]
 impl H5ErrorCode for hssize_t {
     fn is_err_code(value: Self) -> bool {
         value < 0
