@@ -16,10 +16,10 @@ use hdf5_sys::{h5e, h5p, h5t};
 
 use crate::internal_prelude::*;
 
-#[cfg(dll_indirection)]
-pub struct H5GlobalConstant(&'static usize);
-#[cfg(not(dll_indirection))]
-pub struct H5GlobalConstant(&'static hdf5_sys::h5i::hid_t);
+pub struct H5GlobalConstant(
+    #[cfg(dll_indirection)] &'static usize,
+    #[cfg(not(dll_indirection))] &'static hdf5_sys::h5i::hid_t,
+);
 
 impl std::ops::Deref for H5GlobalConstant {
     type Target = hdf5_sys::h5i::hid_t;
