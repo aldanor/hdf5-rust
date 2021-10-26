@@ -160,6 +160,7 @@ pub enum LocationType {
     Dataset,
     NamedDatatype,
     #[cfg(feature = "1.12.0")]
+    #[cfg_attr(docrs, doc(cfg(feature = "1.12.0")))]
     TypeMap,
 }
 
