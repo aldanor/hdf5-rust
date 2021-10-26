@@ -27,7 +27,7 @@
 // RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --features blosc,lzf
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
-#[cfg(all(feature = "mpio", not(h5_have_parallel)))]
+#[cfg(all(feature = "mpio", not(have_parallel)))]
 compile_error!("Enabling \"mpio\" feature requires HDF5 library built with MPI support");
 
 mod export {
@@ -175,7 +175,7 @@ pub fn is_library_threadsafe() -> bool {
     }
     #[cfg(not(feature = "1.8.16"))]
     {
-        cfg!(h5_have_threadsafe)
+        cfg!(have_threadsafe)
     }
 }
 

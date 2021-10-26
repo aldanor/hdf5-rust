@@ -9,7 +9,7 @@ use std::fmt::{self, Debug};
 use std::ops::Deref;
 
 use hdf5_sys::h5p::{H5Pcreate, H5Pget_chunk_cache, H5Pset_chunk_cache};
-#[cfg(all(feature = "1.10.0", h5_have_parallel))]
+#[cfg(all(feature = "1.10.0", have_parallel))]
 use hdf5_sys::h5p::{H5Pget_all_coll_metadata_ops, H5Pset_all_coll_metadata_ops};
 #[cfg(feature = "1.8.17")]
 use hdf5_sys::h5p::{H5Pget_efile_prefix, H5Pset_efile_prefix};
@@ -62,7 +62,7 @@ impl Debug for DatasetAccess {
             formatter.field("virtual_view", &self.virtual_view());
             formatter.field("virtual_printf_gap", &self.virtual_printf_gap());
         }
-        #[cfg(all(feature = "1.10.0", h5_have_parallel))]
+        #[cfg(all(feature = "1.10.0", have_parallel))]
         formatter.field("all_coll_metadata_ops", &self.all_coll_metadata_ops());
         formatter.finish()
     }
@@ -134,7 +134,7 @@ pub struct DatasetAccessBuilder {
     virtual_view: Option<VirtualView>,
     #[cfg(feature = "1.10.0")]
     virtual_printf_gap: Option<usize>,
-    #[cfg(all(feature = "1.10.0", h5_have_parallel))]
+    #[cfg(all(feature = "1.10.0", have_parallel))]
     all_coll_metadata_ops: Option<bool>,
 }
 
@@ -159,7 +159,7 @@ impl DatasetAccessBuilder {
             builder.virtual_view(plist.get_virtual_view()?);
             builder.virtual_printf_gap(plist.get_virtual_printf_gap()?);
         }
-        #[cfg(all(feature = "1.10.0", h5_have_parallel))]
+        #[cfg(all(feature = "1.10.0", have_parallel))]
         builder.all_coll_metadata_ops(plist.get_all_coll_metadata_ops()?);
         Ok(builder)
     }
@@ -187,7 +187,7 @@ impl DatasetAccessBuilder {
         self
     }
 
-    #[cfg(all(feature = "1.10.0", h5_have_parallel))]
+    #[cfg(all(feature = "1.10.0", have_parallel))]
     pub fn all_coll_metadata_ops(&mut self, is_collective: bool) -> &mut Self {
         self.all_coll_metadata_ops = Some(is_collective);
         self
@@ -213,7 +213,7 @@ impl DatasetAccessBuilder {
                 h5try!(H5Pset_virtual_printf_gap(id, v as _));
             }
         }
-        #[cfg(all(feature = "1.10.0", h5_have_parallel))]
+        #[cfg(all(feature = "1.10.0", have_parallel))]
         {
             if let Some(v) = self.all_coll_metadata_ops {
                 h5try!(H5Pset_all_coll_metadata_ops(id, v as _));
@@ -296,13 +296,13 @@ impl DatasetAccess {
         self.get_virtual_printf_gap().unwrap_or(0)
     }
 
-    #[cfg(all(feature = "1.10.0", h5_have_parallel))]
+    #[cfg(all(feature = "1.10.0", have_parallel))]
     #[doc(hidden)]
     pub fn get_all_coll_metadata_ops(&self) -> Result<bool> {
         h5get!(H5Pget_all_coll_metadata_ops(self.id()): hbool_t).map(|x| x > 0)
     }
 
-    #[cfg(all(feature = "1.10.0", h5_have_parallel))]
+    #[cfg(all(feature = "1.10.0", have_parallel))]
     pub fn all_coll_metadata_ops(&self) -> bool {
         self.get_all_coll_metadata_ops().unwrap_or(false)
     }

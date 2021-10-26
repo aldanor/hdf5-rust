@@ -611,7 +611,7 @@ impl DatasetBuilderInner {
         self.with_dapl(|pl| pl.virtual_printf_gap(gap_size));
     }
 
-    #[cfg(all(feature = "1.10.0", h5_have_parallel))]
+    #[cfg(all(feature = "1.10.0", have_parallel))]
     pub fn all_coll_metadata_ops(&mut self, is_collective: bool) {
         self.with_dapl(|pl| pl.all_coll_metadata_ops(is_collective));
     }
@@ -944,7 +944,7 @@ macro_rules! impl_builder_methods {
         impl_builder!(DatasetAccess: virtual_view(view: VirtualView));
         #[cfg(feature = "1.10.0")]
         impl_builder!(DatasetAccess: virtual_printf_gap(gap_size: usize));
-        #[cfg(all(feature = "1.10.0", h5_have_parallel))]
+        #[cfg(all(feature = "1.10.0", have_parallel))]
         impl_builder!(DatasetAccess: all_coll_metadata_ops(is_collective: bool));
 
         impl_builder!(DatasetCreate: create/dcpl);
