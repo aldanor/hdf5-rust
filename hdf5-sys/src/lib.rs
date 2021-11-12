@@ -4,6 +4,7 @@
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::missing_safety_doc))]
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::cognitive_complexity))]
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::upper_case_acronyms))]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 macro_rules! extern_static {
     ($dest:ident, $src:ident) => {
