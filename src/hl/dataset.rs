@@ -907,12 +907,12 @@ macro_rules! impl_builder {
             self.builder.$name($($var),*); self
         }
     };
-    ($(#[cfg(feature = $feature:literal)])*
-     $(#[cfg(all(feature = $feature2:literal, feature = $feature3:literal))])*
-     $plist:ident: $name:ident($($var:ident: $ty:ty),*)) => {
+    (
+        $(#[cfg(feature = $feature:literal)])* $(#[cfg(all($(feature = $features:literal),*))])*
+        $plist:ident: $name:ident($($var:ident: $ty:ty),*)
+    ) => {
         paste::paste! {
-            $(#[cfg(feature = $feature )])*
-            $(#[cfg(all(feature = $feature2, feature = $feature3))])*
+            $(#[cfg(feature = $feature)])* $(#[cfg(all($(feature = $features),*))])*
             #[inline] #[must_use] #[doc =
                 "\u{21b3} [`" $plist "Builder::" $name "`]"
                 "(crate::plist::" $plist "Builder::" $name ")"
@@ -922,9 +922,12 @@ macro_rules! impl_builder {
             }
         }
     };
-    ($(#[cfg(feature = $feature:literal)])* $plist:ident: $name:ident<$($gid:ident: $gty:path),+>($($var:ident: $ty:ty),*)) => {
+    (
+        $(#[cfg(feature = $feature:literal)])* $(#[cfg(all($(feature = $features:literal),*))])*
+        $plist:ident: $name:ident<$($gid:ident: $gty:path),+>($($var:ident: $ty:ty),*)
+    ) => {
         paste::paste! {
-            $(#[cfg(feature = $feature )])*
+            $(#[cfg(feature = $feature)])* $(#[cfg(all($(feature = $features),*))])*
             #[inline] #[must_use] #[doc =
                 "\u{21b3} [`" $plist "Builder::" $name "`]"
                 "(crate::plist::" $plist "Builder::" $name ")"
