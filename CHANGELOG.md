@@ -6,6 +6,7 @@
 
 - `Error` now implements `From<Infallible>`, which allows passing convertible
   extents (like tuples of integers) where `impl TryInto<Extents>` is required.
+- Support for `hdf5` version `1.12.1`.
 
 ## 0.8.0
 
