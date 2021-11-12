@@ -337,7 +337,7 @@ fn test_fapl_driver_mpio() -> hdf5::Result<()> {
 }
 
 #[test]
-#[cfg(have_direct)]
+#[cfg(feature = "have-direct")]
 fn test_fapl_driver_direct() -> hdf5::Result<()> {
     let mut b = FileAccess::build();
 
@@ -553,7 +553,7 @@ fn test_fapl_set_page_buffer_size() -> hdf5::Result<()> {
 }
 
 #[test]
-#[cfg(all(feature = "1.10.1", not(have_parallel)))]
+#[cfg(all(feature = "1.10.1", not(feature = "have-parallel")))]
 fn test_fapl_set_evict_on_close() -> hdf5::Result<()> {
     test_pl!(FA, evict_on_close: true);
     test_pl!(FA, evict_on_close: false);

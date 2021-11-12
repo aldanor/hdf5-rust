@@ -611,7 +611,7 @@ impl DatasetBuilderInner {
         self.with_dapl(|pl| pl.virtual_printf_gap(gap_size));
     }
 
-    #[cfg(all(feature = "1.10.0", have_parallel))]
+    #[cfg(all(feature = "1.10.0", feature = "have-parallel"))]
     pub fn all_coll_metadata_ops(&mut self, is_collective: bool) {
         self.with_dapl(|pl| pl.all_coll_metadata_ops(is_collective));
     }
@@ -908,11 +908,11 @@ macro_rules! impl_builder {
         }
     };
     ($(#[cfg(feature = $feature:literal)])*
-     $(#[cfg(all(feature = $feature2:literal, $feature3:ident))])*
+     $(#[cfg(all(feature = $feature2:literal, feature = $feature3:literal))])*
      $plist:ident: $name:ident($($var:ident: $ty:ty),*)) => {
         paste::paste! {
             $(#[cfg(feature = $feature )])*
-            $(#[cfg(all(feature = $feature2, $feature3))])*
+            $(#[cfg(all(feature = $feature2, feature = $feature3))])*
             #[inline] #[must_use] #[doc =
                 "\u{21b3} [`" $plist "Builder::" $name "`]"
                 "(crate::plist::" $plist "Builder::" $name ")"
@@ -947,7 +947,7 @@ macro_rules! impl_builder_methods {
         impl_builder!(#[cfg(feature = "1.10.0")] DatasetAccess: virtual_view(view: VirtualView));
         impl_builder!(#[cfg(feature = "1.10.0")] DatasetAccess: virtual_printf_gap(gap_size: usize));
         impl_builder!(
-            #[cfg(all(feature = "1.10.0", have_parallel))]
+            #[cfg(all(feature = "1.10.0", feature = "have-parallel"))]
             DatasetAccess: all_coll_metadata_ops(is_collective: bool)
         );
 

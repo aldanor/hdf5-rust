@@ -620,8 +620,8 @@ impl Config {
             println!("cargo:version_{}_{}_{}=1", v.major, v.minor, v.micro);
         }
         if self.header.have_stdbool_h {
-            println!("cargo:have_stdbool=1");
             println!("cargo:rustc-cfg=have_stdbool_h");
+            // there should be no need to export have_stdbool_h downstream
         }
         if self.header.have_direct {
             println!("cargo:rustc-cfg=feature=\"have-direct\"");

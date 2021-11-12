@@ -12,8 +12,9 @@
 //!
 //! Requires `HDF5` library of version 1.8.4 or later. Newer versions will enable additional
 //! features of the library. Such items are marked in the documentation with a version number
-//! indicating the required version of `HDF5`. The `have_direct` and `have_parallel` features
+//! indicating the required version of `HDF5`. The `have-direct` and `have-parallel` features
 //! also indicates `HDF5` functionality.
+
 #![cfg_attr(feature = "cargo-clippy", warn(clippy::pedantic))]
 #![cfg_attr(feature = "cargo-clippy", warn(clippy::nursery))]
 #![cfg_attr(feature = "cargo-clippy", warn(clippy::all))]
@@ -43,7 +44,7 @@
 // RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --features blosc,lzf
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
-#[cfg(all(feature = "mpio", not(have_parallel)))]
+#[cfg(all(feature = "mpio", not(feature = "have-parallel")))]
 compile_error!("Enabling \"mpio\" feature requires HDF5 library built with MPI support");
 
 mod export {
@@ -191,7 +192,7 @@ pub fn is_library_threadsafe() -> bool {
     }
     #[cfg(not(feature = "1.8.16"))]
     {
-        cfg!(have_threadsafe)
+        cfg!(feature = "threadsafe")
     }
 }
 
