@@ -97,6 +97,7 @@ jobs:
           - {os: ubuntu, version: 1.12.0, mpi: openmpi, channel: conda-forge, rust: stable}
           - {os: macos, version: 1.12.0, channel: conda-forge, rust: stable}
           - {os: windows, version: 1.12.0, channel: conda-forge, rust: stable}
+          - {os: ubuntu, version: 1.12.1, channel: conda-forge, rust: stable}
     defaults:
       run:
         shell: bash -l {0}
