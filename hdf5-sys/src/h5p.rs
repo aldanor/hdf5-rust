@@ -531,17 +531,17 @@ extern "C" {
     ) -> herr_t;
 
     // direct
-    #[cfg(h5_have_direct)]
+    #[cfg(feature = "have-direct")]
     pub fn H5Pset_fapl_direct(
         fapl_id: hid_t, alignment: size_t, block_size: size_t, cbuf_size: size_t,
     ) -> herr_t;
-    #[cfg(h5_have_direct)]
+    #[cfg(feature = "have-parallel")]
     pub fn H5Pget_fapl_direct(
         fapl_id: hid_t, alignment: *mut size_t, block_size: *mut size_t, cbuf_size: *mut size_t,
     ) -> herr_t;
 }
 
-#[cfg(h5_have_parallel)]
+#[cfg(feature = "have-parallel")]
 mod mpio {
     use crate::internal_prelude::*;
 
@@ -587,7 +587,7 @@ mod mpio {
     }
 }
 
-#[cfg(h5_have_parallel)]
+#[cfg(feature = "have-parallel")]
 pub use self::mpio::*;
 
 #[cfg(target_os = "windows")]
@@ -724,7 +724,7 @@ pub use self::H5Pencode1 as H5Pencode;
 #[cfg(feature = "1.12.0")]
 pub use self::H5Pencode2 as H5Pencode;
 
-#[cfg(all(feature = "1.10.0", h5_have_parallel))]
+#[cfg(all(feature = "1.10.0", feature = "have-parallel"))]
 extern "C" {
     pub fn H5Pset_coll_metadata_write(fapl_id: hid_t, is_collective: hbool_t) -> herr_t;
     pub fn H5Pget_coll_metadata_write(fapl_id: hid_t, is_collective: *mut hbool_t) -> herr_t;

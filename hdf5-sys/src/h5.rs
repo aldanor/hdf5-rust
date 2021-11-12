@@ -12,9 +12,9 @@ pub type hsize_t = c_ulonglong;
 pub type hssize_t = c_longlong;
 pub type haddr_t = uint64_t;
 
-#[cfg(all(feature = "1.10.0", h5_have_stdbool_h))]
+#[cfg(all(feature = "1.10.0", have_stdbool_h))]
 pub type hbool_t = u8;
-#[cfg(any(not(feature = "1.10.0"), not(h5_have_stdbool_h)))]
+#[cfg(any(not(feature = "1.10.0"), not(have_stdbool_h)))]
 pub type hbool_t = c_uint;
 
 #[repr(C)]

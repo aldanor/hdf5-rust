@@ -191,7 +191,7 @@ extern "C" {
     pub fn H5Fget_file_image(file_id: hid_t, buf_ptr: *mut c_void, buf_len: size_t) -> ssize_t;
 }
 
-#[cfg(all(feature = "1.8.9", h5_have_parallel))]
+#[cfg(all(feature = "1.8.9", feature = "have-parallel"))]
 extern "C" {
     pub fn H5Fset_mpi_atomicity(file_id: hid_t, flag: hbool_t) -> herr_t;
     pub fn H5Fget_mpi_atomicity(file_id: hid_t, flag: *mut hbool_t) -> herr_t;

@@ -620,19 +620,19 @@ impl Config {
             println!("cargo:version_{}_{}_{}=1", v.major, v.minor, v.micro);
         }
         if self.header.have_stdbool_h {
-            println!("cargo:rustc-cfg=h5_have_stdbool_h");
             println!("cargo:have_stdbool=1");
+            println!("cargo:rustc-cfg=have_stdbool_h");
         }
         if self.header.have_direct {
-            println!("cargo:rustc-cfg=h5_have_direct");
+            println!("cargo:rustc-cfg=feature=\"have-direct\"");
             println!("cargo:have_direct=1");
         }
         if self.header.have_parallel {
-            println!("cargo:rustc-cfg=h5_have_parallel");
+            println!("cargo:rustc-cfg=feature=\"have-parallel\"");
             println!("cargo:have_parallel=1");
         }
         if self.header.have_threadsafe {
-            println!("cargo:rustc-cfg=h5_have_threadsafe");
+            println!("cargo:rustc-cfg=feature=\"have-threadsafe\"");
             println!("cargo:have_threadsafe=1");
         }
     }

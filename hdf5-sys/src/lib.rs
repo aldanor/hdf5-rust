@@ -14,7 +14,7 @@ macro_rules! extern_static {
     };
 }
 
-#[cfg(all(feature = "mpio", not(h5_have_parallel)))]
+#[cfg(all(feature = "mpio", not(feature = "have-parallel")))]
 compile_error!("Enabling \"mpio\" feature requires HDF5 library built with MPI support");
 
 #[cfg(all(feature = "mpio", feature = "static"))]

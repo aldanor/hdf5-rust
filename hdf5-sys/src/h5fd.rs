@@ -352,12 +352,12 @@ extern "C" {
     pub fn H5FD_multi_init() -> hid_t;
 }
 
-#[cfg(h5_have_parallel)]
+#[cfg(feature = "have-parallel")]
 extern "C" {
     pub fn H5FD_mpio_init() -> hid_t;
 }
 
-#[cfg(h5_have_direct)]
+#[cfg(feature = "have-direct")]
 extern "C" {
     pub fn H5FD_direct_init() -> hid_t;
 }
