@@ -128,7 +128,7 @@ pub enum ByteOrder {
     None,
 }
 
-#[cfg(hdf5_1_8_6)]
+#[cfg(feature = "1.8.6")]
 impl From<H5T_order_t> for ByteOrder {
     fn from(order: H5T_order_t) -> Self {
         match order {
@@ -141,7 +141,7 @@ impl From<H5T_order_t> for ByteOrder {
     }
 }
 
-#[cfg(not(hdf5_1_8_6))]
+#[cfg(not(feature = "1.8.6"))]
 impl From<H5T_order_t> for ByteOrder {
     fn from(order: H5T_order_t) -> Self {
         match order {

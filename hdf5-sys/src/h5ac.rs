@@ -45,9 +45,9 @@ pub struct H5AC_cache_config_t {
     pub epochs_before_eviction: c_int,
     pub apply_empty_reserve: hbool_t,
     pub empty_reserve: c_double,
-    #[cfg(not(hdf5_1_10_0))]
+    #[cfg(not(feature = "1.10.0"))]
     pub dirty_bytes_threshold: c_int,
-    #[cfg(hdf5_1_10_0)]
+    #[cfg(feature = "1.10.0")]
     pub dirty_bytes_threshold: size_t,
     pub metadata_write_strategy: c_int,
 }
@@ -58,7 +58,7 @@ impl Default for H5AC_cache_config_t {
     }
 }
 
-#[cfg(hdf5_1_10_1)]
+#[cfg(feature = "1.10.1")]
 mod hdf5_1_10_1 {
     use super::*;
 
@@ -78,5 +78,5 @@ mod hdf5_1_10_1 {
     }
 }
 
-#[cfg(hdf5_1_10_1)]
+#[cfg(feature = "1.10.1")]
 pub use self::hdf5_1_10_1::*;

@@ -5,7 +5,7 @@ use std::ops::Deref;
 
 use bitflags::bitflags;
 
-#[cfg(hdf5_1_10_1)]
+#[cfg(feature = "1.10.1")]
 use hdf5_sys::h5f::H5F_fspace_strategy_t;
 use hdf5_sys::h5o::{
     H5O_SHMESG_ALL_FLAG, H5O_SHMESG_ATTR_FLAG, H5O_SHMESG_DTYPE_FLAG, H5O_SHMESG_FILL_FLAG,
@@ -19,7 +19,7 @@ use hdf5_sys::h5p::{
     H5Pset_shared_mesg_index, H5Pset_shared_mesg_nindexes, H5Pset_shared_mesg_phase_change,
     H5Pset_sym_k, H5Pset_userblock,
 };
-#[cfg(hdf5_1_10_1)]
+#[cfg(feature = "1.10.1")]
 use hdf5_sys::h5p::{
     H5Pget_file_space_page_size, H5Pget_file_space_strategy, H5Pset_file_space_page_size,
     H5Pset_file_space_strategy,
@@ -67,7 +67,7 @@ impl Debug for FileCreate {
         formatter.field("obj_track_times", &self.obj_track_times());
         formatter.field("attr_phase_change", &self.attr_phase_change());
         formatter.field("attr_creation_order", &self.attr_creation_order());
-        #[cfg(hdf5_1_10_1)]
+        #[cfg(feature = "1.10.1")]
         {
             formatter.field("file_space_page_size", &self.file_space_page_size());
             formatter.field("file_space_strategy", &self.file_space_strategy());
@@ -188,7 +188,7 @@ pub struct SharedMessageIndex {
 }
 
 /// File space handling strategy.
-#[cfg(hdf5_1_10_1)]
+#[cfg(feature = "1.10.1")]
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub enum FileSpaceStrategy {
     /// Mechanisms used: free-space managers, aggregators or embedded paged
@@ -207,7 +207,7 @@ pub enum FileSpaceStrategy {
     None,
 }
 
-#[cfg(hdf5_1_10_1)]
+#[cfg(feature = "1.10.1")]
 impl Default for FileSpaceStrategy {
     fn default() -> Self {
         Self::FreeSpaceManager { paged: false, persist: false, threshold: 1 }
@@ -225,9 +225,9 @@ pub struct FileCreateBuilder {
     obj_track_times: Option<bool>,
     attr_phase_change: Option<AttrPhaseChange>,
     attr_creation_order: Option<AttrCreationOrder>,
-    #[cfg(hdf5_1_10_1)]
+    #[cfg(feature = "1.10.1")]
     file_space_page_size: Option<u64>,
-    #[cfg(hdf5_1_10_1)]
+    #[cfg(feature = "1.10.1")]
     file_space_strategy: Option<FileSpaceStrategy>,
 }
 
@@ -251,7 +251,7 @@ impl FileCreateBuilder {
         let apc = plist.get_attr_phase_change()?;
         builder.attr_phase_change(apc.max_compact, apc.min_dense);
         builder.attr_creation_order(plist.get_attr_creation_order()?);
-        #[cfg(hdf5_1_10_1)]
+        #[cfg(feature = "1.10.1")]
         {
             builder.file_space_page_size(plist.get_file_space_page_size()?);
             builder.file_space_strategy(plist.get_file_space_strategy()?);
@@ -339,7 +339,7 @@ impl FileCreateBuilder {
         self
     }
 
-    #[cfg(hdf5_1_10_1)]
+    #[cfg(feature = "1.10.1")]
     /// Sets the file space page size.
     ///
     /// The minimum size is 512. Setting a value less than 512 will result in
@@ -350,7 +350,7 @@ impl FileCreateBuilder {
         self
     }
 
-    #[cfg(hdf5_1_10_1)]
+    #[cfg(feature = "1.10.1")]
     /// Sets the file space handling strategy and persisting free-space values.
     ///
     /// This setting cannot be changed for the life of the file.
@@ -394,7 +394,7 @@ impl FileCreateBuilder {
         if let Some(v) = self.attr_creation_order {
             h5try!(H5Pset_attr_creation_order(id, v.bits() as _));
         }
-        #[cfg(hdf5_1_10_1)]
+        #[cfg(feature = "1.10.1")]
         {
             if let Some(v) = self.file_space_page_size {
                 h5try!(H5Pset_file_space_page_size(id, v as _));
@@ -498,13 +498,13 @@ impl FileCreate {
     }
 
     #[doc(hidden)]
-    #[cfg(hdf5_1_10_1)]
+    #[cfg(feature = "1.10.1")]
     pub fn get_file_space_page_size(&self) -> Result<u64> {
         h5get!(H5Pget_file_space_page_size(self.id()): hsize_t).map(|x| x as _)
     }
 
     #[doc(hidden)]
-    #[cfg(hdf5_1_10_1)]
+    #[cfg(feature = "1.10.1")]
     pub fn get_file_space_strategy(&self) -> Result<FileSpaceStrategy> {
         let (strategy, persist, threshold) =
             h5get!(H5Pget_file_space_strategy(self.id()): H5F_fspace_strategy_t, hbool_t, hsize_t)?;
@@ -592,13 +592,13 @@ impl FileCreate {
     }
 
     /// Retrieves the file space page size.
-    #[cfg(hdf5_1_10_1)]
+    #[cfg(feature = "1.10.1")]
     pub fn file_space_page_size(&self) -> u64 {
         self.get_file_space_page_size().unwrap_or(0)
     }
 
     /// Retrieves the file space handling strategy.
-    #[cfg(hdf5_1_10_1)]
+    #[cfg(feature = "1.10.1")]
     pub fn file_space_strategy(&self) -> FileSpaceStrategy {
         self.get_file_space_strategy().unwrap_or_else(|_| FileSpaceStrategy::default())
     }

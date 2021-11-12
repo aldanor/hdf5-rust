@@ -39,7 +39,7 @@ pub enum H5T_class_t {
     H5T_NCLASSES = 11,
 }
 
-#[cfg(hdf5_1_8_6)]
+#[cfg(feature = "1.8.6")]
 #[repr(C)]
 #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
 pub enum H5T_order_t {
@@ -51,7 +51,7 @@ pub enum H5T_order_t {
     H5T_ORDER_NONE = 4,
 }
 
-#[cfg(not(hdf5_1_8_6))]
+#[cfg(not(feature = "1.8.6"))]
 #[repr(C)]
 #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
 pub enum H5T_order_t {
@@ -441,7 +441,7 @@ mod globals {
     extern_static!(H5T_NATIVE_UINT_LEAST64, H5T_NATIVE_UINT_LEAST64_g);
     extern_static!(H5T_NATIVE_INT_FAST64, H5T_NATIVE_INT_FAST64_g);
     extern_static!(H5T_NATIVE_UINT_FAST64, H5T_NATIVE_UINT_FAST64_g);
-    #[cfg(hdf5_1_12_0)]
+    #[cfg(feature = "1.12.0")]
     extern_static!(H5T_STD_REF, H5T_STD_REF_g);
 }
 
@@ -536,17 +536,17 @@ mod globals {
     extern_static!(H5T_NATIVE_UINT_LEAST64, __imp_H5T_NATIVE_UINT_LEAST64_g);
     extern_static!(H5T_NATIVE_INT_FAST64, __imp_H5T_NATIVE_INT_FAST64_g);
     extern_static!(H5T_NATIVE_UINT_FAST64, __imp_H5T_NATIVE_UINT_FAST64_g);
-    #[cfg(hdf5_1_12_0)]
+    #[cfg(feature = "1.12.0")]
     extern_static!(H5T_STD_REF, __imp_H5T_STD_REF_g);
 }
 
-#[cfg(hdf5_1_10_0)]
+#[cfg(feature = "1.10.0")]
 extern "C" {
     pub fn H5Tflush(type_id: hid_t) -> herr_t;
     pub fn H5Trefresh(type_id: hid_t) -> herr_t;
 }
 
-#[cfg(hdf5_1_12_0)]
+#[cfg(feature = "1.12.0")]
 extern "C" {
     pub fn H5Treclaim(type_id: hid_t, space_id: hid_t, dxpl_id: hid_t, buf: *mut c_void) -> herr_t;
 }

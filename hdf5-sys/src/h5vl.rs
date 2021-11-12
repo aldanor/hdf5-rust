@@ -1,5 +1,5 @@
 //! Using the Virtual Object Layer
-#![cfg(hdf5_1_12_0)]
+#![cfg(feature = "1.12.0")]
 use crate::internal_prelude::*;
 
 pub type H5VL_class_value_t = c_int;

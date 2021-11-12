@@ -106,7 +106,7 @@ extern "C" {
     pub fn H5Gunlink(loc_id: hid_t, name: *const c_char) -> herr_t;
 }
 
-#[cfg(hdf5_1_10_0)]
+#[cfg(feature = "1.10.0")]
 extern "C" {
     pub fn H5Gflush(group_id: hid_t) -> herr_t;
     pub fn H5Grefresh(group_id: hid_t) -> herr_t;

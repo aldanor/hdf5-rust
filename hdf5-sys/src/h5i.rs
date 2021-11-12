@@ -13,29 +13,29 @@ pub enum H5I_type_t {
     H5I_DATATYPE,
     H5I_DATASPACE,
     H5I_DATASET,
-    #[cfg(hdf5_1_12_0)]
+    #[cfg(feature = "1.12.0")]
     H5I_MAP,
     H5I_ATTR,
-    #[cfg(not(hdf5_1_12_0))]
-    #[cfg_attr(hdf5_1_10_2, deprecated(note = "deprecated in HDF5 1.10.2"))]
+    #[cfg(not(feature = "1.12.0"))]
+    #[cfg_attr(feature = "1.10.2", deprecated(note = "deprecated in HDF5 1.10.2"))]
     H5I_REFERENCE,
     H5I_VFL,
-    #[cfg(hdf5_1_12_0)]
+    #[cfg(feature = "1.12.0")]
     H5I_VOL,
     H5I_GENPROP_CLS,
     H5I_GENPROP_LST,
     H5I_ERROR_CLASS,
     H5I_ERROR_MSG,
     H5I_ERROR_STACK,
-    #[cfg(hdf5_1_12_0)]
+    #[cfg(feature = "1.12.0")]
     H5I_SPACE_SEL_ITER,
     H5I_NTYPES,
 }
 
-#[cfg(hdf5_1_10_0)]
+#[cfg(feature = "1.10.0")]
 pub type hid_t = i64;
 
-#[cfg(not(hdf5_1_10_0))]
+#[cfg(not(feature = "1.10.0"))]
 pub type hid_t = c_int;
 
 pub const H5I_INVALID_HID: hid_t = -1;
@@ -43,7 +43,7 @@ pub const H5I_INVALID_HID: hid_t = -1;
 pub type H5I_free_t = Option<extern "C" fn(arg1: *mut c_void) -> herr_t>;
 pub type H5I_search_func_t =
     Option<extern "C" fn(obj: *mut c_void, id: hid_t, key: *mut c_void) -> c_int>;
-#[cfg(hdf5_1_12_0)]
+#[cfg(feature = "1.12.0")]
 pub type H5I_iterate_func_t = Option<extern "C" fn(id: hid_t, udata: *mut c_void) -> herr_t>;
 
 extern "C" {
@@ -65,7 +65,7 @@ extern "C" {
     pub fn H5Idec_type_ref(type_: H5I_type_t) -> c_int;
     pub fn H5Iget_type_ref(type_: H5I_type_t) -> c_int;
     pub fn H5Isearch(type_: H5I_type_t, func: H5I_search_func_t, key: *mut c_void) -> *mut c_void;
-    #[cfg(hdf5_1_12_0)]
+    #[cfg(feature = "1.12.0")]
     pub fn H5Iiterate(type_: H5I_type_t, op: H5I_iterate_func_t, op_data: *mut c_void) -> herr_t;
     pub fn H5Inmembers(type_: H5I_type_t, num_members: *mut hsize_t) -> herr_t;
     pub fn H5Itype_exists(type_: H5I_type_t) -> htri_t;

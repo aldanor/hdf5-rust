@@ -160,7 +160,7 @@ fn test_fcpl_attr_creation_order() -> hdf5::Result<()> {
 }
 
 #[test]
-#[cfg(hdf5_1_10_1)]
+#[cfg(feature = "1.10.1")]
 fn test_fcpl_set_file_space_page_size() -> hdf5::Result<()> {
     test_pl!(FC, file_space_page_size: 512);
     test_pl!(FC, file_space_page_size: 999);
@@ -168,7 +168,7 @@ fn test_fcpl_set_file_space_page_size() -> hdf5::Result<()> {
 }
 
 #[test]
-#[cfg(hdf5_1_10_1)]
+#[cfg(feature = "1.10.1")]
 fn test_fcpl_set_file_space_strategy() -> hdf5::Result<()> {
     test_pl!(FC, file_space_strategy: FileSpaceStrategy::PageAggregation);
     test_pl!(FC, file_space_strategy: FileSpaceStrategy::None);
@@ -223,16 +223,16 @@ fn test_fapl_driver_core() -> hdf5::Result<()> {
     let d = check_matches!(b.finish()?.get_driver()?, d, FileDriver::Core(d));
     assert_eq!(d.increment, 1024 * 1024);
     assert_eq!(d.filebacked, false);
-    #[cfg(hdf5_1_8_13)]
+    #[cfg(feature = "1.8.13")]
     assert_eq!(d.write_tracking, 0);
 
     b.core_options(123, true);
-    #[cfg(hdf5_1_8_13)]
+    #[cfg(feature = "1.8.13")]
     b.write_tracking(456);
     let d = check_matches!(b.finish()?.get_driver()?, d, FileDriver::Core(d));
     assert_eq!(d.increment, 123);
     assert_eq!(d.filebacked, true);
-    #[cfg(hdf5_1_8_13)]
+    #[cfg(feature = "1.8.13")]
     assert_eq!(d.write_tracking, 456);
 
     b.core_filebacked(false);
@@ -337,7 +337,7 @@ fn test_fapl_driver_mpio() -> hdf5::Result<()> {
 }
 
 #[test]
-#[cfg(h5_have_direct)]
+#[cfg(feature = "have-direct")]
 fn test_fapl_driver_direct() -> hdf5::Result<()> {
     let mut b = FileAccess::build();
 
@@ -479,7 +479,7 @@ fn test_fapl_set_mdc_config() -> hdf5::Result<()> {
 }
 
 #[test]
-#[cfg(hdf5_1_8_7)]
+#[cfg(feature = "1.8.7")]
 fn test_fapl_set_elink_file_cache_size() -> hdf5::Result<()> {
     test_pl!(FA, elink_file_cache_size: 0);
     test_pl!(FA, elink_file_cache_size: 17);
@@ -487,7 +487,7 @@ fn test_fapl_set_elink_file_cache_size() -> hdf5::Result<()> {
 }
 
 #[test]
-#[cfg(hdf5_1_10_0)]
+#[cfg(feature = "1.10.0")]
 fn test_fapl_set_metadata_read_attempts() -> hdf5::Result<()> {
     test_pl!(FA, metadata_read_attempts: 1);
     test_pl!(FA, metadata_read_attempts: 17);
@@ -495,7 +495,7 @@ fn test_fapl_set_metadata_read_attempts() -> hdf5::Result<()> {
 }
 
 #[test]
-#[cfg(hdf5_1_10_0)]
+#[cfg(feature = "1.10.0")]
 fn test_fapl_set_mdc_log_options() -> hdf5::Result<()> {
     test_pl!(FA, mdc_log_options: is_enabled = true, location = "abc", start_on_access = false,);
     test_pl!(FA, mdc_log_options: is_enabled = false, location = "", start_on_access = true,);
@@ -503,7 +503,7 @@ fn test_fapl_set_mdc_log_options() -> hdf5::Result<()> {
 }
 
 #[test]
-#[cfg(all(hdf5_1_10_0, feature = "mpio"))]
+#[cfg(all(feature = "1.10.0", feature = "mpio"))]
 fn test_fapl_set_all_coll_metadata_ops() -> hdf5::Result<()> {
     test_pl!(FA, all_coll_metadata_ops: true);
     test_pl!(FA, all_coll_metadata_ops: false);
@@ -511,7 +511,7 @@ fn test_fapl_set_all_coll_metadata_ops() -> hdf5::Result<()> {
 }
 
 #[test]
-#[cfg(all(hdf5_1_10_0, feature = "mpio"))]
+#[cfg(all(feature = "1.10.0", feature = "mpio"))]
 fn test_fapl_set_coll_metadata_write() -> hdf5::Result<()> {
     test_pl!(FA, coll_metadata_write: true);
     test_pl!(FA, coll_metadata_write: false);
@@ -519,7 +519,7 @@ fn test_fapl_set_coll_metadata_write() -> hdf5::Result<()> {
 }
 
 #[test]
-#[cfg(hdf5_1_10_2)]
+#[cfg(feature = "1.10.2")]
 fn test_fapl_set_libver_bounds() -> hdf5::Result<()> {
     test_pl!(FA, libver_bounds: low = LibraryVersion::Earliest, high = LibraryVersion::V18);
     test_pl!(FA, libver_bounds: low = LibraryVersion::Earliest, high = LibraryVersion::V110);
@@ -544,7 +544,7 @@ fn test_fapl_set_libver_bounds() -> hdf5::Result<()> {
 }
 
 #[test]
-#[cfg(hdf5_1_10_1)]
+#[cfg(feature = "1.10.1")]
 fn test_fapl_set_page_buffer_size() -> hdf5::Result<()> {
     test_pl!(FA, page_buffer_size: buf_size = 0, min_meta_perc = 0, min_raw_perc = 0);
     test_pl!(FA, page_buffer_size: buf_size = 0, min_meta_perc = 7, min_raw_perc = 9);
@@ -553,7 +553,7 @@ fn test_fapl_set_page_buffer_size() -> hdf5::Result<()> {
 }
 
 #[test]
-#[cfg(all(hdf5_1_10_1, not(h5_have_parallel)))]
+#[cfg(all(feature = "1.10.1", not(feature = "have-parallel")))]
 fn test_fapl_set_evict_on_close() -> hdf5::Result<()> {
     test_pl!(FA, evict_on_close: true);
     test_pl!(FA, evict_on_close: false);
@@ -561,7 +561,7 @@ fn test_fapl_set_evict_on_close() -> hdf5::Result<()> {
 }
 
 #[test]
-#[cfg(hdf5_1_10_1)]
+#[cfg(feature = "1.10.1")]
 fn test_fapl_set_mdc_image_config() -> hdf5::Result<()> {
     test_pl!(FA, mdc_image_config: generate_image = true);
     test_pl!(FA, mdc_image_config: generate_image = false);
@@ -580,7 +580,7 @@ fn test_dapl_common() -> hdf5::Result<()> {
 }
 
 #[test]
-#[cfg(hdf5_1_8_17)]
+#[cfg(feature = "1.8.17")]
 fn test_dapl_set_efile_prefix() -> hdf5::Result<()> {
     assert_eq!(DA::try_new()?.get_efile_prefix().unwrap(), "".to_owned());
     assert_eq!(DA::try_new()?.efile_prefix(), "".to_owned());
@@ -599,7 +599,7 @@ fn test_dapl_set_chunk_cache() -> hdf5::Result<()> {
 }
 
 #[test]
-#[cfg(all(hdf5_1_10_0, feature = "mpio"))]
+#[cfg(all(feature = "1.10.0", feature = "mpio"))]
 fn test_dapl_set_all_coll_metadata_ops() -> hdf5::Result<()> {
     test_pl!(DA, all_coll_metadata_ops: true);
     test_pl!(DA, all_coll_metadata_ops: false);
@@ -607,7 +607,7 @@ fn test_dapl_set_all_coll_metadata_ops() -> hdf5::Result<()> {
 }
 
 #[test]
-#[cfg(hdf5_1_10_0)]
+#[cfg(feature = "1.10.0")]
 fn test_dapl_set_virtual_view() -> hdf5::Result<()> {
     test_pl!(DA, virtual_view: VirtualView::FirstMissing);
     test_pl!(DA, virtual_view: VirtualView::LastAvailable);
@@ -615,7 +615,7 @@ fn test_dapl_set_virtual_view() -> hdf5::Result<()> {
 }
 
 #[test]
-#[cfg(hdf5_1_10_0)]
+#[cfg(feature = "1.10.0")]
 fn test_dapl_set_virtual_printf_gap() -> hdf5::Result<()> {
     test_pl!(DA, virtual_printf_gap: 0);
     test_pl!(DA, virtual_printf_gap: 123);
@@ -641,12 +641,12 @@ fn test_dcpl_set_chunk() -> hdf5::Result<()> {
     let mut b = DCB::new().chunk([3, 7]).clone();
     assert_eq!(b.layout(Layout::Contiguous).finish()?.layout(), Layout::Chunked);
     assert_eq!(b.layout(Layout::Compact).finish()?.layout(), Layout::Chunked);
-    #[cfg(hdf5_1_10_0)]
+    #[cfg(feature = "1.10.0")]
     assert_eq!(b.layout(Layout::Virtual).finish()?.layout(), Layout::Chunked);
     assert!(b.no_chunk().finish()?.chunk().is_none());
     assert!(DCB::new().layout(Layout::Contiguous).finish()?.get_chunk()?.is_none());
     assert!(DCB::new().layout(Layout::Compact).finish()?.get_chunk()?.is_none());
-    #[cfg(hdf5_1_10_0)]
+    #[cfg(feature = "1.10.0")]
     assert!(DCB::new().layout(Layout::Virtual).finish()?.get_chunk()?.is_none());
     assert_eq!(DCB::new().layout(Layout::Chunked).finish()?.get_chunk()?, Some(vec![]));
     Ok(())
@@ -658,19 +658,19 @@ fn test_dcpl_set_layout() -> hdf5::Result<()> {
     test_pl!(DC, layout: Layout::Contiguous);
     test_pl!(DC, layout: Layout::Compact);
     test_pl!(DC, layout: Layout::Chunked);
-    #[cfg(hdf5_1_10_0)]
+    #[cfg(feature = "1.10.0")]
     test_pl!(DC, layout: Layout::Virtual);
     Ok(())
 }
 
-#[cfg(hdf5_1_10_0)]
+#[cfg(feature = "1.10.0")]
 #[test]
 fn test_dcpl_set_chunk_opts() -> hdf5::Result<()> {
     assert!(DC::try_new()?.get_chunk_opts()?.is_none());
     let mut b = DCB::new();
     assert!(b.layout(Layout::Contiguous).finish()?.get_chunk_opts()?.is_none());
     assert!(b.layout(Layout::Compact).finish()?.get_chunk_opts()?.is_none());
-    #[cfg(hdf5_1_10_0)]
+    #[cfg(feature = "1.10.0")]
     assert!(b.layout(Layout::Virtual).finish()?.get_chunk_opts()?.is_none());
     b.layout(Layout::Chunked);
     assert_eq!(b.finish()?.get_chunk_opts()?, Some(ChunkOpts::empty()));
@@ -692,7 +692,7 @@ fn test_dcpl_set_alloc_time() -> hdf5::Result<()> {
     check_matches!(b.finish()?.get_alloc_time()?, (), AllocTime::Early);
     b.layout(Layout::Chunked);
     check_matches!(b.finish()?.get_alloc_time()?, (), AllocTime::Incr);
-    #[cfg(hdf5_1_10_0)]
+    #[cfg(feature = "1.10.0")]
     {
         b.layout(Layout::Virtual);
         check_matches!(b.finish()?.get_alloc_time()?, (), AllocTime::Incr);
@@ -782,7 +782,7 @@ fn test_dcpl_external() -> hdf5::Result<()> {
     Ok(())
 }
 
-#[cfg(hdf5_1_10_0)]
+#[cfg(feature = "1.10.0")]
 #[test]
 fn test_dcpl_virtual_map() -> hdf5::Result<()> {
     use hdf5::Hyperslab;

@@ -1,3 +1,20 @@
+//! HDF5 for Rust.
+//!
+//! This crate provides thread-safe Rust bindings and high-level wrappers for the `HDF5`
+//! library API. Some of the features include:
+//!
+//! - Thread-safety with non-threadsafe libhdf5 builds guaranteed via reentrant mutexes.
+//! - Native representation of most HDF5 types, including variable-length strings and arrays.
+//! - Derive-macro for automatic mapping of user structs and enums to `HDF5` types.
+//! - Multi-dimensional array reading/writing interface via `ndarray`.
+//!
+//! Direct low-level bindings are also available and provided in the `hdf5-sys` crate.
+//!
+//! Requires `HDF5` library of version 1.8.4 or later. Newer versions will enable additional
+//! features of the library. Such items are marked in the documentation with a version number
+//! indicating the required version of `HDF5`. The `have-direct` and `have-parallel` features
+//! also indicates `HDF5` functionality.
+
 #![cfg_attr(feature = "cargo-clippy", warn(clippy::pedantic))]
 #![cfg_attr(feature = "cargo-clippy", warn(clippy::nursery))]
 #![cfg_attr(feature = "cargo-clippy", warn(clippy::all))]
@@ -23,8 +40,11 @@
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::missing_panics_doc))]
 #![cfg_attr(all(feature = "cargo-clippy", test), allow(clippy::cyclomatic_complexity))]
 #![cfg_attr(not(test), allow(dead_code))]
+// To build docs locally:
+// RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --features blosc,lzf
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
-#[cfg(all(feature = "mpio", not(h5_have_parallel)))]
+#[cfg(all(feature = "mpio", not(feature = "have-parallel")))]
 compile_error!("Enabling \"mpio\" feature requires HDF5 library built with MPI support");
 
 mod export {
@@ -54,7 +74,7 @@ mod export {
     }
 
     pub mod dataset {
-        #[cfg(hdf5_1_10_5)]
+        #[cfg(feature = "1.10.5")]
         pub use crate::hl::dataset::ChunkInfo;
         pub use crate::hl::dataset::{Chunk, Dataset, DatasetBuilder};
         pub use crate::hl::plist::dataset_access::*;
@@ -163,16 +183,16 @@ pub fn library_version() -> (u8, u8, u8) {
 
 /// Returns true if the HDF5 library is threadsafe.
 pub fn is_library_threadsafe() -> bool {
-    #[cfg(hdf5_1_8_16)]
+    #[cfg(feature = "1.8.16")]
     {
         use self::internal_prelude::hbool_t;
         use hdf5_sys::h5::H5is_library_threadsafe;
         let mut ts: hbool_t = 0;
         h5call!(H5is_library_threadsafe(&mut ts)).map(|_| ts > 0).unwrap_or(false)
     }
-    #[cfg(not(hdf5_1_8_16))]
+    #[cfg(not(feature = "1.8.16"))]
     {
-        cfg!(h5_have_threadsafe)
+        cfg!(feature = "threadsafe")
     }
 }
 

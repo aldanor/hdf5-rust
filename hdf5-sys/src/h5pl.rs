@@ -1,7 +1,7 @@
 //! Programmatically controlling dynamically loaded plugins
 use crate::internal_prelude::*;
 
-#[cfg(hdf5_1_8_15)]
+#[cfg(feature = "1.8.15")]
 mod hdf5_1_8_15 {
     use super::*;
 
@@ -10,9 +10,9 @@ mod hdf5_1_8_15 {
     pub enum H5PL_type_t {
         H5PL_TYPE_ERROR = -1,
         H5PL_TYPE_FILTER = 0,
-        #[cfg(hdf5_1_12_0)]
+        #[cfg(feature = "1.12.0")]
         H5PL_VOL,
-        #[cfg(hdf5_1_12_0)]
+        #[cfg(feature = "1.12.0")]
         H5PL_TYPE_NONE,
     }
 
@@ -27,10 +27,10 @@ mod hdf5_1_8_15 {
     }
 }
 
-#[cfg(hdf5_1_8_15)]
+#[cfg(feature = "1.8.15")]
 pub use self::hdf5_1_8_15::*;
 
-#[cfg(hdf5_1_10_1)]
+#[cfg(feature = "1.10.1")]
 extern "C" {
     pub fn H5PLappend(search_path: *const c_char) -> herr_t;
     pub fn H5PLprepend(search_path: *const c_char) -> herr_t;

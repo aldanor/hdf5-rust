@@ -616,23 +616,23 @@ impl Config {
         vs.extend((0..=7).map(|v| Version::new(1, 10, v))); // 1.10.[0-7]
         vs.push(Version::new(1, 12, 0)); // 1.12.0
         for v in vs.into_iter().filter(|&v| version >= v) {
-            println!("cargo:rustc-cfg=hdf5_{}_{}_{}", v.major, v.minor, v.micro);
+            println!("cargo:rustc-cfg=feature=\"{}.{}.{}\"", v.major, v.minor, v.micro);
             println!("cargo:version_{}_{}_{}=1", v.major, v.minor, v.micro);
         }
         if self.header.have_stdbool_h {
-            println!("cargo:rustc-cfg=h5_have_stdbool_h");
-            println!("cargo:have_stdbool=1");
+            println!("cargo:rustc-cfg=have_stdbool_h");
+            // there should be no need to export have_stdbool_h downstream
         }
         if self.header.have_direct {
-            println!("cargo:rustc-cfg=h5_have_direct");
+            println!("cargo:rustc-cfg=feature=\"have-direct\"");
             println!("cargo:have_direct=1");
         }
         if self.header.have_parallel {
-            println!("cargo:rustc-cfg=h5_have_parallel");
+            println!("cargo:rustc-cfg=feature=\"have-parallel\"");
             println!("cargo:have_parallel=1");
         }
         if self.header.have_threadsafe {
-            println!("cargo:rustc-cfg=h5_have_threadsafe");
+            println!("cargo:rustc-cfg=feature=\"have-threadsafe\"");
             println!("cargo:have_threadsafe=1");
         }
     }

@@ -12,7 +12,7 @@ use hdf5_sys::h5s::{
     H5Sget_simple_extent_ndims, H5Sselect_all, H5Sselect_elements, H5Sselect_hyperslab,
     H5Sselect_none, H5S_SELECT_SET, H5S_UNLIMITED,
 };
-#[cfg(hdf5_1_10_0)]
+#[cfg(feature = "1.10.0")]
 use hdf5_sys::h5s::{H5Sget_regular_hyperslab, H5Sis_regular_hyperslab};
 
 use crate::hl::extents::Ix;
@@ -44,9 +44,9 @@ unsafe fn set_points_selection(space_id: hid_t, coords: ArrayView2<Ix>) -> Resul
     Ok(())
 }
 
-#[cfg_attr(not(hdf5_1_10_0), allow(unused))]
+#[cfg_attr(not(feature = "1.10.0"), allow(unused))]
 unsafe fn get_regular_hyperslab(space_id: hid_t) -> Result<Option<RawHyperslab>> {
-    #[cfg(hdf5_1_10_0)]
+    #[cfg(feature = "1.10.0")]
     {
         if h5check(H5Sis_regular_hyperslab(space_id))? <= 0 {
             return Ok(None);
@@ -1586,7 +1586,8 @@ mod test {
         check(&[1, 2], RawSelection::All, None)?;
         check(&[1, 2], RawSelection::Points(arr2(&[[0, 1], [0, 0]])), None)?;
 
-        let exp = if cfg!(hdf5_1_10_0) { None } else { Some(RawSelection::ComplexHyperslab) };
+        let exp =
+            if cfg!(feature = "1.10.0") { None } else { Some(RawSelection::ComplexHyperslab) };
         check(
             &[8, 9, 10, 11],
             vec![

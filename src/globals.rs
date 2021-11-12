@@ -4,9 +4,9 @@ use std::mem;
 
 use lazy_static::lazy_static;
 
-#[cfg(h5_have_direct)]
+#[cfg(feature = "have-direct")]
 use hdf5_sys::h5fd::H5FD_direct_init;
-#[cfg(h5_have_parallel)]
+#[cfg(feature = "have-parallel")]
 use hdf5_sys::h5fd::H5FD_mpio_init;
 use hdf5_sys::h5fd::{
     H5FD_core_init, H5FD_family_init, H5FD_log_init, H5FD_multi_init, H5FD_sec2_init,
@@ -16,17 +16,17 @@ use hdf5_sys::{h5e, h5p, h5t};
 
 use crate::internal_prelude::*;
 
-#[cfg(h5_dll_indirection)]
-pub struct H5GlobalConstant(&'static usize);
-#[cfg(not(h5_dll_indirection))]
-pub struct H5GlobalConstant(&'static hdf5_sys::h5i::hid_t);
+pub struct H5GlobalConstant(
+    #[cfg(msvc_dll_indirection)] &'static usize,
+    #[cfg(not(msvc_dll_indirection))] &'static hdf5_sys::h5i::hid_t,
+);
 
 impl std::ops::Deref for H5GlobalConstant {
     type Target = hdf5_sys::h5i::hid_t;
     fn deref(&self) -> &Self::Target {
         lazy_static::initialize(&crate::sync::LIBRARY_INIT);
         cfg_if::cfg_if! {
-            if #[cfg(h5_dll_indirection)] {
+            if #[cfg(msvc_dll_indirection)] {
                 let dll_ptr = self.0 as *const usize;
                 let ptr: *const *const hdf5_sys::h5i::hid_t = dll_ptr.cast();
                 unsafe {
@@ -336,21 +336,21 @@ lazy_static! {
 }
 
 // MPI-IO file driver
-#[cfg(h5_have_parallel)]
+#[cfg(feature = "have-parallel")]
 lazy_static! {
     pub static ref H5FD_MPIO: hid_t = unsafe { h5lock!(H5FD_mpio_init()) };
 }
-#[cfg(not(h5_have_parallel))]
+#[cfg(not(feature = "have-parallel"))]
 lazy_static! {
     pub static ref H5FD_MPIO: hid_t = H5I_INVALID_HID;
 }
 
 // Direct VFD
-#[cfg(h5_have_direct)]
+#[cfg(feature = "have-direct")]
 lazy_static! {
     pub static ref H5FD_DIRECT: hid_t = unsafe { h5lock!(H5FD_direct_init()) };
 }
-#[cfg(not(h5_have_direct))]
+#[cfg(not(feature = "have-direct"))]
 lazy_static! {
     pub static ref H5FD_DIRECT: hid_t = H5I_INVALID_HID;
 }

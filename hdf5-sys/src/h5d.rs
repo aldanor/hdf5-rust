@@ -16,7 +16,7 @@ pub const H5D_CHUNK_CACHE_NBYTES_DEFAULT: size_t = !0;
 
 pub const H5D_CHUNK_CACHE_W0_DEFAULT: c_float = -1.0;
 
-#[cfg(not(hdf5_1_10_0))]
+#[cfg(not(feature = "1.10.0"))]
 #[repr(C)]
 #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
 pub enum H5D_layout_t {
@@ -134,7 +134,7 @@ pub type H5D_operator_t = Option<
     ) -> herr_t,
 >;
 
-#[cfg(hdf5_1_8_11)]
+#[cfg(feature = "1.8.11")]
 pub type H5D_scatter_func_t = Option<
     extern "C" fn(
         src_buf: *mut *const c_void,
@@ -142,7 +142,7 @@ pub type H5D_scatter_func_t = Option<
         op_data: *mut c_void,
     ) -> herr_t,
 >;
-#[cfg(hdf5_1_8_11)]
+#[cfg(feature = "1.8.11")]
 pub type H5D_gather_func_t = Option<
     extern "C" fn(
         dst_buf: *const c_void,
@@ -180,7 +180,7 @@ extern "C" {
         buf: *mut c_void, type_id: hid_t, space_id: hid_t, op: H5D_operator_t,
         operator_data: *mut c_void,
     ) -> herr_t;
-    #[cfg_attr(hdf5_1_12_0, deprecated(note = "deprecated in HDF5 1.12.0, use H5Treclaim"))]
+    #[cfg_attr(feature = "1.12.0", deprecated(note = "deprecated in HDF5 1.12.0, use H5Treclaim"))]
     pub fn H5Dvlen_reclaim(
         type_id: hid_t, space_id: hid_t, plist_id: hid_t, buf: *mut c_void,
     ) -> herr_t;
@@ -201,7 +201,7 @@ extern "C" {
     pub fn H5Dopen1(file_id: hid_t, name: *const c_char) -> hid_t;
 }
 
-#[cfg(hdf5_1_8_11)]
+#[cfg(feature = "1.8.11")]
 extern "C" {
     pub fn H5Dscatter(
         op: H5D_scatter_func_t, op_data: *mut c_void, type_id: hid_t, dst_space_id: hid_t,
@@ -213,7 +213,7 @@ extern "C" {
     ) -> herr_t;
 }
 
-#[cfg(hdf5_1_10_0)]
+#[cfg(feature = "1.10.0")]
 mod hdf5_1_10_0 {
     use super::*;
 
@@ -260,10 +260,10 @@ mod hdf5_1_10_0 {
     }
 }
 
-#[cfg(hdf5_1_10_0)]
+#[cfg(feature = "1.10.0")]
 pub use self::hdf5_1_10_0::*;
 
-#[cfg(hdf5_1_10_3)]
+#[cfg(feature = "1.10.3")]
 extern "C" {
     pub fn H5Dread_chunk(
         dset_id: hid_t, dxpl_id: hid_t, offset: *const hsize_t, filters: *mut u32, buf: *mut c_void,
@@ -274,7 +274,7 @@ extern "C" {
     ) -> herr_t;
 }
 
-#[cfg(hdf5_1_10_5)]
+#[cfg(feature = "1.10.5")]
 extern "C" {
     pub fn H5Dget_chunk_info(
         dset_id: hid_t, fspace_id: hid_t, index: hsize_t, offset: *mut hsize_t,

@@ -8,7 +8,7 @@ use hdf5_sys::h5d::{
     H5Dcreate2, H5Dcreate_anon, H5Dget_access_plist, H5Dget_create_plist, H5Dget_offset,
     H5Dset_extent,
 };
-#[cfg(hdf5_1_10_5)]
+#[cfg(feature = "1.10.5")]
 use hdf5_sys::h5d::{H5Dget_chunk_info, H5Dget_num_chunks};
 use hdf5_sys::h5l::H5Ldelete;
 use hdf5_sys::h5p::H5P_DEFAULT;
@@ -18,10 +18,10 @@ use hdf5_types::{OwnedDynValue, TypeDescriptor};
 #[cfg(feature = "blosc")]
 use crate::hl::filters::{Blosc, BloscShuffle};
 use crate::hl::filters::{Filter, SZip, ScaleOffset};
-#[cfg(hdf5_1_10_0)]
+#[cfg(feature = "1.10.0")]
 use crate::hl::plist::dataset_access::VirtualView;
 use crate::hl::plist::dataset_access::{DatasetAccess, DatasetAccessBuilder};
-#[cfg(hdf5_1_10_0)]
+#[cfg(feature = "1.10.0")]
 use crate::hl::plist::dataset_create::ChunkOpts;
 use crate::hl::plist::dataset_create::{
     AllocTime, AttrCreationOrder, DatasetCreate, DatasetCreateBuilder, FillTime, Layout,
@@ -66,7 +66,7 @@ impl Deref for Dataset {
     }
 }
 
-#[cfg(hdf5_1_10_5)]
+#[cfg(feature = "1.10.5")]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ChunkInfo {
     /// Array with a size equal to the dataset’s rank whose elements contain 0-based
@@ -83,7 +83,7 @@ pub struct ChunkInfo {
     pub size: u64,
 }
 
-#[cfg(hdf5_1_10_5)]
+#[cfg(feature = "1.10.5")]
 impl ChunkInfo {
     pub(crate) fn new(ndim: usize) -> Self {
         let mut offset = Vec::with_capacity(ndim);
@@ -133,7 +133,7 @@ impl Dataset {
         self.dcpl().map_or(Layout::default(), |pl| pl.layout())
     }
 
-    #[cfg(hdf5_1_10_5)]
+    #[cfg(feature = "1.10.5")]
     /// Returns the number of chunks if the dataset is chunked.
     pub fn num_chunks(&self) -> Option<usize> {
         if !self.is_chunked() {
@@ -145,7 +145,7 @@ impl Dataset {
         }))
     }
 
-    #[cfg(hdf5_1_10_5)]
+    #[cfg(feature = "1.10.5")]
     /// Retrieves the chunk information for the chunk specified by its index.
     pub fn chunk_info(&self, index: usize) -> Option<ChunkInfo> {
         if !self.is_chunked() {
@@ -596,22 +596,22 @@ impl DatasetBuilderInner {
         self.with_dapl(|pl| pl.chunk_cache(nslots, nbytes, w0));
     }
 
-    #[cfg(hdf5_1_8_17)]
+    #[cfg(feature = "1.8.17")]
     pub fn efile_prefix(&mut self, prefix: &str) {
         self.with_dapl(|pl| pl.efile_prefix(prefix));
     }
 
-    #[cfg(hdf5_1_10_0)]
+    #[cfg(feature = "1.10.0")]
     pub fn virtual_view(&mut self, view: VirtualView) {
         self.with_dapl(|pl| pl.virtual_view(view));
     }
 
-    #[cfg(hdf5_1_10_0)]
+    #[cfg(feature = "1.10.0")]
     pub fn virtual_printf_gap(&mut self, gap_size: usize) {
         self.with_dapl(|pl| pl.virtual_printf_gap(gap_size));
     }
 
-    #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
+    #[cfg(all(feature = "1.10.0", feature = "have-parallel"))]
     pub fn all_coll_metadata_ops(&mut self, is_collective: bool) {
         self.with_dapl(|pl| pl.all_coll_metadata_ops(is_collective));
     }
@@ -773,7 +773,7 @@ impl DatasetBuilderInner {
         self.with_dcpl(|pl| pl.layout(layout));
     }
 
-    #[cfg(hdf5_1_10_0)]
+    #[cfg(feature = "1.10.0")]
     pub fn chunk_opts(&mut self, opts: ChunkOpts) {
         self.with_dcpl(|pl| pl.chunk_opts(opts));
     }
@@ -782,7 +782,7 @@ impl DatasetBuilderInner {
         self.with_dcpl(|pl| pl.external(name, offset, size));
     }
 
-    #[cfg(hdf5_1_10_0)]
+    #[cfg(feature = "1.10.0")]
     pub fn virtual_map<F, D, E1, S1, E2, S2>(
         &mut self, src_filename: F, src_dataset: D, src_extents: E1, src_selection: S1,
         vds_extents: E2, vds_selection: S2,
@@ -907,8 +907,12 @@ macro_rules! impl_builder {
             self.builder.$name($($var),*); self
         }
     };
-    ($plist:ident: $name:ident($($var:ident: $ty:ty),*)) => {
+    (
+        $(#[cfg(feature = $feature:literal)])* $(#[cfg(all($(feature = $features:literal),*))])*
+        $plist:ident: $name:ident($($var:ident: $ty:ty),*)
+    ) => {
         paste::paste! {
+            $(#[cfg(feature = $feature)])* $(#[cfg(all($(feature = $features),*))])*
             #[inline] #[must_use] #[doc =
                 "\u{21b3} [`" $plist "Builder::" $name "`]"
                 "(crate::plist::" $plist "Builder::" $name ")"
@@ -918,8 +922,12 @@ macro_rules! impl_builder {
             }
         }
     };
-    ($plist:ident: $name:ident<$($gid:ident: $gty:path),+>($($var:ident: $ty:ty),*)) => {
+    (
+        $(#[cfg(feature = $feature:literal)])* $(#[cfg(all($(feature = $features:literal),*))])*
+        $plist:ident: $name:ident<$($gid:ident: $gty:path),+>($($var:ident: $ty:ty),*)
+    ) => {
         paste::paste! {
+            $(#[cfg(feature = $feature)])* $(#[cfg(all($(feature = $features),*))])*
             #[inline] #[must_use] #[doc =
                 "\u{21b3} [`" $plist "Builder::" $name "`]"
                 "(crate::plist::" $plist "Builder::" $name ")"
@@ -938,14 +946,13 @@ macro_rules! impl_builder_methods {
         impl_builder!(DatasetAccess: access/dapl);
 
         impl_builder!(DatasetAccess: chunk_cache(nslots: usize, nbytes: usize, w0: f64));
-        #[cfg(hdf5_1_8_17)]
-        impl_builder!(DatasetAccess: efile_prefix(prefix: &str));
-        #[cfg(hdf5_1_10_0)]
-        impl_builder!(DatasetAccess: virtual_view(view: VirtualView));
-        #[cfg(hdf5_1_10_0)]
-        impl_builder!(DatasetAccess: virtual_printf_gap(gap_size: usize));
-        #[cfg(all(hdf5_1_10_0, h5_have_parallel))]
-        impl_builder!(DatasetAccess: all_coll_metadata_ops(is_collective: bool));
+        impl_builder!(#[cfg(feature = "1.8.17")] DatasetAccess: efile_prefix(prefix: &str));
+        impl_builder!(#[cfg(feature = "1.10.0")] DatasetAccess: virtual_view(view: VirtualView));
+        impl_builder!(#[cfg(feature = "1.10.0")] DatasetAccess: virtual_printf_gap(gap_size: usize));
+        impl_builder!(
+            #[cfg(all(feature = "1.10.0", feature = "have-parallel"))]
+            DatasetAccess: all_coll_metadata_ops(is_collective: bool)
+        );
 
         impl_builder!(DatasetCreate: create/dcpl);
 
@@ -956,24 +963,35 @@ macro_rules! impl_builder_methods {
         impl_builder!(DatasetCreate: szip(coding: SZip, px_per_block: u8));
         impl_builder!(DatasetCreate: nbit());
         impl_builder!(DatasetCreate: scale_offset(mode: ScaleOffset));
-        #[cfg(feature = "lzf")]
-        impl_builder!(DatasetCreate: lzf());
-        #[cfg(feature = "blosc")]
+        impl_builder!(#[cfg(feature = "lzf")] DatasetCreate: lzf());
         impl_builder!(
+            #[cfg(feature = "blosc")]
             DatasetCreate: blosc(complib: Blosc, clevel: u8, shuffle: impl Into<BloscShuffle>)
         );
-        #[cfg(feature = "blosc")]
-        impl_builder!(DatasetCreate: blosc_blosclz(clevel: u8, shuffle: impl Into<BloscShuffle>));
-        #[cfg(feature = "blosc")]
-        impl_builder!(DatasetCreate: blosc_lz4(clevel: u8, shuffle: impl Into<BloscShuffle>));
-        #[cfg(feature = "blosc")]
-        impl_builder!(DatasetCreate: blosc_lz4hc(clevel: u8, shuffle: impl Into<BloscShuffle>));
-        #[cfg(feature = "blosc")]
-        impl_builder!(DatasetCreate: blosc_snappy(clevel: u8, shuffle: impl Into<BloscShuffle>));
-        #[cfg(feature = "blosc")]
-        impl_builder!(DatasetCreate: blosc_zlib(clevel: u8, shuffle: impl Into<BloscShuffle>));
-        #[cfg(feature = "blosc")]
-        impl_builder!(DatasetCreate: blosc_zstd(clevel: u8, shuffle: impl Into<BloscShuffle>));
+        impl_builder!(
+            #[cfg(feature = "blosc")]
+            DatasetCreate: blosc_blosclz(clevel: u8, shuffle: impl Into<BloscShuffle>)
+        );
+        impl_builder!(
+            #[cfg(feature = "blosc")]
+            DatasetCreate: blosc_lz4(clevel: u8, shuffle: impl Into<BloscShuffle>)
+        );
+        impl_builder!(
+            #[cfg(feature = "blosc")]
+            DatasetCreate: blosc_lz4hc(clevel: u8, shuffle: impl Into<BloscShuffle>)
+        );
+        impl_builder!(
+            #[cfg(feature = "blosc")]
+            DatasetCreate: blosc_snappy(clevel: u8, shuffle: impl Into<BloscShuffle>)
+        );
+        impl_builder!(
+            #[cfg(feature = "blosc")]
+            DatasetCreate: blosc_zlib(clevel: u8, shuffle: impl Into<BloscShuffle>)
+        );
+        impl_builder!(
+            #[cfg(feature = "blosc")]
+            DatasetCreate: blosc_zstd(clevel: u8, shuffle: impl Into<BloscShuffle>)
+        );
         impl_builder!(DatasetCreate: add_filter(id: H5Z_filter_t, cdata: &[c_uint]));
         impl_builder!(DatasetCreate: clear_filters());
         impl_builder!(DatasetCreate: alloc_time(alloc_time: Option<AllocTime>));
@@ -984,11 +1002,10 @@ macro_rules! impl_builder_methods {
         impl_builder!(*: chunk_min_kb(size: usize));
         impl_builder!(DatasetCreate: no_chunk());
         impl_builder!(DatasetCreate: layout(layout: Layout));
-        #[cfg(hdf5_1_10_0)]
-        impl_builder!(DatasetCreate: chunk_opts(opts: ChunkOpts));
+        impl_builder!(#[cfg(feature = "1.10.0")] DatasetCreate: chunk_opts(opts: ChunkOpts));
         impl_builder!(DatasetCreate: external(name: &str, offset: usize, size: usize));
-        #[cfg(hdf5_1_10_0)]
         impl_builder!(
+            #[cfg(feature = "1.10.0")]
             DatasetCreate: virtual_map<
                 F: AsRef<str>, D: AsRef<str>,
                 E1: Into<Extents>, S1: Into<Selection>, E2: Into<Extents>, S2: Into<Selection>

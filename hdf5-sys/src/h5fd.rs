@@ -67,7 +67,7 @@ pub const H5FD_FEAT_DIRTY_SBLK_LOAD: c_uint = 0x00000040;
 pub const H5FD_FEAT_POSIX_COMPAT_HANDLE: c_uint = 0x00000080;
 pub const H5FD_FEAT_ALLOW_FILE_IMAGE: c_uint = 0x00000400;
 pub const H5FD_FEAT_CAN_USE_FILE_IMAGE_CALLBACKS: c_uint = 0x00000800;
-#[cfg(hdf5_1_10_2)]
+#[cfg(feature = "1.10.2")]
 pub const H5FD_FEAT_DEFAULT_VFD_COMPATIBLE: c_uint = 0x00008000;
 
 /* Flags for H5Pset_fapl_log() */
@@ -262,7 +262,7 @@ pub enum H5FD_file_image_op_t {
     H5FD_FILE_IMAGE_OP_FILE_CLOSE = 7,
 }
 
-#[cfg(hdf5_1_8_9)]
+#[cfg(feature = "1.8.9")]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct H5FD_file_image_callbacks_t {
@@ -302,7 +302,7 @@ pub struct H5FD_file_image_callbacks_t {
     pub udata: *mut c_void,
 }
 
-#[cfg(hdf5_1_8_9)]
+#[cfg(feature = "1.8.9")]
 impl Default for H5FD_file_image_callbacks_t {
     fn default() -> Self {
         unsafe { mem::zeroed() }
@@ -352,23 +352,23 @@ extern "C" {
     pub fn H5FD_multi_init() -> hid_t;
 }
 
-#[cfg(h5_have_parallel)]
+#[cfg(feature = "have-parallel")]
 extern "C" {
     pub fn H5FD_mpio_init() -> hid_t;
 }
 
-#[cfg(h5_have_direct)]
+#[cfg(feature = "have-direct")]
 extern "C" {
     pub fn H5FD_direct_init() -> hid_t;
 }
 
-#[cfg(hdf5_1_10_0)]
+#[cfg(feature = "1.10.0")]
 extern "C" {
     pub fn H5FDlock(file: *mut H5FD_t, rw: hbool_t) -> herr_t;
     pub fn H5FDunlock(file: *mut H5FD_t) -> herr_t;
 }
 
-#[cfg(hdf5_1_10_6)]
+#[cfg(feature = "1.10.6")]
 pub mod hdfs {
     use super::*;
     pub const H5FD__CURR_HDFS_FAPL_T_VERSION: c_uint = 1;
@@ -393,7 +393,7 @@ pub mod hdfs {
     }
 }
 
-#[cfg(hdf5_1_10_6)]
+#[cfg(feature = "1.10.6")]
 pub mod ros3 {
     use super::*;
     pub const H5FD_CURR_ROS3_FAPL_T_VERSION: c_uint = 1;
@@ -417,7 +417,7 @@ pub mod ros3 {
     }
 }
 
-#[cfg(all(hdf5_1_10_7, not(hdf5_1_12_0)))]
+#[cfg(all(feature = "1.10.7", not(feature = "1.12.0")))]
 pub mod splitter {
     use super::*;
 
@@ -447,7 +447,7 @@ pub mod splitter {
     }
 }
 
-#[cfg(hdf5_1_10_2)]
+#[cfg(feature = "1.10.2")]
 extern "C" {
     pub fn H5FDdriver_query(driver_id: hid_t, flags: *mut c_ulong) -> herr_t;
 }

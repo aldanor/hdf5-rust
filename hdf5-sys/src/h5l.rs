@@ -3,7 +3,7 @@ use std::mem;
 
 pub use self::H5L_type_t::*;
 
-#[cfg(hdf5_1_12_0)]
+#[cfg(feature = "1.12.0")]
 use crate::h5o::H5O_token_t;
 use crate::internal_prelude::*;
 
@@ -65,7 +65,7 @@ impl H5L_info1_t__u {
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-#[cfg(hdf5_1_12_0)]
+#[cfg(feature = "1.12.0")]
 pub struct H5L_info2_t {
     pub type_: H5L_type_t,
     pub corder_valid: hbool_t,
@@ -74,7 +74,7 @@ pub struct H5L_info2_t {
     pub u: H5L_info1_t__u,
 }
 
-#[cfg(hdf5_1_12_0)]
+#[cfg(feature = "1.12.0")]
 impl Default for H5L_info2_t {
     fn default() -> Self {
         unsafe { mem::zeroed() }
@@ -83,13 +83,13 @@ impl Default for H5L_info2_t {
 
 #[repr(C)]
 #[derive(Copy, Clone)]
-#[cfg(hdf5_1_12_0)]
+#[cfg(feature = "1.12.0")]
 pub union H5L_info2_t__u {
     token: H5O_token_t,
     val_size: size_t,
 }
 
-#[cfg(hdf5_1_12_0)]
+#[cfg(feature = "1.12.0")]
 impl Default for H5L_info2_t__u {
     fn default() -> Self {
         unsafe { mem::zeroed() }
@@ -176,7 +176,7 @@ pub type H5L_iterate1_t = Option<
         op_data: *mut c_void,
     ) -> herr_t,
 >;
-#[cfg(hdf5_1_12_0)]
+#[cfg(feature = "1.12.0")]
 pub type H5L_iterate2_t = Option<
     extern "C" fn(
         group: hid_t,
@@ -227,12 +227,15 @@ extern "C" {
         n: hsize_t, buf: *mut c_void, size: size_t, lapl_id: hid_t,
     ) -> herr_t;
     pub fn H5Lexists(loc_id: hid_t, name: *const c_char, lapl_id: hid_t) -> htri_t;
-    #[cfg_attr(hdf5_1_12_0, deprecated(note = "deprecated in HDF5 1.12.0, use H5Lget_info2()"))]
-    #[cfg_attr(not(hdf5_1_12_0), link_name = "H5Lget_info")]
+    #[cfg_attr(
+        feature = "1.12.0",
+        deprecated(note = "deprecated in HDF5 1.12.0, use H5Lget_info2()")
+    )]
+    #[cfg_attr(not(feature = "1.12.0"), link_name = "H5Lget_info")]
     pub fn H5Lget_info1(
         loc_id: hid_t, name: *const c_char, linfo: *mut H5L_info1_t, lapl_id: hid_t,
     ) -> herr_t;
-    #[cfg(hdf5_1_12_0)]
+    #[cfg(feature = "1.12.0")]
     pub fn H5Lget_info2(
         loc_id: hid_t, name: *const c_char, linfo: *mut H5L_info2_t, lapl_id: hid_t,
     ) -> herr_t;
@@ -240,12 +243,12 @@ extern "C" {
         hdf5_1_12_0,
         deprecated(note = "deprecated in HDF5 1.12.0, use H5Lget_info_by_idx2()")
     )]
-    #[cfg_attr(not(hdf5_1_12_0), link_name = "H5Lget_info_by_idx")]
+    #[cfg_attr(not(feature = "1.12.0"), link_name = "H5Lget_info_by_idx")]
     pub fn H5Lget_info_by_idx(
         loc_id: hid_t, group_name: *const c_char, idx_type: H5_index_t, order: H5_iter_order_t,
         n: hsize_t, linfo: *mut H5L_info1_t, lapl_id: hid_t,
     ) -> herr_t;
-    #[cfg(hdf5_1_12_0)]
+    #[cfg(feature = "1.12.0")]
     pub fn H5Lget_info_by_idx2(
         loc_id: hid_t, group_name: *const c_char, idx_type: H5_index_t, order: H5_iter_order_t,
         n: hsize_t, linfo: *mut H5L_info2_t, lapl_id: hid_t,
@@ -254,13 +257,16 @@ extern "C" {
         loc_id: hid_t, group_name: *const c_char, idx_type: H5_index_t, order: H5_iter_order_t,
         n: hsize_t, name: *mut c_char, size: size_t, lapl_id: hid_t,
     ) -> ssize_t;
-    #[cfg_attr(hdf5_1_12_0, deprecated(note = "deprecated in HDF5 1.12.0, use H5Literate2()"))]
-    #[cfg_attr(not(hdf5_1_12_0), link_name = "H5Literate")]
+    #[cfg_attr(
+        feature = "1.12.0",
+        deprecated(note = "deprecated in HDF5 1.12.0, use H5Literate2()")
+    )]
+    #[cfg_attr(not(feature = "1.12.0"), link_name = "H5Literate")]
     pub fn H5Literate1(
         grp_id: hid_t, idx_type: H5_index_t, order: H5_iter_order_t, idx: *mut hsize_t,
         op: H5L_iterate1_t, op_data: *mut c_void,
     ) -> herr_t;
-    #[cfg(hdf5_1_12_0)]
+    #[cfg(feature = "1.12.0")]
     pub fn H5Literate2(
         grp_id: hid_t, idx_type: H5_index_t, order: H5_iter_order_t, idx: *mut hsize_t,
         op: H5L_iterate2_t, op_data: *mut c_void,
@@ -269,23 +275,23 @@ extern "C" {
         hdf5_1_12_0,
         deprecated(note = "deprecated in HDF5 1.12.0, use H5Literate_by_name2()")
     )]
-    #[cfg_attr(not(hdf5_1_12_0), link_name = "H5Literate_by_name")]
+    #[cfg_attr(not(feature = "1.12.0"), link_name = "H5Literate_by_name")]
     pub fn H5Literate_by_name1(
         loc_id: hid_t, group_name: *const c_char, idx_type: H5_index_t, order: H5_iter_order_t,
         idx: *mut hsize_t, op: H5L_iterate1_t, op_data: *mut c_void, lapl_id: hid_t,
     ) -> herr_t;
-    #[cfg(hdf5_1_12_0)]
+    #[cfg(feature = "1.12.0")]
     pub fn H5Literate_by_name2(
         loc_id: hid_t, group_name: *const c_char, idx_type: H5_index_t, order: H5_iter_order_t,
         idx: *mut hsize_t, op: H5L_iterate2_t, op_data: *mut c_void, lapl_id: hid_t,
     ) -> herr_t;
-    #[cfg_attr(hdf5_1_12_0, deprecated(note = "deprecated in HDF5 1.12.0, use H5Lvisit2()"))]
-    #[cfg_attr(not(hdf5_1_12_0), link_name = "H5Lvisit")]
+    #[cfg_attr(feature = "1.12.0", deprecated(note = "deprecated in HDF5 1.12.0, use H5Lvisit2()"))]
+    #[cfg_attr(not(feature = "1.12.0"), link_name = "H5Lvisit")]
     pub fn H5Lvisit1(
         grp_id: hid_t, idx_type: H5_index_t, order: H5_iter_order_t, op: H5L_iterate1_t,
         op_data: *mut c_void,
     ) -> herr_t;
-    #[cfg(hdf5_1_12_0)]
+    #[cfg(feature = "1.12.0")]
     pub fn H5Lvisit2(
         grp_id: hid_t, idx_type: H5_index_t, order: H5_iter_order_t, op: H5L_iterate2_t,
         op_data: *mut c_void,
@@ -294,12 +300,12 @@ extern "C" {
         hdf5_1_12_0,
         deprecated(note = "deprecated in HDF5 1.12.0, use H5Lvisit_by_name2()")
     )]
-    #[cfg_attr(not(hdf5_1_12_0), link_name = "H5Lvisit_by_name")]
+    #[cfg_attr(not(feature = "1.12.0"), link_name = "H5Lvisit_by_name")]
     pub fn H5Lvisit_by_name1(
         loc_id: hid_t, group_name: *const c_char, idx_type: H5_index_t, order: H5_iter_order_t,
         op: H5L_iterate1_t, op_data: *mut c_void, lapl_id: hid_t,
     ) -> herr_t;
-    #[cfg(hdf5_1_12_0)]
+    #[cfg(feature = "1.12.0")]
     pub fn H5Lvisit_by_name2(
         loc_id: hid_t, group_name: *const c_char, idx_type: H5_index_t, order: H5_iter_order_t,
         op: H5L_iterate2_t, op_data: *mut c_void, lapl_id: hid_t,
@@ -321,11 +327,11 @@ extern "C" {
     ) -> herr_t;
 }
 
-#[cfg(not(hdf5_1_12_0))]
+#[cfg(not(feature = "1.12.0"))]
 pub use self::{
     H5L_info1_t as H5L_info_t, H5L_iterate1_t as H5L_iterate_t, H5Literate1 as H5Literate,
 };
-#[cfg(hdf5_1_12_0)]
+#[cfg(feature = "1.12.0")]
 pub use self::{
     H5L_info2_t as H5L_info_t, H5L_iterate2_t as H5L_iterate_t, H5Literate2 as H5Literate,
 };
