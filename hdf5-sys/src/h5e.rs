@@ -289,6 +289,12 @@ mod globals {
     extern_static!(H5E_CANTREMOVE, H5E_CANTREMOVE_g);
     extern_static!(H5E_CANTCONVERT, H5E_CANTCONVERT_g);
     extern_static!(H5E_BADSIZE, H5E_BADSIZE_g);
+    #[cfg(feature = "1.12.1")]
+    extern_static!(H5E_CANTLOCKFILE, H5E_CANTLOCKFILE_g);
+    #[cfg(feature = "1.12.1")]
+    extern_static!(H5E_CANTUNLOCKFILE, H5E_CANTUNLOCKFILE_g);
+    #[cfg(feature = "1.12.1")]
+    extern_static!(H5E_LIB, H5E_LIB_g);
 }
 
 #[cfg(all(target_env = "msvc", not(feature = "static")))]
@@ -447,4 +453,10 @@ mod globals {
     extern_static!(H5E_CANTREMOVE, __imp_H5E_CANTREMOVE_g);
     extern_static!(H5E_CANTCONVERT, __imp_H5E_CANTCONVERT_g);
     extern_static!(H5E_BADSIZE, __imp_H5E_BADSIZE_g);
+    #[cfg(feature = "1.12.1")]
+    extern_static!(H5E_CANTLOCKFILE, __imp_H5E_CANTLOCKFILE_g);
+    #[cfg(feature = "1.12.1")]
+    extern_static!(H5E_CANTUNLOCKFILE, __imp_H5E_CANTUNLOCKFILE_g);
+    #[cfg(feature = "1.12.1")]
+    extern_static!(H5E_LIB, __imp_H5E_LIB_g);
 }

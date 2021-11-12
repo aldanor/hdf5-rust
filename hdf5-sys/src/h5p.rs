@@ -771,7 +771,7 @@ extern "C" {
     pub fn H5Pset_dset_no_attrs_hint(dcpl_id: hid_t, minimize: hbool_t) -> herr_t;
 }
 
-#[cfg(all(feature = "1.10.7", not(feature = "1.12.0")))]
+#[cfg(any(all(feature = "1.10.7", not(feature = "1.12.0")), feature = "1.12.1"))]
 extern "C" {
     pub fn H5Pget_file_locking(
         fapl_id: hid_t, use_file_locking: *mut hbool_t, ignore_when_disable: *mut hbool_t,

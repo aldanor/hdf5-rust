@@ -143,3 +143,8 @@ extern "C" {
         nbytes: *mut size_t, off: *mut hsize_t, len: *mut size_t,
     ) -> herr_t;
 }
+
+#[cfg(feature = "1.12.1")]
+extern "C" {
+    pub fn H5Ssel_iter_reset(sel_iter_id: hid_t, space_id: hid_t) -> hid_t;
+}
