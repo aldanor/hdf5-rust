@@ -506,9 +506,7 @@ impl Filter {
                     ptr::null_mut(),
                 ));
                 let cdata = &cd_values[..(cd_nelmts as _)];
-                let flt = Self::from_raw(filter_id, cdata)
-                    .ok()
-                    .unwrap_or_else(|| Self::user(filter_id, cdata));
+                let flt = Self::from_raw(filter_id, cdata)?;
                 filters.push(flt);
             }
             Ok(filters)
