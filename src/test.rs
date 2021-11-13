@@ -4,19 +4,19 @@ use tempfile::tempdir;
 
 use crate::internal_prelude::*;
 
-pub fn with_tmp_dir<F: Fn(PathBuf)>(func: F) {
+pub fn with_tmp_dir<T, F: Fn(PathBuf) -> T>(func: F) -> T {
     let dir = tempdir().unwrap();
     let path = dir.path().to_path_buf();
-    func(path);
+    func(path)
 }
 
-pub fn with_tmp_path<F: Fn(PathBuf)>(func: F) {
+pub fn with_tmp_path<T, F: Fn(PathBuf) -> T>(func: F) -> T {
     with_tmp_dir(|dir| func(dir.join("foo.h5")))
 }
 
-pub fn with_tmp_file<F: Fn(File)>(func: F) {
+pub fn with_tmp_file<T, F: Fn(File) -> T>(func: F) -> T {
     with_tmp_path(|path| {
         let file = File::create(&path).unwrap();
-        func(file);
+        func(file)
     })
 }
