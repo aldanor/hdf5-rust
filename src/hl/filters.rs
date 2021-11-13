@@ -563,3 +563,48 @@ pub(crate) fn validate_filters(filters: &[Filter], type_class: H5T_class_t) -> R
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{validate_filters, Filter, SZip, ScaleOffset};
+    use crate::{plist::DatasetCreate, Result};
+    use hdf5_sys::h5t::H5T_class_t;
+
+    #[test]
+    fn test_filter_pipeline() -> Result<()> {
+        let mut comp_filters = vec![];
+        comp_filters.push(Filter::deflate(3));
+        comp_filters.push(Filter::szip(SZip::Entropy, 8));
+        #[cfg(feature = "lzf")]
+        {
+            comp_filters.push(Filter::lzf());
+        }
+        #[cfg(feature = "blosc")]
+        {
+            use super::BloscShuffle;
+            comp_filters.push(Filter::blosc_blosclz(1, false));
+            comp_filters.push(Filter::blosc_lz4(3, true));
+            comp_filters.push(Filter::blosc_lz4hc(5, BloscShuffle::Bit));
+            comp_filters.push(Filter::blosc_zlib(7, BloscShuffle::None));
+            comp_filters.push(Filter::blosc_zstd(9, BloscShuffle::Byte));
+            comp_filters.push(Filter::blosc_snappy(0, BloscShuffle::Bit));
+        }
+        for c in &comp_filters {
+            let pipeline = vec![
+                Filter::nbit(),
+                Filter::shuffle(),
+                c.clone(),
+                Filter::fletcher32(),
+                Filter::scale_offset(ScaleOffset::Integer(3)),
+                Filter::user(36_666, &[1, 2, 3]),
+            ];
+            validate_filters(&pipeline, H5T_class_t::H5T_INTEGER)?;
+            let plist = DatasetCreate::try_new()?;
+            for flt in &pipeline {
+                flt.apply_to_plist(plist.id())?;
+            }
+            assert_eq!(Filter::extract_pipeline(plist.id())?, pipeline);
+        }
+        Ok(())
+    }
+}
