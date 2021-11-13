@@ -567,6 +567,7 @@ pub(crate) fn validate_filters(filters: &[Filter], type_class: H5T_class_t) -> R
 #[cfg(test)]
 mod tests {
     use super::{validate_filters, Filter, SZip, ScaleOffset};
+    use crate::test::with_tmp_file;
     use crate::{plist::DatasetCreate, Result};
     use hdf5_sys::h5t::H5T_class_t;
 
@@ -599,11 +600,29 @@ mod tests {
                 Filter::user(36_666, &[1, 2, 3]),
             ];
             validate_filters(&pipeline, H5T_class_t::H5T_INTEGER)?;
+
             let plist = DatasetCreate::try_new()?;
             for flt in &pipeline {
                 flt.apply_to_plist(plist.id())?;
             }
             assert_eq!(Filter::extract_pipeline(plist.id())?, pipeline);
+
+            let mut b = DatasetCreate::build();
+            b.set_filters(&pipeline);
+            let plist = b.finish()?;
+            assert_eq!(Filter::extract_pipeline(plist.id())?, pipeline);
+
+            let res = with_tmp_file(|file| {
+                file.new_dataset_builder()
+                    .empty::<i32>()
+                    .shape((10_000, 20))
+                    .with_dcpl(|p| p.set_filters(&pipeline))
+                    .create("foo")
+                    .unwrap();
+                let plist = file.dataset("foo").unwrap().dcpl().unwrap();
+                Filter::extract_pipeline(plist.id()).unwrap()
+            });
+            assert_eq!(res, pipeline);
         }
         Ok(())
     }
