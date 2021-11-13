@@ -87,7 +87,7 @@ extern "C" {
     pub fn H5is_library_threadsafe(is_ts: *mut hbool_t) -> herr_t;
 }
 
-#[cfg(all(feature = "1.10.7", not(feature = "1.12.0")))]
+#[cfg(any(all(feature = "1.10.7", not(feature = "1.12.0")), feature = "1.12.1"))]
 #[repr(C)]
 pub struct H5_alloc_stats_t {
     total_alloc_bytes: c_ulonglong,
@@ -99,7 +99,7 @@ pub struct H5_alloc_stats_t {
     peak_alloc_blocks_count: size_t,
 }
 
-#[cfg(all(feature = "1.10.7", not(feature = "1.12.0")))]
+#[cfg(any(all(feature = "1.10.7", not(feature = "1.12.0")), feature = "1.12.1"))]
 extern "C" {
     pub fn H5get_alloc_stats(stats: *mut H5_alloc_stats_t) -> herr_t;
     pub fn H5get_free_list_sizes(

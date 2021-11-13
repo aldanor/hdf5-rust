@@ -417,7 +417,7 @@ pub mod ros3 {
     }
 }
 
-#[cfg(all(feature = "1.10.7", not(feature = "1.12.0")))]
+#[cfg(any(all(feature = "1.10.7", not(feature = "1.12.0")), feature = "1.12.1"))]
 pub mod splitter {
     use super::*;
 

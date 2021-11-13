@@ -22,3 +22,29 @@ extern "C" {
     ) -> hid_t;
     pub fn H5VLunregister_connector(vol_id: hid_t) -> herr_t;
 }
+
+#[cfg(feature = "1.12.1")]
+#[repr(C)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum H5VL_subclass_t {
+    H5VL_SUBCLS_NONE,
+    H5VL_SUBCLS_INFO,
+    H5VL_SUBCLS_WRAP,
+    H5VL_SUBCLS_ATTR,
+    H5VL_SUBCLS_DATASET,
+    H5VL_SUBCLS_DATATYPE,
+    H5VL_SUBCLS_FILE,
+    H5VL_SUBCLS_GROUP,
+    H5VL_SUBCLS_LINK,
+    H5VL_SUBCLS_OBJECT,
+    H5VL_SUBCLS_REQUEST,
+    H5VL_SUBCLS_BLOB,
+    H5VL_SUBCLS_TOKEN,
+}
+
+#[cfg(feature = "1.12.1")]
+extern "C" {
+    pub fn H5VLquery_optional(
+        obj_id: hid_t, subcls: H5VL_subclass_t, opt_type: c_int, supported: *mut hbool_t,
+    ) -> herr_t;
+}
