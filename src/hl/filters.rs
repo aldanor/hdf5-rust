@@ -281,28 +281,25 @@ impl Filter {
     }
 
     fn parse_deflate(cdata: &[c_uint]) -> Result<Self> {
-        ensure!(cdata.len() == 1, "expected length 1 cdata for deflate filter");
+        ensure!(!cdata.is_empty(), "expected cdata.len() >= 1 for deflate filter");
         ensure!(cdata[0] <= 9, "invalid deflate level: {}", cdata[0]);
         Ok(Self::deflate(cdata[0] as _))
     }
 
-    fn parse_shuffle(cdata: &[c_uint]) -> Result<Self> {
-        ensure!(cdata.is_empty(), "expected length 0 cdata for shuffle filter");
+    fn parse_shuffle(_cdata: &[c_uint]) -> Result<Self> {
         Ok(Self::shuffle())
     }
 
-    fn parse_fletcher32(cdata: &[c_uint]) -> Result<Self> {
-        ensure!(cdata.is_empty(), "expected length 0 cdata for fletcher32 filter");
+    fn parse_fletcher32(_cdata: &[c_uint]) -> Result<Self> {
         Ok(Self::fletcher32())
     }
 
-    fn parse_nbit(cdata: &[c_uint]) -> Result<Self> {
-        ensure!(cdata.is_empty(), "expected length 0 cdata for nbit filter");
+    fn parse_nbit(_cdata: &[c_uint]) -> Result<Self> {
         Ok(Self::nbit())
     }
 
     fn parse_szip(cdata: &[c_uint]) -> Result<Self> {
-        ensure!(cdata.len() == 2, "expected length 2 cdata for szip filter");
+        ensure!(cdata.len() >= 2, "expected cdata.len() >= 2 for szip filter");
         let m = cdata[0];
         ensure!(
             (m & H5_SZIP_EC_OPTION_MASK != 0) != (m & H5_SZIP_NN_OPTION_MASK != 0),
@@ -321,7 +318,7 @@ impl Filter {
     }
 
     fn parse_scaleoffset(cdata: &[c_uint]) -> Result<Self> {
-        ensure!(cdata.len() == 2, "expected length 2 cdata for scaleoffset filter");
+        ensure!(cdata.len() >= 2, "expected cdata.len() >= 2 for scaleoffset filter");
         let scale_type = cdata[0];
         let mode = if scale_type == (H5Z_SO_INT as c_uint) {
             ensure!(
@@ -344,8 +341,7 @@ impl Filter {
     }
 
     #[cfg(feature = "lzf")]
-    fn parse_lzf(cdata: &[c_uint]) -> Result<Self> {
-        ensure!(cdata.is_empty(), "expected length 0 cdata for lzf filter");
+    fn parse_lzf(_cdata: &[c_uint]) -> Result<Self> {
         Ok(Self::lzf())
     }
 
