@@ -129,8 +129,8 @@ pub(crate) fn register_filters() {
     }
 }
 
-/// Returns `true` if gzip filter is available.
-pub fn gzip_available() -> bool {
+/// Returns `true` if deflate filter is available.
+pub fn deflate_available() -> bool {
     h5lock!(H5Zfilter_avail(H5Z_FILTER_DEFLATE) == 1)
 }
 
@@ -561,8 +561,8 @@ pub(crate) fn validate_filters(filters: &[Filter], type_class: H5T_class_t) -> R
 #[cfg(test)]
 mod tests {
     use super::{
-        blosc_available, gzip_available, lzf_available, szip_available, validate_filters, Filter,
-        SZip, ScaleOffset,
+        blosc_available, deflate_available, lzf_available, szip_available, validate_filters,
+        Filter, SZip, ScaleOffset,
     };
     use crate::test::with_tmp_file;
     use crate::{plist::DatasetCreate, Result};
@@ -571,7 +571,7 @@ mod tests {
     #[test]
     fn test_filter_pipeline() -> Result<()> {
         let mut comp_filters = vec![];
-        if gzip_available() {
+        if deflate_available() {
             comp_filters.push(Filter::deflate(3));
         }
         if szip_available() {
