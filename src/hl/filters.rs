@@ -560,7 +560,10 @@ pub(crate) fn validate_filters(filters: &[Filter], type_class: H5T_class_t) -> R
 
 #[cfg(test)]
 mod tests {
-    use super::{validate_filters, Filter, SZip, ScaleOffset};
+    use super::{
+        blosc_available, gzip_available, lzf_available, szip_available, validate_filters, Filter,
+        SZip, ScaleOffset,
+    };
     use crate::test::with_tmp_file;
     use crate::{plist::DatasetCreate, Result};
     use hdf5_sys::h5t::H5T_class_t;
@@ -568,12 +571,18 @@ mod tests {
     #[test]
     fn test_filter_pipeline() -> Result<()> {
         let mut comp_filters = vec![];
-        comp_filters.push(Filter::deflate(3));
-        comp_filters.push(Filter::szip(SZip::Entropy, 8));
+        if gzip_available() {
+            comp_filters.push(Filter::deflate(3));
+        }
+        if szip_available() {
+            comp_filters.push(Filter::szip(SZip::Entropy, 8));
+        }
+        assert_eq!(cfg!(feature = "lzf"), lzf_available());
         #[cfg(feature = "lzf")]
         {
             comp_filters.push(Filter::lzf());
         }
+        assert_eq!(cfg!(feature = "blosc"), blosc_available());
         #[cfg(feature = "blosc")]
         {
             use super::BloscShuffle;
