@@ -56,7 +56,7 @@ pub fn register_blosc() -> Result<(), &'static str> {
 extern "C" fn set_local_blosc(dcpl_id: hid_t, type_id: hid_t, _space_id: hid_t) -> herr_t {
     const MAX_NDIMS: usize = 32;
     let mut flags: c_uint = 0;
-    let mut nelmts: size_t = 0;
+    let mut nelmts: size_t = 8;
     let mut values: Vec<c_uint> = vec![0; 8];
     let ret = unsafe {
         H5Pget_filter_by_id2(
