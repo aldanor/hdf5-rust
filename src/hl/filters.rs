@@ -562,13 +562,14 @@ pub(crate) fn validate_filters(filters: &[Filter], type_class: H5T_class_t) -> R
 
 #[cfg(test)]
 mod tests {
+    use hdf5_sys::h5t::H5T_class_t;
+
     use super::{
         blosc_available, deflate_available, lzf_available, szip_available, validate_filters,
-        Filter, SZip, ScaleOffset,
+        Filter, FilterInfo, SZip, ScaleOffset,
     };
     use crate::test::with_tmp_file;
     use crate::{plist::DatasetCreate, Result};
-    use hdf5_sys::h5t::H5T_class_t;
 
     #[test]
     fn test_filter_pipeline() -> Result<()> {
@@ -596,13 +597,16 @@ mod tests {
             comp_filters.push(Filter::blosc_snappy(0, BloscShuffle::Bit));
         }
         for c in &comp_filters {
+            assert!(c.is_available());
+            assert!(c.encode_enabled());
+            assert!(c.decode_enabled());
+
             let pipeline = vec![
                 Filter::nbit(),
                 Filter::shuffle(),
                 c.clone(),
                 Filter::fletcher32(),
                 Filter::scale_offset(ScaleOffset::Integer(3)),
-                Filter::user(36_666, &[1, 2, 3]),
             ];
             validate_filters(&pipeline, H5T_class_t::H5T_INTEGER)?;
 
@@ -629,6 +633,17 @@ mod tests {
             });
             assert_eq!(res, pipeline);
         }
+
+        let bad_filter = Filter::user(12_345, &[1, 2, 3, 4, 5]);
+        assert_eq!(Filter::get_info(bad_filter.id()), FilterInfo::default());
+        assert!(!bad_filter.is_available());
+        assert!(!bad_filter.encode_enabled());
+        assert!(!bad_filter.decode_enabled());
+        assert_err!(
+            validate_filters(&[bad_filter], H5T_class_t::H5T_INTEGER),
+            "Filter not available"
+        );
+
         Ok(())
     }
 }
