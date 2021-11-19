@@ -7,6 +7,10 @@
 - `Error` now implements `From<Infallible>`, which allows passing convertible
   extents (like tuples of integers) where `impl TryInto<Extents>` is required.
 - Support for HDF5 versions 1.12.1 and 1.10.8
+- `#[derive(H5Type)]` now supports structs / tuple structs with `repr(packed)`.
+- `#[derive(H5Type)]` now supports structs / tuple structs with 
+  `repr(transparent)` (the generated HDF5 type is equivalent to the type of
+  the field and is not compound).
 
 ### Changed
 
