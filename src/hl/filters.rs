@@ -7,12 +7,14 @@ use hdf5_sys::h5p::{
 };
 use hdf5_sys::h5t::H5T_class_t;
 use hdf5_sys::h5z::{
-    H5Z_filter_t, H5Zfilter_avail, H5Zget_filter_info, H5Z_FILTER_CONFIG_DECODE_ENABLED,
+    H5Zfilter_avail, H5Zget_filter_info, H5Z_FILTER_CONFIG_DECODE_ENABLED,
     H5Z_FILTER_CONFIG_ENCODE_ENABLED, H5Z_FILTER_DEFLATE, H5Z_FILTER_FLETCHER32, H5Z_FILTER_NBIT,
     H5Z_FILTER_SCALEOFFSET, H5Z_FILTER_SHUFFLE, H5Z_FILTER_SZIP, H5Z_FLAG_OPTIONAL,
     H5Z_SO_FLOAT_DSCALE, H5Z_SO_INT, H5_SZIP_EC_OPTION_MASK, H5_SZIP_MAX_PIXELS_PER_BLOCK,
     H5_SZIP_NN_OPTION_MASK,
 };
+
+pub use hdf5_sys::h5z::H5Z_filter_t;
 
 use crate::internal_prelude::*;
 
