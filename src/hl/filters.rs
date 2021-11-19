@@ -167,7 +167,7 @@ impl Filter {
     }
 
     pub fn get_info(filter_id: i32) -> FilterInfo {
-        if h5call!(H5Zfilter_avail(filter_id as _)).map(|x| x > 0).unwrap_or_default() {
+        if !h5call!(H5Zfilter_avail(filter_id as _)).map(|x| x > 0).unwrap_or_default() {
             return FilterInfo::default();
         }
         let mut flags: c_uint = 0;

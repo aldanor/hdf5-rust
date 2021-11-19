@@ -16,6 +16,7 @@
 
 - Fixed a bug where all blosc filter settings were discarded / zeroed out.
 - Fixed errors when recovering filter pipelines from stored datasets.
+- Fixed a bug where filter availability was computed incorrectly.
 
 ## 0.8.0
 
