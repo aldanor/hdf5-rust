@@ -166,12 +166,12 @@ impl Filter {
         }
     }
 
-    pub fn get_info(filter_id: H5Z_filter_t) -> FilterInfo {
-        if h5call!(H5Zfilter_avail(filter_id)).map(|x| x > 0).unwrap_or_default() {
+    pub fn get_info(filter_id: i32) -> FilterInfo {
+        if h5call!(H5Zfilter_avail(filter_id as _)).map(|x| x > 0).unwrap_or_default() {
             return FilterInfo::default();
         }
         let mut flags: c_uint = 0;
-        h5lock!(H5Zget_filter_info(filter_id, &mut flags as *mut _));
+        h5lock!(H5Zget_filter_info(filter_id as _, &mut flags as *mut _));
         FilterInfo {
             is_available: true,
             encode_enabled: flags & H5Z_FILTER_CONFIG_ENCODE_ENABLED != 0,
