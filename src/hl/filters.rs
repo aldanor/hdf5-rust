@@ -136,6 +136,13 @@ pub fn deflate_available() -> bool {
     h5lock!(H5Zfilter_avail(H5Z_FILTER_DEFLATE) == 1)
 }
 
+/// Returns `true` if deflate filter is available.
+#[doc(hidden)]
+#[deprecated(note = "deprecated; use deflate_available()")]
+pub fn gzip_available() -> bool {
+    deflate_available()
+}
+
 /// Returns `true` if szip filter is available.
 pub fn szip_available() -> bool {
     h5lock!(H5Zfilter_avail(H5Z_FILTER_SZIP) == 1)

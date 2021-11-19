@@ -10,7 +10,8 @@
 
 ### Changed
 
-- Renamed `filters::gzip_available()` to `deflate_available()`.
+- Renamed `filters::gzip_available()` to `deflate_available()` (the old name is
+  present but marked as deprecated).
 
 ### Fixed
 
