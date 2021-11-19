@@ -44,6 +44,16 @@ struct P1 {
 #[repr(packed)]
 struct P2(i8, u32);
 
+#[derive(H5Type)]
+#[repr(transparent)]
+struct T1 {
+    _x: u64,
+}
+
+#[derive(H5Type)]
+#[repr(transparent)]
+struct T2(i32);
+
 #[test]
 fn test_compound_packed() {
     assert_eq!(
@@ -66,6 +76,12 @@ fn test_compound_packed() {
             size: 5,
         })
     );
+}
+
+#[test]
+fn test_compound_transparent() {
+    assert_eq!(T1::type_descriptor(), u64::type_descriptor(),);
+    assert_eq!(T2::type_descriptor(), i32::type_descriptor(),);
 }
 
 #[test]

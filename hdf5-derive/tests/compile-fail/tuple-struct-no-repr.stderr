@@ -4,4 +4,4 @@ error: proc-macro derive panicked
 4 | #[derive(H5Type)]
   |          ^^^^^^
   |
-  = help: message: H5Type requires #[repr(C)] or #[repr(packed)] for structs
+  = help: message: H5Type requires repr(C), repr(packed) or repr(transparent) for tuple structs
