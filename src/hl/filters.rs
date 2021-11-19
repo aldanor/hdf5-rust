@@ -517,6 +517,8 @@ pub(crate) fn validate_filters(filters: &[Filter], type_class: H5T_class_t) -> R
     let mut comp_filter: Option<&Filter> = None;
 
     for filter in filters {
+        ensure!(filter.is_available(), "Filter not available: {:?}", filter);
+
         let id = filter.id();
 
         if let Some(f) = map.get(&id) {
