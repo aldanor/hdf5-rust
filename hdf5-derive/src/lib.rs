@@ -149,7 +149,8 @@ fn impl_trait(
                 if fields.is_empty() {
                     panic!("Cannot derive H5Type for empty structs");
                 }
-                find_repr(attrs, &["C"]).expect("H5Type requires #[repr(C)] for structs");
+                find_repr(attrs, &["C", "packed"])
+                    .expect("H5Type requires #[repr(C)] or #[repr(packed)] for structs");
                 let types = pluck(fields.iter(), |f| f.ty.clone());
                 let fields = pluck(fields.iter(), |f| f.ident.clone().unwrap());
                 let names = fields.iter().map(|f| f.to_string()).collect::<Vec<_>>();
@@ -166,7 +167,8 @@ fn impl_trait(
                 if fields.is_empty() {
                     panic!("Cannot derive H5Type for empty tuple structs");
                 }
-                find_repr(attrs, &["C"]).expect("H5Type requires #[repr(C)] for structs");
+                find_repr(attrs, &["C", "packed"])
+                    .expect("H5Type requires #[repr(C)] or #[repr(packed)] for structs");
                 let names = (0..fields.len()).map(|f| f.to_string()).collect::<Vec<_>>();
                 let types = pluck(fields.iter(), |f| f.ty.clone());
                 impl_compound(ty, ty_generics, &index, &names, &types)
