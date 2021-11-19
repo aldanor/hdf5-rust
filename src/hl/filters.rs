@@ -121,11 +121,11 @@ pub struct FilterInfo {
 pub(crate) fn register_filters() {
     #[cfg(feature = "lzf")]
     if let Err(e) = lzf::register_lzf() {
-        eprintln!("{}", e);
+        eprintln!("Error while registering LZF filter: {}", e);
     }
     #[cfg(feature = "blosc")]
     if let Err(e) = blosc::register_blosc() {
-        eprintln!("{}", e);
+        eprintln!("Error while registering Blosc filter: {}", e);
     }
 }
 
