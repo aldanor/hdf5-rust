@@ -61,6 +61,12 @@ where
     }
 }
 
+fn impl_transparent(ty: &Type) -> TokenStream {
+    quote! {
+        <#ty as _h5::types::H5Type>::type_descriptor()
+    }
+}
+
 fn impl_enum(names: Vec<Ident>, values: Vec<Expr>, repr: &Ident) -> TokenStream {
     let size = Ident::new(
         &format!(
@@ -149,11 +155,18 @@ fn impl_trait(
                 if fields.is_empty() {
                     panic!("Cannot derive H5Type for empty structs");
                 }
-                find_repr(attrs, &["C"]).expect("H5Type requires #[repr(C)] for structs");
-                let types = pluck(fields.iter(), |f| f.ty.clone());
-                let fields = pluck(fields.iter(), |f| f.ident.clone().unwrap());
-                let names = fields.iter().map(|f| f.to_string()).collect::<Vec<_>>();
-                impl_compound(ty, ty_generics, &fields, &names, &types)
+                if find_repr(attrs, &["C", "packed", "transparent"]).expect(
+                    "H5Type requires repr(C), repr(packed) or repr(transparent) for structs",
+                ) == "transparent"
+                {
+                    assert_eq!(fields.len(), 1);
+                    impl_transparent(&fields[0].ty)
+                } else {
+                    let types = pluck(fields.iter(), |f| f.ty.clone());
+                    let fields = pluck(fields.iter(), |f| f.ident.clone().unwrap());
+                    let names = fields.iter().map(|f| f.to_string()).collect::<Vec<_>>();
+                    impl_compound(ty, ty_generics, &fields, &names, &types)
+                }
             }
             Fields::Unnamed(ref fields) => {
                 let (index, fields): (Vec<Index>, Vec<_>) = fields
@@ -166,10 +179,17 @@ fn impl_trait(
                 if fields.is_empty() {
                     panic!("Cannot derive H5Type for empty tuple structs");
                 }
-                find_repr(attrs, &["C"]).expect("H5Type requires #[repr(C)] for structs");
-                let names = (0..fields.len()).map(|f| f.to_string()).collect::<Vec<_>>();
-                let types = pluck(fields.iter(), |f| f.ty.clone());
-                impl_compound(ty, ty_generics, &index, &names, &types)
+                if find_repr(attrs, &["C", "packed", "transparent"]).expect(
+                    "H5Type requires repr(C), repr(packed) or repr(transparent) for tuple structs",
+                ) == "transparent"
+                {
+                    assert_eq!(fields.len(), 1);
+                    impl_transparent(&fields[0].ty)
+                } else {
+                    let names = (0..fields.len()).map(|f| f.to_string()).collect::<Vec<_>>();
+                    let types = pluck(fields.iter(), |f| f.ty.clone());
+                    impl_compound(ty, ty_generics, &index, &names, &types)
+                }
             }
         },
         Data::Enum(ref data) => {
