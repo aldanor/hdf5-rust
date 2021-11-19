@@ -7,12 +7,14 @@ use hdf5_sys::h5p::{
 };
 use hdf5_sys::h5t::H5T_class_t;
 use hdf5_sys::h5z::{
-    H5Z_filter_t, H5Zfilter_avail, H5Zget_filter_info, H5Z_FILTER_CONFIG_DECODE_ENABLED,
+    H5Zfilter_avail, H5Zget_filter_info, H5Z_FILTER_CONFIG_DECODE_ENABLED,
     H5Z_FILTER_CONFIG_ENCODE_ENABLED, H5Z_FILTER_DEFLATE, H5Z_FILTER_FLETCHER32, H5Z_FILTER_NBIT,
     H5Z_FILTER_SCALEOFFSET, H5Z_FILTER_SHUFFLE, H5Z_FILTER_SZIP, H5Z_FLAG_OPTIONAL,
     H5Z_SO_FLOAT_DSCALE, H5Z_SO_INT, H5_SZIP_EC_OPTION_MASK, H5_SZIP_MAX_PIXELS_PER_BLOCK,
     H5_SZIP_NN_OPTION_MASK,
 };
+
+pub use hdf5_sys::h5z::H5Z_filter_t;
 
 use crate::internal_prelude::*;
 
@@ -121,17 +123,24 @@ pub struct FilterInfo {
 pub(crate) fn register_filters() {
     #[cfg(feature = "lzf")]
     if let Err(e) = lzf::register_lzf() {
-        eprintln!("{}", e);
+        eprintln!("Error while registering LZF filter: {}", e);
     }
     #[cfg(feature = "blosc")]
     if let Err(e) = blosc::register_blosc() {
-        eprintln!("{}", e);
+        eprintln!("Error while registering Blosc filter: {}", e);
     }
 }
 
-/// Returns `true` if gzip filter is available.
-pub fn gzip_available() -> bool {
+/// Returns `true` if deflate filter is available.
+pub fn deflate_available() -> bool {
     h5lock!(H5Zfilter_avail(H5Z_FILTER_DEFLATE) == 1)
+}
+
+/// Returns `true` if deflate filter is available.
+#[doc(hidden)]
+#[deprecated(note = "deprecated; use deflate_available()")]
+pub fn gzip_available() -> bool {
+    deflate_available()
 }
 
 /// Returns `true` if szip filter is available.
@@ -167,7 +176,7 @@ impl Filter {
     }
 
     pub fn get_info(filter_id: H5Z_filter_t) -> FilterInfo {
-        if h5call!(H5Zfilter_avail(filter_id)).map(|x| x > 0).unwrap_or_default() {
+        if !h5call!(H5Zfilter_avail(filter_id)).map(|x| x > 0).unwrap_or_default() {
             return FilterInfo::default();
         }
         let mut flags: c_uint = 0;
@@ -281,28 +290,25 @@ impl Filter {
     }
 
     fn parse_deflate(cdata: &[c_uint]) -> Result<Self> {
-        ensure!(cdata.len() == 1, "expected length 1 cdata for deflate filter");
+        ensure!(!cdata.is_empty(), "expected cdata.len() >= 1 for deflate filter");
         ensure!(cdata[0] <= 9, "invalid deflate level: {}", cdata[0]);
         Ok(Self::deflate(cdata[0] as _))
     }
 
-    fn parse_shuffle(cdata: &[c_uint]) -> Result<Self> {
-        ensure!(cdata.is_empty(), "expected length 0 cdata for shuffle filter");
+    fn parse_shuffle(_cdata: &[c_uint]) -> Result<Self> {
         Ok(Self::shuffle())
     }
 
-    fn parse_fletcher32(cdata: &[c_uint]) -> Result<Self> {
-        ensure!(cdata.is_empty(), "expected length 0 cdata for fletcher32 filter");
+    fn parse_fletcher32(_cdata: &[c_uint]) -> Result<Self> {
         Ok(Self::fletcher32())
     }
 
-    fn parse_nbit(cdata: &[c_uint]) -> Result<Self> {
-        ensure!(cdata.is_empty(), "expected length 0 cdata for nbit filter");
+    fn parse_nbit(_cdata: &[c_uint]) -> Result<Self> {
         Ok(Self::nbit())
     }
 
     fn parse_szip(cdata: &[c_uint]) -> Result<Self> {
-        ensure!(cdata.len() == 2, "expected length 2 cdata for szip filter");
+        ensure!(cdata.len() >= 2, "expected cdata.len() >= 2 for szip filter");
         let m = cdata[0];
         ensure!(
             (m & H5_SZIP_EC_OPTION_MASK != 0) != (m & H5_SZIP_NN_OPTION_MASK != 0),
@@ -321,7 +327,7 @@ impl Filter {
     }
 
     fn parse_scaleoffset(cdata: &[c_uint]) -> Result<Self> {
-        ensure!(cdata.len() == 2, "expected length 2 cdata for scaleoffset filter");
+        ensure!(cdata.len() >= 2, "expected cdata.len() >= 2 for scaleoffset filter");
         let scale_type = cdata[0];
         let mode = if scale_type == (H5Z_SO_INT as c_uint) {
             ensure!(
@@ -344,8 +350,7 @@ impl Filter {
     }
 
     #[cfg(feature = "lzf")]
-    fn parse_lzf(cdata: &[c_uint]) -> Result<Self> {
-        ensure!(cdata.is_empty(), "expected length 0 cdata for lzf filter");
+    fn parse_lzf(_cdata: &[c_uint]) -> Result<Self> {
         Ok(Self::lzf())
     }
 
@@ -506,9 +511,7 @@ impl Filter {
                     ptr::null_mut(),
                 ));
                 let cdata = &cd_values[..(cd_nelmts as _)];
-                let flt = Self::from_raw(filter_id, cdata)
-                    .ok()
-                    .unwrap_or_else(|| Self::user(filter_id, cdata));
+                let flt = Self::from_raw(filter_id, cdata)?;
                 filters.push(flt);
             }
             Ok(filters)
@@ -523,6 +526,8 @@ pub(crate) fn validate_filters(filters: &[Filter], type_class: H5T_class_t) -> R
     let mut comp_filter: Option<&Filter> = None;
 
     for filter in filters {
+        ensure!(filter.is_available(), "Filter not available: {:?}", filter);
+
         let id = filter.id();
 
         if let Some(f) = map.get(&id) {
@@ -562,4 +567,92 @@ pub(crate) fn validate_filters(filters: &[Filter], type_class: H5T_class_t) -> R
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use hdf5_sys::h5t::H5T_class_t;
+
+    use super::{
+        blosc_available, deflate_available, lzf_available, szip_available, validate_filters,
+        Filter, FilterInfo, SZip, ScaleOffset,
+    };
+    use crate::test::with_tmp_file;
+    use crate::{plist::DatasetCreate, Result};
+
+    #[test]
+    fn test_filter_pipeline() -> Result<()> {
+        let mut comp_filters = vec![];
+        if deflate_available() {
+            comp_filters.push(Filter::deflate(3));
+        }
+        if szip_available() {
+            comp_filters.push(Filter::szip(SZip::Entropy, 8));
+        }
+        assert_eq!(cfg!(feature = "lzf"), lzf_available());
+        #[cfg(feature = "lzf")]
+        {
+            comp_filters.push(Filter::lzf());
+        }
+        assert_eq!(cfg!(feature = "blosc"), blosc_available());
+        #[cfg(feature = "blosc")]
+        {
+            use super::BloscShuffle;
+            comp_filters.push(Filter::blosc_blosclz(1, false));
+            comp_filters.push(Filter::blosc_lz4(3, true));
+            comp_filters.push(Filter::blosc_lz4hc(5, BloscShuffle::Bit));
+            comp_filters.push(Filter::blosc_zlib(7, BloscShuffle::None));
+            comp_filters.push(Filter::blosc_zstd(9, BloscShuffle::Byte));
+            comp_filters.push(Filter::blosc_snappy(0, BloscShuffle::Bit));
+        }
+        for c in &comp_filters {
+            assert!(c.is_available());
+            assert!(c.encode_enabled());
+            assert!(c.decode_enabled());
+
+            let pipeline = vec![
+                Filter::nbit(),
+                Filter::shuffle(),
+                c.clone(),
+                Filter::fletcher32(),
+                Filter::scale_offset(ScaleOffset::Integer(3)),
+            ];
+            validate_filters(&pipeline, H5T_class_t::H5T_INTEGER)?;
+
+            let plist = DatasetCreate::try_new()?;
+            for flt in &pipeline {
+                flt.apply_to_plist(plist.id())?;
+            }
+            assert_eq!(Filter::extract_pipeline(plist.id())?, pipeline);
+
+            let mut b = DatasetCreate::build();
+            b.set_filters(&pipeline);
+            let plist = b.finish()?;
+            assert_eq!(Filter::extract_pipeline(plist.id())?, pipeline);
+
+            let res = with_tmp_file(|file| {
+                file.new_dataset_builder()
+                    .empty::<i32>()
+                    .shape((10_000, 20))
+                    .with_dcpl(|p| p.set_filters(&pipeline))
+                    .create("foo")
+                    .unwrap();
+                let plist = file.dataset("foo").unwrap().dcpl().unwrap();
+                Filter::extract_pipeline(plist.id()).unwrap()
+            });
+            assert_eq!(res, pipeline);
+        }
+
+        let bad_filter = Filter::user(12_345, &[1, 2, 3, 4, 5]);
+        assert_eq!(Filter::get_info(bad_filter.id()), FilterInfo::default());
+        assert!(!bad_filter.is_available());
+        assert!(!bad_filter.encode_enabled());
+        assert!(!bad_filter.decode_enabled());
+        assert_err!(
+            validate_filters(&[bad_filter], H5T_class_t::H5T_INTEGER),
+            "Filter not available"
+        );
+
+        Ok(())
+    }
 }

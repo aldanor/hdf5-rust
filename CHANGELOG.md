@@ -6,7 +6,18 @@
 
 - `Error` now implements `From<Infallible>`, which allows passing convertible
   extents (like tuples of integers) where `impl TryInto<Extents>` is required.
-- Support for HDF5 versions 1.12.1 and 1.10.8.
+- Support for HDF5 versions 1.12.1 and 1.10.8
+
+### Changed
+
+- Renamed `filters::gzip_available()` to `deflate_available()` (the old name is
+  present but marked as deprecated).
+
+### Fixed
+
+- Fixed a bug where all blosc filter settings were discarded / zeroed out.
+- Fixed errors when recovering filter pipelines from stored datasets.
+- Fixed a bug where filter availability was computed incorrectly.
 
 ## 0.8.0
 
