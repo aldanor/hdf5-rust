@@ -1,6 +1,6 @@
 [package]
 name = "hdf5-types"
-version = "0.8.0"  # !V
+version = "0.8.1"  # !V
 authors = ["Ivan Smirnov <i.s.smirnov@gmail.com>"]
 keywords = ["hdf5"]
 license = "MIT OR Apache-2.0"
@@ -16,7 +16,7 @@ h5-alloc = []
 [dependencies]
 ascii = "1.0"
 libc = "0.2"
-hdf5-sys = { version = "0.8.0", path = "../hdf5-sys" }  # !V
+hdf5-sys = { version = "0.8.1", path = "../hdf5-sys" }  # !V
 cfg-if = "1.0.0"
 
 [dev-dependencies]
