@@ -1,12 +1,14 @@
 # Changelog
 
-## Unreleased
+## 0.8.1
+
+Release date: Nov 21, 2021.
 
 ### Added
 
 - `Error` now implements `From<Infallible>`, which allows passing convertible
   extents (like tuples of integers) where `impl TryInto<Extents>` is required.
-- Support for HDF5 versions 1.12.1 and 1.10.8
+- Support for HDF5 versions 1.12.1 and 1.10.8.
 - `#[derive(H5Type)]` now supports structs / tuple structs with `repr(packed)`.
 - `#[derive(H5Type)]` now supports structs / tuple structs with 
   `repr(transparent)` (the generated HDF5 type is equivalent to the type of
@@ -16,6 +18,12 @@
 
 - Renamed `filters::gzip_available()` to `deflate_available()` (the old name is
   present but marked as deprecated).
+- Code dependent on HDF5 version in `hdf5` and `hdf5-sys` crates now uses features
+  instead of cfg options: `cfg(feature = "1.10.1")` instead of `cfg(hdf5_1_10_1)`.
+  The main initial reason for that is for HDF5 versions to show up in the official
+  documentation on docs.rs.
+- Similar to the above, there's `have-direct`, `have-parallel` and `have-threadsafe`
+  features that reflect the build configuration of the underlying HDF5 library.
 
 ### Fixed
 
