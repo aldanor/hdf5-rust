@@ -535,7 +535,7 @@ extern "C" {
     pub fn H5Pset_fapl_direct(
         fapl_id: hid_t, alignment: size_t, block_size: size_t, cbuf_size: size_t,
     ) -> herr_t;
-    #[cfg(feature = "have-parallel")]
+    #[cfg(feature = "have-direct")]
     pub fn H5Pget_fapl_direct(
         fapl_id: hid_t, alignment: *mut size_t, block_size: *mut size_t, cbuf_size: *mut size_t,
     ) -> herr_t;

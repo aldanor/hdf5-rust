@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Fixed a bug where `H5Pget_fapl_direct` was only included when HDF5 was compiled
+  with feature `have-parallel` instead of `have-direct`.
+
 ## 0.8.1
 
 Release date: Nov 21, 2021.

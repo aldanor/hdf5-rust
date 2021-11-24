@@ -908,11 +908,11 @@ macro_rules! impl_builder {
         }
     };
     (
-        $(#[cfg(feature = $feature:literal)])* $(#[cfg(all($(feature = $features:literal),*))])*
+        $(#[$meta:meta])*
         $plist:ident: $name:ident($($var:ident: $ty:ty),*)
     ) => {
         paste::paste! {
-            $(#[cfg(feature = $feature)])* $(#[cfg(all($(feature = $features),*))])*
+            $(#[$meta])*
             #[inline] #[must_use] #[doc =
                 "\u{21b3} [`" $plist "Builder::" $name "`]"
                 "(crate::plist::" $plist "Builder::" $name ")"
@@ -923,11 +923,11 @@ macro_rules! impl_builder {
         }
     };
     (
-        $(#[cfg(feature = $feature:literal)])* $(#[cfg(all($(feature = $features:literal),*))])*
+        $(#[$meta:meta])*
         $plist:ident: $name:ident<$($gid:ident: $gty:path),+>($($var:ident: $ty:ty),*)
     ) => {
         paste::paste! {
-            $(#[cfg(feature = $feature)])* $(#[cfg(all($(feature = $features),*))])*
+            $(#[$meta])*
             #[inline] #[must_use] #[doc =
                 "\u{21b3} [`" $plist "Builder::" $name "`]"
                 "(crate::plist::" $plist "Builder::" $name ")"
