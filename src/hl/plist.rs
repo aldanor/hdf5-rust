@@ -36,7 +36,7 @@ impl ObjectClass for PropertyList {
     }
 
     fn short_repr(&self) -> Option<String> {
-        Some(self.class().ok().map_or_else(|| "unknown class".into(), |c| c.into()))
+        Some(self.class().ok().map_or_else(|| "unknown class".into(), Into::into))
     }
 }
 

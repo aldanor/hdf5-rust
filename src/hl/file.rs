@@ -139,10 +139,10 @@ impl File {
             let count = h5call!(H5Fget_obj_count(self.id(), types)).unwrap_or(0) as size_t;
             if count > 0 {
                 let mut ids: Vec<hid_t> = Vec::with_capacity(count as _);
-                unsafe {
-                    ids.set_len(count as _);
-                }
                 if h5call!(H5Fget_obj_ids(self.id(), types, count, ids.as_mut_ptr())).is_ok() {
+                    unsafe {
+                        ids.set_len(count as _);
+                    }
                     ids.retain(|id| *id != self.id());
                     return ids;
                 }
@@ -221,7 +221,7 @@ impl FileBuilder {
     /// Opens a file in a given mode.
     pub fn open_as<P: AsRef<Path>>(&self, filename: P, mode: OpenMode) -> Result<File> {
         let filename = filename.as_ref();
-        if let OpenMode::Append = mode {
+        if mode == OpenMode::Append {
             if let Ok(file) = self.open_as(filename, OpenMode::ReadWrite) {
                 return Ok(file);
             }

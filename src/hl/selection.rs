@@ -408,7 +408,7 @@ impl TryFrom<ndarray::Slice> for SliceOrIndex {
         let ndarray::Slice { start, end, step } = slice;
         let start = start.try_into()?;
         let step = step.try_into()?;
-        let end = end.map(|end| end.try_into());
+        let end = end.map(TryInto::try_into);
         match end {
             Some(Ok(end)) => Ok(Self::SliceTo { start, end, step, block: 1 }),
             None => Ok(Self::Unlimited { start, step, block: 1 }),
@@ -946,7 +946,7 @@ impl From<Hyperslab> for Selection {
 impl TryFrom<ndarray::Slice> for Selection {
     type Error = Error;
     fn try_from(slice: ndarray::Slice) -> Result<Self, Self::Error> {
-        Hyperslab::try_from(slice).map(|x| x.into())
+        Hyperslab::try_from(slice).map(Into::into)
     }
 }
 

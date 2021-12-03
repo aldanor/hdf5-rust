@@ -753,7 +753,7 @@ impl DatasetCreate {
 
     #[doc(hidden)]
     pub fn get_chunk(&self) -> Result<Option<Vec<usize>>> {
-        if let Layout::Chunked = self.get_layout()? {
+        if self.get_layout()? == Layout::Chunked {
             let ndims = h5try!(H5Pget_chunk(self.id(), 0, ptr::null_mut()));
             let mut buf: Vec<hsize_t> = vec![0; ndims as usize];
             h5try!(H5Pget_chunk(self.id(), ndims, buf.as_mut_ptr()));
@@ -781,7 +781,7 @@ impl DatasetCreate {
     #[cfg(feature = "1.10.0")]
     #[doc(hidden)]
     pub fn get_chunk_opts(&self) -> Result<Option<ChunkOpts>> {
-        if let Layout::Chunked = self.get_layout()? {
+        if self.get_layout()? == Layout::Chunked {
             let opts = h5get!(H5Pget_chunk_opts(self.id()): c_uint)?;
             Ok(Some(ChunkOpts::from_bits_truncate(opts as _)))
         } else {

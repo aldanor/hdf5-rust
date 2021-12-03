@@ -544,17 +544,11 @@ impl Default for ChunkCache {
 
 impl Eq for ChunkCache {}
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct PageBufferSize {
     pub buf_size: usize,
     pub min_meta_perc: u32,
     pub min_raw_perc: u32,
-}
-
-impl Default for PageBufferSize {
-    fn default() -> Self {
-        Self { buf_size: 0, min_meta_perc: 0, min_raw_perc: 0 }
-    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -1639,7 +1633,7 @@ impl FileAccess {
 
     #[doc(hidden)]
     pub fn get_fclose_degree(&self) -> Result<FileCloseDegree> {
-        h5get!(H5Pget_fclose_degree(self.id()): H5F_close_degree_t).map(|x| x.into())
+        h5get!(H5Pget_fclose_degree(self.id()): H5F_close_degree_t).map(Into::into)
     }
 
     pub fn fclose_degree(&self) -> FileCloseDegree {

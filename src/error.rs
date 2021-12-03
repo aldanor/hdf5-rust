@@ -264,7 +264,7 @@ impl StdError for Error {}
 
 impl From<ShapeError> for Error {
     fn from(err: ShapeError) -> Self {
-        format!("shape error: {}", err.to_string()).into()
+        format!("shape error: {}", err).into()
     }
 }
 
