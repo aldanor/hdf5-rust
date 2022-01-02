@@ -130,6 +130,11 @@ extern "C" {
     pub fn H5Eget_major(maj: H5E_major_t) -> *mut c_char;
     #[deprecated(note = "deprecated in HDF5 1.8.0")]
     pub fn H5Eget_minor(min: H5E_minor_t) -> *mut c_char;
+
+    #[cfg(feature = "1.13.0")]
+    pub fn H5Eappend_stack(
+        dst_stack_id: hid_t, src_stack_id: hid_t, close_source_stack: hbool_t,
+    ) -> herr_t;
 }
 
 pub use self::globals::*;
@@ -295,6 +300,22 @@ mod globals {
     extern_static!(H5E_CANTUNLOCKFILE, H5E_CANTUNLOCKFILE_g);
     #[cfg(feature = "1.12.1")]
     extern_static!(H5E_LIB, H5E_LIB_g);
+    #[cfg(feature = "1.13.0")]
+    extern_static!(H5E_BADID, H5E_BADID_g);
+    #[cfg(feature = "1.13.0")]
+    extern_static!(H5E_CANTCANCEL, H5E_CANTCANCEL_g);
+    #[cfg(feature = "1.13.0")]
+    extern_static!(H5E_CANTFIND, H5E_CANTFIND_g);
+    #[cfg(feature = "1.13.0")]
+    extern_static!(H5E_CANTPUT, H5E_CANTPUT_g);
+    #[cfg(feature = "1.13.0")]
+    extern_static!(H5E_CANTWAIT, H5E_CANTWAIT_g);
+    #[cfg(feature = "1.13.0")]
+    extern_static!(H5E_EVENTSET, H5E_EVENTSET_g);
+    #[cfg(feature = "1.13.0")]
+    extern_static!(H5E_ID, H5E_ID_g);
+    #[cfg(feature = "1.13.0")]
+    extern_static!(H5E_UNMOUNT, H5E_UNMOUNT_g);
 }
 
 #[cfg(all(target_env = "msvc", not(feature = "static")))]
@@ -459,4 +480,20 @@ mod globals {
     extern_static!(H5E_CANTUNLOCKFILE, __imp_H5E_CANTUNLOCKFILE_g);
     #[cfg(feature = "1.12.1")]
     extern_static!(H5E_LIB, __imp_H5E_LIB_g);
+    #[cfg(feature = "1.13.0")]
+    extern_static!(H5E_BADID, __imp_H5E_BADID_g);
+    #[cfg(feature = "1.13.0")]
+    extern_static!(H5E_CANTCANCEL, __imp_H5E_CANTCANCEL_g);
+    #[cfg(feature = "1.13.0")]
+    extern_static!(H5E_CANTFIND, __imp_H5E_CANTFIND_g);
+    #[cfg(feature = "1.13.0")]
+    extern_static!(H5E_CANTPUT, __imp_H5E_CANTPUT_g);
+    #[cfg(feature = "1.13.0")]
+    extern_static!(H5E_CANTWAIT, __imp_H5E_CANTWAIT_g);
+    #[cfg(feature = "1.13.0")]
+    extern_static!(H5E_EVENTSET, __imp_H5E_EVENTSET_g);
+    #[cfg(feature = "1.13.0")]
+    extern_static!(H5E_ID, __imp_H5E_ID_g);
+    #[cfg(feature = "1.13.0")]
+    extern_static!(H5E_UNMOUNT, __imp_H5E_UNMOUNT_g);
 }
