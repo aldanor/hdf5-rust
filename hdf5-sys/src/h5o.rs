@@ -475,3 +475,37 @@ mod globals {
     use super::H5O_token_t as id_t;
     extern_static!(H5O_TOKEN_UNDEF, __imp_H5O_TOKEN_UNDEF_g);
 }
+
+#[cfg(feature = "1.13.0")]
+extern "C" {
+    pub fn H5Oclose_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, object_id: hid_t,
+        es_id: hid_t,
+    ) -> herr_t;
+    pub fn H5Ocopy_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, src_loc_id: hid_t,
+        src_name: *const c_char, dst_loc_id: hid_t, dst_name: *const c_char, ocpypl_id: hid_t,
+        lcpl_id: hid_t, es_id: hid_t,
+    ) -> herr_t;
+    pub fn H5Oflush_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, obj_id: hid_t,
+        es_id: hid_t,
+    ) -> herr_t;
+    pub fn H5Oget_info_by_name_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, loc_id: hid_t,
+        name: *const c_char, oinfo: *mut H5O_info2_t, fields: c_uint, lapl_id: hid_t, es_id: hid_t,
+    ) -> herr_t;
+    pub fn H5Oopen_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, loc_id: hid_t,
+        name: *const c_char, lapl_id: hid_t, es_id: hid_t,
+    ) -> hid_t;
+    pub fn H5Oopen_by_idx_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, loc_id: hid_t,
+        group_name: *const c_char, idx_type: H5_index_t, order: H5_iter_order_t, n: c_ulong,
+        lapl_id: hid_t, es_id: hid_t,
+    ) -> hid_t;
+    pub fn H5Orefresh_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, oid: hid_t,
+        es_id: hid_t,
+    ) -> herr_t;
+}
