@@ -119,3 +119,19 @@ extern "C" {
     pub fn H5Ropen_object(ref_ptr: *const H5R_ref_t, rapl_id: hid_t, oapl_id: hid_t) -> hid_t;
     pub fn H5Ropen_region(ref_ptr: *const H5R_ref_t, rapl_id: hid_t, oapl_id: hid_t) -> hid_t;
 }
+
+#[cfg(feature = "1.13.0")]
+extern "C" {
+    pub fn H5Ropen_attr_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint,
+        ref_ptr: *mut H5R_ref_t, rapl_id: hid_t, aapl_id: hid_t, es_id: hid_t,
+    ) -> hid_t;
+    pub fn H5Ropen_object_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint,
+        ref_ptr: *mut H5R_ref_t, rapl_id: hid_t, oapl_id: hid_t, es_id: hid_t,
+    ) -> hid_t;
+    pub fn H5Ropen_region_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint,
+        ref_ptr: *mut H5R_ref_t, rapl_id: hid_t, oapl_id: hid_t, es_id: hid_t,
+    ) -> hid_t;
+}
