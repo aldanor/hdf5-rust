@@ -29,6 +29,8 @@ pub enum H5I_type_t {
     H5I_ERROR_STACK,
     #[cfg(feature = "1.12.0")]
     H5I_SPACE_SEL_ITER,
+    #[cfg(feature = "1.13.0")]
+    H5I_EVENTSET,
     H5I_NTYPES,
 }
 

@@ -211,6 +211,16 @@ pub struct H5FD_class_t {
     >,
     pub unlock:
         Option<extern "C" fn(file: *mut H5FD_t, oid: *mut c_uchar, last: hbool_t) -> herr_t>,
+    pub del: Option<extern "C" fn(name: *const c_char, fapl: hid_t) -> herr_t>,
+    pub ctl: Option<
+        extern "C" fn(
+            file: *mut H5FD_t,
+            op_code: u64,
+            flags: u64,
+            input: *const c_char,
+            output: *mut *mut c_void,
+        ) -> herr_t,
+    >,
     pub fl_map: [H5FD_mem_t; 7usize],
 }
 

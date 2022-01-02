@@ -126,7 +126,11 @@ pub enum H5F_libver_t {
     H5F_LIBVER_EARLIEST = 0,
     H5F_LIBVER_V18 = 1,
     H5F_LIBVER_V110 = 2,
-    H5F_LIBVER_NBOUNDS = 3,
+    #[cfg(feature = "1.12.0")]
+    H5F_LIBVER_V112 = 3,
+    #[cfg(feature = "1.13.0")]
+    H5F_LIBVER_V114 = 4,
+    H5F_LIBVER_NBOUNDS,
 }
 
 #[cfg(feature = "1.10.2")]
