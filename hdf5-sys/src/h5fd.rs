@@ -119,9 +119,13 @@ pub const H5FD_LOG_ALL: c_ulonglong = H5FD_LOG_FREE
     | H5FD_LOG_LOC_IO
     | H5FD_LOG_META_IO;
 
+pub type H5FD_class_value_t = c_int;
+
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct H5FD_class_t {
+    #[cfg(feature = "1.13.0")]
+    pub value: H5FD_class_value_t,
     pub name: *const c_char,
     pub maxaddr: haddr_t,
     pub fc_degree: H5F_close_degree_t,
@@ -450,4 +454,18 @@ pub mod splitter {
 #[cfg(feature = "1.10.2")]
 extern "C" {
     pub fn H5FDdriver_query(driver_id: hid_t, flags: *mut c_ulong) -> herr_t;
+}
+
+#[cfg(feature = "1.13.0")]
+type H5FD_perform_init_func_t = Option<extern "C" fn() -> hid_t>;
+
+#[cfg(feature = "1.13.0")]
+extern "C" {
+    pub fn H5FDctl(
+        file: *mut H5FD_t, op_cod: u64, flags: u64, input: *const c_void, output: *mut *mut c_void,
+    ) -> herr_t;
+    pub fn H5FDdelete(name: *const c_char, fapl_id: hid_t) -> herr_t;
+    pub fn H5FDis_driver_registered_by_name(driver_name: *const c_char) -> htri_t;
+    pub fn H5FDis_driver_registered_by_value(driver_value: H5FD_class_value_t) -> htri_t;
+    pub fn H5FDperform_init(p: H5FD_perform_init_func_t) -> hid_t;
 }
