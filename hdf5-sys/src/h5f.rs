@@ -175,7 +175,10 @@ extern "C" {
     pub fn H5Fget_freespace(file_id: hid_t) -> hssize_t;
     pub fn H5Fget_filesize(file_id: hid_t, size: *mut hsize_t) -> herr_t;
     pub fn H5Fget_mdc_config(file_id: hid_t, config_ptr: *mut H5AC_cache_config_t) -> herr_t;
+    #[cfg(not(feature = "1.13.0"))]
     pub fn H5Fset_mdc_config(file_id: hid_t, config_ptr: *mut H5AC_cache_config_t) -> herr_t;
+    #[cfg(feature = "1.13.0")]
+    pub fn H5Fset_mdc_config(file_id: hid_t, config_ptr: *const H5AC_cache_config_t) -> herr_t;
     pub fn H5Fget_mdc_hit_rate(file_id: hid_t, hit_rate_ptr: *mut c_double) -> herr_t;
     pub fn H5Fget_mdc_size(
         file_id: hid_t, max_size_ptr: *mut size_t, min_clean_size_ptr: *mut size_t,

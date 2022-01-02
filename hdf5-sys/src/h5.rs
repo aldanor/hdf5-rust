@@ -8,8 +8,17 @@ use crate::internal_prelude::*;
 
 pub type herr_t = c_int;
 pub type htri_t = c_int;
+
+#[cfg(not(feature = "1.13.0"))]
 pub type hsize_t = c_ulonglong;
+#[cfg(feature = "1.13.0")]
+pub type hsize_t = c_ulong;
+
+#[cfg(not(feature = "1.13.0"))]
 pub type hssize_t = c_longlong;
+#[cfg(feature = "1.13.0")]
+pub type hssize_t = c_long;
+
 pub type haddr_t = uint64_t;
 
 #[cfg(all(feature = "1.10.0", have_stdbool_h))]

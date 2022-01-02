@@ -8,6 +8,7 @@ use crate::internal_prelude::*;
 
 use crate::h5f::{H5F_close_degree_t, H5F_mem_t};
 
+#[cfg(not(feature = "1.13.0"))]
 pub const H5_HAVE_VFL: c_uint = 1;
 
 pub const H5FD_VFD_DEFAULT: c_uint = 0;
@@ -129,6 +130,8 @@ pub struct H5FD_class_t {
     pub name: *const c_char,
     pub maxaddr: haddr_t,
     pub fc_degree: H5F_close_degree_t,
+    #[cfg(feature = "1.13.0")]
+    pub terminate: Option<extern "C" fn() -> herr_t>,
     pub sb_size: Option<extern "C" fn(file: *mut H5FD_t) -> hsize_t>,
     pub sb_encode:
         Option<extern "C" fn(file: *mut H5FD_t, name: *mut c_char, p: *mut c_uchar) -> herr_t>,
