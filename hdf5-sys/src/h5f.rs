@@ -371,3 +371,27 @@ extern "C" {
     pub fn H5Fget_dset_no_attrs_hint(file_id: hid_t, minimize: *mut hbool_t) -> herr_t;
     pub fn H5Fset_dset_no_attrs_hint(file_id: hid_t, minimize: hbool_t) -> herr_t;
 }
+
+#[cfg(feature = "1.13.0")]
+extern "C" {
+    pub fn H5Fclose_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, file_id: hid_t,
+        es_id: hid_t,
+    ) -> herr_t;
+    pub fn H5Fcreate_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint,
+        filename: *const c_char, flags: c_uint, fcpl_id: hid_t, fapl_id: hid_t, es_id: hid_t,
+    ) -> hid_t;
+    pub fn H5Fflush_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, object_id: hid_t,
+        scope: H5F_scope_t, es_id: hid_t,
+    ) -> herr_t;
+    pub fn H5Fopen_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint,
+        filename: *const c_char, flags: c_uint, access_plit: hid_t, es_id: hid_t,
+    ) -> hid_t;
+    pub fn H5reopen_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, file_id: hid_t,
+        es_id: hid_t,
+    ) -> hid_t;
+}
