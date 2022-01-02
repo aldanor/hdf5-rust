@@ -550,3 +550,20 @@ extern "C" {
 extern "C" {
     pub fn H5Treclaim(type_id: hid_t, space_id: hid_t, dxpl_id: hid_t, buf: *mut c_void) -> herr_t;
 }
+
+#[cfg(feature = "1.13.0")]
+extern "C" {
+    pub fn H5Tclose_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, type_id: hid_t,
+        es_id: hid_t,
+    ) -> herr_t;
+    pub fn H5Tcommit_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, loc_id: hid_t,
+        name: *const c_char, type_id: hid_t, lcpl_id: hid_t, tcpl_id: hid_t, tapl_id: hid_t,
+        es_id: hid_t,
+    ) -> herr_t;
+    pub fn H5Topen_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, loc_id: hid_t,
+        name: *const c_char, tapl_id: hid_t, es_id: hid_t,
+    ) -> hid_t;
+}
