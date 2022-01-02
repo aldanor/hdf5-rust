@@ -372,7 +372,7 @@ extern "C" {
     pub fn H5FDunlock(file: *mut H5FD_t) -> herr_t;
 }
 
-#[cfg(feature = "1.10.6")]
+#[cfg(all(feature = "1.10.6", not(feature = "1.13.0")))]
 pub mod hdfs {
     use super::*;
     pub const H5FD__CURR_HDFS_FAPL_T_VERSION: c_uint = 1;

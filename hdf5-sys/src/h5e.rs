@@ -166,6 +166,7 @@ mod globals {
     extern_static!(H5E_RS, H5E_RS_g);
     extern_static!(H5E_HEAP, H5E_HEAP_g);
     extern_static!(H5E_OHDR, H5E_OHDR_g);
+    #[cfg(not(feature = "1.13.0"))]
     extern_static!(H5E_ATOM, H5E_ATOM_g);
     extern_static!(H5E_ATTR, H5E_ATTR_g);
     extern_static!(H5E_NONE_MAJOR, H5E_NONE_MAJOR_g);
@@ -241,6 +242,7 @@ mod globals {
     extern_static!(H5E_BADFILE, H5E_BADFILE_g);
     extern_static!(H5E_TRUNCATED, H5E_TRUNCATED_g);
     extern_static!(H5E_MOUNT, H5E_MOUNT_g);
+    #[cfg(not(feature = "1.13.0"))]
     extern_static!(H5E_BADATOM, H5E_BADATOM_g);
     extern_static!(H5E_BADGROUP, H5E_BADGROUP_g);
     extern_static!(H5E_CANTREGISTER, H5E_CANTREGISTER_g);
@@ -346,6 +348,7 @@ mod globals {
     extern_static!(H5E_RS, __imp_H5E_RS_g);
     extern_static!(H5E_HEAP, __imp_H5E_HEAP_g);
     extern_static!(H5E_OHDR, __imp_H5E_OHDR_g);
+    #[cfg(not(feature = "1.13.0"))]
     extern_static!(H5E_ATOM, __imp_H5E_ATOM_g);
     extern_static!(H5E_ATTR, __imp_H5E_ATTR_g);
     extern_static!(H5E_NONE_MAJOR, __imp_H5E_NONE_MAJOR_g);
@@ -421,6 +424,7 @@ mod globals {
     extern_static!(H5E_BADFILE, __imp_H5E_BADFILE_g);
     extern_static!(H5E_TRUNCATED, __imp_H5E_TRUNCATED_g);
     extern_static!(H5E_MOUNT, __imp_H5E_MOUNT_g);
+    #[cfg(not(feature = "1.13.0"))]
     extern_static!(H5E_BADATOM, __imp_H5E_BADATOM_g);
     extern_static!(H5E_BADGROUP, __imp_H5E_BADGROUP_g);
     extern_static!(H5E_CANTREGISTER, __imp_H5E_CANTREGISTER_g);

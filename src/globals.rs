@@ -190,6 +190,7 @@ link_hid!(H5E_DATATYPE, h5e::H5E_DATATYPE);
 link_hid!(H5E_RS, h5e::H5E_RS);
 link_hid!(H5E_HEAP, h5e::H5E_HEAP);
 link_hid!(H5E_OHDR, h5e::H5E_OHDR);
+#[cfg(not(feature = "1.13.0"))]
 link_hid!(H5E_ATOM, h5e::H5E_ATOM);
 link_hid!(H5E_ATTR, h5e::H5E_ATTR);
 link_hid!(H5E_NONE_MAJOR, h5e::H5E_NONE_MAJOR);
@@ -265,6 +266,7 @@ link_hid!(H5E_NOTHDF5, h5e::H5E_NOTHDF5);
 link_hid!(H5E_BADFILE, h5e::H5E_BADFILE);
 link_hid!(H5E_TRUNCATED, h5e::H5E_TRUNCATED);
 link_hid!(H5E_MOUNT, h5e::H5E_MOUNT);
+#[cfg(not(feature = "1.13.0"))]
 link_hid!(H5E_BADATOM, h5e::H5E_BADATOM);
 link_hid!(H5E_BADGROUP, h5e::H5E_BADGROUP);
 link_hid!(H5E_CANTREGISTER, h5e::H5E_CANTREGISTER);
