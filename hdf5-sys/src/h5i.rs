@@ -71,3 +71,18 @@ extern "C" {
     pub fn H5Itype_exists(type_: H5I_type_t) -> htri_t;
     pub fn H5Iis_valid(id: hid_t) -> htri_t;
 }
+
+#[cfg(feature = "1.13.0")]
+pub type H5I_future_realize_func_t =
+    Option<extern "C" fn(future_object: *mut c_void, actual_object_id: *mut hid_t) -> herr_t>;
+
+#[cfg(feature = "1.13.0")]
+pub type H5I_future_discard_func_t = Option<extern "C" fn(future_object: *mut c_void) -> herr_t>;
+
+#[cfg(feature = "1.13.0")]
+extern "C" {
+    pub fn H5Iregister_future(
+        type_: H5I_type_t, object: *const c_void, realize_cb: H5I_future_realize_func_t,
+        discard_cb: H5I_future_discard_func_t,
+    ) -> hid_t;
+}
