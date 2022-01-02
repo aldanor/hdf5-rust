@@ -286,3 +286,52 @@ extern "C" {
     ) -> herr_t;
     pub fn H5Dget_num_chunks(dset_id: hid_t, fspace_id: hid_t, nchunks: *mut hsize_t) -> herr_t;
 }
+
+#[cfg(feature = "1.13.0")]
+pub type H5D_chunk_iter_op_t = Option<
+    extern "C" fn(
+        offset: *const hsize_t,
+        filter_mask: u32,
+        addr: haddr_t,
+        nbytes: u32,
+        op_data: *mut c_void,
+    ) -> c_int,
+>;
+
+#[cfg(feature = "1.13.0")]
+extern "C" {
+    pub fn H5Dchunk_iter(
+        dset_id: hid_t, dxpl: hid_t, cb: H5D_chunk_iter_op_t, op_data: *mut c_void,
+    ) -> herr_t;
+    pub fn H5Dclose_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, dset_id: hid_t,
+        es_id: hid_t,
+    ) -> herr_t;
+    pub fn H5Dcreate_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, loc_id: hid_t,
+        name: *const c_char, type_id: hid_t, space_id: hid_t, lcpl_id: hid_t, dcpl_id: hid_t,
+        dapl_id: hid_t, es_id: hid_t,
+    ) -> hid_t;
+    pub fn H5Dget_space_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, dset_id: hid_t,
+        es_id: hid_t,
+    ) -> hid_t;
+    pub fn H5Dopen_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, loc_id: hid_t,
+        name: *const c_char, dapl_id: hid_t, es_id: hid_t,
+    ) -> hid_t;
+    pub fn H5Dread_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, dset_id: hid_t,
+        mem_type_id: hid_t, mem_space_id: hid_t, file_space_id: hid_t, dxpl_id: hid_t,
+        buf: *mut c_void, es_id: hid_t,
+    ) -> herr_t;
+    pub fn H5Dset_extent_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, dset_id: hid_t,
+        size: *mut c_ulong, es_id: hid_t,
+    ) -> herr_t;
+    pub fn H5Dwrite_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, dset_id: hid_t,
+        mem_type_id: hid_t, mem_space_id: hid_t, file_space_id: hid_t, dxpl_id: hid_t,
+        buf: *const c_void, es_id: hid_t,
+    ) -> herr_t;
+}
