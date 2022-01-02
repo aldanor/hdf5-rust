@@ -106,3 +106,12 @@ extern "C" {
         reg_size: *mut size_t, arr_size: *mut size_t, blk_size: *mut size_t, fac_size: *mut size_t,
     ) -> herr_t;
 }
+
+#[cfg(feature = "1.13.0")]
+type H5_atclose_func_t = Option<extern "C" fn(ctx: *mut c_void)>;
+
+#[cfg(feature = "1.13.0")]
+extern "C" {
+    pub fn H5atclose(func: H5_atclose_func_t, ctx: *mut c_void) -> herr_t;
+    pub fn H5is_library_terminating(is_terminating: *mut hbool_t) -> herr_t;
+}
