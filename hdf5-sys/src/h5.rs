@@ -12,14 +12,14 @@ pub type htri_t = c_int;
 #[cfg(not(feature = "1.13.0"))]
 pub type hsize_t = c_ulonglong;
 #[cfg(feature = "1.13.0")]
-pub type hsize_t = c_ulong;
+pub type hsize_t = u64;
 
 #[cfg(not(feature = "1.13.0"))]
 pub type hssize_t = c_longlong;
 #[cfg(feature = "1.13.0")]
-pub type hssize_t = c_long;
+pub type hssize_t = i64;
 
-pub type haddr_t = uint64_t;
+pub type haddr_t = u64;
 
 #[cfg(all(feature = "1.10.0", have_stdbool_h))]
 pub type hbool_t = u8;
