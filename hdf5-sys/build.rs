@@ -29,7 +29,7 @@ impl Version {
     }
 
     pub fn parse(s: &str) -> Option<Self> {
-        let re = Regex::new(r"^(1)\.(8|10|12)\.(\d\d?)(_\d+)?(-patch\d+)?$").ok()?;
+        let re = Regex::new(r"^(1)\.(8|10|12|13)\.(\d\d?)(_\d+)?(-patch\d+)?$").ok()?;
         let captures = re.captures(s)?;
         Some(Self {
             major: captures.get(1).and_then(|c| c.as_str().parse::<u8>().ok())?,
@@ -612,6 +612,7 @@ impl Config {
         let mut vs: Vec<_> = (5..=21).map(|v| Version::new(1, 8, v)).collect(); // 1.8.[5-21]
         vs.extend((0..=8).map(|v| Version::new(1, 10, v))); // 1.10.[0-8]
         vs.extend((0..=1).map(|v| Version::new(1, 12, v))); // 1.12.[0-1]
+        vs.extend((0..=0).map(|v| Version::new(1, 13, v))); // 1.13.[0-0]
         for v in vs.into_iter().filter(|&v| version >= v) {
             println!("cargo:rustc-cfg=feature=\"{}.{}.{}\"", v.major, v.minor, v.micro);
             println!("cargo:version_{}_{}_{}=1", v.major, v.minor, v.micro);
