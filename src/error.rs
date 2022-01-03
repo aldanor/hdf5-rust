@@ -365,7 +365,7 @@ pub mod tests {
             "Error in H5Pclose(): can't close [Property lists: Unable to free object]"
         );
 
-        assert!(stack.len() >= 2 && stack.len() <= 3); // depending on HDF5 version
+        assert!(stack.len() >= 2 && stack.len() <= 4); // depending on HDF5 version
         assert!(!stack.is_empty());
 
         assert_eq!(stack[0].description(), "H5Pclose(): can't close");
@@ -375,12 +375,24 @@ pub mod tests {
              [Property lists: Unable to free object]"
         );
 
-        assert_eq!(stack[stack.len() - 1].description(), "H5I_dec_ref(): can't locate ID");
-        assert_eq!(
-            &stack[stack.len() - 1].detail().unwrap(),
-            "Error in H5I_dec_ref(): can't locate ID \
+        #[cfg(not(feature = "1.13.0"))]
+        {
+            assert_eq!(stack[stack.len() - 1].description(), "H5I_dec_ref(): can't locate ID");
+            assert_eq!(
+                &stack[stack.len() - 1].detail().unwrap(),
+                "Error in H5I_dec_ref(): can't locate ID \
              [Object atom: Unable to find atom information (already closed?)]"
-        );
+            );
+        }
+        #[cfg(feature = "1.13.0")]
+        {
+            assert_eq!(stack[stack.len() - 1].description(), "H5I__dec_ref(): can't locate ID");
+            assert_eq!(
+                &stack[stack.len() - 1].detail().unwrap(),
+                "Error in H5I__dec_ref(): can't locate ID \
+             [Object ID: Unable to find ID information (already closed?)]"
+            );
+        }
 
         let empty_stack = ExpandedErrorStack::new();
         assert!(empty_stack.is_empty());
