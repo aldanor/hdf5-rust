@@ -21,9 +21,9 @@ pub type hssize_t = i64;
 
 pub type haddr_t = u64;
 
-#[cfg(all(feature = "1.10.0", have_stdbool_h))]
+#[cfg(any(all(feature = "1.10.0", have_stdbool_h), feature = "1.13.0"))]
 pub type hbool_t = u8;
-#[cfg(any(not(feature = "1.10.0"), not(have_stdbool_h)))]
+#[cfg(not(any(all(feature = "1.10.0", have_stdbool_h), feature = "1.13.0")))]
 pub type hbool_t = c_uint;
 
 #[repr(C)]
