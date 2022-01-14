@@ -18,6 +18,16 @@ fn write_raw<T: Copy>(out: &mut [u8], value: T) {
     }
 }
 
+/// Much the same as align_offset but works around
+/// align_offset being allowed to always return usize::MAX
+fn is_aligned_for_type<U>(buf: *const u8) -> bool {
+    let aligned = mem::align_of::<U>();
+    if aligned == 0 {
+        return true;
+    }
+    (buf as usize & (aligned - 1)) == 0
+}
+
 unsafe trait DynDrop {
     fn dyn_drop(&mut self) {}
 }
@@ -354,13 +364,15 @@ unsafe impl DynClone for DynArray<'_> {
         let (len, ptr, size) = (self.get_len(), self.get_ptr(), self.tp.size());
         let out = if self.len.is_none() {
             debug_assert_eq!(out.len(), mem::size_of::<hvl_t>());
+            debug_assert!(is_aligned_for_type::<hvl_t>(out.as_ptr()));
             if self.get_ptr().is_null() {
                 return;
             }
             unsafe {
                 let dst = crate::malloc(len * size).cast();
                 ptr::copy_nonoverlapping(ptr, dst, len * size);
-                (*(out.as_mut_ptr() as *mut hvl_t)).ptr = dst as _;
+                let outptr = out.as_mut_ptr().cast::<hvl_t>(); // alignment asserted above
+                ptr::write(ptr::addr_of_mut!((*outptr).ptr), dst.cast());
                 slice::from_raw_parts_mut(dst, len * size)
             }
         } else {
@@ -498,11 +510,13 @@ impl<'a> DynVarLenString<'a> {
     }
 
     fn as_ascii(&self) -> &VarLenAscii {
-        unsafe { &*(self.buf.as_ptr() as *const VarLenAscii) }
+        debug_assert!(is_aligned_for_type::<VarLenAscii>(self.buf.as_ptr()));
+        unsafe { &*(self.buf.as_ptr().cast::<VarLenAscii>()) } // alignment asserted above
     }
 
     fn as_unicode(&self) -> &VarLenUnicode {
-        unsafe { &*(self.buf.as_ptr() as *const VarLenUnicode) }
+        debug_assert!(is_aligned_for_type::<VarLenUnicode>(self.buf.as_ptr()));
+        unsafe { &*(self.buf.as_ptr().cast::<VarLenUnicode>()) } //alignment asserted above
     }
 }
 
@@ -520,12 +534,14 @@ unsafe impl DynClone for DynVarLenString<'_> {
     fn dyn_clone(&mut self, out: &mut [u8]) {
         debug_assert_eq!(out.len(), mem::size_of::<usize>());
         if !self.get_ptr().is_null() {
+            debug_assert!(is_aligned_for_type::<DynVarLenString>(out.as_ptr()));
             unsafe {
                 let raw_len = self.raw_len();
                 let dst = crate::malloc(raw_len + 1).cast();
                 ptr::copy_nonoverlapping(self.get_ptr(), dst, raw_len);
-                *dst.add(raw_len) = 0;
-                *(out.as_mut_ptr() as *mut *const u8) = dst as _;
+                dst.add(raw_len).write(0);
+                let outptr = out.as_mut_ptr().cast::<*const u8>(); // alignment asserted above
+                ptr::write(outptr, dst.cast());
             }
         }
     }
