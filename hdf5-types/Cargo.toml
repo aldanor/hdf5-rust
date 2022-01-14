@@ -7,8 +7,10 @@ license = "MIT OR Apache-2.0"
 description = "Native Rust equivalents of HDF5 types."
 repository = "https://github.com/aldanor/hdf5-rust"
 homepage = "https://github.com/aldanor/hdf5-rust"
+readme = "README.md"
 edition = "2018"
 build = "build.rs"
+categories = ["encoding"]
 
 [features]
 h5-alloc = []
