@@ -23,15 +23,15 @@ pub enum IntSize {
 }
 
 impl IntSize {
-    pub fn from_int(size: usize) -> Option<IntSize> {
+    pub const fn from_int(size: usize) -> Option<Self> {
         if size == 1 {
-            Some(IntSize::U1)
+            Some(Self::U1)
         } else if size == 2 {
-            Some(IntSize::U2)
+            Some(Self::U2)
         } else if size == 4 {
-            Some(IntSize::U4)
+            Some(Self::U4)
         } else if size == 8 {
-            Some(IntSize::U8)
+            Some(Self::U8)
         } else {
             None
         }
@@ -45,11 +45,11 @@ pub enum FloatSize {
 }
 
 impl FloatSize {
-    pub fn from_int(size: usize) -> Option<FloatSize> {
+    pub const fn from_int(size: usize) -> Option<Self> {
         if size == 4 {
-            Some(FloatSize::U4)
+            Some(Self::U4)
         } else if size == 8 {
-            Some(FloatSize::U8)
+            Some(Self::U8)
         } else {
             None
         }
@@ -105,7 +105,8 @@ pub struct CompoundType {
 }
 
 impl CompoundType {
-    pub fn to_c_repr(&self) -> CompoundType {
+    #[must_use]
+    pub fn to_c_repr(&self) -> Self {
         let mut layout = self.clone();
         layout.fields.sort_by_key(|f| f.index);
         let mut offset = 0;
@@ -127,7 +128,8 @@ impl CompoundType {
         layout
     }
 
-    pub fn to_packed_repr(&self) -> CompoundType {
+    #[must_use]
+    pub fn to_packed_repr(&self) -> Self {
         let mut layout = self.clone();
         layout.fields.sort_by_key(|f| f.index);
         layout.size = 0;
@@ -148,10 +150,10 @@ pub enum TypeDescriptor {
     Boolean,
     Enum(EnumType),
     Compound(CompoundType),
-    FixedArray(Box<TypeDescriptor>, usize),
+    FixedArray(Box<Self>, usize),
     FixedAscii(usize),
     FixedUnicode(usize),
-    VarLenArray(Box<TypeDescriptor>),
+    VarLenArray(Box<Self>),
     VarLenAscii,
     VarLenUnicode,
 }
@@ -213,6 +215,7 @@ impl TypeDescriptor {
         }
     }
 
+    #[must_use]
     pub fn to_c_repr(&self) -> Self {
         use self::TypeDescriptor::*;
 
@@ -224,6 +227,7 @@ impl TypeDescriptor {
         }
     }
 
+    #[must_use]
     pub fn to_packed_repr(&self) -> Self {
         use self::TypeDescriptor::*;
 

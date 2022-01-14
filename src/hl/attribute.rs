@@ -192,12 +192,14 @@ where
     D: ndarray::Dimension,
 {
     /// Set maximum allowed conversion level.
+    #[must_use]
     pub fn conversion(mut self, conv: Conversion) -> Self {
         self.conv = conv;
         self
     }
 
     /// Disallow all conversions.
+    #[must_use]
     pub fn no_convert(mut self) -> Self {
         self.conv = Conversion::NoOp;
         self

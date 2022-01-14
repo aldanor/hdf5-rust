@@ -20,7 +20,7 @@ pub struct Version {
 }
 
 impl Version {
-    pub fn new(major: u8, minor: u8, micro: u8) -> Self {
+    pub const fn new(major: u8, minor: u8, micro: u8) -> Self {
         Self { major, minor, micro }
     }
 
@@ -35,7 +35,7 @@ impl Version {
     }
 
     pub fn is_valid(self) -> bool {
-        self >= Version { major: 1, minor: 8, micro: 4 }
+        self >= Self { major: 1, minor: 8, micro: 4 }
     }
 }
 
@@ -111,17 +111,20 @@ fn validate_runtime_version(config: &Config) {
     let libfiles = &["libhdf5.dylib", "libhdf5.so", "hdf5.dll"];
     let mut link_paths = config.link_paths.clone();
     if cfg!(all(unix, not(target_os = "macos"))) {
-        if let Some(ldv) = run_command("ld", &["--verbose"]) {
-            let re = Regex::new(r#"SEARCH_DIR\("=?(?P<path>[^"]+)"\)"#).unwrap();
-            println!("Adding extra link paths (ld)...");
-            for caps in re.captures_iter(&ldv) {
-                let path = &caps["path"];
-                println!("    {}", path);
-                link_paths.push(path.into());
-            }
-        } else {
-            println!("Unable to add extra link paths (ld).");
-        }
+        run_command("ld", &["--verbose"]).map_or_else(
+            || {
+                println!("Unable to add extra link paths (ld).");
+            },
+            |ldv| {
+                let re = Regex::new(r#"SEARCH_DIR\("=?(?P<path>[^"]+)"\)"#).unwrap();
+                println!("Adding extra link paths (ld)...");
+                for caps in re.captures_iter(&ldv) {
+                    let path = &caps["path"];
+                    println!("    {}", path);
+                    link_paths.push(path.into());
+                }
+            },
+        )
     }
     for link_path in &link_paths {
         if let Ok(paths) = fs::read_dir(link_path) {
@@ -194,11 +197,14 @@ impl Header {
             let name = captures.get(1).unwrap().as_str();
             let value = captures.get(2).unwrap().as_str();
             if name == "H5_VERSION" {
-                if let Some(version) = Version::parse(value) {
-                    hdr.version = version;
-                } else {
-                    panic!("Invalid H5_VERSION: {:?}", value);
-                }
+                Version::parse(value).map_or_else(
+                    || {
+                        panic!("Invalid H5_VERSION: {:?}", value);
+                    },
+                    |version| {
+                        hdr.version = version;
+                    },
+                )
             }
         }
 
@@ -260,12 +266,15 @@ mod unix {
                     break;
                 }
             }
-            if let Some(ref inc_dir) = config.inc_dir {
-                println!("Located HDF5 headers at:");
-                println!("    {:?}", inc_dir);
-            } else {
-                println!("Unable to locate HDF5 headers from pkg-config info.");
-            }
+            config.inc_dir.as_ref().map_or_else(
+                || {
+                    println!("Unable to locate HDF5 headers from pkg-config info.");
+                },
+                |inc_dir| {
+                    println!("Located HDF5 headers at:");
+                    println!("    {:?}", inc_dir);
+                },
+            );
         }
     }
 

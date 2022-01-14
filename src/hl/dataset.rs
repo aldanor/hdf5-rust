@@ -323,12 +323,14 @@ where
     D: ndarray::Dimension,
 {
     /// Set maximum allowed conversion level.
+    #[must_use]
     pub fn conversion(mut self, conv: Conversion) -> Self {
         self.conv = conv;
         self
     }
 
     /// Disallow all conversions.
+    #[must_use]
     pub fn no_convert(mut self) -> Self {
         self.conv = Conversion::NoOp;
         self
@@ -455,13 +457,14 @@ impl DatasetBuilderInner {
         let chunking_required = has_filters || extents.is_resizable();
         let chunking_allowed = extents.size() > 0 || extents.is_resizable();
 
-        let chunk = if let Some(chunk) = &self.chunk {
-            chunk.clone()
-        } else if chunking_required && chunking_allowed {
-            Chunk::MinKB(DEFAULT_CHUNK_SIZE_KB)
-        } else {
-            Chunk::None
-        };
+        let chunk = self.chunk.as_ref().map_or(
+            if chunking_required && chunking_allowed {
+                Chunk::MinKB(DEFAULT_CHUNK_SIZE_KB)
+            } else {
+                Chunk::None
+            },
+            Clone::clone,
+        );
 
         let chunk_shape = match chunk {
             Chunk::Exact(chunk) => Some(chunk),

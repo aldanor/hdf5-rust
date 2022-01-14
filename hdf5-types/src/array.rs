@@ -13,7 +13,7 @@ pub struct VarLenArray<T: Copy> {
 }
 
 impl<T: Copy> VarLenArray<T> {
-    pub unsafe fn from_parts(p: *const T, len: usize) -> VarLenArray<T> {
+    pub unsafe fn from_parts(p: *const T, len: usize) -> Self {
         let (len, ptr) = if !p.is_null() && len != 0 {
             let dst = crate::malloc(len * mem::size_of::<T>());
             ptr::copy_nonoverlapping(p, dst as *mut _, len);
@@ -21,12 +21,12 @@ impl<T: Copy> VarLenArray<T> {
         } else {
             (0, ptr::null_mut())
         };
-        VarLenArray { len, ptr: ptr as *const _, tag: PhantomData }
+        Self { len, ptr: ptr as *const _, tag: PhantomData }
     }
 
     #[inline]
-    pub fn from_slice(arr: &[T]) -> VarLenArray<T> {
-        unsafe { VarLenArray::from_parts(arr.as_ptr(), arr.len()) }
+    pub fn from_slice(arr: &[T]) -> Self {
+        unsafe { Self::from_parts(arr.as_ptr(), arr.len()) }
     }
 
     #[inline]
@@ -66,8 +66,8 @@ impl<T: Copy> Drop for VarLenArray<T> {
 
 impl<T: Copy> Clone for VarLenArray<T> {
     #[inline]
-    fn clone(&self) -> VarLenArray<T> {
-        VarLenArray::from_slice(&*self)
+    fn clone(&self) -> Self {
+        Self::from_slice(&*self)
     }
 }
 
@@ -86,8 +86,8 @@ impl<T: Copy> Deref for VarLenArray<T> {
 
 impl<'a, T: Copy> From<&'a [T]> for VarLenArray<T> {
     #[inline]
-    fn from(arr: &[T]) -> VarLenArray<T> {
-        VarLenArray::from_slice(arr)
+    fn from(arr: &[T]) -> Self {
+        Self::from_slice(arr)
     }
 }
 
@@ -100,15 +100,15 @@ impl<T: Copy> From<VarLenArray<T>> for Vec<T> {
 
 impl<T: Copy, const N: usize> From<[T; N]> for VarLenArray<T> {
     #[inline]
-    fn from(arr: [T; N]) -> VarLenArray<T> {
-        unsafe { VarLenArray::from_parts(arr.as_ptr(), arr.len()) }
+    fn from(arr: [T; N]) -> Self {
+        unsafe { Self::from_parts(arr.as_ptr(), arr.len()) }
     }
 }
 
 impl<T: Copy> Default for VarLenArray<T> {
     #[inline]
-    fn default() -> VarLenArray<T> {
-        unsafe { VarLenArray::from_parts(ptr::null(), 0) }
+    fn default() -> Self {
+        unsafe { Self::from_parts(ptr::null(), 0) }
     }
 }
 

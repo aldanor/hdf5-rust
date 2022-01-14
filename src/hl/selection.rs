@@ -845,8 +845,10 @@ impl Selection {
     pub fn out_ndim(&self) -> Option<usize> {
         match self {
             Self::All => None,
-            Self::Points(ref points) => Some((points.shape() != [0, 0]) as usize),
-            Self::Hyperslab(ref hyper) => Some(hyper.iter().map(|&s| s.is_slice() as usize).sum()),
+            Self::Points(ref points) => Some(usize::from(points.shape() != [0, 0])),
+            Self::Hyperslab(ref hyper) => {
+                Some(hyper.iter().map(|&s| usize::from(s.is_slice())).sum())
+            }
         }
     }
 

@@ -107,7 +107,7 @@ impl LinkCreateBuilder {
 
     fn populate_plist(&self, id: hid_t) -> Result<()> {
         if let Some(create) = self.create_intermediate_group {
-            h5try!(H5Pset_create_intermediate_group(id, create as _));
+            h5try!(H5Pset_create_intermediate_group(id, c_uint::from(create)));
         }
         if let Some(encoding) = self.char_encoding {
             let encoding = match encoding {
@@ -137,6 +137,7 @@ impl LinkCreate {
         Self::from_id(h5try!(H5Pcreate(*H5P_LINK_CREATE)))
     }
 
+    #[must_use]
     pub fn copy(&self) -> Self {
         unsafe { self.deref().copy().cast_unchecked() }
     }

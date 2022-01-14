@@ -108,7 +108,7 @@ impl Display for DynInteger {
 
 impl From<DynInteger> for DynScalar {
     fn from(value: DynInteger) -> Self {
-        DynScalar::Integer(value)
+        Self::Integer(value)
     }
 }
 

@@ -626,7 +626,7 @@ impl DatasetCreateBuilder {
             h5try!(H5Pset_external(id, name.as_ptr(), external.offset as _, size));
         }
         if let Some(v) = self.obj_track_times {
-            h5try!(H5Pset_obj_track_times(id, v as _));
+            h5try!(H5Pset_obj_track_times(id, hbool_t::from(v)));
         }
         if let Some(v) = self.attr_phase_change {
             h5try!(H5Pset_attr_phase_change(id, v.max_compact as _, v.min_dense as _));
@@ -663,6 +663,7 @@ impl DatasetCreate {
         Self::from_id(h5try!(H5Pcreate(*H5P_DATASET_CREATE)))
     }
 
+    #[must_use]
     pub fn copy(&self) -> Self {
         unsafe { self.deref().copy().cast_unchecked() }
     }

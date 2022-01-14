@@ -240,6 +240,7 @@ impl DatasetAccess {
         Self::from_id(h5try!(H5Pcreate(*H5P_DATASET_ACCESS)))
     }
 
+    #[must_use]
     pub fn copy(&self) -> Self {
         unsafe { self.deref().copy().cast_unchecked() }
     }

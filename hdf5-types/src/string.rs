@@ -21,7 +21,7 @@ pub enum StringError {
 
 impl From<AsAsciiStrError> for StringError {
     fn from(err: AsAsciiStrError) -> Self {
-        StringError::AsciiError(err)
+        Self::AsciiError(err)
     }
 }
 
@@ -62,7 +62,7 @@ macro_rules! impl_string_eq {
 }
 
 macro_rules! impl_string_traits {
-    ($nm:ident, $ty:ty $(, const $N:ident: usize)*) => (
+    ($ty:ty $(, const $N:ident: usize)*) => (
         impl<'a $(,const $N: usize)*> fmt::Debug for $ty {
             #[inline]
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -86,8 +86,8 @@ macro_rules! impl_string_traits {
 
         impl<'a $(,const $N: usize)*> Default for $ty {
             #[inline]
-            fn default() -> $ty {
-                $nm::new()
+            fn default() -> Self {
+                Self::new()
             }
         }
 
@@ -174,10 +174,10 @@ macro_rules! impl_string_traits {
     )
 }
 
-impl_string_traits!(FixedAscii, FixedAscii<N>, const N: usize);
-impl_string_traits!(FixedUnicode, FixedUnicode<N>, const N: usize);
-impl_string_traits!(VarLenAscii, VarLenAscii);
-impl_string_traits!(VarLenUnicode, VarLenUnicode);
+impl_string_traits!(FixedAscii<N>, const N: usize);
+impl_string_traits!(FixedUnicode<N>, const N: usize);
+impl_string_traits!(VarLenAscii);
+impl_string_traits!(VarLenUnicode);
 
 // ================================================================================
 
@@ -208,7 +208,7 @@ impl VarLenAscii {
         unsafe {
             let ptr = crate::malloc(1) as *mut _;
             *ptr = 0;
-            VarLenAscii { ptr }
+            Self { ptr }
         }
     }
 
@@ -217,7 +217,7 @@ impl VarLenAscii {
         let ptr = crate::malloc(bytes.len() + 1) as *mut _;
         ptr::copy_nonoverlapping(bytes.as_ptr(), ptr, bytes.len());
         *ptr.add(bytes.len()) = 0;
-        VarLenAscii { ptr }
+        Self { ptr }
     }
 
     #[inline]
@@ -311,7 +311,7 @@ impl VarLenUnicode {
         unsafe {
             let ptr = crate::malloc(1) as *mut _;
             *ptr = 0;
-            VarLenUnicode { ptr }
+            Self { ptr }
         }
     }
 
@@ -320,7 +320,7 @@ impl VarLenUnicode {
         let ptr = crate::malloc(bytes.len() + 1) as *mut _;
         ptr::copy_nonoverlapping(bytes.as_ptr(), ptr, bytes.len());
         *ptr.add(bytes.len()) = 0;
-        VarLenUnicode { ptr }
+        Self { ptr }
     }
 
     #[inline]
@@ -385,7 +385,7 @@ impl<const N: usize> Clone for FixedAscii<N> {
         unsafe {
             let mut buf: mem::MaybeUninit<[u8; N]> = mem::MaybeUninit::uninit();
             ptr::copy_nonoverlapping(self.buf.as_ptr(), buf.as_mut_ptr() as *mut _, N);
-            FixedAscii { buf: buf.assume_init() }
+            Self { buf: buf.assume_init() }
         }
     }
 }
@@ -393,7 +393,7 @@ impl<const N: usize> Clone for FixedAscii<N> {
 impl<const N: usize> FixedAscii<N> {
     #[inline]
     pub fn new() -> Self {
-        unsafe { FixedAscii { buf: mem::zeroed() } }
+        unsafe { Self { buf: mem::zeroed() } }
     }
 
     #[inline]
@@ -401,7 +401,7 @@ impl<const N: usize> FixedAscii<N> {
         let len = if bytes.len() < N { bytes.len() } else { N };
         let mut buf: [u8; N] = mem::zeroed();
         ptr::copy_nonoverlapping(bytes.as_ptr(), buf.as_mut_ptr() as *mut _, len);
-        FixedAscii { buf }
+        Self { buf }
     }
 
     #[inline]
@@ -410,7 +410,7 @@ impl<const N: usize> FixedAscii<N> {
     }
 
     #[inline]
-    pub fn capacity() -> usize {
+    pub const fn capacity() -> usize {
         N
     }
 
@@ -490,7 +490,7 @@ impl<const N: usize> Clone for FixedUnicode<N> {
         unsafe {
             let mut buf: mem::MaybeUninit<[u8; N]> = mem::MaybeUninit::uninit();
             ptr::copy_nonoverlapping(self.buf.as_ptr(), buf.as_mut_ptr() as *mut _, N);
-            FixedUnicode { buf: buf.assume_init() }
+            Self { buf: buf.assume_init() }
         }
     }
 }
@@ -498,7 +498,7 @@ impl<const N: usize> Clone for FixedUnicode<N> {
 impl<const N: usize> FixedUnicode<N> {
     #[inline]
     pub fn new() -> Self {
-        unsafe { FixedUnicode { buf: mem::zeroed() } }
+        unsafe { Self { buf: mem::zeroed() } }
     }
 
     #[inline]
@@ -506,7 +506,7 @@ impl<const N: usize> FixedUnicode<N> {
         let len = if bytes.len() < N { bytes.len() } else { N };
         let mut buf: [u8; N] = mem::zeroed();
         ptr::copy_nonoverlapping(bytes.as_ptr(), buf.as_mut_ptr() as *mut _, len);
-        FixedUnicode { buf }
+        Self { buf }
     }
 
     #[inline]
@@ -520,7 +520,7 @@ impl<const N: usize> FixedUnicode<N> {
     }
 
     #[inline]
-    pub fn capacity() -> usize {
+    pub const fn capacity() -> usize {
         N
     }
 

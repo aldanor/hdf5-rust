@@ -221,7 +221,7 @@ impl Default for H5FD_class_t {
 pub struct H5FD_free_t {
     pub addr: haddr_t,
     pub size: hsize_t,
-    pub next: *mut H5FD_free_t,
+    pub next: *mut Self,
 }
 
 impl Default for H5FD_free_t {

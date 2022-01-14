@@ -157,6 +157,7 @@ impl FromStr for PropertyListClass {
 #[allow(clippy::len_without_is_empty)]
 impl PropertyList {
     /// Copies the property list.
+    #[must_use]
     pub fn copy(&self) -> Self {
         Self::from_id(h5lock!(H5Pcopy(self.id()))).unwrap_or_else(|_| Self::invalid())
     }
