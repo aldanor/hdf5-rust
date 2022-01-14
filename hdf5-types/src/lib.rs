@@ -43,7 +43,7 @@ pub(crate) unsafe fn free(ptr: *mut core::ffi::c_void) {
         if #[cfg(any(feature = "h5-alloc", windows_dll))] {
             hdf5_sys::h5::H5free_memory(ptr);
         } else {
-            libc::free(ptr)
+            libc::free(ptr);
         }
     }
 }

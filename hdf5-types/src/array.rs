@@ -16,7 +16,7 @@ impl<T: Copy> VarLenArray<T> {
     pub unsafe fn from_parts(p: *const T, len: usize) -> Self {
         let (len, ptr) = if !p.is_null() && len != 0 {
             let dst = crate::malloc(len * mem::size_of::<T>());
-            ptr::copy_nonoverlapping(p, dst as *mut _, len);
+            ptr::copy_nonoverlapping(p, dst.cast(), len);
             (len, dst)
         } else {
             (0, ptr::null_mut())
@@ -94,7 +94,7 @@ impl<'a, T: Copy> From<&'a [T]> for VarLenArray<T> {
 impl<T: Copy> From<VarLenArray<T>> for Vec<T> {
     #[inline]
     fn from(v: VarLenArray<T>) -> Self {
-        v.iter().cloned().collect()
+        v.iter().copied().collect()
     }
 }
 
