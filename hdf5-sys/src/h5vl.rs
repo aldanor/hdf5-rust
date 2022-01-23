@@ -1,10 +1,10 @@
 //! Using the Virtual Object Layer
-#![cfg(feature = "1.12.0")]
+#![cfg(feature = "1.13.0")]
 
+use std::fmt::{self, Debug};
 use std::mem::ManuallyDrop;
 
 use crate::internal_prelude::*;
-#[cfg(feature = "1.13.0")]
 use crate::{
     h5a::{H5A_info_t, H5A_operator2_t},
     h5d::H5D_space_status_t,
@@ -17,11 +17,6 @@ use crate::{
 
 pub type H5VL_class_value_t = c_int;
 
-// Incomplete type
-#[cfg(not(feature = "1.13.0"))]
-pub type H5VL_class_t = c_void;
-
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_info_class_t {
@@ -35,7 +30,6 @@ pub struct H5VL_info_class_t {
     pub from_str: Option<extern "C" fn(str: *const c_char, info: *mut *mut c_void) -> herr_t>,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_wrap_class_t {
@@ -49,7 +43,6 @@ pub struct H5VL_wrap_class_t {
     pub free_wrap_ctx: Option<extern "C" fn(wrap_ctx: *mut c_void) -> herr_t>,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum H5VL_attr_get_t {
@@ -61,35 +54,30 @@ pub enum H5VL_attr_get_t {
     H5VL_ATTR_GET_TYPE,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_attr_get_args_t_union_get_acpl {
     pub acpl_id: hid_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_attr_get_args_t_union_get_space {
     pub space_id: hid_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_attr_get_args_t_union_get_storage_size {
     pub data_size: *mut hsize_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_attr_get_args_t_union_get_type {
     pub type_id: hid_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_attr_get_name_args_t {
@@ -99,7 +87,6 @@ pub struct H5VL_attr_get_name_args_t {
     pub attr_name_len: *mut size_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_attr_get_info_args_t {
@@ -108,9 +95,7 @@ pub struct H5VL_attr_get_info_args_t {
     pub ainfo: *mut H5A_info_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
-#[derive(Debug)]
 pub union H5VL_attr_get_args_t_union {
     pub get_acpl: ManuallyDrop<H5VL_attr_get_args_t_union_get_acpl>,
     pub get_info: ManuallyDrop<H5VL_attr_get_info_args_t>,
@@ -120,15 +105,32 @@ pub union H5VL_attr_get_args_t_union {
     pub get_type: ManuallyDrop<H5VL_attr_get_args_t_union_get_type>,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
-#[derive(Debug)]
 pub struct H5VL_attr_get_args_t {
     pub op_type: H5VL_attr_get_t,
     pub args: H5VL_attr_get_args_t_union,
 }
 
-#[cfg(feature = "1.13.0")]
+impl Debug for H5VL_attr_get_args_t {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut s = f.debug_struct("H5VL_dataset_specific_args_t");
+        s.field("op_type", &self.op_type);
+        unsafe {
+            match self.op_type {
+                H5VL_attr_get_t::H5VL_ATTR_GET_ACPL => s.field("args", &self.args.get_acpl),
+                H5VL_attr_get_t::H5VL_ATTR_GET_INFO => s.field("args", &self.args.get_info),
+                H5VL_attr_get_t::H5VL_ATTR_GET_NAME => s.field("args", &self.args.get_name),
+                H5VL_attr_get_t::H5VL_ATTR_GET_SPACE => s.field("args", &self.args.get_space),
+                H5VL_attr_get_t::H5VL_ATTR_GET_STORAGE_SIZE => {
+                    s.field("args", &self.args.get_storage_size)
+                }
+                H5VL_attr_get_t::H5VL_ATTR_GET_TYPE => s.field("args", &self.args.get_type),
+            }
+        };
+        s.finish()
+    }
+}
+
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum H5VL_attr_specific_t {
@@ -139,14 +141,12 @@ pub enum H5VL_attr_specific_t {
     H5VL_ATTR_RENAME,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_attr_specific_args_t_union_del {
     pub name: *const c_char,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_attr_specific_args_t_union_exists {
@@ -154,7 +154,6 @@ pub struct H5VL_attr_specific_args_t_union_exists {
     pub exists: *mut hbool_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_attr_specific_args_t_union_rename {
@@ -162,7 +161,6 @@ pub struct H5VL_attr_specific_args_t_union_rename {
     pub new_name: *const c_char,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_attr_iterate_args_t {
@@ -173,7 +171,6 @@ pub struct H5VL_attr_iterate_args_t {
     pub op_data: *mut c_void,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_attr_delete_by_idx_args_t {
@@ -182,9 +179,7 @@ pub struct H5VL_attr_delete_by_idx_args_t {
     pub n: hsize_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
-#[derive(Debug)]
 pub union H5VL_attr_specific_args_t_union {
     pub del: ManuallyDrop<H5VL_attr_specific_args_t_union_del>,
     pub delete_by_idx: ManuallyDrop<H5VL_attr_delete_by_idx_args_t>,
@@ -193,15 +188,31 @@ pub union H5VL_attr_specific_args_t_union {
     pub rename: ManuallyDrop<H5VL_attr_specific_args_t_union_rename>,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
-#[derive(Debug)]
 pub struct H5VL_attr_specific_args_t {
     pub op_type: H5VL_attr_specific_t,
     pub args: H5VL_attr_specific_args_t_union,
 }
 
-#[cfg(feature = "1.13.0")]
+impl Debug for H5VL_attr_specific_args_t {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut s = f.debug_struct("H5VL_dataset_specific_args_t");
+        s.field("op_type", &self.op_type);
+        unsafe {
+            match self.op_type {
+                H5VL_attr_specific_t::H5VL_ATTR_DELETE => s.field("args", &self.args.del),
+                H5VL_attr_specific_t::H5VL_ATTR_DELETE_BY_IDX => {
+                    s.field("args", &self.args.delete_by_idx)
+                }
+                H5VL_attr_specific_t::H5VL_ATTR_EXISTS => s.field("args", &self.args.exists),
+                H5VL_attr_specific_t::H5VL_ATTR_ITER => s.field("args", &self.args.iterate),
+                H5VL_attr_specific_t::H5VL_ATTR_RENAME => s.field("args", &self.args.rename),
+            }
+        };
+        s.finish()
+    }
+}
+
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_attr_class_t {
@@ -275,7 +286,6 @@ pub struct H5VL_attr_class_t {
         Option<extern "C" fn(attr: *mut c_void, dxpl_id: hid_t, req: *mut *mut c_void) -> herr_t>,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum H5VL_dataset_specific_t {
@@ -284,45 +294,56 @@ pub enum H5VL_dataset_specific_t {
     H5VL_DATASET_REFRESH,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
-pub union H5VL_dataset_specific_args_t_union_set_extent {
+pub struct H5VL_dataset_specific_args_t_union_set_extent {
     pub size: *const hsize_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
-pub union H5VL_dataset_specific_args_t_union_flush {
+pub struct H5VL_dataset_specific_args_t_union_flush {
     pub dset_id: hid_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
-pub union H5VL_dataset_specific_args_t_union_refresh {
+pub struct H5VL_dataset_specific_args_t_union_refresh {
     pub dset_id: hid_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
-#[derive(Debug)]
 pub union H5VL_dataset_specific_args_t_union {
     pub set_extent: ManuallyDrop<H5VL_dataset_specific_args_t_union_set_extent>,
     pub flush: ManuallyDrop<H5VL_dataset_specific_args_t_union_flush>,
     pub refresh: ManuallyDrop<H5VL_dataset_specific_args_t_union_refresh>,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
-#[derive(Debug)]
 pub struct H5VL_dataset_specific_args_t {
     pub op_type: H5VL_dataset_specific_t,
     pub args: H5VL_dataset_specific_args_t_union,
 }
 
-#[cfg(feature = "1.13.0")]
+impl Debug for H5VL_dataset_specific_args_t {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut s = f.debug_struct("H5VL_dataset_specific_args_t");
+        s.field("op_type", &self.op_type);
+        unsafe {
+            match self.op_type {
+                H5VL_dataset_specific_t::H5VL_DATASET_SET_EXTENT => {
+                    s.field("args", &self.args.set_extent)
+                }
+                H5VL_dataset_specific_t::H5VL_DATASET_FLUSH => s.field("args", &self.args.flush),
+                H5VL_dataset_specific_t::H5VL_DATASET_REFRESH => {
+                    s.field("args", &self.args.refresh)
+                }
+            }
+        };
+        s.finish()
+    }
+}
+
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum H5VL_dataset_get_t {
@@ -334,49 +355,42 @@ pub enum H5VL_dataset_get_t {
     H5VL_DATASET_GET_TYPE,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_dataset_get_args_t_union_get_dapl {
     pub dapl_id: hid_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_dataset_get_args_t_union_get_dcpl {
     pub dcpl_id: hid_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_dataset_get_args_t_union_get_space {
     pub space_id: hid_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_dataset_get_args_t_union_get_space_status {
     pub status: *mut H5D_space_status_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_dataset_get_args_t_union_get_storage_size {
     pub storage_size: *mut hsize_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_dataset_get_args_t_union_get_type {
     pub type_id: hid_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 pub union H5VL_dataset_get_args_t_union {
     pub get_dapl: ManuallyDrop<H5VL_dataset_get_args_t_union_get_dapl>,
@@ -387,15 +401,34 @@ pub union H5VL_dataset_get_args_t_union {
     pub get_type: ManuallyDrop<H5VL_dataset_get_args_t_union_get_type>,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
-#[derive(Debug)]
 pub struct H5VL_dataset_get_args_t {
     pub op_type: H5VL_dataset_get_t,
     pub args: H5VL_dataset_get_args_t_union,
 }
 
-#[cfg(feature = "1.13.0")]
+impl Debug for H5VL_dataset_get_args_t {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut s = f.debug_struct("H5VL_dataset_get_args_t");
+        s.field("op_type", &self.op_type);
+        unsafe {
+            match self.op_type {
+                H5VL_dataset_get_t::H5VL_DATASET_GET_DAPL => s.field("args", &self.args.get_dapl),
+                H5VL_dataset_get_t::H5VL_DATASET_GET_DCPL => s.field("args", &self.args.get_dcpl),
+                H5VL_dataset_get_t::H5VL_DATASET_GET_SPACE => s.field("args", &self.args.get_space),
+                H5VL_dataset_get_t::H5VL_DATASET_GET_SPACE_STATUS => {
+                    s.field("args", &self.args.get_space_status)
+                }
+                H5VL_dataset_get_t::H5VL_DATASET_GET_STORAGE_SIZE => {
+                    s.field("args", &self.args.get_storage_size)
+                }
+                H5VL_dataset_get_t::H5VL_DATASET_GET_TYPE => s.field("args", &self.args.get_type),
+            }
+        };
+        s.finish()
+    }
+}
+
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_dataset_class_t {
@@ -473,7 +506,6 @@ pub struct H5VL_dataset_class_t {
         Option<extern "C" fn(dset: *mut c_void, dxpl_id: hid_t, req: *mut *mut c_void) -> herr_t>,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum H5VL_file_specific_t {
@@ -484,65 +516,53 @@ pub enum H5VL_file_specific_t {
     H5VL_FILE_IS_EQUAL,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_datatype_specific_args_t_union_flush {
-    pub obj_type: H5I_type_t,
-    pub scope: H5F_scope_t,
+    pub type_id: hid_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
-pub struct H5VL_datatype_specific_args_t_union_reopen {
-    pub file: *mut *mut c_void,
+pub struct H5VL_datatype_specific_args_t_union_refresh {
+    pub type_id: hid_t,
 }
 
-#[cfg(feature = "1.13.0")]
-#[repr(C)]
-#[derive(Debug)]
-pub struct H5VL_datatype_specific_args_t_union_is_accessible {
-    pub filename: *const c_char,
-    pub fapl_id: hid_t,
-    pub accessible: *mut hbool_t,
-}
-
-#[cfg(feature = "1.13.0")]
-#[repr(C)]
-#[derive(Debug)]
-pub struct H5VL_datatype_specific_args_t_union_del {
-    pub filename: *const c_char,
-    pub fapl_id: hid_t,
-}
-
-#[cfg(feature = "1.13.0")]
-#[repr(C)]
-#[derive(Debug)]
-pub struct H5VL_datatype_specific_args_t_union_is_equal {
-    pub obj2: *mut c_void,
-    pub same_file: *mut hbool_t,
-}
-
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 pub union H5VL_datatype_specific_args_t_union {
     pub flush: ManuallyDrop<H5VL_datatype_specific_args_t_union_flush>,
-    pub reopen: ManuallyDrop<H5VL_datatype_specific_args_t_union_reopen>,
-    pub is_accessible: ManuallyDrop<H5VL_datatype_specific_args_t_union_is_accessible>,
-    pub del: ManuallyDrop<H5VL_datatype_specific_args_t_union_del>,
-    pub is_equal: ManuallyDrop<H5VL_datatype_specific_args_t_union_is_equal>,
+    pub refresh: ManuallyDrop<H5VL_datatype_specific_args_t_union_refresh>,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum H5VL_datatype_specific_t {
+    H5VL_DATATYPE_FLUSH,
+    H5VL_DATATYPE_REFRESH,
+}
+
+#[repr(C)]
 pub struct H5VL_datatype_specific_args_t {
-    pub op_type: H5VL_file_specific_t,
+    pub op_type: H5VL_datatype_specific_t,
     pub args: H5VL_datatype_specific_args_t_union,
 }
 
-#[cfg(feature = "1.13.0")]
+impl Debug for H5VL_datatype_specific_args_t {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut s = f.debug_struct("H5VL_datatype_specific_args_t");
+        s.field("op_type", &self.op_type);
+        unsafe {
+            match self.op_type {
+                H5VL_datatype_specific_t::H5VL_DATATYPE_FLUSH => s.field("args", &self.args.flush),
+                H5VL_datatype_specific_t::H5VL_DATATYPE_REFRESH => {
+                    s.field("args", &self.args.refresh)
+                }
+            }
+        };
+        s.finish()
+    }
+}
+
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum H5VL_datatype_get_t {
@@ -551,14 +571,12 @@ pub enum H5VL_datatype_get_t {
     H5VL_DATATYPE_GET_TCPL,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_datatype_get_args_t_union_get_binary_size {
     pub size: *mut size_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_datatype_get_args_t_union_get_binary {
@@ -566,14 +584,12 @@ pub struct H5VL_datatype_get_args_t_union_get_binary {
     pub buf_size: size_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_datatype_get_args_t_union_get_tcpl {
     pub tcpl_id: hid_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 pub union H5VL_datatype_get_args_t_union {
     pub get_binary_size: ManuallyDrop<H5VL_datatype_get_args_t_union_get_binary_size>,
@@ -581,15 +597,31 @@ pub union H5VL_datatype_get_args_t_union {
     pub get_tcpl: ManuallyDrop<H5VL_datatype_get_args_t_union_get_tcpl>,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
-#[derive(Debug)]
 pub struct H5VL_datatype_get_args_t {
     pub op_type: H5VL_datatype_get_t,
     pub args: H5VL_datatype_get_args_t_union,
 }
 
-#[cfg(feature = "1.13.0")]
+impl Debug for H5VL_datatype_get_args_t {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut s = f.debug_struct("H5VL_datatype_get_args_t");
+        s.field("op_type", &self.op_type);
+        unsafe {
+            match self.op_type {
+                H5VL_datatype_get_t::H5VL_DATATYPE_GET_BINARY_SIZE => {
+                    s.field("args", &self.args.get_binary_size)
+                }
+                H5VL_datatype_get_t::H5VL_DATATYPE_GET_BINARY => {
+                    s.field("args", &self.args.get_binary)
+                }
+                H5VL_datatype_get_t::H5VL_DATATYPE_GET_TCPL => s.field("args", &self.args.get_tcpl),
+            }
+        };
+        s.finish()
+    }
+}
+
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_datatype_class_t {
@@ -644,7 +676,6 @@ pub struct H5VL_datatype_class_t {
         Option<extern "C" fn(dt: *mut c_void, dxpl_id: hid_t, req: *mut *mut c_void) -> herr_t>,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_file_specific_args_t_union_flush {
@@ -652,14 +683,12 @@ pub struct H5VL_file_specific_args_t_union_flush {
     pub scope: H5F_scope_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_file_specific_args_t_union_reopen {
     pub file: *mut *mut c_void,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_file_specific_args_t_union_is_accessible {
@@ -668,7 +697,6 @@ pub struct H5VL_file_specific_args_t_union_is_accessible {
     pub accessible: *mut hbool_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_file_specific_args_t_union_del {
@@ -676,7 +704,6 @@ pub struct H5VL_file_specific_args_t_union_del {
     pub fapl_id: hid_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_file_specific_args_t_union_is_equal {
@@ -684,7 +711,6 @@ pub struct H5VL_file_specific_args_t_union_is_equal {
     pub same_file: *mut hbool_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 pub union H5VL_file_specific_args_t_union {
     pub flush: ManuallyDrop<H5VL_file_specific_args_t_union_flush>,
@@ -694,15 +720,31 @@ pub union H5VL_file_specific_args_t_union {
     pub is_equal: ManuallyDrop<H5VL_file_specific_args_t_union_is_equal>,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
-#[derive(Debug)]
 pub struct H5VL_file_specific_args_t {
     pub op_type: H5VL_file_specific_t,
     pub args: H5VL_file_specific_args_t_union,
 }
 
-#[cfg(feature = "1.13.0")]
+impl Debug for H5VL_file_specific_args_t {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut s = f.debug_struct("H5VL_file_specific_args_t");
+        s.field("op_type", &self.op_type);
+        unsafe {
+            match self.op_type {
+                H5VL_file_specific_t::H5VL_FILE_FLUSH => s.field("args", &self.args.flush),
+                H5VL_file_specific_t::H5VL_FILE_REOPEN => s.field("args", &self.args.reopen),
+                H5VL_file_specific_t::H5VL_FILE_IS_ACCESSIBLE => {
+                    s.field("args", &self.args.is_accessible)
+                }
+                H5VL_file_specific_t::H5VL_FILE_DELETE => s.field("args", &self.args.del),
+                H5VL_file_specific_t::H5VL_FILE_IS_EQUAL => s.field("args", &self.args.is_equal),
+            }
+        };
+        s.finish()
+    }
+}
+
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_file_cont_info_t {
@@ -712,42 +754,36 @@ pub struct H5VL_file_cont_info_t {
     pub blob_id_size: size_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_file_get_args_t_union_get_cont_info {
     pub info: *mut H5VL_file_cont_info_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_file_get_args_t_union_get_fapl {
     pub fapl_id: hid_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_file_get_args_t_union_get_fcpl {
     pub fcpl_id: hid_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_file_get_args_t_union_get_fileno {
     pub fileno: *mut c_ulong,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_file_get_args_t_union_get_intent {
     pub flags: *mut c_uint,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_file_get_args_t_union_get_obj_count {
@@ -755,7 +791,6 @@ pub struct H5VL_file_get_args_t_union_get_obj_count {
     pub count: *mut size_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_file_get_obj_ids_args_t {
@@ -765,7 +800,6 @@ pub struct H5VL_file_get_obj_ids_args_t {
     pub count: *mut size_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_file_get_name_args_t {
@@ -775,7 +809,6 @@ pub struct H5VL_file_get_name_args_t {
     pub file_name_len: *mut size_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 pub union H5VL_file_get_args_t_union {
     pub get_cont_info: ManuallyDrop<H5VL_file_get_args_t_union_get_cont_info>,
@@ -788,7 +821,6 @@ pub union H5VL_file_get_args_t_union {
     pub get_obj_ids: ManuallyDrop<H5VL_file_get_obj_ids_args_t>,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum H5VL_file_get_t {
@@ -802,15 +834,36 @@ pub enum H5VL_file_get_t {
     H5VL_FILE_GET_OBJ_IDS,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
-#[derive(Debug)]
 pub struct H5VL_file_get_args_t {
     pub op_type: H5VL_file_get_t,
     pub args: H5VL_file_get_args_t_union,
 }
 
-#[cfg(feature = "1.13.0")]
+impl Debug for H5VL_file_get_args_t {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut s = f.debug_struct("H5VL_file_get_args_t");
+        s.field("op_type", &self.op_type);
+        unsafe {
+            match self.op_type {
+                H5VL_file_get_t::H5VL_FILE_GET_CONT_INFO => {
+                    s.field("args", &self.args.get_cont_info)
+                }
+                H5VL_file_get_t::H5VL_FILE_GET_FAPL => s.field("args", &self.args.get_fapl),
+                H5VL_file_get_t::H5VL_FILE_GET_FCPL => s.field("args", &self.args.get_fcpl),
+                H5VL_file_get_t::H5VL_FILE_GET_FILENO => s.field("args", &self.args.get_fileno),
+                H5VL_file_get_t::H5VL_FILE_GET_INTENT => s.field("args", &self.args.get_intent),
+                H5VL_file_get_t::H5VL_FILE_GET_NAME => s.field("args", &self.args.get_name),
+                H5VL_file_get_t::H5VL_FILE_GET_OBJ_COUNT => {
+                    s.field("args", &self.args.get_obj_count)
+                }
+                H5VL_file_get_t::H5VL_FILE_GET_OBJ_IDS => s.field("args", &self.args.get_obj_ids),
+            }
+        };
+        s.finish()
+    }
+}
+
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_file_class_t {
@@ -861,7 +914,6 @@ pub struct H5VL_file_class_t {
         Option<extern "C" fn(file: *mut c_void, dxpl_id: hid_t, req: *mut *mut c_void) -> herr_t>,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum H5VL_group_specific_t {
@@ -871,7 +923,6 @@ pub enum H5VL_group_specific_t {
     H5VL_GROUP_REFRESH,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_group_spec_mount_args_t {
@@ -880,28 +931,24 @@ pub struct H5VL_group_spec_mount_args_t {
     pub fmpl_id: hid_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_group_specific_args_t_union_unmount {
     pub name: *const c_char,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_group_specific_args_t_union_flush {
     pub grp_id: hid_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_group_specific_args_t_union_refresh {
     pub grp_id: hid_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 pub union H5VL_group_specific_args_t_union {
     pub mount: ManuallyDrop<H5VL_group_spec_mount_args_t>,
@@ -910,15 +957,28 @@ pub union H5VL_group_specific_args_t_union {
     pub refresh: ManuallyDrop<H5VL_group_specific_args_t_union_refresh>,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
-#[derive(Debug)]
 pub struct H5VL_group_specific_args_t {
     pub op_type: H5VL_group_specific_t,
     pub args: H5VL_group_specific_args_t_union,
 }
 
-#[cfg(feature = "1.13.0")]
+impl Debug for H5VL_group_specific_args_t {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut s = f.debug_struct("H5VL_group_specific_args_t");
+        s.field("op_type", &self.op_type);
+        unsafe {
+            match self.op_type {
+                H5VL_group_specific_t::H5VL_GROUP_MOUNT => s.field("args", &self.args.mount),
+                H5VL_group_specific_t::H5VL_GROUP_UNMOUNT => s.field("args", &self.args.unmount),
+                H5VL_group_specific_t::H5VL_GROUP_FLUSH => s.field("args", &self.args.flush),
+                H5VL_group_specific_t::H5VL_GROUP_REFRESH => s.field("args", &self.args.refresh),
+            }
+        };
+        s.finish()
+    }
+}
+
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_group_get_info_args_t {
@@ -926,21 +986,18 @@ pub struct H5VL_group_get_info_args_t {
     pub ginfo: *mut H5G_info_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_group_get_args_t_union_get_gcpl {
     pub gcpl_id: hid_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 pub union H5VL_group_get_args_t_union {
     pub get_gcpl: ManuallyDrop<H5VL_group_get_args_t_union_get_gcpl>,
     pub get_info: ManuallyDrop<H5VL_group_get_info_args_t>,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum H5VL_group_get_t {
@@ -948,15 +1005,26 @@ pub enum H5VL_group_get_t {
     H5VL_GROUP_GET_INFO,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
-#[derive(Debug)]
 pub struct H5VL_group_get_args_t {
     pub op_type: H5VL_group_get_t,
     pub args: H5VL_group_get_args_t_union,
 }
 
-#[cfg(feature = "1.13.0")]
+impl Debug for H5VL_group_get_args_t {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut s = f.debug_struct("H5VL_group_get_args_t");
+        s.field("op_type", &self.op_type);
+        unsafe {
+            match self.op_type {
+                H5VL_group_get_t::H5VL_GROUP_GET_GCPL => s.field("args", &self.args.get_gcpl),
+                H5VL_group_get_t::H5VL_GROUP_GET_INFO => s.field("args", &self.args.get_info),
+            }
+        };
+        s.finish()
+    }
+}
+
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_group_class_t {
@@ -1011,7 +1079,6 @@ pub struct H5VL_group_class_t {
         Option<extern "C" fn(grp: *mut c_void, dxpl_id: hid_t, req: *mut *mut c_void) -> herr_t>,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_link_iterate_args_t {
@@ -1023,21 +1090,18 @@ pub struct H5VL_link_iterate_args_t {
     pub op_data: *mut c_void,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_link_specific_args_t_union_exists {
     pub exists: *mut hbool_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 pub union H5VL_link_specific_args_t_union {
     pub exists: ManuallyDrop<H5VL_link_specific_args_t_union_exists>,
     pub iterate: ManuallyDrop<H5VL_link_iterate_args_t>,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum H5VL_link_specific_t {
@@ -1046,22 +1110,33 @@ pub enum H5VL_link_specific_t {
     H5VL_LINK_ITER,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
-#[derive(Debug)]
 pub struct H5VL_link_specific_args_t {
     pub op_type: H5VL_link_specific_t,
     pub args: H5VL_link_specific_args_t_union,
 }
 
-#[cfg(feature = "1.13.0")]
+impl Debug for H5VL_link_specific_args_t {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut s = f.debug_struct("H5VL_link_specific_args_t");
+        s.field("op_type", &self.op_type);
+        unsafe {
+            match self.op_type {
+                H5VL_link_specific_t::H5VL_LINK_DELETE => s.field("args", &"delete"),
+                H5VL_link_specific_t::H5VL_LINK_EXISTS => s.field("args", &self.args.exists),
+                H5VL_link_specific_t::H5VL_LINK_ITER => s.field("args", &self.args.iterate),
+            }
+        };
+        s.finish()
+    }
+}
+
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_link_get_args_t_union_get_info {
     pub linfo: *mut H5L_info2_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_link_get_args_t_union_get_name {
@@ -1070,7 +1145,6 @@ pub struct H5VL_link_get_args_t_union_get_name {
     pub name_len: *mut size_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_link_get_args_t_union_get_val {
@@ -1078,7 +1152,6 @@ pub struct H5VL_link_get_args_t_union_get_val {
     pub buf: *mut c_void,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 pub union H5VL_link_get_args_t_union {
     pub get_info: ManuallyDrop<H5VL_link_get_args_t_union_get_info>,
@@ -1086,7 +1159,6 @@ pub union H5VL_link_get_args_t_union {
     pub get_val: ManuallyDrop<H5VL_link_get_args_t_union_get_val>,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum H5VL_link_get_t {
@@ -1095,15 +1167,27 @@ pub enum H5VL_link_get_t {
     H5VL_LINK_GET_VAL,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
-#[derive(Debug)]
 pub struct H5VL_link_get_args_t {
     pub op_type: H5VL_link_get_t,
     pub args: H5VL_link_get_args_t_union,
 }
 
-#[cfg(feature = "1.13.0")]
+impl Debug for H5VL_link_get_args_t {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut s = f.debug_struct("H5VL_link_get_args_t");
+        s.field("op_type", &self.op_type);
+        unsafe {
+            match self.op_type {
+                H5VL_link_get_t::H5VL_LINK_GET_INFO => s.field("args", &self.args.get_info),
+                H5VL_link_get_t::H5VL_LINK_GET_NAME => s.field("args", &self.args.get_name),
+                H5VL_link_get_t::H5VL_LINK_GET_VAL => s.field("args", &self.args.get_val),
+            }
+        };
+        s.finish()
+    }
+}
+
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum H5VL_link_create_t {
@@ -1112,7 +1196,6 @@ pub enum H5VL_link_create_t {
     H5VL_LINK_CREATE_UD,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_link_create_args_t_union_hard {
@@ -1120,14 +1203,12 @@ pub struct H5VL_link_create_args_t_union_hard {
     pub curr_loc_params: H5VL_loc_params_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_link_create_args_t_union_soft {
     pub target: *const c_char,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_link_create_args_t_union_ud {
@@ -1136,7 +1217,6 @@ pub struct H5VL_link_create_args_t_union_ud {
     pub buf_size: size_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 pub union H5VL_link_create_args_t_union {
     pub hard: ManuallyDrop<H5VL_link_create_args_t_union_hard>,
@@ -1144,15 +1224,27 @@ pub union H5VL_link_create_args_t_union {
     pub ud: ManuallyDrop<H5VL_link_create_args_t_union_ud>,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
-#[derive(Debug)]
 pub struct H5VL_link_create_args_t {
     pub op_type: H5VL_link_create_t,
     pub args: H5VL_link_create_args_t_union,
 }
 
-#[cfg(feature = "1.13.0")]
+impl Debug for H5VL_link_create_args_t {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut s = f.debug_struct("H5VL_link_create_args_t");
+        s.field("op_type", &self.op_type);
+        unsafe {
+            match self.op_type {
+                H5VL_link_create_t::H5VL_LINK_CREATE_HARD => s.field("args", &self.args.hard),
+                H5VL_link_create_t::H5VL_LINK_CREATE_SOFT => s.field("args", &self.args.soft),
+                H5VL_link_create_t::H5VL_LINK_CREATE_UD => s.field("args", &self.args.ud),
+            }
+        };
+        s.finish()
+    }
+}
+
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_link_class_t {
@@ -1220,7 +1312,6 @@ pub struct H5VL_link_class_t {
     >,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_object_visit_args_t {
@@ -1231,42 +1322,36 @@ pub struct H5VL_object_visit_args_t {
     pub op_data: *mut c_void,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_object_specific_args_t_union_change_rc {
     pub delta: c_int,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_object_specific_args_t_union_exists {
     pub exists: *mut hbool_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_object_specific_args_t_union_lookup {
     pub token_ptr: *mut H5O_token_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_object_specific_args_t_union_flush {
     pub obj_id: hid_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_object_specific_args_t_union_refresh {
     pub obj_id: hid_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 pub union H5VL_object_specific_args_t_union {
     pub change_rc: ManuallyDrop<H5VL_object_specific_args_t_union_change_rc>,
@@ -1277,7 +1362,6 @@ pub union H5VL_object_specific_args_t_union {
     pub refresh: ManuallyDrop<H5VL_object_specific_args_t_union_refresh>,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum H5VL_object_specific_t {
@@ -1289,15 +1373,32 @@ pub enum H5VL_object_specific_t {
     H5VL_OBJECT_REFRESH,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
-#[derive(Debug)]
 pub struct H5VL_object_specific_args_t {
     pub op_type: H5VL_object_specific_t,
     pub args: H5VL_object_specific_args_t_union,
 }
 
-#[cfg(feature = "1.13.0")]
+impl Debug for H5VL_object_specific_args_t {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut s = f.debug_struct("H5VL_object_specific_args_t");
+        s.field("op_type", &self.op_type);
+        unsafe {
+            match self.op_type {
+                H5VL_object_specific_t::H5VL_OBJECT_CHANGE_REF_COUNT => {
+                    s.field("args", &self.args.change_rc)
+                }
+                H5VL_object_specific_t::H5VL_OBJECT_EXISTS => s.field("args", &self.args.exists),
+                H5VL_object_specific_t::H5VL_OBJECT_LOOKUP => s.field("args", &self.args.lookup),
+                H5VL_object_specific_t::H5VL_OBJECT_VISIT => s.field("args", &self.args.visit),
+                H5VL_object_specific_t::H5VL_OBJECT_FLUSH => s.field("args", &self.args.flush),
+                H5VL_object_specific_t::H5VL_OBJECT_REFRESH => s.field("args", &self.args.refresh),
+            }
+        };
+        s.finish()
+    }
+}
+
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum H5VL_object_get_t {
@@ -1307,14 +1408,12 @@ pub enum H5VL_object_get_t {
     H5VL_OBJECT_GET_INFO,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_object_get_args_t_union_get_file {
     pub file: *mut *mut c_void,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_object_get_args_t_union_get_name {
@@ -1323,14 +1422,12 @@ pub struct H5VL_object_get_args_t_union_get_name {
     pub name_len: *mut size_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_object_get_args_t_union_get_type {
     pub obj_type: *mut H5O_type_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_object_get_args_t_union_get_info {
@@ -1338,7 +1435,6 @@ pub struct H5VL_object_get_args_t_union_get_info {
     pub oinfo: *mut H5O_info2_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 pub union H5VL_object_get_args_t_union {
     pub get_file: ManuallyDrop<H5VL_object_get_args_t_union_get_file>,
@@ -1347,15 +1443,28 @@ pub union H5VL_object_get_args_t_union {
     pub get_info: ManuallyDrop<H5VL_object_get_args_t_union_get_info>,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
-#[derive(Debug)]
 pub struct H5VL_object_get_args_t {
     pub op_type: H5VL_object_get_t,
     pub args: H5VL_object_get_args_t_union,
 }
 
-#[cfg(feature = "1.13.0")]
+impl Debug for H5VL_object_get_args_t {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut s = f.debug_struct("H5VL_object_get_args_t");
+        s.field("op_type", &self.op_type);
+        unsafe {
+            match self.op_type {
+                H5VL_object_get_t::H5VL_OBJECT_GET_FILE => s.field("args", &self.args.get_file),
+                H5VL_object_get_t::H5VL_OBJECT_GET_NAME => s.field("args", &self.args.get_name),
+                H5VL_object_get_t::H5VL_OBJECT_GET_TYPE => s.field("args", &self.args.get_type),
+                H5VL_object_get_t::H5VL_OBJECT_GET_INFO => s.field("args", &self.args.get_info),
+            }
+        };
+        s.finish()
+    }
+}
+
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_object_class_t {
@@ -1410,7 +1519,6 @@ pub struct H5VL_object_class_t {
         ) -> herr_t,
     >,
 }
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum H5VL_get_conn_lvl_t {
@@ -1418,7 +1526,6 @@ pub enum H5VL_get_conn_lvl_t {
     H5VL_GET_CONN_LVL_TERM,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_introspect_class_t {
@@ -1440,7 +1547,6 @@ pub struct H5VL_introspect_class_t {
     >,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum H5VL_request_status_t {
@@ -1451,7 +1557,6 @@ pub enum H5VL_request_status_t {
     H5VL_REQUEST_STATUS_CANCELED,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum H5VL_request_specific_t {
@@ -1459,14 +1564,12 @@ pub enum H5VL_request_specific_t {
     H5VL_REQUEST_GET_EXEC_TIME,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_request_specific_args_t_union_get_err_stack {
     pub err_stack_id: hid_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_request_specific_args_t_union_get_exec_time {
@@ -1474,26 +1577,39 @@ pub struct H5VL_request_specific_args_t_union_get_exec_time {
     pub exec_time: *mut u64,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 pub union H5VL_request_specific_args_t_union {
     pub get_err_stack: ManuallyDrop<H5VL_request_specific_args_t_union_get_err_stack>,
     pub get_exec_time: ManuallyDrop<H5VL_request_specific_args_t_union_get_exec_time>,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
-#[derive(Debug)]
 pub struct H5VL_request_specific_args_t {
     pub op_type: H5VL_request_specific_t,
     pub args: H5VL_request_specific_args_t_union,
 }
 
-#[cfg(feature = "1.13.0")]
+impl Debug for H5VL_request_specific_args_t {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut s = f.debug_struct("H5VL_blob_specific_args_t");
+        s.field("op_type", &self.op_type);
+        unsafe {
+            match self.op_type {
+                H5VL_request_specific_t::H5VL_REQUEST_GET_ERR_STACK => {
+                    s.field("args", &self.args.get_err_stack)
+                }
+                H5VL_request_specific_t::H5VL_REQUEST_GET_EXEC_TIME => {
+                    s.field("args", &self.args.get_exec_time)
+                }
+            }
+        };
+        s.finish()
+    }
+}
+
 pub type H5VL_request_notify_t =
     Option<extern "C" fn(ctx: *mut c_void, status: H5VL_request_status_t) -> herr_t>;
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_request_class_t {
@@ -1531,15 +1647,27 @@ pub union H5VL_blob_specific_args_t_union {
     pub is_null: ManuallyDrop<H5VL_blob_specific_args_t_union_is_null>,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
-#[derive(Debug)]
 pub struct H5VL_blob_specific_args_t {
     pub op_type: H5VL_blob_specific_t,
     pub args: H5VL_blob_specific_args_t_union,
 }
 
-#[cfg(feature = "1.13.0")]
+impl Debug for H5VL_blob_specific_args_t {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut s = f.debug_struct("H5VL_blob_specific_args_t");
+        s.field("op_type", &self.op_type);
+        let s = unsafe {
+            match self.op_type {
+                H5VL_blob_specific_t::H5VL_BLOB_DELETE => s.field("args", &"delete"),
+                H5VL_blob_specific_t::H5VL_BLOB_ISNULL => s.field("args", &self.args.is_null),
+                H5VL_blob_specific_t::H5VL_BLOB_SETNULL => s.field("args", &"setnull"),
+            }
+        };
+        s.finish()
+    }
+}
+
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_blob_class_t {
@@ -1577,7 +1705,6 @@ pub struct H5VL_blob_class_t {
     >,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_token_class_t {
@@ -1607,7 +1734,6 @@ pub struct H5VL_token_class_t {
     >,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_class_t {
@@ -1661,7 +1787,6 @@ extern "C" {
     pub fn H5VLunregister_connector(vol_id: hid_t) -> herr_t;
 }
 
-#[cfg(feature = "1.12.1")]
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum H5VL_subclass_t {
@@ -1680,14 +1805,12 @@ pub enum H5VL_subclass_t {
     H5VL_SUBCLS_TOKEN,
 }
 
-#[cfg(feature = "1.12.1")]
 extern "C" {
     pub fn H5VLquery_optional(
         obj_id: hid_t, subcls: H5VL_subclass_t, opt_type: c_int, supported: *mut hbool_t,
     ) -> herr_t;
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum H5VL_loc_type_t {
@@ -1697,7 +1820,6 @@ pub enum H5VL_loc_type_t {
     H5VL_OBJECT_BY_TOKEN,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_loc_by_name_t {
@@ -1705,7 +1827,6 @@ pub struct H5VL_loc_by_name_t {
     pub lapl_id: hid_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_loc_by_idx_t {
@@ -1716,14 +1837,12 @@ pub struct H5VL_loc_by_idx_t {
     pub lapl_id: hid_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_loc_by_token_t {
     pub token: *mut H5O_token_t,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
 pub union H5VL_loc_params_t_union {
     pub loc_by_token: ManuallyDrop<H5VL_loc_by_token_t>,
@@ -1731,16 +1850,35 @@ pub union H5VL_loc_params_t_union {
     pub loc_by_idx: ManuallyDrop<H5VL_loc_by_idx_t>,
 }
 
-#[cfg(feature = "1.13.0")]
 #[repr(C)]
-#[derive(Debug)]
 pub struct H5VL_loc_params_t {
     pub obj_type: H5I_type_t,
     pub type_: H5VL_loc_type_t,
     pub loc_data: H5VL_loc_params_t_union,
 }
 
-#[cfg(feature = "1.13.0")]
+impl Debug for H5VL_loc_params_t {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut s = f.debug_struct("H5VL_lov_params_t");
+        s.field("obj_type", &self.obj_type).field("type", &self.type_);
+        unsafe {
+            match self.type_ {
+                H5VL_loc_type_t::H5VL_OBJECT_BY_SELF => s.field("loc_data", &"by_self"),
+                H5VL_loc_type_t::H5VL_OBJECT_BY_NAME => {
+                    s.field("loc_data", &self.loc_data.loc_by_name)
+                }
+                H5VL_loc_type_t::H5VL_OBJECT_BY_IDX => {
+                    s.field("loc_data", &self.loc_data.loc_by_idx)
+                }
+                H5VL_loc_type_t::H5VL_OBJECT_BY_TOKEN => {
+                    s.field("loc_data", &self.loc_data.loc_by_token)
+                }
+            }
+        };
+        s.finish()
+    }
+}
+
 #[repr(C)]
 #[derive(Debug)]
 pub struct H5VL_optional_args_t {
@@ -1748,7 +1886,6 @@ pub struct H5VL_optional_args_t {
     pub args: *mut c_void,
 }
 
-#[cfg(feature = "1.13.0")]
 extern "C" {
     pub fn H5VLattr_optional_op(
         app_file: *const c_char, app_func: *const c_char, app_line: c_uint, attr_id: hid_t,
@@ -1792,7 +1929,6 @@ extern "C" {
     pub fn H5VLunregister_opt_operation(subcls: H5VL_subclass_t, op_name: *const c_char) -> herr_t;
 }
 
-#[cfg(feature = "1.13.0")]
 extern "C" {
     pub fn H5VLfinish_lib_state() -> herr_t;
     pub fn H5VLintrospect_get_cap_flags(
@@ -1801,7 +1937,6 @@ extern "C" {
     pub fn H5VLstart_lib_state() -> herr_t;
 }
 
-#[cfg(feature = "1.13.0")]
 extern "C" {
     pub fn H5VLobject_is_native(obj_id: hid_t, is_native: *mut hbool_t) -> herr_t;
 }
