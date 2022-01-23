@@ -18,8 +18,8 @@ fn write_raw<T: Copy>(out: &mut [u8], value: T) {
     }
 }
 
-/// Much the same as align_offset but works around
-/// align_offset being allowed to always return usize::MAX
+/// Much the same as `align_offset` but works around
+/// `align_offset` being allowed to always return `usize::MAX`
 fn is_aligned_for_type<U>(buf: *const u8) -> bool {
     let aligned = mem::align_of::<U>();
     if aligned == 0 {
