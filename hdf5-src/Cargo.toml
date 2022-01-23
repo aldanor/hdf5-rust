@@ -32,7 +32,6 @@ hl = []
 zlib = ["libz-sys"]
 deprecated = []
 threadsafe = []
-default = ["deprecated"]
 
 [dependencies]
 libz-sys = { version = "1.0.25", features = ["static"], optional = true, default-features=false }

@@ -2,8 +2,11 @@ use std::fmt::{self, Debug};
 use std::ops::Deref;
 use std::ptr;
 
-#[allow(deprecated)]
+#[cfg(not(feature = "1.12.0"))]
 use hdf5_sys::h5s::H5Sencode1;
+#[cfg(feature = "1.12.0")]
+use hdf5_sys::h5s::H5Sencode2;
+
 use hdf5_sys::h5s::{
     H5S_class_t, H5Scopy, H5Screate, H5Screate_simple, H5Sdecode, H5Sget_select_npoints,
     H5Sget_simple_extent_dims, H5Sget_simple_extent_ndims, H5Sget_simple_extent_npoints,
@@ -127,13 +130,26 @@ impl Dataspace {
 
     #[allow(deprecated)]
     pub fn encode(&self) -> Result<Vec<u8>> {
-        let mut len: size_t = 0;
-        h5lock!({
-            h5try!(H5Sencode1(self.id(), ptr::null_mut(), &mut len as *mut _));
-            let mut buf = vec![0_u8; len];
-            h5try!(H5Sencode1(self.id(), buf.as_mut_ptr().cast(), &mut len as *mut _));
-            Ok(buf)
-        })
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "1.12.0")] {
+                h5lock!({
+                    let mut len: size_t = 0;
+                    let fapl = crate::hl::plist::file_access::FileAccessBuilder::new().finish()?;
+                    h5try!(H5Sencode2(self.id(), ptr::null_mut(), &mut len, fapl.id()));
+                    let mut buf = vec![0_u8; len];
+                    h5try!(H5Sencode2(self.id(), buf.as_mut_ptr().cast(), &mut len, fapl.id()));
+                    Ok(buf)
+                })
+            } else {
+                h5lock!({
+                    let mut len: size_t = 0;
+                    h5try!(H5Sencode1(self.id(), ptr::null_mut(), &mut len as *mut _));
+                    let mut buf = vec![0_u8; len];
+                    h5try!(H5Sencode1(self.id(), buf.as_mut_ptr().cast(), &mut len as *mut _));
+                    Ok(buf)
+                })
+            }
+        }
     }
 
     pub fn decode<T>(buf: T) -> Result<Self>
