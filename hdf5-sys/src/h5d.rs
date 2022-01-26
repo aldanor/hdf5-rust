@@ -29,7 +29,7 @@ pub enum H5D_layout_t {
 
 impl Default for H5D_layout_t {
     fn default() -> Self {
-        H5D_layout_t::H5D_CONTIGUOUS
+        Self::H5D_CONTIGUOUS
     }
 }
 
@@ -50,7 +50,7 @@ pub enum H5D_alloc_time_t {
 
 impl Default for H5D_alloc_time_t {
     fn default() -> Self {
-        H5D_alloc_time_t::H5D_ALLOC_TIME_DEFAULT
+        Self::H5D_ALLOC_TIME_DEFAULT
     }
 }
 
@@ -74,7 +74,7 @@ pub enum H5D_fill_time_t {
 
 impl Default for H5D_fill_time_t {
     fn default() -> Self {
-        H5D_fill_time_t::H5D_FILL_TIME_IFSET
+        Self::H5D_FILL_TIME_IFSET
     }
 }
 
@@ -89,7 +89,7 @@ pub enum H5D_fill_value_t {
 
 impl Default for H5D_fill_value_t {
     fn default() -> Self {
-        H5D_fill_value_t::H5D_FILL_VALUE_DEFAULT
+        Self::H5D_FILL_VALUE_DEFAULT
     }
 }
 
@@ -238,7 +238,7 @@ mod hdf5_1_10_0 {
 
     impl Default for H5D_vds_view_t {
         fn default() -> Self {
-            H5D_vds_view_t::H5D_VDS_LAST_AVAILABLE
+            Self::H5D_VDS_LAST_AVAILABLE
         }
     }
 

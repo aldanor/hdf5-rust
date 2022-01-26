@@ -86,8 +86,7 @@ pub struct ChunkInfo {
 #[cfg(feature = "1.10.5")]
 impl ChunkInfo {
     pub(crate) fn new(ndim: usize) -> Self {
-        let mut offset = Vec::with_capacity(ndim);
-        unsafe { offset.set_len(ndim) };
+        let offset = vec![0; ndim];
         Self { offset, filter_mask: 0, addr: 0, size: 0 }
     }
 
@@ -661,11 +660,11 @@ impl DatasetBuilderInner {
     }
 
     pub fn shuffle(&mut self) {
-        self.with_dcpl(|pl| pl.shuffle());
+        self.with_dcpl(DatasetCreateBuilder::shuffle);
     }
 
     pub fn fletcher32(&mut self) {
-        self.with_dcpl(|pl| pl.fletcher32());
+        self.with_dcpl(DatasetCreateBuilder::fletcher32);
     }
 
     pub fn szip(&mut self, coding: SZip, px_per_block: u8) {
@@ -673,7 +672,7 @@ impl DatasetBuilderInner {
     }
 
     pub fn nbit(&mut self) {
-        self.with_dcpl(|pl| pl.nbit());
+        self.with_dcpl(DatasetCreateBuilder::nbit);
     }
 
     pub fn scale_offset(&mut self, mode: ScaleOffset) {
@@ -738,7 +737,7 @@ impl DatasetBuilderInner {
     }
 
     pub fn clear_filters(&mut self) {
-        self.with_dcpl(|pl| pl.clear_filters());
+        self.with_dcpl(DatasetCreateBuilder::clear_filters);
     }
 
     pub fn alloc_time(&mut self, alloc_time: Option<AllocTime>) {
@@ -754,7 +753,7 @@ impl DatasetBuilderInner {
     }
 
     pub fn no_fill_value(&mut self) {
-        self.with_dcpl(|pl| pl.no_fill_value());
+        self.with_dcpl(DatasetCreateBuilder::no_fill_value);
     }
 
     pub fn chunk<D: Dimension>(&mut self, chunk: D) {

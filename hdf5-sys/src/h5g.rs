@@ -21,7 +21,7 @@ pub const H5G_NTYPES: c_uint = 256;
 pub const H5G_NLIBTYPES: c_uint = 8;
 pub const H5G_NUSERTYPES: c_uint = H5G_NTYPES - H5G_NLIBTYPES;
 
-pub fn H5G_USERTYPE(X: c_uint) -> c_uint {
+pub const fn H5G_USERTYPE(X: c_uint) -> c_uint {
     8 + X
 }
 

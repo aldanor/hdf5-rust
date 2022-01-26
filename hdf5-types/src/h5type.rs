@@ -23,15 +23,15 @@ pub enum IntSize {
 }
 
 impl IntSize {
-    pub fn from_int(size: usize) -> Option<IntSize> {
+    pub const fn from_int(size: usize) -> Option<Self> {
         if size == 1 {
-            Some(IntSize::U1)
+            Some(Self::U1)
         } else if size == 2 {
-            Some(IntSize::U2)
+            Some(Self::U2)
         } else if size == 4 {
-            Some(IntSize::U4)
+            Some(Self::U4)
         } else if size == 8 {
-            Some(IntSize::U8)
+            Some(Self::U8)
         } else {
             None
         }
@@ -45,11 +45,11 @@ pub enum FloatSize {
 }
 
 impl FloatSize {
-    pub fn from_int(size: usize) -> Option<FloatSize> {
+    pub const fn from_int(size: usize) -> Option<Self> {
         if size == 4 {
-            Some(FloatSize::U4)
+            Some(Self::U4)
         } else if size == 8 {
-            Some(FloatSize::U8)
+            Some(Self::U8)
         } else {
             None
         }
@@ -105,12 +105,12 @@ pub struct CompoundType {
 }
 
 impl CompoundType {
-    pub fn to_c_repr(&self) -> CompoundType {
+    pub fn to_c_repr(&self) -> Self {
         let mut layout = self.clone();
         layout.fields.sort_by_key(|f| f.index);
         let mut offset = 0;
         let mut max_align = 1;
-        for f in layout.fields.iter_mut() {
+        for f in &mut layout.fields {
             f.ty = f.ty.to_c_repr();
             let align = f.ty.c_alignment();
             while offset % align != 0 {
@@ -127,11 +127,11 @@ impl CompoundType {
         layout
     }
 
-    pub fn to_packed_repr(&self) -> CompoundType {
+    pub fn to_packed_repr(&self) -> Self {
         let mut layout = self.clone();
         layout.fields.sort_by_key(|f| f.index);
         layout.size = 0;
-        for f in layout.fields.iter_mut() {
+        for f in &mut layout.fields {
             f.ty = f.ty.to_packed_repr();
             f.offset = layout.size;
             layout.size += f.ty.size();
@@ -148,10 +148,10 @@ pub enum TypeDescriptor {
     Boolean,
     Enum(EnumType),
     Compound(CompoundType),
-    FixedArray(Box<TypeDescriptor>, usize),
+    FixedArray(Box<Self>, usize),
     FixedAscii(usize),
     FixedUnicode(usize),
-    VarLenArray(Box<TypeDescriptor>),
+    VarLenArray(Box<Self>),
     VarLenAscii,
     VarLenUnicode,
 }
@@ -184,53 +184,45 @@ impl Display for TypeDescriptor {
 
 impl TypeDescriptor {
     pub fn size(&self) -> usize {
-        use self::TypeDescriptor::*;
-
         match *self {
-            Integer(size) | Unsigned(size) => size as _,
-            Float(size) => size as _,
-            Boolean => 1,
-            Enum(ref enum_type) => enum_type.size as _,
-            Compound(ref compound) => compound.size,
-            FixedArray(ref ty, len) => ty.size() * len,
-            FixedAscii(len) | FixedUnicode(len) => len,
-            VarLenArray(_) => mem::size_of::<hvl_t>(),
-            VarLenAscii | VarLenUnicode => mem::size_of::<*const u8>(),
+            Self::Integer(size) | Self::Unsigned(size) => size as _,
+            Self::Float(size) => size as _,
+            Self::Boolean => 1,
+            Self::Enum(ref enum_type) => enum_type.size as _,
+            Self::Compound(ref compound) => compound.size,
+            Self::FixedArray(ref ty, len) => ty.size() * len,
+            Self::FixedAscii(len) | Self::FixedUnicode(len) => len,
+            Self::VarLenArray(_) => mem::size_of::<hvl_t>(),
+            Self::VarLenAscii | Self::VarLenUnicode => mem::size_of::<*const u8>(),
         }
     }
 
     fn c_alignment(&self) -> usize {
-        use self::TypeDescriptor::*;
-
         match *self {
-            Compound(ref compound) => {
+            Self::Compound(ref compound) => {
                 compound.fields.iter().map(|f| f.ty.c_alignment()).max().unwrap_or(1)
             }
-            FixedArray(ref ty, _) => ty.c_alignment(),
-            FixedAscii(_) | FixedUnicode(_) => 1,
-            VarLenArray(_) => mem::size_of::<usize>(),
+            Self::FixedArray(ref ty, _) => ty.c_alignment(),
+            Self::FixedAscii(_) | Self::FixedUnicode(_) => 1,
+            Self::VarLenArray(_) => mem::size_of::<usize>(),
             _ => self.size(),
         }
     }
 
     pub fn to_c_repr(&self) -> Self {
-        use self::TypeDescriptor::*;
-
         match *self {
-            Compound(ref compound) => Compound(compound.to_c_repr()),
-            FixedArray(ref ty, size) => FixedArray(Box::new(ty.to_c_repr()), size),
-            VarLenArray(ref ty) => VarLenArray(Box::new(ty.to_c_repr())),
+            Self::Compound(ref compound) => Self::Compound(compound.to_c_repr()),
+            Self::FixedArray(ref ty, size) => Self::FixedArray(Box::new(ty.to_c_repr()), size),
+            Self::VarLenArray(ref ty) => Self::VarLenArray(Box::new(ty.to_c_repr())),
             _ => self.clone(),
         }
     }
 
     pub fn to_packed_repr(&self) -> Self {
-        use self::TypeDescriptor::*;
-
         match *self {
-            Compound(ref compound) => Compound(compound.to_packed_repr()),
-            FixedArray(ref ty, size) => FixedArray(Box::new(ty.to_packed_repr()), size),
-            VarLenArray(ref ty) => VarLenArray(Box::new(ty.to_packed_repr())),
+            Self::Compound(ref compound) => Self::Compound(compound.to_packed_repr()),
+            Self::FixedArray(ref ty, size) => Self::FixedArray(Box::new(ty.to_packed_repr()), size),
+            Self::VarLenArray(ref ty) => Self::VarLenArray(Box::new(ty.to_packed_repr())),
             _ => self.clone(),
         }
     }

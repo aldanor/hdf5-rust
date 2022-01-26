@@ -11,6 +11,7 @@ description = "Native bindings to the HDF5 library."
 edition = "2018"
 links = "hdf5"
 readme = "README.md"
+categories = ["ffi", "filesystem", "science"]
 
 [dependencies]
 libc = "0.2"

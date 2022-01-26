@@ -13,7 +13,7 @@ fn main() {
             "DEP_HDF5_MSVC_DLL_INDIRECTION" => print_cfg("msvc_dll_indirection"),
             // public version features
             key if key.starts_with("DEP_HDF5_VERSION_") => {
-                print_feature(&key.trim_start_matches("DEP_HDF5_VERSION_").replace("_", "."));
+                print_feature(&key.trim_start_matches("DEP_HDF5_VERSION_").replace('_', "."));
             }
             _ => continue,
         }

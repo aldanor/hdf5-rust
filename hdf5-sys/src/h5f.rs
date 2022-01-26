@@ -64,7 +64,7 @@ pub enum H5F_close_degree_t {
 
 impl Default for H5F_close_degree_t {
     fn default() -> Self {
-        H5F_close_degree_t::H5F_CLOSE_DEFAULT
+        Self::H5F_CLOSE_DEFAULT
     }
 }
 

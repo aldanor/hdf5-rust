@@ -10,6 +10,8 @@ homepage = "https://github.com/aldanor/hdf5-rust"
 description = "Build script for compiling HDF5 C library from source."
 edition = "2018"
 links = "hdf5src"
+readme = "README.md"
+categories = ["ffi"]
 exclude = [
     "ext/hdf5/bin/**",
     "ext/hdf5/c++/**",

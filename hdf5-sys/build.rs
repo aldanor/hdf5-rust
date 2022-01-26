@@ -1,3 +1,7 @@
+#![allow(clippy::must_use_candidate)]
+#![allow(clippy::option_if_let_else)]
+
+use std::convert::TryInto;
 use std::env;
 use std::error::Error;
 use std::fmt::{self, Debug, Display};
@@ -20,7 +24,7 @@ pub struct Version {
 }
 
 impl Version {
-    pub fn new(major: u8, minor: u8, micro: u8) -> Self {
+    pub const fn new(major: u8, minor: u8, micro: u8) -> Self {
         Self { major, minor, micro }
     }
 
@@ -35,7 +39,7 @@ impl Version {
     }
 
     pub fn is_valid(self) -> bool {
-        self >= Version { major: 1, minor: 8, micro: 4 }
+        self >= Self { major: 1, minor: 8, micro: 4 }
     }
 }
 
@@ -82,12 +86,11 @@ impl Display for RuntimeError {
 
 #[allow(non_snake_case, non_camel_case_types)]
 fn get_runtime_version_single<P: AsRef<Path>>(path: P) -> Result<Version, Box<dyn Error>> {
-    let lib = unsafe { libloading::Library::new(path.as_ref()) }?;
-
     type H5open_t = unsafe extern "C" fn() -> c_int;
-    let H5open = unsafe { lib.get::<H5open_t>(b"H5open")? };
-
     type H5get_libversion_t = unsafe extern "C" fn(*mut c_uint, *mut c_uint, *mut c_uint) -> c_int;
+
+    let lib = unsafe { libloading::Library::new(path.as_ref()) }?;
+    let H5open = unsafe { lib.get::<H5open_t>(b"H5open")? };
     let H5get_libversion = unsafe { lib.get::<H5get_libversion_t>(b"H5get_libversion")? };
 
     let mut v: (c_uint, c_uint, c_uint) = (0, 0, 0);
@@ -97,7 +100,11 @@ fn get_runtime_version_single<P: AsRef<Path>>(path: P) -> Result<Version, Box<dy
         } else if H5get_libversion(&mut v.0, &mut v.1, &mut v.2) != 0 {
             Err("H5get_libversion()".into())
         } else {
-            Ok(Version::new(v.0 as _, v.1 as _, v.2 as _))
+            Ok(Version::new(
+                v.0.try_into().unwrap(),
+                v.1.try_into().unwrap(),
+                v.2.try_into().unwrap(),
+            ))
         }
     };
     // On macos libraries using TLS will corrupt TLS from rust. We delay closing
@@ -199,12 +206,11 @@ impl Header {
                 } else {
                     panic!("Invalid H5_VERSION: {:?}", value);
                 }
-            }
+            };
         }
 
-        if !hdr.version.is_valid() {
-            panic!("Invalid H5_VERSION in the header: {:?}", hdr.version);
-        }
+        assert!(hdr.version.is_valid(), "Invalid H5_VERSION in the header: {:?}", hdr.version);
+
         hdr
     }
 }
@@ -231,7 +237,7 @@ pub struct LibrarySearcher {
 
 #[cfg(all(unix, not(target_os = "macos")))]
 mod unix {
-    use super::*;
+    use super::{is_inc_dir, LibrarySearcher};
 
     pub fn find_hdf5_via_pkg_config(config: &mut LibrarySearcher) {
         if config.inc_dir.is_some() {
@@ -479,12 +485,10 @@ impl LibrarySearcher {
             println!("Setting HDF5 root from environment variable:");
             println!("    HDF5_DIR = {:?}", var);
             let root = PathBuf::from(var);
-            if root.is_relative() {
-                panic!("HDF5_DIR cannot be relative.");
-            }
-            if !root.is_dir() {
-                panic!("HDF5_DIR is not a directory.");
-            }
+
+            assert!(!root.is_relative(), "HDF5_DIR cannot be relative.");
+            assert!(root.is_dir(), "HDF5_DIR is not a directory.");
+
             config.user_provided_dir = true;
             config.inc_dir = Some(root.join("include"));
         }
@@ -551,9 +555,7 @@ impl LibrarySearcher {
 
     pub fn finalize(self) -> Config {
         if let Some(ref inc_dir) = self.inc_dir {
-            if !is_inc_dir(inc_dir) {
-                panic!("Invalid HDF5 headers directory: {:?}", inc_dir);
-            }
+            assert!(is_inc_dir(inc_dir), "Invalid HDF5 headers directory: {:?}", inc_dir);
             let mut link_paths = self.link_paths;
             if link_paths.is_empty() {
                 if let Some(root_dir) = inc_dir.parent() {
@@ -565,12 +567,7 @@ impl LibrarySearcher {
             }
             let header = Header::parse(&inc_dir);
             if let Some(version) = self.version {
-                if header.version != version {
-                    panic!(
-                        "HDF5 header version mismatch: got {:?}, expected {:?}.",
-                        header.version, version
-                    );
-                }
+                assert_eq!(header.version, version, "HDF5 header version mismatch",);
             }
             let config = Config { inc_dir: inc_dir.clone(), link_paths, header };
             validate_runtime_version(&config);

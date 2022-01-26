@@ -10,6 +10,7 @@ repository = "https://github.com/aldanor/hdf5-rust"
 homepage = "https://github.com/aldanor/hdf5-rust"
 build = "build.rs"
 edition = "2018"
+categories = ["science", "filesystem"]
 
 [features]
 default = []

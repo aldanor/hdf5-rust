@@ -1,5 +1,8 @@
 #![recursion_limit = "1024"]
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::missing_safety_doc))]
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::missing_const_for_fn))]
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::redundant_pub_crate))]
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::must_use_candidate))]
 
 //! Types that can be stored and retrieved from a `HDF5` dataset
 //!
@@ -41,7 +44,7 @@ pub(crate) unsafe fn free(ptr: *mut core::ffi::c_void) {
         if #[cfg(any(feature = "h5-alloc", windows_dll))] {
             hdf5_sys::h5::H5free_memory(ptr);
         } else {
-            libc::free(ptr)
+            libc::free(ptr);
         }
     }
 }

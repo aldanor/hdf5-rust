@@ -67,7 +67,7 @@ fn impl_transparent(ty: &Type) -> TokenStream {
     }
 }
 
-fn impl_enum(names: Vec<Ident>, values: Vec<Expr>, repr: &Ident) -> TokenStream {
+fn impl_enum(names: &[Ident], values: &[Expr], repr: &Ident) -> TokenStream {
     let size = Ident::new(
         &format!(
             "U{}",
@@ -96,7 +96,7 @@ fn impl_enum(names: Vec<Ident>, values: Vec<Expr>, repr: &Ident) -> TokenStream 
 fn is_phantom_data(ty: &Type) -> bool {
     match *ty {
         Type::Path(TypePath { qself: None, ref path }) => {
-            path.segments.iter().last().map(|x| x.ident == "PhantomData").unwrap_or(false)
+            path.segments.iter().last().map_or(false, |x| x.ident == "PhantomData")
         }
         _ => false,
     }
@@ -152,9 +152,8 @@ fn impl_trait(
             Fields::Named(ref fields) => {
                 let fields: Vec<_> =
                     fields.named.iter().filter(|f| !is_phantom_data(&f.ty)).collect();
-                if fields.is_empty() {
-                    panic!("Cannot derive H5Type for empty structs");
-                }
+                assert!(!fields.is_empty(), "Cannot derive H5Type for empty structs");
+
                 if find_repr(attrs, &["C", "packed", "transparent"]).expect(
                     "H5Type requires repr(C), repr(packed) or repr(transparent) for structs",
                 ) == "transparent"
@@ -164,7 +163,7 @@ fn impl_trait(
                 } else {
                     let types = pluck(fields.iter(), |f| f.ty.clone());
                     let fields = pluck(fields.iter(), |f| f.ident.clone().unwrap());
-                    let names = fields.iter().map(|f| f.to_string()).collect::<Vec<_>>();
+                    let names = fields.iter().map(ToString::to_string).collect::<Vec<_>>();
                     impl_compound(ty, ty_generics, &fields, &names, &types)
                 }
             }
@@ -176,9 +175,8 @@ fn impl_trait(
                     .filter(|&(_, f)| !is_phantom_data(&f.ty))
                     .map(|(i, f)| (Index::from(i), f))
                     .unzip();
-                if fields.is_empty() {
-                    panic!("Cannot derive H5Type for empty tuple structs");
-                }
+                assert!(!fields.is_empty(), "Cannot derive H5Type for empty tuple structs");
+
                 if find_repr(attrs, &["C", "packed", "transparent"]).expect(
                     "H5Type requires repr(C), repr(packed) or repr(transparent) for tuple structs",
                 ) == "transparent"
@@ -194,18 +192,20 @@ fn impl_trait(
         },
         Data::Enum(ref data) => {
             let variants = &data.variants;
-            if variants.iter().any(|v| v.fields != Fields::Unit || v.discriminant.is_none()) {
-                panic!("H5Type can only be derived for enums with scalar discriminants");
-            } else if variants.is_empty() {
-                panic!("Cannot derive H5Type for empty enums")
-            }
+            assert!(
+                variants.iter().all(|v| v.fields == Fields::Unit && v.discriminant.is_some()),
+                "H5Type can only be derived for enums with scalar discriminants"
+            );
+
+            assert!(!variants.is_empty(), "Cannot derive H5Type for empty enums");
+
             let enum_reprs =
                 &["i8", "i16", "i32", "i64", "u8", "u16", "u32", "u64", "isize", "usize"];
             let repr = find_repr(attrs, enum_reprs)
                 .expect("H5Type can only be derived for enums with explicit representation");
             let names = pluck(variants.iter(), |v| v.ident.clone());
             let values = pluck(variants.iter(), |v| v.discriminant.clone().unwrap().1);
-            impl_enum(names, values, &repr)
+            impl_enum(&names, &values, &repr)
         }
         Data::Union(_) => {
             panic!("Cannot derive H5Type for tagged unions");

@@ -386,7 +386,7 @@ impl FileCreateBuilder {
             }
         }
         if let Some(v) = self.obj_track_times {
-            h5try!(H5Pset_obj_track_times(id, v as _));
+            h5try!(H5Pset_obj_track_times(id, hbool_t::from(v)));
         }
         if let Some(v) = self.attr_phase_change {
             h5try!(H5Pset_attr_phase_change(id, v.max_compact as _, v.min_dense as _));
@@ -407,7 +407,7 @@ impl FileCreateBuilder {
                         } else {
                             H5F_fspace_strategy_t::H5F_FSPACE_STRATEGY_FSM_AGGR
                         };
-                        (strategy, persist as _, threshold as _)
+                        (strategy, hbool_t::from(persist), threshold)
                     }
                     FileSpaceStrategy::PageAggregation => {
                         (H5F_fspace_strategy_t::H5F_FSPACE_STRATEGY_AGGR, 0, 0)

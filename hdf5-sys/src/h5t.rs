@@ -104,7 +104,7 @@ pub enum H5T_cset_t {
 
 impl Default for H5T_cset_t {
     fn default() -> Self {
-        H5T_cset_t::H5T_CSET_ASCII
+        Self::H5T_CSET_ASCII
     }
 }
 

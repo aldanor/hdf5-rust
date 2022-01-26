@@ -8,13 +8,13 @@ use crate::string::{VarLenAscii, VarLenUnicode};
 
 fn read_raw<T: Copy>(buf: &[u8]) -> T {
     debug_assert_eq!(mem::size_of::<T>(), buf.len());
-    unsafe { *(buf.as_ptr() as *const T) }
+    unsafe { *(buf.as_ptr().cast::<T>()) }
 }
 
 fn write_raw<T: Copy>(out: &mut [u8], value: T) {
     debug_assert_eq!(mem::size_of::<T>(), out.len());
     unsafe {
-        *(out.as_mut_ptr() as *mut T) = value;
+        *(out.as_mut_ptr().cast()) = value;
     }
 }
 
@@ -40,62 +40,58 @@ pub enum DynInteger {
 
 impl DynInteger {
     pub(self) fn read(buf: &[u8], signed: bool, size: IntSize) -> Self {
-        use DynInteger::*;
         match (signed, size) {
-            (true, IntSize::U1) => Int8(read_raw(buf)),
-            (true, IntSize::U2) => Int16(read_raw(buf)),
-            (true, IntSize::U4) => Int32(read_raw(buf)),
-            (true, IntSize::U8) => Int64(read_raw(buf)),
-            (false, IntSize::U1) => UInt8(read_raw(buf)),
-            (false, IntSize::U2) => UInt16(read_raw(buf)),
-            (false, IntSize::U4) => UInt32(read_raw(buf)),
-            (false, IntSize::U8) => UInt64(read_raw(buf)),
+            (true, IntSize::U1) => Self::Int8(read_raw(buf)),
+            (true, IntSize::U2) => Self::Int16(read_raw(buf)),
+            (true, IntSize::U4) => Self::Int32(read_raw(buf)),
+            (true, IntSize::U8) => Self::Int64(read_raw(buf)),
+            (false, IntSize::U1) => Self::UInt8(read_raw(buf)),
+            (false, IntSize::U2) => Self::UInt16(read_raw(buf)),
+            (false, IntSize::U4) => Self::UInt32(read_raw(buf)),
+            (false, IntSize::U8) => Self::UInt64(read_raw(buf)),
         }
     }
 
     pub(self) fn as_u64(self) -> u64 {
-        use DynInteger::*;
         match self {
-            Int8(x) => x as _,
-            Int16(x) => x as _,
-            Int32(x) => x as _,
-            Int64(x) => x as _,
-            UInt8(x) => x as _,
-            UInt16(x) => x as _,
-            UInt32(x) => x as _,
-            UInt64(x) => x as _,
+            Self::Int8(x) => x as _,
+            Self::Int16(x) => x as _,
+            Self::Int32(x) => x as _,
+            Self::Int64(x) => x as _,
+            Self::UInt8(x) => x as _,
+            Self::UInt16(x) => x as _,
+            Self::UInt32(x) => x as _,
+            Self::UInt64(x) => x as _,
         }
     }
 }
 
 unsafe impl DynClone for DynInteger {
     fn dyn_clone(&mut self, out: &mut [u8]) {
-        use DynInteger::*;
         match self {
-            Int8(x) => write_raw(out, *x),
-            Int16(x) => write_raw(out, *x),
-            Int32(x) => write_raw(out, *x),
-            Int64(x) => write_raw(out, *x),
-            UInt8(x) => write_raw(out, *x),
-            UInt16(x) => write_raw(out, *x),
-            UInt32(x) => write_raw(out, *x),
-            UInt64(x) => write_raw(out, *x),
+            Self::Int8(x) => write_raw(out, *x),
+            Self::Int16(x) => write_raw(out, *x),
+            Self::Int32(x) => write_raw(out, *x),
+            Self::Int64(x) => write_raw(out, *x),
+            Self::UInt8(x) => write_raw(out, *x),
+            Self::UInt16(x) => write_raw(out, *x),
+            Self::UInt32(x) => write_raw(out, *x),
+            Self::UInt64(x) => write_raw(out, *x),
         }
     }
 }
 
 impl Debug for DynInteger {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use DynInteger::*;
         match *self {
-            Int8(x) => Debug::fmt(&x, f),
-            Int16(x) => Debug::fmt(&x, f),
-            Int32(x) => Debug::fmt(&x, f),
-            Int64(x) => Debug::fmt(&x, f),
-            UInt8(x) => Debug::fmt(&x, f),
-            UInt16(x) => Debug::fmt(&x, f),
-            UInt32(x) => Debug::fmt(&x, f),
-            UInt64(x) => Debug::fmt(&x, f),
+            Self::Int8(x) => Debug::fmt(&x, f),
+            Self::Int16(x) => Debug::fmt(&x, f),
+            Self::Int32(x) => Debug::fmt(&x, f),
+            Self::Int64(x) => Debug::fmt(&x, f),
+            Self::UInt8(x) => Debug::fmt(&x, f),
+            Self::UInt16(x) => Debug::fmt(&x, f),
+            Self::UInt32(x) => Debug::fmt(&x, f),
+            Self::UInt64(x) => Debug::fmt(&x, f),
         }
     }
 }
@@ -108,7 +104,7 @@ impl Display for DynInteger {
 
 impl From<DynInteger> for DynScalar {
     fn from(value: DynInteger) -> Self {
-        DynScalar::Integer(value)
+        Self::Integer(value)
     }
 }
 
@@ -128,24 +124,22 @@ pub enum DynScalar {
 
 unsafe impl DynClone for DynScalar {
     fn dyn_clone(&mut self, out: &mut [u8]) {
-        use DynScalar::*;
         match self {
-            Integer(x) => x.dyn_clone(out),
-            Float32(x) => write_raw(out, *x),
-            Float64(x) => write_raw(out, *x),
-            Boolean(x) => write_raw(out, *x),
+            Self::Integer(x) => x.dyn_clone(out),
+            Self::Float32(x) => write_raw(out, *x),
+            Self::Float64(x) => write_raw(out, *x),
+            Self::Boolean(x) => write_raw(out, *x),
         }
     }
 }
 
 impl Debug for DynScalar {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use DynScalar::*;
         match self {
-            Integer(x) => Debug::fmt(&x, f),
-            Float32(x) => Debug::fmt(&x, f),
-            Float64(x) => Debug::fmt(&x, f),
-            Boolean(x) => Debug::fmt(&x, f),
+            Self::Integer(x) => Debug::fmt(&x, f),
+            Self::Float32(x) => Debug::fmt(&x, f),
+            Self::Float64(x) => Debug::fmt(&x, f),
+            Self::Boolean(x) => Debug::fmt(&x, f),
         }
     }
 }
@@ -186,7 +180,7 @@ impl<'a> DynEnum<'a> {
 
 unsafe impl DynClone for DynEnum<'_> {
     fn dyn_clone(&mut self, out: &mut [u8]) {
-        self.value.dyn_clone(out)
+        self.value.dyn_clone(out);
     }
 }
 
@@ -360,15 +354,16 @@ unsafe impl DynClone for DynArray<'_> {
         let (len, ptr, size) = (self.get_len(), self.get_ptr(), self.tp.size());
         let out = if self.len.is_none() {
             debug_assert_eq!(out.len(), mem::size_of::<hvl_t>());
-            if !self.get_ptr().is_null() {
-                unsafe {
-                    let dst = crate::malloc(len * size) as *mut u8;
-                    ptr::copy_nonoverlapping(ptr, dst, len * size);
-                    (*(out.as_mut_ptr() as *mut hvl_t)).ptr = dst as _;
-                    slice::from_raw_parts_mut(dst, len * size)
-                }
-            } else {
+            if self.get_ptr().is_null() {
                 return;
+            }
+            unsafe {
+                let dst = crate::malloc(len * size).cast();
+                ptr::copy_nonoverlapping(ptr, dst, len * size);
+                // Alignment is always at least usize for pointers from `hdf5-c`
+                let outptr = out.as_mut_ptr().cast::<hvl_t>();
+                ptr::write(ptr::addr_of_mut!((*outptr).ptr), dst.cast());
+                slice::from_raw_parts_mut(dst, len * size)
             }
         } else {
             out
@@ -505,11 +500,13 @@ impl<'a> DynVarLenString<'a> {
     }
 
     fn as_ascii(&self) -> &VarLenAscii {
-        unsafe { &*(self.buf.as_ptr() as *const VarLenAscii) }
+        // Alignment is always at least usize for pointers from `hdf5-c`
+        unsafe { &*(self.buf.as_ptr().cast::<VarLenAscii>()) }
     }
 
     fn as_unicode(&self) -> &VarLenUnicode {
-        unsafe { &*(self.buf.as_ptr() as *const VarLenUnicode) }
+        // Alignment is always at least usize for pointers from `hdf5-c`
+        unsafe { &*(self.buf.as_ptr().cast::<VarLenUnicode>()) }
     }
 }
 
@@ -529,10 +526,12 @@ unsafe impl DynClone for DynVarLenString<'_> {
         if !self.get_ptr().is_null() {
             unsafe {
                 let raw_len = self.raw_len();
-                let dst = crate::malloc(raw_len + 1) as *mut _;
+                let dst = crate::malloc(raw_len + 1).cast();
                 ptr::copy_nonoverlapping(self.get_ptr(), dst, raw_len);
-                *dst.add(raw_len) = 0;
-                *(out.as_mut_ptr() as *mut *const u8) = dst as _;
+                dst.add(raw_len).write(0);
+                // Alignment is always at least usize for pointers from `hdf5-c`
+                let outptr = out.as_mut_ptr().cast::<*const u8>();
+                ptr::write(outptr, dst.cast());
             }
         }
     }
@@ -594,20 +593,18 @@ unsafe impl DynDrop for DynString<'_> {
 
 unsafe impl DynClone for DynString<'_> {
     fn dyn_clone(&mut self, out: &mut [u8]) {
-        use DynString::*;
         match self {
-            Fixed(x) => x.dyn_clone(out),
-            VarLen(x) => x.dyn_clone(out),
+            Self::Fixed(x) => x.dyn_clone(out),
+            Self::VarLen(x) => x.dyn_clone(out),
         }
     }
 }
 
 impl Debug for DynString<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use DynString::*;
         match self {
-            Fixed(x) => Debug::fmt(&x, f),
-            VarLen(x) => Debug::fmt(&x, f),
+            Self::Fixed(x) => Debug::fmt(&x, f),
+            Self::VarLen(x) => Debug::fmt(&x, f),
         }
     }
 }
@@ -639,8 +636,7 @@ impl<'a> DynValue<'a> {
         debug_assert_eq!(tp.size(), buf.len());
 
         match tp {
-            Integer(size) => DynInteger::read(buf, true, *size).into(),
-            Unsigned(size) => DynInteger::read(buf, true, *size).into(),
+            Integer(size) | Unsigned(size) => DynInteger::read(buf, true, *size).into(),
             Float(FloatSize::U4) => DynScalar::Float32(read_raw(buf)).into(),
             Float(FloatSize::U8) => DynScalar::Float64(read_raw(buf)).into(),
             Boolean => DynScalar::Boolean(read_raw(buf)).into(),
@@ -658,11 +654,10 @@ impl<'a> DynValue<'a> {
 
 unsafe impl DynDrop for DynValue<'_> {
     fn dyn_drop(&mut self) {
-        use DynValue::*;
         match self {
-            Compound(x) => x.dyn_drop(),
-            Array(x) => x.dyn_drop(),
-            String(x) => x.dyn_drop(),
+            Self::Compound(x) => x.dyn_drop(),
+            Self::Array(x) => x.dyn_drop(),
+            Self::String(x) => x.dyn_drop(),
             _ => (),
         }
     }
@@ -670,26 +665,24 @@ unsafe impl DynDrop for DynValue<'_> {
 
 unsafe impl DynClone for DynValue<'_> {
     fn dyn_clone(&mut self, out: &mut [u8]) {
-        use DynValue::*;
         match self {
-            Scalar(x) => x.dyn_clone(out),
-            Enum(x) => x.dyn_clone(out),
-            Compound(x) => x.dyn_clone(out),
-            Array(x) => x.dyn_clone(out),
-            String(x) => x.dyn_clone(out),
+            Self::Scalar(x) => x.dyn_clone(out),
+            Self::Enum(x) => x.dyn_clone(out),
+            Self::Compound(x) => x.dyn_clone(out),
+            Self::Array(x) => x.dyn_clone(out),
+            Self::String(x) => x.dyn_clone(out),
         }
     }
 }
 
 impl Debug for DynValue<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use DynValue::*;
         match self {
-            Scalar(x) => Debug::fmt(&x, f),
-            Enum(x) => Debug::fmt(&x, f),
-            Compound(x) => Debug::fmt(&x, f),
-            Array(x) => Debug::fmt(&x, f),
-            String(x) => Debug::fmt(&x, f),
+            Self::Scalar(x) => Debug::fmt(&x, f),
+            Self::Enum(x) => Debug::fmt(&x, f),
+            Self::Compound(x) => Debug::fmt(&x, f),
+            Self::Array(x) => Debug::fmt(&x, f),
+            Self::String(x) => Debug::fmt(&x, f),
         }
     }
 }
@@ -707,7 +700,7 @@ pub struct OwnedDynValue {
 
 impl OwnedDynValue {
     pub fn new<T: H5Type>(value: T) -> Self {
-        let ptr = &value as *const _ as *const u8;
+        let ptr = (&value as *const T).cast::<u8>();
         let len = mem::size_of_val(&value);
         let buf = unsafe { std::slice::from_raw_parts(ptr, len) };
         mem::forget(value);
@@ -772,7 +765,7 @@ impl<T: H5Type> From<T> for OwnedDynValue {
 
 impl Drop for OwnedDynValue {
     fn drop(&mut self) {
-        self.get().dyn_drop()
+        self.get().dyn_drop();
     }
 }
 
