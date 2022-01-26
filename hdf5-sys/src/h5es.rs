@@ -2,7 +2,7 @@
 use crate::internal_prelude::*;
 
 #[repr(C)]
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct H5ES_err_info_t {
     api_cname: *mut c_char,
     api_args: *mut c_char,
@@ -20,7 +20,7 @@ pub struct H5ES_err_info_t {
 }
 
 #[repr(C)]
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct H5ES_op_info_t {
     api_cname: *const c_char,
     api_args: *mut c_char,

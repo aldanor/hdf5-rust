@@ -10,7 +10,7 @@ pub type H5VL_class_value_t = c_int;
 pub type H5VL_class_t = c_void;
 
 #[repr(C)]
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 #[cfg(feature = "1.13.0")]
 pub struct H5VL_class_t {
     pub version: c_uint,
@@ -109,7 +109,7 @@ mod v1_13_0 {
     use super::*;
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_info_class_t {
         pub size: size_t,
         pub copy: Option<extern "C" fn(info: *const c_void) -> *mut c_void>,
@@ -126,7 +126,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_wrap_class_t {
         pub get_object: Option<extern "C" fn(obj: *const c_void) -> *mut c_void>,
         pub get_wrap_ctx:
@@ -154,31 +154,31 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_attr_get_args_t_union_get_acpl {
         pub acpl_id: hid_t,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_attr_get_args_t_union_get_space {
         pub space_id: hid_t,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_attr_get_args_t_union_get_storage_size {
         pub data_size: *mut hsize_t,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_attr_get_args_t_union_get_type {
         pub type_id: hid_t,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_attr_get_name_args_t {
         pub loc_params: H5VL_loc_params_t,
         pub buf_size: size_t,
@@ -187,7 +187,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_attr_get_info_args_t {
         pub loc_params: H5VL_loc_params_t,
         pub attr_name: *const c_char,
@@ -195,6 +195,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
+    #[derive(Copy, Clone)]
     pub union H5VL_attr_get_args_t_union {
         pub get_acpl: ManuallyDrop<H5VL_attr_get_args_t_union_get_acpl>,
         pub get_info: ManuallyDrop<H5VL_attr_get_info_args_t>,
@@ -205,6 +206,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
+    #[derive(Copy, Clone)]
     pub struct H5VL_attr_get_args_t {
         pub op_type: H5VL_attr_get_t,
         pub args: H5VL_attr_get_args_t_union,
@@ -241,27 +243,27 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_attr_specific_args_t_union_del {
         pub name: *const c_char,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_attr_specific_args_t_union_exists {
         pub name: *const c_char,
         pub exists: *mut hbool_t,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_attr_specific_args_t_union_rename {
         pub old_name: *const c_char,
         pub new_name: *const c_char,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_attr_iterate_args_t {
         pub idx_type: H5_index_t,
         pub order: H5_iter_order_t,
@@ -271,7 +273,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_attr_delete_by_idx_args_t {
         pub idx_type: H5_index_t,
         pub order: H5_iter_order_t,
@@ -279,6 +281,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
+    #[derive(Copy, Clone)]
     pub union H5VL_attr_specific_args_t_union {
         pub del: ManuallyDrop<H5VL_attr_specific_args_t_union_del>,
         pub delete_by_idx: ManuallyDrop<H5VL_attr_delete_by_idx_args_t>,
@@ -288,6 +291,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
+    #[derive(Copy, Clone)]
     pub struct H5VL_attr_specific_args_t {
         pub op_type: H5VL_attr_specific_t,
         pub args: H5VL_attr_specific_args_t_union,
@@ -313,7 +317,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_attr_class_t {
         pub create: Option<
             extern "C" fn(
@@ -395,24 +399,25 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Copy, Clone, Debug)]
     pub struct H5VL_dataset_specific_args_t_union_set_extent {
         pub size: *const hsize_t,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_dataset_specific_args_t_union_flush {
         pub dset_id: hid_t,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_dataset_specific_args_t_union_refresh {
         pub dset_id: hid_t,
     }
 
     #[repr(C)]
+    #[derive(Copy, Clone)]
     pub union H5VL_dataset_specific_args_t_union {
         pub set_extent: ManuallyDrop<H5VL_dataset_specific_args_t_union_set_extent>,
         pub flush: ManuallyDrop<H5VL_dataset_specific_args_t_union_flush>,
@@ -420,6 +425,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
+    #[derive(Copy, Clone)]
     pub struct H5VL_dataset_specific_args_t {
         pub op_type: H5VL_dataset_specific_t,
         pub args: H5VL_dataset_specific_args_t_union,
@@ -458,42 +464,43 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_dataset_get_args_t_union_get_dapl {
         pub dapl_id: hid_t,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_dataset_get_args_t_union_get_dcpl {
         pub dcpl_id: hid_t,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_dataset_get_args_t_union_get_space {
         pub space_id: hid_t,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_dataset_get_args_t_union_get_space_status {
         pub status: *mut H5D_space_status_t,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_dataset_get_args_t_union_get_storage_size {
         pub storage_size: *mut hsize_t,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_dataset_get_args_t_union_get_type {
         pub type_id: hid_t,
     }
 
     #[repr(C)]
+    #[derive(Copy, Clone)]
     pub union H5VL_dataset_get_args_t_union {
         pub get_dapl: ManuallyDrop<H5VL_dataset_get_args_t_union_get_dapl>,
         pub get_dcpl: ManuallyDrop<H5VL_dataset_get_args_t_union_get_dcpl>,
@@ -504,6 +511,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
+    #[derive(Copy, Clone)]
     pub struct H5VL_dataset_get_args_t {
         pub op_type: H5VL_dataset_get_t,
         pub args: H5VL_dataset_get_args_t_union,
@@ -540,7 +548,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_dataset_class_t {
         pub create: Option<
             extern "C" fn(
@@ -628,18 +636,19 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_datatype_specific_args_t_union_flush {
         pub type_id: hid_t,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_datatype_specific_args_t_union_refresh {
         pub type_id: hid_t,
     }
 
     #[repr(C)]
+    #[derive(Copy, Clone)]
     pub union H5VL_datatype_specific_args_t_union {
         pub flush: ManuallyDrop<H5VL_datatype_specific_args_t_union_flush>,
         pub refresh: ManuallyDrop<H5VL_datatype_specific_args_t_union_refresh>,
@@ -653,6 +662,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
+    #[derive(Copy, Clone)]
     pub struct H5VL_datatype_specific_args_t {
         pub op_type: H5VL_datatype_specific_t,
         pub args: H5VL_datatype_specific_args_t_union,
@@ -685,25 +695,26 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_datatype_get_args_t_union_get_binary_size {
         pub size: *mut size_t,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_datatype_get_args_t_union_get_binary {
         pub buf: *mut c_void,
         pub buf_size: size_t,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_datatype_get_args_t_union_get_tcpl {
         pub tcpl_id: hid_t,
     }
 
     #[repr(C)]
+    #[derive(Copy, Clone)]
     pub union H5VL_datatype_get_args_t_union {
         pub get_binary_size: ManuallyDrop<H5VL_datatype_get_args_t_union_get_binary_size>,
         pub get_binary: ManuallyDrop<H5VL_datatype_get_args_t_union_get_binary>,
@@ -711,6 +722,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
+    #[derive(Copy, Clone)]
     pub struct H5VL_datatype_get_args_t {
         pub op_type: H5VL_datatype_get_t,
         pub args: H5VL_datatype_get_args_t_union,
@@ -738,7 +750,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_datatype_class_t {
         pub commit: Option<
             extern "C" fn(
@@ -792,20 +804,20 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_file_specific_args_t_union_flush {
         pub obj_type: H5I_type_t,
         pub scope: H5F_scope_t,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_file_specific_args_t_union_reopen {
         pub file: *mut *mut c_void,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_file_specific_args_t_union_is_accessible {
         pub filename: *const c_char,
         pub fapl_id: hid_t,
@@ -813,20 +825,21 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_file_specific_args_t_union_del {
         pub filename: *const c_char,
         pub fapl_id: hid_t,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_file_specific_args_t_union_is_equal {
         pub obj2: *mut c_void,
         pub same_file: *mut hbool_t,
     }
 
     #[repr(C)]
+    #[derive(Copy, Clone)]
     pub union H5VL_file_specific_args_t_union {
         pub flush: ManuallyDrop<H5VL_file_specific_args_t_union_flush>,
         pub reopen: ManuallyDrop<H5VL_file_specific_args_t_union_reopen>,
@@ -836,6 +849,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
+    #[derive(Copy, Clone)]
     pub struct H5VL_file_specific_args_t {
         pub op_type: H5VL_file_specific_t,
         pub args: H5VL_file_specific_args_t_union,
@@ -863,7 +877,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_file_cont_info_t {
         pub version: c_uint,
         pub feature_flags: u64,
@@ -872,44 +886,44 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_file_get_args_t_union_get_cont_info {
         pub info: *mut H5VL_file_cont_info_t,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_file_get_args_t_union_get_fapl {
         pub fapl_id: hid_t,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_file_get_args_t_union_get_fcpl {
         pub fcpl_id: hid_t,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_file_get_args_t_union_get_fileno {
         pub fileno: *mut c_ulong,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_file_get_args_t_union_get_intent {
         pub flags: *mut c_uint,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_file_get_args_t_union_get_obj_count {
         pub types: c_uint,
         pub count: *mut size_t,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_file_get_obj_ids_args_t {
         pub types: c_uint,
         pub max_objs: size_t,
@@ -918,7 +932,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_file_get_name_args_t {
         pub r#type: H5I_type_t,
         pub buf_size: size_t,
@@ -927,6 +941,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
+    #[derive(Copy, Clone)]
     pub union H5VL_file_get_args_t_union {
         pub get_cont_info: ManuallyDrop<H5VL_file_get_args_t_union_get_cont_info>,
         pub get_fapl: ManuallyDrop<H5VL_file_get_args_t_union_get_fapl>,
@@ -952,6 +967,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
+    #[derive(Copy, Clone)]
     pub struct H5VL_file_get_args_t {
         pub op_type: H5VL_file_get_t,
         pub args: H5VL_file_get_args_t_union,
@@ -984,7 +1000,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_file_class_t {
         pub create: Option<
             extern "C" fn(
@@ -1044,7 +1060,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_group_spec_mount_args_t {
         pub name: *const c_char,
         pub child_file: *mut c_void,
@@ -1052,24 +1068,25 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_group_specific_args_t_union_unmount {
         pub name: *const c_char,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_group_specific_args_t_union_flush {
         pub grp_id: hid_t,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_group_specific_args_t_union_refresh {
         pub grp_id: hid_t,
     }
 
     #[repr(C)]
+    #[derive(Copy, Clone)]
     pub union H5VL_group_specific_args_t_union {
         pub mount: ManuallyDrop<H5VL_group_spec_mount_args_t>,
         pub unmount: ManuallyDrop<H5VL_group_specific_args_t_union_unmount>,
@@ -1078,6 +1095,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
+    #[derive(Copy, Clone)]
     pub struct H5VL_group_specific_args_t {
         pub op_type: H5VL_group_specific_t,
         pub args: H5VL_group_specific_args_t_union,
@@ -1104,19 +1122,20 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_group_get_info_args_t {
         pub loc_params: H5VL_loc_params_t,
         pub ginfo: *mut H5G_info_t,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_group_get_args_t_union_get_gcpl {
         pub gcpl_id: hid_t,
     }
 
     #[repr(C)]
+    #[derive(Copy, Clone)]
     pub union H5VL_group_get_args_t_union {
         pub get_gcpl: ManuallyDrop<H5VL_group_get_args_t_union_get_gcpl>,
         pub get_info: ManuallyDrop<H5VL_group_get_info_args_t>,
@@ -1130,6 +1149,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
+    #[derive(Copy, Clone)]
     pub struct H5VL_group_get_args_t {
         pub op_type: H5VL_group_get_t,
         pub args: H5VL_group_get_args_t_union,
@@ -1150,7 +1170,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_group_class_t {
         pub create: Option<
             extern "C" fn(
@@ -1205,7 +1225,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_link_iterate_args_t {
         pub recursive: hbool_t,
         pub idx_type: H5_index_t,
@@ -1216,12 +1236,13 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_link_specific_args_t_union_exists {
         pub exists: *mut hbool_t,
     }
 
     #[repr(C)]
+    #[derive(Copy, Clone)]
     pub union H5VL_link_specific_args_t_union {
         pub exists: ManuallyDrop<H5VL_link_specific_args_t_union_exists>,
         pub iterate: ManuallyDrop<H5VL_link_iterate_args_t>,
@@ -1236,6 +1257,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
+    #[derive(Copy, Clone)]
     pub struct H5VL_link_specific_args_t {
         pub op_type: H5VL_link_specific_t,
         pub args: H5VL_link_specific_args_t_union,
@@ -1257,13 +1279,13 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_link_get_args_t_union_get_info {
         pub linfo: *mut H5L_info2_t,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_link_get_args_t_union_get_name {
         pub name_size: size_t,
         pub name: *mut c_char,
@@ -1271,13 +1293,14 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_link_get_args_t_union_get_val {
         pub buf_size: size_t,
         pub buf: *mut c_void,
     }
 
     #[repr(C)]
+    #[derive(Copy, Clone)]
     pub union H5VL_link_get_args_t_union {
         pub get_info: ManuallyDrop<H5VL_link_get_args_t_union_get_info>,
         pub get_name: ManuallyDrop<H5VL_link_get_args_t_union_get_name>,
@@ -1293,6 +1316,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
+    #[derive(Copy, Clone)]
     pub struct H5VL_link_get_args_t {
         pub op_type: H5VL_link_get_t,
         pub args: H5VL_link_get_args_t_union,
@@ -1322,20 +1346,20 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_link_create_args_t_union_hard {
         pub curr_obj: *mut c_void,
         pub curr_loc_params: H5VL_loc_params_t,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_link_create_args_t_union_soft {
         pub target: *const c_char,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_link_create_args_t_union_ud {
         pub r#type: H5L_type_t,
         pub buf: *const c_void,
@@ -1343,6 +1367,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
+    #[derive(Copy, Clone)]
     pub union H5VL_link_create_args_t_union {
         pub hard: ManuallyDrop<H5VL_link_create_args_t_union_hard>,
         pub soft: ManuallyDrop<H5VL_link_create_args_t_union_soft>,
@@ -1350,6 +1375,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
+    #[derive(Copy, Clone)]
     pub struct H5VL_link_create_args_t {
         pub op_type: H5VL_link_create_t,
         pub args: H5VL_link_create_args_t_union,
@@ -1371,7 +1397,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_link_class_t {
         pub create: Option<
             extern "C" fn(
@@ -1438,7 +1464,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_object_visit_args_t {
         pub idx_type: H5_index_t,
         pub order: H5_iter_order_t,
@@ -1448,36 +1474,37 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_object_specific_args_t_union_change_rc {
         pub delta: c_int,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_object_specific_args_t_union_exists {
         pub exists: *mut hbool_t,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_object_specific_args_t_union_lookup {
         pub token_ptr: *mut H5O_token_t,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_object_specific_args_t_union_flush {
         pub obj_id: hid_t,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_object_specific_args_t_union_refresh {
         pub obj_id: hid_t,
     }
 
     #[repr(C)]
+    #[derive(Copy, Clone)]
     pub union H5VL_object_specific_args_t_union {
         pub change_rc: ManuallyDrop<H5VL_object_specific_args_t_union_change_rc>,
         pub exists: ManuallyDrop<H5VL_object_specific_args_t_union_exists>,
@@ -1499,6 +1526,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
+    #[derive(Copy, Clone)]
     pub struct H5VL_object_specific_args_t {
         pub op_type: H5VL_object_specific_t,
         pub args: H5VL_object_specific_args_t_union,
@@ -1540,13 +1568,13 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_object_get_args_t_union_get_file {
         pub file: *mut *mut c_void,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_object_get_args_t_union_get_name {
         pub buf_size: size_t,
         pub buf: *mut c_char,
@@ -1554,19 +1582,20 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_object_get_args_t_union_get_type {
         pub obj_type: *mut H5O_type_t,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_object_get_args_t_union_get_info {
         pub fields: c_uint,
         pub oinfo: *mut H5O_info2_t,
     }
 
     #[repr(C)]
+    #[derive(Copy, Clone)]
     pub union H5VL_object_get_args_t_union {
         pub get_file: ManuallyDrop<H5VL_object_get_args_t_union_get_file>,
         pub get_name: ManuallyDrop<H5VL_object_get_args_t_union_get_name>,
@@ -1575,6 +1604,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
+    #[derive(Copy, Clone)]
     pub struct H5VL_object_get_args_t {
         pub op_type: H5VL_object_get_t,
         pub args: H5VL_object_get_args_t_union,
@@ -1597,7 +1627,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_object_class_t {
         pub open: Option<
             extern "C" fn(
@@ -1658,7 +1688,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_introspect_class_t {
         pub get_conn_cls: Option<
             extern "C" fn(
@@ -1697,25 +1727,27 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_request_specific_args_t_union_get_err_stack {
         pub err_stack_id: hid_t,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_request_specific_args_t_union_get_exec_time {
         pub exec_ts: *mut u64,
         pub exec_time: *mut u64,
     }
 
     #[repr(C)]
+    #[derive(Copy, Clone)]
     pub union H5VL_request_specific_args_t_union {
         pub get_err_stack: ManuallyDrop<H5VL_request_specific_args_t_union_get_err_stack>,
         pub get_exec_time: ManuallyDrop<H5VL_request_specific_args_t_union_get_exec_time>,
     }
 
     #[repr(C)]
+    #[derive(Copy, Clone)]
     pub struct H5VL_request_specific_args_t {
         pub op_type: H5VL_request_specific_t,
         pub args: H5VL_request_specific_args_t_union,
@@ -1743,7 +1775,7 @@ mod v1_13_0 {
         Option<extern "C" fn(ctx: *mut c_void, status: H5VL_request_status_t) -> herr_t>;
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_request_class_t {
         pub wait: Option<
             extern "C" fn(
@@ -1774,17 +1806,19 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_blob_specific_args_t_union_is_null {
         pub isnull: *mut hbool_t,
     }
 
     #[repr(C)]
+    #[derive(Copy, Clone)]
     pub union H5VL_blob_specific_args_t_union {
         pub is_null: ManuallyDrop<H5VL_blob_specific_args_t_union_is_null>,
     }
 
     #[repr(C)]
+    #[derive(Copy, Clone)]
     pub struct H5VL_blob_specific_args_t {
         pub op_type: H5VL_blob_specific_t,
         pub args: H5VL_blob_specific_args_t_union,
@@ -1806,7 +1840,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_blob_class_t {
         pub put: Option<
             extern "C" fn(
@@ -1843,7 +1877,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_token_class_t {
         pub cmp: Option<
             extern "C" fn(
@@ -1881,14 +1915,14 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_loc_by_name_t {
         pub name: *const c_char,
         pub lapl_id: hid_t,
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_loc_by_idx_t {
         pub name: *const c_char,
         pub idx_type: H5_index_t,
@@ -1898,12 +1932,13 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_loc_by_token_t {
         pub token: *mut H5O_token_t,
     }
 
     #[repr(C)]
+    #[derive(Copy, Clone)]
     pub union H5VL_loc_params_t_union {
         pub loc_by_token: ManuallyDrop<H5VL_loc_by_token_t>,
         pub loc_by_name: ManuallyDrop<H5VL_loc_by_name_t>,
@@ -1911,6 +1946,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
+    #[derive(Copy, Clone)]
     pub struct H5VL_loc_params_t {
         pub obj_type: H5I_type_t,
         pub type_: H5VL_loc_type_t,
@@ -1940,7 +1976,7 @@ mod v1_13_0 {
     }
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     pub struct H5VL_optional_args_t {
         pub op_type: c_int,
         pub args: *mut c_void,

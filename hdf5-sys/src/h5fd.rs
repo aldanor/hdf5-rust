@@ -214,7 +214,9 @@ pub struct H5FD_class_t {
     >,
     pub unlock:
         Option<extern "C" fn(file: *mut H5FD_t, oid: *mut c_uchar, last: hbool_t) -> herr_t>,
+    #[cfg(feature = "1.13.0")]
     pub del: Option<extern "C" fn(name: *const c_char, fapl: hid_t) -> herr_t>,
+    #[cfg(feature = "1.13.0")]
     pub ctl: Option<
         extern "C" fn(
             file: *mut H5FD_t,
