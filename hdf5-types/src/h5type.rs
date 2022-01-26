@@ -105,7 +105,6 @@ pub struct CompoundType {
 }
 
 impl CompoundType {
-    #[must_use]
     pub fn to_c_repr(&self) -> Self {
         let mut layout = self.clone();
         layout.fields.sort_by_key(|f| f.index);
@@ -128,7 +127,6 @@ impl CompoundType {
         layout
     }
 
-    #[must_use]
     pub fn to_packed_repr(&self) -> Self {
         let mut layout = self.clone();
         layout.fields.sort_by_key(|f| f.index);
@@ -211,7 +209,6 @@ impl TypeDescriptor {
         }
     }
 
-    #[must_use]
     pub fn to_c_repr(&self) -> Self {
         match *self {
             Self::Compound(ref compound) => Self::Compound(compound.to_c_repr()),
@@ -221,7 +218,6 @@ impl TypeDescriptor {
         }
     }
 
-    #[must_use]
     pub fn to_packed_repr(&self) -> Self {
         match *self {
             Self::Compound(ref compound) => Self::Compound(compound.to_packed_repr()),

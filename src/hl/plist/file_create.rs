@@ -440,7 +440,6 @@ impl FileCreate {
         Self::from_id(h5try!(H5Pcreate(*H5P_FILE_CREATE)))
     }
 
-    #[must_use]
     pub fn copy(&self) -> Self {
         unsafe { self.deref().copy().cast_unchecked() }
     }

@@ -400,7 +400,6 @@ impl Extents {
         self.as_simple().map_or(true, SimpleExtents::is_resizable)
     }
 
-    #[must_use]
     pub fn resizable(self) -> Self {
         match self {
             Self::Simple(extents) => SimpleExtents::resizable(extents.dims()).into(),

@@ -2,6 +2,7 @@
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::missing_safety_doc))]
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::missing_const_for_fn))]
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::redundant_pub_crate))]
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::must_use_candidate))]
 
 //! Types that can be stored and retrieved from a `HDF5` dataset
 //!

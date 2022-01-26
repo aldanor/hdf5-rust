@@ -79,7 +79,6 @@ impl Dataspace {
         Self::from_extents(&extents.into())
     }
 
-    #[must_use]
     pub fn copy(&self) -> Self {
         Self::from_id(h5lock!(H5Scopy(self.id()))).unwrap_or_else(|_| Self::invalid())
     }

@@ -137,7 +137,6 @@ impl LinkCreate {
         Self::from_id(h5try!(H5Pcreate(*H5P_LINK_CREATE)))
     }
 
-    #[must_use]
     pub fn copy(&self) -> Self {
         unsafe { self.deref().copy().cast_unchecked() }
     }
