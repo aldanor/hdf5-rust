@@ -1,7 +1,5 @@
-error: proc-macro derive panicked
- --> $DIR/enum-no-repr.rs:4:10
+error: `H5Type` can only be derived for enums with explicit representation
+ --> $DIR/enum-no-repr.rs:7:6
   |
-4 | #[derive(H5Type)]
-  |          ^^^^^^
-  |
-  = help: message: H5Type can only be derived for enums with explicit representation
+7 | enum Foo {
+  |      ^^^

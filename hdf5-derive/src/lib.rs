@@ -1,12 +1,11 @@
 #![recursion_limit = "192"]
 
-extern crate proc_macro;
-
 use std::iter;
 use std::mem;
 use std::str::FromStr;
 
 use proc_macro2::{Ident, Span, TokenStream};
+use proc_macro_error::{abort, proc_macro_error};
 use quote::{quote, ToTokens};
 use syn::{
     parse_macro_input, AttrStyle, Attribute, Data, DeriveInput, Expr, Fields, Index, Meta,
@@ -14,6 +13,7 @@ use syn::{
 };
 
 #[proc_macro_derive(H5Type)]
+#[proc_macro_error]
 pub fn derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     let name = input.ident;
@@ -147,17 +147,21 @@ fn impl_trait(
     match *data {
         Data::Struct(ref data) => match data.fields {
             Fields::Unit => {
-                panic!("Cannot derive H5Type for unit structs");
+                abort!(ty, "cannot derive `H5Type` for unit structs");
             }
             Fields::Named(ref fields) => {
                 let fields: Vec<_> =
                     fields.named.iter().filter(|f| !is_phantom_data(&f.ty)).collect();
-                assert!(!fields.is_empty(), "Cannot derive H5Type for empty structs");
+                if fields.is_empty() {
+                    abort!(ty, "cannot derive `H5Type` for empty structs");
+                }
 
-                if find_repr(attrs, &["C", "packed", "transparent"]).expect(
-                    "H5Type requires repr(C), repr(packed) or repr(transparent) for structs",
-                ) == "transparent"
-                {
+                let repr =
+                    find_repr(attrs, &["C", "packed", "transparent"]).unwrap_or_else(|| {
+                        abort!(ty,
+                    "`H5Type` requires repr(C), repr(packed) or repr(transparent) for structs")
+                    });
+                if repr == "transparent" {
                     assert_eq!(fields.len(), 1);
                     impl_transparent(&fields[0].ty)
                 } else {
@@ -175,12 +179,15 @@ fn impl_trait(
                     .filter(|&(_, f)| !is_phantom_data(&f.ty))
                     .map(|(i, f)| (Index::from(i), f))
                     .unzip();
-                assert!(!fields.is_empty(), "Cannot derive H5Type for empty tuple structs");
+                if fields.is_empty() {
+                    abort!(ty, "cannot derive `H5Type` for empty tuple structs")
+                }
 
-                if find_repr(attrs, &["C", "packed", "transparent"]).expect(
-                    "H5Type requires repr(C), repr(packed) or repr(transparent) for tuple structs",
-                ) == "transparent"
-                {
+                let repr =  find_repr(attrs, &["C", "packed", "transparent"]).unwrap_or_else(|| {
+                        abort!(ty,
+                    "`H5Type` requires repr(C), repr(packed) or repr(transparent) for tuple structs")
+                    });
+                if repr == "transparent" {
                     assert_eq!(fields.len(), 1);
                     impl_transparent(&fields[0].ty)
                 } else {
@@ -192,23 +199,26 @@ fn impl_trait(
         },
         Data::Enum(ref data) => {
             let variants = &data.variants;
-            assert!(
-                variants.iter().all(|v| v.fields == Fields::Unit && v.discriminant.is_some()),
-                "H5Type can only be derived for enums with scalar discriminants"
-            );
 
-            assert!(!variants.is_empty(), "Cannot derive H5Type for empty enums");
+            if variants.iter().any(|v| v.fields != Fields::Unit || v.discriminant.is_none()) {
+                abort!(ty, "`H5Type` can only be derived for enums with scalar discriminants")
+            }
+
+            if variants.is_empty() {
+                abort!(ty, "cannot derive `H5Type` for empty enums")
+            }
 
             let enum_reprs =
                 &["i8", "i16", "i32", "i64", "u8", "u16", "u32", "u64", "isize", "usize"];
-            let repr = find_repr(attrs, enum_reprs)
-                .expect("H5Type can only be derived for enums with explicit representation");
+            let repr = find_repr(attrs, enum_reprs).unwrap_or_else(|| {
+                abort!(ty, "`H5Type` can only be derived for enums with explicit representation")
+            });
             let names = pluck(variants.iter(), |v| v.ident.clone());
             let values = pluck(variants.iter(), |v| v.discriminant.clone().unwrap().1);
             impl_enum(&names, &values, &repr)
         }
         Data::Union(_) => {
-            panic!("Cannot derive H5Type for tagged unions");
+            abort!(ty, "cannot derive `H5Type` for tagged unions");
         }
     }
 }

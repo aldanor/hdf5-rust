@@ -1,7 +1,5 @@
-error: proc-macro derive panicked
- --> $DIR/struct-no-repr.rs:4:10
+error: `H5Type` requires repr(C), repr(packed) or repr(transparent) for structs
+ --> $DIR/struct-no-repr.rs:7:8
   |
-4 | #[derive(H5Type)]
-  |          ^^^^^^
-  |
-  = help: message: H5Type requires repr(C), repr(packed) or repr(transparent) for structs
+7 | struct Foo {
+  |        ^^^
