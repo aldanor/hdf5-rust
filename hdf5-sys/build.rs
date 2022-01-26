@@ -1,5 +1,6 @@
 #![allow(clippy::must_use_candidate)]
 #![allow(clippy::option_if_let_else)]
+
 use std::convert::TryInto;
 use std::env;
 use std::error::Error;
