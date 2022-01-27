@@ -137,3 +137,32 @@ pub struct H5G_stat_t {
     linklen: size_t,
     ohdr: H5O_stat_t,
 }
+
+#[cfg(feature = "1.13.0")]
+extern "C" {
+    pub fn H5Gclose_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, group_id: hid_t,
+        es_id: hid_t,
+    ) -> herr_t;
+    pub fn H5Gcreate_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, loc_id: hid_t,
+        name: *const c_char, lcpl_id: hid_t, gcpl_id: hid_t, gapl_id: hid_t, es_id: hid_t,
+    ) -> hid_t;
+    pub fn H5Gget_info_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, loc_id: hid_t,
+        ginfo: *mut H5G_info_t, es_id: hid_t,
+    ) -> herr_t;
+    pub fn H5Gget_info_by_idx_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, loc_id: hid_t,
+        group_name: *const c_char, idx_type: H5_index_t, order: H5_iter_order_t, n: c_ulong,
+        ginfo: *mut H5G_info_t, lapl_id: hid_t, es_id: hid_t,
+    ) -> herr_t;
+    pub fn H5Gget_info_by_name_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, loc_id: hid_t,
+        name: *const c_char, ginfo: *mut H5G_info_t, lapl_id: hid_t, es_id: hid_t,
+    ) -> herr_t;
+    pub fn H5Gopen_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, loc_id: hid_t,
+        name: *const c_char, gapl_id: hid_t, es_id: hid_t,
+    ) -> hid_t;
+}

@@ -335,3 +335,36 @@ pub use self::{
 pub use self::{
     H5L_info2_t as H5L_info_t, H5L_iterate2_t as H5L_iterate_t, H5Literate2 as H5Literate,
 };
+
+#[cfg(feature = "1.13.0")]
+extern "C" {
+    pub fn H5Lcreate_hard_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, cur_loc_id: hid_t,
+        cur_name: *const c_char, new_loc_id: hid_t, new_name: *const c_char, lcpl_id: hid_t,
+        lapl_id: hid_t, es_id: hid_t,
+    ) -> herr_t;
+    pub fn H5Lcreate_soft_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint,
+        link_target: *const c_char, link_loc_id: hid_t, link_name: *const c_char, lcpl_id: hid_t,
+        lapl_id: hid_t, es_id: hid_t,
+    ) -> herr_t;
+    pub fn H5Ldelete_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, loc_id: hid_t,
+        name: *const c_char, lapl_id: hid_t, es_id: hid_t,
+    ) -> herr_t;
+    pub fn H5Ldelete_by_idx_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, loc_id: hid_t,
+        group_name: *const c_char, idx_type: H5_index_t, order: H5_iter_order_t, n: c_ulong,
+        lapl_id: hid_t, es_id: hid_t,
+    ) -> herr_t;
+    pub fn H5Lexists_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, loc_id: hid_t,
+        name: *const c_char, exists: *mut hbool_t, lapl_id: hid_t, es_id: hid_t,
+    ) -> herr_t;
+    pub fn H5Literate_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, group_id: hid_t,
+        idx_type: H5_index_t, order: H5_iter_order_t, idx_p: *mut c_ulong, op: H5L_iterate2_t,
+        op_data: *mut c_void, es_id: hid_t,
+    ) -> herr_t;
+
+}

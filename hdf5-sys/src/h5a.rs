@@ -122,3 +122,61 @@ extern "C" {
         loc_id: hid_t, attr_num: *mut c_uint, op: H5A_operator1_t, op_data: *mut c_void,
     ) -> herr_t;
 }
+
+#[cfg(feature = "1.13.0")]
+extern "C" {
+    pub fn H5Aclose_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, attr_id: hid_t,
+        es_id: hid_t,
+    ) -> herr_t;
+    pub fn H5Acreate_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, loc_id: hid_t,
+        attr_name: *const c_char, type_id: hid_t, space_id: hid_t, acpl_id: hid_t, aapl_id: hid_t,
+        es_id: hid_t,
+    ) -> hid_t;
+    pub fn H5Acreate_by_name_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, loc_id: hid_t,
+        obj_name: *const c_char, attr_name: *const c_char, type_id: hid_t, space_id: hid_t,
+        acpl_id: hid_t, aapl_id: hid_t, lapl_id: hid_t, es_id: hid_t,
+    ) -> hid_t;
+    pub fn H5Aexists_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, obj_id: hid_t,
+        attr_name: *const c_char, exists: *mut hbool_t, es_id: hid_t,
+    ) -> herr_t;
+    pub fn H5Aexists_by_name_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, loc_id: hid_t,
+        obj_name: *const c_char, attr_name: *const c_char, exists: *mut hbool_t, lapl_id: hid_t,
+        es_id: hid_t,
+    ) -> herr_t;
+    pub fn H5Aopen_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, obj_id: hid_t,
+        attr_name: *const c_char, aapl_id: hid_t, es_id: hid_t,
+    ) -> hid_t;
+    pub fn H5Aopen_by_idx_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, loc_id: hid_t,
+        obj_name: *const c_char, idx_type: H5_index_t, order: H5_iter_order_t, n: c_ulong,
+        aapl_id: hid_t, lapl_id: hid_t, es_id: hid_t,
+    ) -> hid_t;
+    pub fn H5Aopen_by_name_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, loc_id: hid_t,
+        obj_name: *const c_char, attr_name: *const c_char, aapl_id: hid_t, lapl_id: hid_t,
+        es_id: hid_t,
+    ) -> hid_t;
+    pub fn H5Aread_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, attr_id: hid_t,
+        dtype_id: hid_t, buf: *mut c_void, es_id: hid_t,
+    ) -> herr_t;
+    pub fn H5Arename_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, loc_id: hid_t,
+        old_name: *const c_char, new_name: *const c_char, es_id: hid_t,
+    ) -> herr_t;
+    pub fn H5Arename_by_name_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, loc_id: hid_t,
+        obj_name: *const c_char, old_attr_name: *const c_char, new_attr_name: *const c_char,
+        lapl_id: hid_t, es_id: hid_t,
+    ) -> herr_t;
+    pub fn H5Awrite_async(
+        app_file: *const c_char, app_func: *const c_char, app_line: c_uint, attr_id: hid_t,
+        type_id: hid_t, buf: *const c_void, es_id: hid_t,
+    ) -> herr_t;
+}

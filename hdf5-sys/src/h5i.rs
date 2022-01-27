@@ -29,6 +29,8 @@ pub enum H5I_type_t {
     H5I_ERROR_STACK,
     #[cfg(feature = "1.12.0")]
     H5I_SPACE_SEL_ITER,
+    #[cfg(feature = "1.13.0")]
+    H5I_EVENTSET,
     H5I_NTYPES,
 }
 
@@ -40,7 +42,11 @@ pub type hid_t = c_int;
 
 pub const H5I_INVALID_HID: hid_t = -1;
 
+#[cfg(not(feature = "1.13.0"))]
 pub type H5I_free_t = Option<extern "C" fn(arg1: *mut c_void) -> herr_t>;
+#[cfg(feature = "1.13.0")]
+pub type H5I_free_t = Option<extern "C" fn(*mut c_void, *mut *mut c_void) -> herr_t>;
+
 pub type H5I_search_func_t =
     Option<extern "C" fn(obj: *mut c_void, id: hid_t, key: *mut c_void) -> c_int>;
 #[cfg(feature = "1.12.0")]
@@ -70,4 +76,19 @@ extern "C" {
     pub fn H5Inmembers(type_: H5I_type_t, num_members: *mut hsize_t) -> herr_t;
     pub fn H5Itype_exists(type_: H5I_type_t) -> htri_t;
     pub fn H5Iis_valid(id: hid_t) -> htri_t;
+}
+
+#[cfg(feature = "1.13.0")]
+pub type H5I_future_realize_func_t =
+    Option<extern "C" fn(future_object: *mut c_void, actual_object_id: *mut hid_t) -> herr_t>;
+
+#[cfg(feature = "1.13.0")]
+pub type H5I_future_discard_func_t = Option<extern "C" fn(future_object: *mut c_void) -> herr_t>;
+
+#[cfg(feature = "1.13.0")]
+extern "C" {
+    pub fn H5Iregister_future(
+        type_: H5I_type_t, object: *const c_void, realize_cb: H5I_future_realize_func_t,
+        discard_cb: H5I_future_discard_func_t,
+    ) -> hid_t;
 }

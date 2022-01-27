@@ -436,7 +436,10 @@ pub mod tests {
     #[test]
     pub fn test_group() {
         with_tmp_file(|file| {
-            assert_err_re!(file.group("a"), "unable to open group: object.+doesn't exist");
+            assert_err_re!(
+                file.group("a"),
+                "unable to (?:synchronously )?open group: object.+doesn't exist"
+            );
             file.create_group("a").unwrap();
             let a = file.group("a").unwrap();
             assert_eq!(a.name(), "/a");
@@ -497,11 +500,11 @@ pub mod tests {
             file.group("/foo/hard/inner").unwrap();
             assert_err_re!(
                 file.link_hard("foo/test", "/foo/test/inner"),
-                "unable to create (?:hard )?link: name already exists"
+                "unable to (?:synchronously )?create (?:hard )?link: name already exists"
             );
             assert_err_re!(
                 file.link_hard("foo/bar", "/foo/baz"),
-                "unable to create (?:hard )?link: object.+doesn't exist"
+                "unable to (?:synchronously )?create (?:hard )?link: object.+doesn't exist"
             );
             file.relink("/foo/hard", "/foo/hard2").unwrap();
             file.group("/foo/hard2/inner").unwrap();
@@ -509,10 +512,13 @@ pub mod tests {
             file.group("/foo/baz/inner").unwrap();
             file.group("/foo/hard2/inner").unwrap();
             file.unlink("/foo/baz").unwrap();
-            assert_err!(file.group("/foo/baz"), "unable to open group");
+            assert_err_re!(file.group("/foo/baz"), "unable to (?:synchronously )?open group");
             file.group("/foo/hard2/inner").unwrap();
             file.unlink("/foo/hard2").unwrap();
-            assert_err!(file.group("/foo/hard2/inner"), "unable to open group");
+            assert_err_re!(
+                file.group("/foo/hard2/inner"),
+                "unable to (?:synchronously )?open group"
+            );
         })
     }
 
@@ -525,14 +531,14 @@ pub mod tests {
             file.relink("/a/soft", "/a/soft2").unwrap();
             file.group("/a/soft2/c").unwrap();
             file.relink("a/b", "/a/d").unwrap();
-            assert_err!(file.group("/a/soft2/c"), "unable to open group");
+            assert_err_re!(file.group("/a/soft2/c"), "unable to (?:synchronously )?open group");
             file.link_soft("/a/bar", "/a/baz").unwrap();
-            assert_err!(file.group("/a/baz"), "unable to open group");
+            assert_err_re!(file.group("/a/baz"), "unable to (?:synchronously )?open group");
             file.create_group("/a/bar").unwrap();
             file.group("/a/baz").unwrap();
             file.unlink("/a/bar").unwrap();
-            assert_err!(file.group("/a/bar"), "unable to open group");
-            assert_err!(file.group("/a/baz"), "unable to open group");
+            assert_err_re!(file.group("/a/bar"), "unable to (?:synchronously )?open group");
+            assert_err_re!(file.group("/a/baz"), "unable to (?:synchronously )?open group");
         })
     }
 
@@ -573,7 +579,10 @@ pub mod tests {
             assert_err!(file.relink("bar", "/baz"), "unable to move link: name doesn't exist");
             file.relink("test", "/foo/test").unwrap();
             file.group("/foo/test").unwrap();
-            assert_err_re!(file.group("test"), "unable to open group: object.+doesn't exist");
+            assert_err_re!(
+                file.group("test"),
+                "unable to (?:synchronously )?open group: object.+doesn't exist"
+            );
         })
     }
 
@@ -582,7 +591,7 @@ pub mod tests {
         with_tmp_file(|file| {
             file.create_group("/foo/bar").unwrap();
             file.unlink("foo/bar").unwrap();
-            assert_err!(file.group("/foo/bar"), "unable to open group");
+            assert_err_re!(file.group("/foo/bar"), "unable to (?:synchronously )?open group");
             assert!(file.group("foo").unwrap().is_empty());
         })
     }

@@ -362,16 +362,16 @@ pub mod tests {
     #[test]
     pub fn test_unable_to_open() {
         with_tmp_dir(|dir| {
-            assert_err!(File::open(&dir), "unable to open file");
-            assert_err!(File::open_rw(&dir), "unable to open file");
-            assert_err!(File::create_excl(&dir), "unable to create file");
-            assert_err!(File::create(&dir), "unable to create file");
-            assert_err!(File::append(&dir), "unable to create file");
+            assert_err_re!(File::open(&dir), "unable to (?:synchronously )?open file");
+            assert_err_re!(File::open_rw(&dir), "unable to (?:synchronously )?open file");
+            assert_err_re!(File::create_excl(&dir), "unable to (?:synchronously )?create file");
+            assert_err_re!(File::create(&dir), "unable to (?:synchronously )?create file");
+            assert_err_re!(File::append(&dir), "unable to (?:synchronously )?create file");
         });
         with_tmp_path(|path| {
             fs::File::create(&path).unwrap().write_all(b"foo").unwrap();
             assert!(fs::metadata(&path).is_ok());
-            assert_err!(File::open(&path), "unable to open file");
+            assert_err_re!(File::open(&path), "unable to (?:synchronously )?open file");
         })
     }
 
@@ -379,7 +379,10 @@ pub mod tests {
     pub fn test_file_create() {
         with_tmp_path(|path| {
             File::create(&path).unwrap().create_group("foo").unwrap();
-            assert_err!(File::create(&path).unwrap().group("foo"), "unable to open group");
+            assert_err_re!(
+                File::create(&path).unwrap().group("foo"),
+                "unable to (?:synchronously )?open group"
+            );
         });
     }
 
@@ -387,7 +390,7 @@ pub mod tests {
     pub fn test_file_create_excl() {
         with_tmp_path(|path| {
             File::create_excl(&path).unwrap();
-            assert_err!(File::create_excl(&path), "unable to create file");
+            assert_err_re!(File::create_excl(&path), "unable to (?:synchronously )?create file");
         });
     }
 
@@ -405,9 +408,9 @@ pub mod tests {
             File::create(&path).unwrap().create_group("foo").unwrap();
             let file = File::open(&path).unwrap();
             file.group("foo").unwrap();
-            assert_err!(
+            assert_err_re!(
                 file.create_group("bar"),
-                "unable to create group: no write intent on file"
+                "unable to (?:synchronously )?create group: no write intent on file"
             );
             assert_err!(File::open("/foo/bar/baz"), "unable to open file");
         });

@@ -17,6 +17,9 @@ use crate::h5o::H5O_mcdt_search_cb_t;
 #[cfg(feature = "1.10.1")]
 use crate::{h5ac::H5AC_cache_image_config_t, h5f::H5F_fspace_strategy_t};
 
+#[cfg(feature = "1.13.0")]
+use crate::{h5fd::H5FD_class_value_t, h5s::H5S_seloper_t};
+
 pub const H5P_CRT_ORDER_TRACKED: c_uint = 0x0001;
 pub const H5P_CRT_ORDER_INDEXED: c_uint = 0x0002;
 
@@ -787,4 +790,22 @@ extern "C" {
     pub fn H5Pget_vol_id(plist_id: hid_t, vol_id: *mut hid_t) -> herr_t;
     pub fn H5Pget_vol_info(plist_id: hid_t, vol_info: *mut *mut c_void) -> herr_t;
     pub fn H5Pset_vol(plist_id: hid_t, new_vol_id: hid_t, new_vol_id: *const c_void) -> herr_t;
+}
+
+#[cfg(feature = "1.13.0")]
+extern "C" {
+    pub fn H5Pget_driver_config_str(
+        fapl_id: hid_t, config_buf: *mut c_char, buf_size: size_t,
+    ) -> ssize_t;
+    pub fn H5Pget_vol_cap_flags(plist_id: hid_t, cap_flags: *mut c_uint) -> herr_t;
+    pub fn H5Pset_dataset_io_hyperslab_selection(
+        plist_id: hid_t, rank: c_uint, op: H5S_seloper_t, start: *const hsize_t,
+        stride: *const hsize_t, count: *const hsize_t, block: *const hsize_t,
+    ) -> herr_t;
+    pub fn H5Pset_driver_by_name(
+        plist_id: hid_t, driver_name: *const c_char, driver_config: *const c_char,
+    ) -> herr_t;
+    pub fn H5Pset_driver_by_value(
+        plist_id: hid_t, driver_value: H5FD_class_value_t, driver_config: *const c_char,
+    ) -> herr_t;
 }

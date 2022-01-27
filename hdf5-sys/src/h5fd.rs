@@ -8,6 +8,7 @@ use crate::internal_prelude::*;
 
 use crate::h5f::{H5F_close_degree_t, H5F_mem_t};
 
+#[cfg(not(feature = "1.13.0"))]
 pub const H5_HAVE_VFL: c_uint = 1;
 
 pub const H5FD_VFD_DEFAULT: c_uint = 0;
@@ -119,12 +120,18 @@ pub const H5FD_LOG_ALL: c_ulonglong = H5FD_LOG_FREE
     | H5FD_LOG_LOC_IO
     | H5FD_LOG_META_IO;
 
+pub type H5FD_class_value_t = c_int;
+
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct H5FD_class_t {
+    #[cfg(feature = "1.13.0")]
+    pub value: H5FD_class_value_t,
     pub name: *const c_char,
     pub maxaddr: haddr_t,
     pub fc_degree: H5F_close_degree_t,
+    #[cfg(feature = "1.13.0")]
+    pub terminate: Option<extern "C" fn() -> herr_t>,
     pub sb_size: Option<extern "C" fn(file: *mut H5FD_t) -> hsize_t>,
     pub sb_encode:
         Option<extern "C" fn(file: *mut H5FD_t, name: *mut c_char, p: *mut c_uchar) -> herr_t>,
@@ -207,6 +214,18 @@ pub struct H5FD_class_t {
     >,
     pub unlock:
         Option<extern "C" fn(file: *mut H5FD_t, oid: *mut c_uchar, last: hbool_t) -> herr_t>,
+    #[cfg(feature = "1.13.0")]
+    pub del: Option<extern "C" fn(name: *const c_char, fapl: hid_t) -> herr_t>,
+    #[cfg(feature = "1.13.0")]
+    pub ctl: Option<
+        extern "C" fn(
+            file: *mut H5FD_t,
+            op_code: u64,
+            flags: u64,
+            input: *const c_char,
+            output: *mut *mut c_void,
+        ) -> herr_t,
+    >,
     pub fl_map: [H5FD_mem_t; 7usize],
 }
 
@@ -368,7 +387,7 @@ extern "C" {
     pub fn H5FDunlock(file: *mut H5FD_t) -> herr_t;
 }
 
-#[cfg(feature = "1.10.6")]
+#[cfg(all(feature = "1.10.6", not(feature = "1.13.0")))]
 pub mod hdfs {
     use super::*;
     pub const H5FD__CURR_HDFS_FAPL_T_VERSION: c_uint = 1;
@@ -450,4 +469,18 @@ pub mod splitter {
 #[cfg(feature = "1.10.2")]
 extern "C" {
     pub fn H5FDdriver_query(driver_id: hid_t, flags: *mut c_ulong) -> herr_t;
+}
+
+#[cfg(feature = "1.13.0")]
+type H5FD_perform_init_func_t = Option<extern "C" fn() -> hid_t>;
+
+#[cfg(feature = "1.13.0")]
+extern "C" {
+    pub fn H5FDctl(
+        file: *mut H5FD_t, op_cod: u64, flags: u64, input: *const c_void, output: *mut *mut c_void,
+    ) -> herr_t;
+    pub fn H5FDdelete(name: *const c_char, fapl_id: hid_t) -> herr_t;
+    pub fn H5FDis_driver_registered_by_name(driver_name: *const c_char) -> htri_t;
+    pub fn H5FDis_driver_registered_by_value(driver_value: H5FD_class_value_t) -> htri_t;
+    pub fn H5FDperform_init(p: H5FD_perform_init_func_t) -> hid_t;
 }
