@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Added
+
+- Support for HDF5 version 1.13.0.
+
+### Changed
+
+- The `H5Type` derive macro now uses `proc-macro-error` to emit error messages.
+
 ### Fixed
 
 - Fixed a bug where `H5Pget_fapl_direct` was only included when HDF5 was compiled
