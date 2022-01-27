@@ -109,20 +109,19 @@ mod v1_13_0 {
     use super::*;
 
     macro_rules! impl_debug_args {
-        ($struct: ty, $($m: pat => $arg: expr),+) => {
-            paste::paste! {
-                impl Debug for $struct {
-                    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-                        let mut s = f.debug_struct(stringify!($struct));
-                        s.field("op_type", &self.op_type);
-                        match self.op_type {
-                            $($m => {
-                                let arg: &dyn for<'a> Fn(&'a [<$struct _union>]) -> &'a dyn Debug = $arg;
-                                s.field("args", arg(&self.args))
-                            }),+,
-                        };
-                        s.finish()
-                    }
+        ($ty:ty, $tag:ident, $args:ty, {$($variant:ident => $func:expr),+$(,)*}) => {
+            #[allow(unreachable_patterns)]
+            impl std::fmt::Debug for $ty {
+                fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                    let mut s = f.debug_struct(stringify!($ty));
+                    s.field("op_type", &self.op_type);
+                    match self.op_type {$(
+                        $tag::$variant => {
+                            s.field("args", &($func as fn($args) -> _)(self.args));
+                        }
+                        _ => {}
+                    )+}
+                    s.finish()
                 }
             }
         };
@@ -232,13 +231,18 @@ mod v1_13_0 {
         pub args: H5VL_attr_get_args_t_union,
     }
 
-    impl_debug_args!(H5VL_attr_get_args_t,
-        H5VL_attr_get_t::H5VL_ATTR_GET_ACPL => &|args| unsafe { &args.get_acpl },
-        H5VL_attr_get_t::H5VL_ATTR_GET_INFO => &|args| unsafe { &args.get_info },
-        H5VL_attr_get_t::H5VL_ATTR_GET_NAME => &|args| unsafe { &args.get_name },
-        H5VL_attr_get_t::H5VL_ATTR_GET_SPACE => &|args| unsafe { &args.get_space },
-        H5VL_attr_get_t::H5VL_ATTR_GET_STORAGE_SIZE => &|args| unsafe { &args.get_storage_size },
-        H5VL_attr_get_t::H5VL_ATTR_GET_TYPE => &|args| unsafe { &args.get_type }
+    impl_debug_args!(
+        H5VL_attr_get_args_t,
+        H5VL_attr_get_t,
+        H5VL_attr_get_args_t_union,
+        {
+            H5VL_ATTR_GET_ACPL => |args| unsafe { args.get_acpl },
+            H5VL_ATTR_GET_INFO => |args| unsafe { args.get_info },
+            H5VL_ATTR_GET_NAME => |args| unsafe { args.get_name },
+            H5VL_ATTR_GET_SPACE => |args| unsafe { args.get_space },
+            H5VL_ATTR_GET_STORAGE_SIZE => |args| unsafe { args.get_storage_size },
+            H5VL_ATTR_GET_TYPE => |args| unsafe { args.get_type },
+        }
     );
 
     #[repr(C)]
@@ -306,12 +310,17 @@ mod v1_13_0 {
         pub args: H5VL_attr_specific_args_t_union,
     }
 
-    impl_debug_args!(H5VL_attr_specific_args_t,
-        H5VL_attr_specific_t::H5VL_ATTR_DELETE => &|args| unsafe { &args.del },
-        H5VL_attr_specific_t::H5VL_ATTR_DELETE_BY_IDX => &|args| unsafe { &args.delete_by_idx },
-        H5VL_attr_specific_t::H5VL_ATTR_EXISTS => &|args| unsafe { &args.exists },
-        H5VL_attr_specific_t::H5VL_ATTR_ITER => &|args| unsafe { &args.iterate },
-        H5VL_attr_specific_t::H5VL_ATTR_RENAME => &|args| unsafe { &args.rename }
+    impl_debug_args!(
+        H5VL_attr_specific_args_t,
+        H5VL_attr_specific_t,
+        H5VL_attr_specific_args_t_union,
+        {
+            H5VL_ATTR_DELETE => |args| unsafe { args.del },
+            H5VL_ATTR_DELETE_BY_IDX => |args| unsafe { args.delete_by_idx },
+            H5VL_ATTR_EXISTS => |args| unsafe { args.exists },
+            H5VL_ATTR_ITER => |args| unsafe { args.iterate },
+            H5VL_ATTR_RENAME => |args| unsafe { args.rename },
+        }
     );
 
     #[repr(C)]
@@ -429,10 +438,15 @@ mod v1_13_0 {
         pub args: H5VL_dataset_specific_args_t_union,
     }
 
-    impl_debug_args!(H5VL_dataset_specific_args_t,
-        H5VL_dataset_specific_t::H5VL_DATASET_SET_EXTENT => &|args| unsafe { &args.set_extent },
-        H5VL_dataset_specific_t::H5VL_DATASET_FLUSH => &|args| unsafe { &args.flush },
-        H5VL_dataset_specific_t::H5VL_DATASET_REFRESH => &|args| unsafe { &args.refresh }
+    impl_debug_args!(
+        H5VL_dataset_specific_args_t,
+        H5VL_dataset_specific_t,
+        H5VL_dataset_specific_args_t_union,
+        {
+            H5VL_DATASET_SET_EXTENT => |args| unsafe { args.set_extent },
+            H5VL_DATASET_FLUSH => |args| unsafe { args.flush },
+            H5VL_DATASET_REFRESH => |args| unsafe { args.refresh },
+        }
     );
 
     #[repr(C)]
@@ -500,13 +514,18 @@ mod v1_13_0 {
         pub args: H5VL_dataset_get_args_t_union,
     }
 
-    impl_debug_args!(H5VL_dataset_get_args_t,
-        H5VL_dataset_get_t::H5VL_DATASET_GET_DAPL => &|args| unsafe { &args.get_dapl },
-        H5VL_dataset_get_t::H5VL_DATASET_GET_DCPL => &|args| unsafe { &args.get_dcpl },
-        H5VL_dataset_get_t::H5VL_DATASET_GET_SPACE => &|args| unsafe { &args.get_space },
-        H5VL_dataset_get_t::H5VL_DATASET_GET_SPACE_STATUS => &|args| unsafe { &args.get_space_status },
-        H5VL_dataset_get_t::H5VL_DATASET_GET_STORAGE_SIZE => &|args| unsafe { &args.get_storage_size },
-        H5VL_dataset_get_t::H5VL_DATASET_GET_TYPE => &|args| unsafe { &args.get_type }
+    impl_debug_args!(
+        H5VL_dataset_get_args_t,
+        H5VL_dataset_get_t,
+        H5VL_dataset_get_args_t_union,
+        {
+            H5VL_DATASET_GET_DAPL => |args| unsafe { args.get_dapl },
+            H5VL_DATASET_GET_DCPL => |args| unsafe { args.get_dcpl },
+            H5VL_DATASET_GET_SPACE => |args| unsafe { args.get_space },
+            H5VL_DATASET_GET_SPACE_STATUS => |args| unsafe { args.get_space_status },
+            H5VL_DATASET_GET_STORAGE_SIZE => |args| unsafe { args.get_storage_size },
+            H5VL_DATASET_GET_TYPE => |args| unsafe { args.get_type },
+        }
     );
 
     #[repr(C)]
@@ -630,9 +649,14 @@ mod v1_13_0 {
         pub args: H5VL_datatype_specific_args_t_union,
     }
 
-    impl_debug_args!(H5VL_datatype_specific_args_t,
-        H5VL_datatype_specific_t::H5VL_DATATYPE_FLUSH => &|args| unsafe { &args.flush },
-        H5VL_datatype_specific_t::H5VL_DATATYPE_REFRESH => &|args| unsafe { &args.refresh }
+    impl_debug_args!(
+        H5VL_datatype_specific_args_t,
+        H5VL_datatype_specific_t,
+        H5VL_datatype_specific_args_t_union,
+        {
+            H5VL_DATATYPE_FLUSH => |args| unsafe { args.flush },
+            H5VL_DATATYPE_REFRESH => |args| unsafe { args.refresh },
+        }
     );
 
     #[repr(C)]
@@ -677,10 +701,15 @@ mod v1_13_0 {
         pub args: H5VL_datatype_get_args_t_union,
     }
 
-    impl_debug_args!(H5VL_datatype_get_args_t,
-        H5VL_datatype_get_t::H5VL_DATATYPE_GET_BINARY_SIZE => &|args| unsafe { &args.get_binary_size },
-        H5VL_datatype_get_t::H5VL_DATATYPE_GET_BINARY => &|args| unsafe { &args.get_binary },
-        H5VL_datatype_get_t::H5VL_DATATYPE_GET_TCPL => &|args| unsafe { &args.get_tcpl }
+    impl_debug_args!(
+        H5VL_datatype_get_args_t,
+        H5VL_datatype_get_t,
+        H5VL_datatype_get_args_t_union,
+        {
+            H5VL_DATATYPE_GET_BINARY_SIZE => |args| unsafe { args.get_binary_size },
+            H5VL_DATATYPE_GET_BINARY => |args| unsafe { args.get_binary },
+            H5VL_DATATYPE_GET_TCPL => |args| unsafe { args.get_tcpl },
+        }
     );
 
     #[repr(C)]
@@ -789,12 +818,17 @@ mod v1_13_0 {
         pub args: H5VL_file_specific_args_t_union,
     }
 
-    impl_debug_args!(H5VL_file_specific_args_t,
-        H5VL_file_specific_t::H5VL_FILE_FLUSH => &|args| unsafe { &args.flush },
-        H5VL_file_specific_t::H5VL_FILE_REOPEN => &|args| unsafe { &args.reopen },
-        H5VL_file_specific_t::H5VL_FILE_IS_ACCESSIBLE => &|args| unsafe { &args.is_accessible },
-        H5VL_file_specific_t::H5VL_FILE_DELETE => &|args| unsafe { &args.del },
-        H5VL_file_specific_t::H5VL_FILE_IS_EQUAL => &|args| unsafe { &args.is_equal }
+    impl_debug_args!(
+        H5VL_file_specific_args_t,
+        H5VL_file_specific_t,
+        H5VL_file_specific_args_t_union,
+        {
+            H5VL_FILE_FLUSH => |args| unsafe { args.flush },
+            H5VL_FILE_REOPEN => |args| unsafe { args.reopen },
+            H5VL_FILE_IS_ACCESSIBLE => |args| unsafe { args.is_accessible },
+            H5VL_FILE_DELETE => |args| unsafe { args.del },
+            H5VL_FILE_IS_EQUAL => |args| unsafe { args.is_equal },
+        }
     );
 
     #[repr(C)]
@@ -894,15 +928,20 @@ mod v1_13_0 {
         pub args: H5VL_file_get_args_t_union,
     }
 
-    impl_debug_args!(H5VL_file_get_args_t,
-        H5VL_file_get_t::H5VL_FILE_GET_CONT_INFO => &|args| unsafe { &args.get_cont_info },
-        H5VL_file_get_t::H5VL_FILE_GET_FAPL => &|args| unsafe { &args.get_fapl },
-        H5VL_file_get_t::H5VL_FILE_GET_FCPL => &|args| unsafe { &args.get_fcpl },
-        H5VL_file_get_t::H5VL_FILE_GET_FILENO => &|args| unsafe { &args.get_fileno },
-        H5VL_file_get_t::H5VL_FILE_GET_INTENT => &|args| unsafe { &args.get_intent },
-        H5VL_file_get_t::H5VL_FILE_GET_NAME => &|args| unsafe { &args.get_name },
-        H5VL_file_get_t::H5VL_FILE_GET_OBJ_COUNT => &|args| unsafe { &args.get_obj_count },
-        H5VL_file_get_t::H5VL_FILE_GET_OBJ_IDS => &|args| unsafe { &args.get_obj_ids }
+    impl_debug_args!(
+        H5VL_file_get_args_t,
+        H5VL_file_get_t,
+        H5VL_file_get_args_t_union,
+        {
+            H5VL_FILE_GET_CONT_INFO => |args| unsafe { args.get_cont_info },
+            H5VL_FILE_GET_FAPL => |args| unsafe { args.get_fapl },
+            H5VL_FILE_GET_FCPL => |args| unsafe { args.get_fcpl },
+            H5VL_FILE_GET_FILENO => |args| unsafe { args.get_fileno },
+            H5VL_FILE_GET_INTENT => |args| unsafe { args.get_intent },
+            H5VL_FILE_GET_NAME => |args| unsafe { args.get_name },
+            H5VL_FILE_GET_OBJ_COUNT => |args| unsafe { args.get_obj_count },
+            H5VL_FILE_GET_OBJ_IDS => |args| unsafe { args.get_obj_ids },
+        }
     );
 
     #[repr(C)]
@@ -1007,11 +1046,16 @@ mod v1_13_0 {
         pub args: H5VL_group_specific_args_t_union,
     }
 
-    impl_debug_args!(H5VL_group_specific_args_t,
-        H5VL_group_specific_t::H5VL_GROUP_MOUNT => &|args| unsafe { &args.mount },
-        H5VL_group_specific_t::H5VL_GROUP_UNMOUNT => &|args| unsafe { &args.unmount },
-        H5VL_group_specific_t::H5VL_GROUP_FLUSH => &|args| unsafe { &args.flush },
-        H5VL_group_specific_t::H5VL_GROUP_REFRESH => &|args| unsafe { &args.refresh }
+    impl_debug_args!(
+        H5VL_group_specific_args_t,
+        H5VL_group_specific_t,
+        H5VL_group_specific_args_t_union,
+        {
+            H5VL_GROUP_MOUNT => |args| unsafe { args.mount },
+            H5VL_GROUP_UNMOUNT => |args| unsafe { args.unmount },
+            H5VL_GROUP_FLUSH => |args| unsafe { args.flush },
+            H5VL_GROUP_REFRESH => |args| unsafe { args.refresh },
+        }
     );
 
     #[repr(C)]
@@ -1048,9 +1092,14 @@ mod v1_13_0 {
         pub args: H5VL_group_get_args_t_union,
     }
 
-    impl_debug_args!(H5VL_group_get_args_t,
-        H5VL_group_get_t::H5VL_GROUP_GET_GCPL => &|args| unsafe { &args.get_gcpl },
-        H5VL_group_get_t::H5VL_GROUP_GET_INFO => &|args| unsafe { &args.get_info }
+    impl_debug_args!(
+        H5VL_group_get_args_t,
+        H5VL_group_get_t,
+        H5VL_group_get_args_t_union,
+        {
+            H5VL_GROUP_GET_GCPL => |args| unsafe { args.get_gcpl },
+            H5VL_GROUP_GET_INFO => |args| unsafe { args.get_info },
+        }
     );
 
     #[repr(C)]
@@ -1147,10 +1196,14 @@ mod v1_13_0 {
         pub args: H5VL_link_specific_args_t_union,
     }
 
-    impl_debug_args!(H5VL_link_specific_args_t,
-        H5VL_link_specific_t::H5VL_LINK_DELETE => &|_| &"delete",
-        H5VL_link_specific_t::H5VL_LINK_EXISTS => &|args| unsafe { &args.exists },
-        H5VL_link_specific_t::H5VL_LINK_ITER => &|args| unsafe { &args.iterate }
+    impl_debug_args!(
+        H5VL_link_specific_args_t,
+        H5VL_link_specific_t,
+        H5VL_link_specific_args_t_union,
+        {
+            H5VL_LINK_EXISTS => |args| unsafe { args.exists },
+            H5VL_LINK_ITER => |args| unsafe { args.iterate },
+        }
     );
 
     #[repr(C)]
@@ -1197,10 +1250,15 @@ mod v1_13_0 {
         pub args: H5VL_link_get_args_t_union,
     }
 
-    impl_debug_args!(H5VL_link_get_args_t,
-        H5VL_link_get_t::H5VL_LINK_GET_INFO => &|args| unsafe { &args.get_info },
-        H5VL_link_get_t::H5VL_LINK_GET_NAME => &|args| unsafe { &args.get_name },
-        H5VL_link_get_t::H5VL_LINK_GET_VAL => &|args| unsafe { &args.get_val }
+    impl_debug_args!(
+        H5VL_link_get_args_t,
+        H5VL_link_get_t,
+        H5VL_link_get_args_t_union,
+        {
+            H5VL_LINK_GET_INFO => |args| unsafe { args.get_info },
+            H5VL_LINK_GET_NAME => |args| unsafe { args.get_name },
+            H5VL_LINK_GET_VAL => |args| unsafe { args.get_val },
+        }
     );
 
     #[repr(C)]
@@ -1247,10 +1305,15 @@ mod v1_13_0 {
         pub args: H5VL_link_create_args_t_union,
     }
 
-    impl_debug_args!(H5VL_link_create_args_t,
-        H5VL_link_create_t::H5VL_LINK_CREATE_HARD => &|args| unsafe { &args.hard },
-        H5VL_link_create_t::H5VL_LINK_CREATE_SOFT => &|args| unsafe { &args.soft },
-        H5VL_link_create_t::H5VL_LINK_CREATE_UD => &|args| unsafe { &args.ud }
+    impl_debug_args!(
+        H5VL_link_create_args_t,
+        H5VL_link_create_t,
+        H5VL_link_create_args_t_union,
+        {
+            H5VL_LINK_CREATE_HARD => |args| unsafe { args.hard },
+            H5VL_LINK_CREATE_SOFT => |args| unsafe { args.soft },
+            H5VL_LINK_CREATE_UD => |args| unsafe { args.ud },
+        }
     );
 
     #[repr(C)]
@@ -1389,13 +1452,18 @@ mod v1_13_0 {
         pub args: H5VL_object_specific_args_t_union,
     }
 
-    impl_debug_args!(H5VL_object_specific_args_t,
-        H5VL_object_specific_t::H5VL_OBJECT_CHANGE_REF_COUNT => &|args| unsafe { &args.change_rc },
-        H5VL_object_specific_t::H5VL_OBJECT_EXISTS => &|args| unsafe { &args.exists },
-        H5VL_object_specific_t::H5VL_OBJECT_LOOKUP => &|args| unsafe { &args.lookup },
-        H5VL_object_specific_t::H5VL_OBJECT_VISIT => &|args| unsafe { &args.visit },
-        H5VL_object_specific_t::H5VL_OBJECT_FLUSH => &|args| unsafe { &args.flush },
-        H5VL_object_specific_t::H5VL_OBJECT_REFRESH => &|args| unsafe { &args.refresh }
+    impl_debug_args!(
+        H5VL_object_specific_args_t,
+        H5VL_object_specific_t,
+        H5VL_object_specific_args_t_union,
+        {
+            H5VL_OBJECT_CHANGE_REF_COUNT => |args| unsafe { args.change_rc },
+            H5VL_OBJECT_EXISTS => |args| unsafe { args.exists },
+            H5VL_OBJECT_LOOKUP => |args| unsafe { args.lookup },
+            H5VL_OBJECT_VISIT => |args| unsafe { args.visit },
+            H5VL_OBJECT_FLUSH => |args| unsafe { args.flush },
+            H5VL_OBJECT_REFRESH => |args| unsafe { args.refresh },
+        }
     );
 
     #[repr(C)]
@@ -1450,11 +1518,16 @@ mod v1_13_0 {
         pub args: H5VL_object_get_args_t_union,
     }
 
-    impl_debug_args!(H5VL_object_get_args_t,
-        H5VL_object_get_t::H5VL_OBJECT_GET_FILE => &|args| unsafe { &args.get_file },
-        H5VL_object_get_t::H5VL_OBJECT_GET_NAME => &|args| unsafe { &args.get_name },
-        H5VL_object_get_t::H5VL_OBJECT_GET_TYPE => &|args| unsafe { &args.get_type },
-        H5VL_object_get_t::H5VL_OBJECT_GET_INFO => &|args| unsafe { &args.get_info }
+    impl_debug_args!(
+        H5VL_object_get_args_t,
+        H5VL_object_get_t,
+        H5VL_object_get_args_t_union,
+        {
+            H5VL_OBJECT_GET_FILE => |args| unsafe { args.get_file },
+            H5VL_OBJECT_GET_NAME => |args| unsafe { args.get_name },
+            H5VL_OBJECT_GET_TYPE => |args| unsafe { args.get_type },
+            H5VL_OBJECT_GET_INFO => |args| unsafe { args.get_info },
+        }
     );
 
     #[repr(C)]
@@ -1584,9 +1657,14 @@ mod v1_13_0 {
         pub args: H5VL_request_specific_args_t_union,
     }
 
-    impl_debug_args!(H5VL_request_specific_args_t,
-        H5VL_request_specific_t::H5VL_REQUEST_GET_ERR_STACK => &|args| unsafe { &args.get_err_stack },
-        H5VL_request_specific_t::H5VL_REQUEST_GET_EXEC_TIME => &|args| unsafe { &args.get_exec_time }
+    impl_debug_args!(
+        H5VL_request_specific_args_t,
+        H5VL_request_specific_t,
+        H5VL_request_specific_args_t_union,
+        {
+            H5VL_REQUEST_GET_ERR_STACK => |args| unsafe { args.get_err_stack },
+            H5VL_REQUEST_GET_EXEC_TIME => |args| unsafe { args.get_exec_time },
+        }
     );
 
     pub type H5VL_request_notify_t =
@@ -1642,10 +1720,13 @@ mod v1_13_0 {
         pub args: H5VL_blob_specific_args_t_union,
     }
 
-    impl_debug_args!(H5VL_blob_specific_args_t,
-        H5VL_blob_specific_t::H5VL_BLOB_DELETE => &|_| &"delete",
-        H5VL_blob_specific_t::H5VL_BLOB_ISNULL => &|args| unsafe { &args.is_null },
-        H5VL_blob_specific_t::H5VL_BLOB_SETNULL => &|_| &"setnull"
+    impl_debug_args!(
+        H5VL_blob_specific_args_t,
+        H5VL_blob_specific_t,
+        H5VL_blob_specific_args_t_union,
+        {
+            H5VL_BLOB_ISNULL => |args| unsafe { args.is_null },
+        }
     );
 
     #[repr(C)]
@@ -1768,15 +1849,15 @@ mod v1_13_0 {
             s.field("obj_type", &self.obj_type).field("type", &self.type_);
             unsafe {
                 match self.type_ {
-                    H5VL_loc_type_t::H5VL_OBJECT_BY_SELF => s.field("loc_data", &"by_self"),
+                    H5VL_loc_type_t::H5VL_OBJECT_BY_SELF => {}
                     H5VL_loc_type_t::H5VL_OBJECT_BY_NAME => {
-                        s.field("loc_data", &self.loc_data.loc_by_name)
+                        s.field("loc_data", &self.loc_data.loc_by_name);
                     }
                     H5VL_loc_type_t::H5VL_OBJECT_BY_IDX => {
-                        s.field("loc_data", &self.loc_data.loc_by_idx)
+                        s.field("loc_data", &self.loc_data.loc_by_idx);
                     }
                     H5VL_loc_type_t::H5VL_OBJECT_BY_TOKEN => {
-                        s.field("loc_data", &self.loc_data.loc_by_token)
+                        s.field("loc_data", &self.loc_data.loc_by_token);
                     }
                 }
             };
