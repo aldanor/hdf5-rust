@@ -15,6 +15,7 @@ categories = ["procedural-macro-helpers"]
 proc-macro = true
 
 [dependencies]
+proc-macro-error = { version = "1.0.4", default-features = false }
 proc-macro2 = "1.0"
 quote = "^1.0.2"
 syn = { version = "^1.0.5", features = ["derive", "extra-traits"]}

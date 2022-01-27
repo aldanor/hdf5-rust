@@ -1,7 +1,5 @@
-error: proc-macro derive panicked
- --> $DIR/empty-tuple-struct.rs:4:10
+error: cannot derive `H5Type` for empty tuple structs
+ --> $DIR/empty-tuple-struct.rs:7:8
   |
-4 | #[derive(H5Type)]
-  |          ^^^^^^
-  |
-  = help: message: Cannot derive H5Type for empty tuple structs
+7 | struct Foo();
+  |        ^^^

@@ -1,7 +1,5 @@
-error: proc-macro derive panicked
- --> $DIR/empty-enum.rs:4:10
+error: cannot derive `H5Type` for empty enums
+ --> $DIR/empty-enum.rs:7:6
   |
-4 | #[derive(H5Type)]
-  |          ^^^^^^
-  |
-  = help: message: Cannot derive H5Type for empty enums
+7 | enum Foo {}
+  |      ^^^
