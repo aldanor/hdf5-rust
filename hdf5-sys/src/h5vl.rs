@@ -115,12 +115,12 @@ mod v1_13_0 {
                 fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                     let mut s = f.debug_struct(stringify!($ty));
                     s.field("op_type", &self.op_type);
-                    match self.op_type {$(
-                        $tag::$variant => {
+                    match self.op_type {
+                        $($tag::$variant => {
                             s.field("args", &($func as fn($args) -> _)(self.args));
-                        }
+                        })+
                         _ => {}
-                    )+}
+                    }
                     s.finish()
                 }
             }
