@@ -58,7 +58,7 @@ mod export {
         hl::selection::{Hyperslab, Selection, SliceOrIndex},
         hl::{
             Attribute, AttributeBuilder, AttributeBuilderData, AttributeBuilderEmpty,
-            AttributeBuilderEmptyShape, Container, Conversion, Dataset, DatasetBuilder,
+            AttributeBuilderEmptyShape, ByteReader, Container, Conversion, Dataset, DatasetBuilder,
             DatasetBuilderData, DatasetBuilderEmpty, DatasetBuilderEmptyShape, Dataspace, Datatype,
             File, FileBuilder, Group, LinkInfo, LinkType, Location, LocationInfo, LocationToken,
             LocationType, Object, PropertyList, Reader, Writer,

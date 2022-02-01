@@ -359,29 +359,21 @@ fn test_read_write_rename_fields() -> hdf5::Result<()> {
 
 #[test]
 fn test_byte_read_seek() -> hdf5::Result<()> {
-    let td = u8::type_descriptor();
-    let mut packed = vec![false];
-    if let TypeDescriptor::Compound(_) = td {
-        packed.push(true);
-    }
-
     let mut rng = SmallRng::seed_from_u64(42);
     let file = new_in_memory_file()?;
 
-    for packed in &packed {
-        for ndim in 0..=2 {
-            for _ in 0..=20 {
-                let arr: ArrayD<u8> = gen_arr(&mut rng, ndim);
+    for ndim in 0..=2 {
+        for _ in 0..=20 {
+            let arr: ArrayD<u8> = gen_arr(&mut rng, ndim);
 
-                let ds: hdf5::Dataset =
-                    file.new_dataset::<u8>().packed(*packed).shape(arr.shape()).create("x")?;
-                let ds = scopeguard::guard(ds, |ds| {
-                    drop(ds);
-                    drop(file.unlink("x"));
-                });
+            let ds: hdf5::Dataset =
+                file.new_dataset::<u8>().packed(*packed).shape(arr.shape()).create("x")?;
+            let ds = scopeguard::guard(ds, |ds| {
+                drop(ds);
+                drop(file.unlink("x"));
+            });
 
-                test_byte_read_seek_impl(&ds, &arr, ndim)?;
-            }
+            test_byte_read_seek_impl(&ds, &arr, ndim)?;
         }
     }
     Ok(())
