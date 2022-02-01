@@ -1,5 +1,6 @@
 use std::convert::TryInto;
 use std::fmt::{self, Debug};
+use std::io;
 use std::mem;
 use std::ops::Deref;
 
@@ -346,6 +347,115 @@ impl<'a> Writer<'a> {
     }
 }
 
+#[derive(Debug)]
+pub struct ByteReader<'a> {
+    obj: &'a Container,
+    pos: u64,
+    dt: Datatype,
+    obj_space: Dataspace,
+    xfer: PropertyList,
+}
+
+impl<'a> ByteReader<'a> {
+    pub fn new(obj: &'a Container) -> Result<Self> {
+        ensure!(!obj.is_attr(), "ByteReader cannot be used on attribute datasets");
+
+        let file_dtype = obj.dtype()?;
+        let mem_dtype = Datatype::from_type::<u8>()?;
+        file_dtype.ensure_convertible(&mem_dtype, Conversion::NoOp)?;
+
+        let obj_space = obj.space()?;
+        ensure!(obj_space.shape().len() == 1, "Only rank 1 datasets can be read vie ByteReader.");
+        let xfer = PropertyList::from_id(h5call!(H5Pcreate(*crate::globals::H5P_DATASET_XFER))?)?;
+        if !hdf5_types::USING_H5_ALLOCATOR {
+            crate::hl::plist::set_vlen_manager_libc(xfer.id())?;
+        }
+        Ok(ByteReader { obj, pos: 0, obj_space, dt: mem_dtype, xfer })
+    }
+
+    pub fn set_position(&mut self, pos: u64) {
+        self.pos = pos;
+    }
+
+    fn dataset_len(&self) -> usize {
+        self.obj_space.shape()[0]
+    }
+
+    fn remaining_len(&self) -> usize {
+        self.dataset_len().saturating_sub(self.pos as usize)
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.pos >= self.dataset_len() as u64
+    }
+}
+
+trait IOResultExt<T> {
+    fn to_io_err(self) -> std::io::Result<T>;
+}
+impl<T> IOResultExt<T> for Result<T> {
+    fn to_io_err(self) -> std::io::Result<T> {
+        match self {
+            Ok(x) => Ok(x),
+            Err(e) => Err(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())),
+        }
+    }
+}
+
+impl<'a> std::io::Read for ByteReader<'a> {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        let pos = self.pos as usize;
+        let amt = std::cmp::min(buf.len(), self.remaining_len());
+        let selection = Selection::new(pos..pos + amt);
+        let out_shape = selection.out_shape(&self.obj_space.shape()).to_io_err()?;
+        let fspace = self.obj_space.select(selection).to_io_err()?;
+        let mspace = Dataspace::try_new(&out_shape).to_io_err()?;
+        h5call!(H5Dread(
+            self.obj.id(),
+            self.dt.id(),
+            mspace.id(),
+            fspace.id(),
+            self.xfer.id(),
+            buf.as_mut_ptr().cast()
+        ))
+        .to_io_err()?;
+        self.pos += amt as u64;
+        Ok(out_shape[0])
+    }
+}
+
+impl<'a> std::io::Seek for ByteReader<'a> {
+    fn seek(&mut self, style: std::io::SeekFrom) -> std::io::Result<u64> {
+        let (base_pos, offset) = match style {
+            std::io::SeekFrom::Start(n) => {
+                self.pos = n;
+                return Ok(n);
+            }
+            std::io::SeekFrom::End(n) => (self.dataset_len() as u64, n),
+            std::io::SeekFrom::Current(n) => (self.pos, n),
+        };
+        let new_pos = if offset.is_negative() {
+            base_pos.checked_sub(offset.wrapping_abs() as u64)
+        } else {
+            base_pos.checked_add(offset as u64)
+        };
+        match new_pos {
+            Some(n) => {
+                self.pos = n;
+                Ok(self.pos)
+            }
+            None => Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "invalid seek to a negative or overflowing position",
+            )),
+        }
+    }
+
+    fn stream_position(&mut self) -> io::Result<u64> {
+        Ok(self.pos)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone)]
 /// An object which can be read or written to.
@@ -393,6 +503,11 @@ impl Container {
     /// set custom type conversion options when writing.
     pub fn as_writer(&self) -> Writer {
         Writer::new(self)
+    }
+
+    /// Convert into a ``ByteReader`` that implements ``std::io::{Read, Seek}``.
+    pub fn as_byte_reader(&self) -> Result<ByteReader> {
+        ByteReader::new(self)
     }
 
     /// Returns the datatype of the dataset/attribute.
