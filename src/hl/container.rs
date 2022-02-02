@@ -505,9 +505,10 @@ impl Container {
         Writer::new(self)
     }
 
-    /// Creates a ``ByteReader`` which implements ``std::io::{Read, Seek}``.
-    /// ``ByteReader`` only supports 1D ``u8`` datasets. Attributes or datasets
-    /// with other dimensions or datatypes cannot be read with ``ByteReader``.
+    /// Creates `ByteReader` which implements [`Read`](std::io::Read)
+    /// and [`Seek`](std::io::Seek).
+    ///
+    /// ``ByteReader`` only supports 1-D `u8` datasets.
     pub fn as_byte_reader(&self) -> Result<ByteReader> {
         ByteReader::new(self)
     }
