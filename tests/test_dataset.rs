@@ -183,7 +183,7 @@ fn test_byte_read_seek_impl(ds: &hdf5::Dataset, arr: &ArrayD<u8>, ndim: usize) -
         return Ok(());
     } else {
         let mut out_bytes = vec![0u8; arr.len()];
-        reader?.read(&mut out_bytes.as_mut_slice()).expect("io::Read faild");
+        reader?.read(&mut out_bytes.as_mut_slice()).expect("io::Read failed");
         assert_eq!(out_bytes.as_slice(), arr.as_slice().unwrap());
     }
 
@@ -193,7 +193,7 @@ fn test_byte_read_seek_impl(ds: &hdf5::Dataset, arr: &ArrayD<u8>, ndim: usize) -
     while pos < arr.len() {
         let chunk_len: usize = rng.gen_range(1..arr.len() + 1);
         let mut chunk = vec![0u8; chunk_len];
-        let n_read = reader.read(&mut chunk).expect("io::Read faild");
+        let n_read = reader.read(&mut chunk).expect("io::Read failed");
         if pos + chunk_len < arr.len() {
             // We did not read until end. Thus, the chunk should be fully filled.
             assert_eq!(chunk_len, n_read);
@@ -202,10 +202,10 @@ fn test_byte_read_seek_impl(ds: &hdf5::Dataset, arr: &ArrayD<u8>, ndim: usize) -
         pos += chunk_len;
     }
 
-    // Seek to begining and read again
+    // Seek to the begining and read again
     reader.seek(SeekFrom::Start(0)).expect("io::Seek failed");
     let mut out_bytes = vec![0u8; arr.len()];
-    reader.read(&mut out_bytes.as_mut_slice()).expect("io::Read faild");
+    reader.read(&mut out_bytes.as_mut_slice()).expect("io::Read failed");
     assert_eq!(out_bytes.as_slice(), arr.as_slice().unwrap());
 
     // Seek to a random position from start
@@ -240,7 +240,7 @@ fn test_byte_read_seek_impl(ds: &hdf5::Dataset, arr: &ArrayD<u8>, ndim: usize) -
     // Seek before start
     assert!(reader.seek(SeekFrom::End(-(arr.len() as i64) - 1)).is_err());
 
-    // Test strem position start
+    // Test stream position start
     // Requires Rust 1.55.0: reader.rewind().expect("io::Seek::rewind failed");
     assert_eq!(0, reader.seek(SeekFrom::Start(0)).unwrap());
     assert_eq!(0, reader.stream_position().unwrap());
@@ -366,8 +366,7 @@ fn test_byte_read_seek() -> hdf5::Result<()> {
         for _ in 0..=20 {
             let arr: ArrayD<u8> = gen_arr(&mut rng, ndim);
 
-            let ds: hdf5::Dataset =
-                file.new_dataset::<u8>().packed(*packed).shape(arr.shape()).create("x")?;
+            let ds: hdf5::Dataset = file.new_dataset::<u8>().shape(arr.shape()).create("x")?;
             let ds = scopeguard::guard(ds, |ds| {
                 drop(ds);
                 drop(file.unlink("x"));

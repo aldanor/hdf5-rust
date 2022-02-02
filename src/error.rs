@@ -1,6 +1,7 @@
 use std::convert::Infallible;
 use std::error::Error as StdError;
 use std::fmt;
+use std::io;
 use std::ops::Deref;
 use std::panic;
 use std::ptr;
@@ -265,6 +266,12 @@ impl StdError for Error {}
 impl From<ShapeError> for Error {
     fn from(err: ShapeError) -> Self {
         format!("shape error: {}", err).into()
+    }
+}
+
+impl From<Error> for io::Error {
+    fn from(err: Error) -> Self {
+        Self::new(io::ErrorKind::Other, err)
     }
 }
 

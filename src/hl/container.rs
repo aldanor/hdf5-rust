@@ -365,16 +365,12 @@ impl<'a> ByteReader<'a> {
         file_dtype.ensure_convertible(&mem_dtype, Conversion::NoOp)?;
 
         let obj_space = obj.space()?;
-        ensure!(obj_space.shape().len() == 1, "Only rank 1 datasets can be read vie ByteReader.");
+        ensure!(obj_space.shape().len() == 1, "Only rank 1 datasets can be read via ByteReader");
         let xfer = PropertyList::from_id(h5call!(H5Pcreate(*crate::globals::H5P_DATASET_XFER))?)?;
         if !hdf5_types::USING_H5_ALLOCATOR {
             crate::hl::plist::set_vlen_manager_libc(xfer.id())?;
         }
         Ok(ByteReader { obj, pos: 0, obj_space, dt: mem_dtype, xfer })
-    }
-
-    pub fn set_position(&mut self, pos: u64) {
-        self.pos = pos;
     }
 
     fn dataset_len(&self) -> usize {
@@ -390,26 +386,14 @@ impl<'a> ByteReader<'a> {
     }
 }
 
-trait IOResultExt<T> {
-    fn to_io_err(self) -> std::io::Result<T>;
-}
-impl<T> IOResultExt<T> for Result<T> {
-    fn to_io_err(self) -> std::io::Result<T> {
-        match self {
-            Ok(x) => Ok(x),
-            Err(e) => Err(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())),
-        }
-    }
-}
-
-impl<'a> std::io::Read for ByteReader<'a> {
-    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+impl<'a> io::Read for ByteReader<'a> {
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         let pos = self.pos as usize;
         let amt = std::cmp::min(buf.len(), self.remaining_len());
         let selection = Selection::new(pos..pos + amt);
-        let out_shape = selection.out_shape(&self.obj_space.shape()).to_io_err()?;
-        let fspace = self.obj_space.select(selection).to_io_err()?;
-        let mspace = Dataspace::try_new(&out_shape).to_io_err()?;
+        let out_shape = selection.out_shape(&self.obj_space.shape())?;
+        let fspace = self.obj_space.select(selection)?;
+        let mspace = Dataspace::try_new(&out_shape)?;
         h5call!(H5Dread(
             self.obj.id(),
             self.dt.id(),
@@ -417,22 +401,21 @@ impl<'a> std::io::Read for ByteReader<'a> {
             fspace.id(),
             self.xfer.id(),
             buf.as_mut_ptr().cast()
-        ))
-        .to_io_err()?;
+        ))?;
         self.pos += amt as u64;
         Ok(out_shape[0])
     }
 }
 
-impl<'a> std::io::Seek for ByteReader<'a> {
-    fn seek(&mut self, style: std::io::SeekFrom) -> std::io::Result<u64> {
+impl<'a> io::Seek for ByteReader<'a> {
+    fn seek(&mut self, style: io::SeekFrom) -> io::Result<u64> {
         let (base_pos, offset) = match style {
-            std::io::SeekFrom::Start(n) => {
+            io::SeekFrom::Start(n) => {
                 self.pos = n;
                 return Ok(n);
             }
-            std::io::SeekFrom::End(n) => (self.dataset_len() as u64, n),
-            std::io::SeekFrom::Current(n) => (self.pos, n),
+            io::SeekFrom::End(n) => (self.dataset_len() as u64, n),
+            io::SeekFrom::Current(n) => (self.pos, n),
         };
         let new_pos = if offset.is_negative() {
             base_pos.checked_sub(offset.wrapping_abs() as u64)
