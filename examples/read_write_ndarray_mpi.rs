@@ -1,4 +1,4 @@
-//! Read and write dynamically sized arrays in parallel.
+//! Read and write ndarray datasets in parallel.
 //!
 //! This will fail if the systems `hdf5` library is not build
 //! with mpi support.

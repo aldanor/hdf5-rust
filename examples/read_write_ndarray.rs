@@ -1,4 +1,4 @@
-//! Read and write dynamically sized arrays.
+//! Read and write ndarray datasets.
 //!
 //! ``` ignore
 //! cargo run --example read_write_ndarray
