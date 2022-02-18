@@ -230,3 +230,17 @@ impl Gen for VarLenStruct {
         VarLenStruct { va: Gen::gen(rng), vu: Gen::gen(rng), vla: Gen::gen(rng) }
     }
 }
+
+#[derive(H5Type, Clone, Debug, PartialEq)]
+#[repr(C)]
+pub struct RenameStruct {
+    first: i32,
+    #[hdf5(rename = "field.second")]
+    second: i64,
+}
+
+impl Gen for RenameStruct {
+    fn gen<R: Rng + ?Sized>(rng: &mut R) -> Self {
+        RenameStruct { first: Gen::gen(rng), second: Gen::gen(rng) }
+    }
+}

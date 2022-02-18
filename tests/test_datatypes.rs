@@ -84,6 +84,23 @@ pub fn test_datatype_roundtrip() {
         size: 2 * 8 + 4 * 32 * 16,
     });
     check_roundtrip!(C, c_desc);
+
+    #[derive(H5Type)]
+    #[repr(C)]
+    struct D {
+        #[hdf5(rename = "field.one")]
+        a: f64,
+        #[hdf5(rename = "field.two")]
+        b: u64,
+    }
+    let d_desc = TD::Compound(CompoundType {
+        fields: vec![
+            CompoundField::typed::<f64>("field.one", 0, 0),
+            CompoundField::typed::<u64>("field.two", 8, 1),
+        ],
+        size: 16,
+    });
+    check_roundtrip!(D, d_desc);
 }
 
 #[test]

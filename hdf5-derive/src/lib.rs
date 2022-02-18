@@ -8,11 +8,11 @@ use proc_macro2::{Ident, Span, TokenStream};
 use proc_macro_error::{abort, proc_macro_error};
 use quote::{quote, ToTokens};
 use syn::{
-    parse_macro_input, AttrStyle, Attribute, Data, DeriveInput, Expr, Fields, Index, Meta,
-    NestedMeta, Type, TypeGenerics, TypePath,
+    parse_macro_input, AttrStyle, Attribute, Data, DeriveInput, Expr, Field, Fields, Index, Lit,
+    Meta, NestedMeta, Type, TypeGenerics, TypePath,
 };
 
-#[proc_macro_derive(H5Type)]
+#[proc_macro_derive(H5Type, attributes(hdf5))]
 #[proc_macro_error]
 pub fn derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
@@ -132,6 +132,27 @@ fn find_repr(attrs: &[Attribute], expected: &[&str]) -> Option<Ident> {
     None
 }
 
+fn extract_field_name(field: &Field) -> String {
+    if let Some(attr) = field.attrs.iter().find(|a| a.path.is_ident("hdf5")) {
+        if let Ok(Meta::List(meta_list)) = attr.parse_meta() {
+            let rename = meta_list.nested.iter().find_map(|n| {
+                if let NestedMeta::Meta(Meta::NameValue(name_value)) = n {
+                    if name_value.path.is_ident("rename") {
+                        return Some(&name_value.lit);
+                    }
+                }
+
+                None
+            });
+            if let Some(Lit::Str(renamed)) = rename {
+                return renamed.value();
+            }
+        }
+    }
+
+    field.ident.as_ref().unwrap().to_string()
+}
+
 fn pluck<'a, I, F, T, S>(iter: I, func: F) -> Vec<S>
 where
     I: Iterator<Item = &'a T>,
@@ -166,8 +187,8 @@ fn impl_trait(
                     impl_transparent(&fields[0].ty)
                 } else {
                     let types = pluck(fields.iter(), |f| f.ty.clone());
+                    let names = pluck(fields.iter(), |f| extract_field_name(*f));
                     let fields = pluck(fields.iter(), |f| f.ident.clone().unwrap());
-                    let names = fields.iter().map(ToString::to_string).collect::<Vec<_>>();
                     impl_compound(ty, ty_generics, &fields, &names, &types)
                 }
             }
