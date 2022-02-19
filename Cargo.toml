@@ -17,6 +17,11 @@ default = []
 mpio = ["mpi-sys", "hdf5-sys/mpio"]
 lzf = ["lzf-sys", "errno"]
 blosc = ["blosc-sys"]
+hl = ["hdf5-sys/hl"]
+threadsafe = ["hdf5-sys/threadsafe"]
+zlib = ["hdf5-sys/zlib"]
+static = ["hdf5-sys/static"]
+deprecated = ["hdf5-sys/deprecated"]
 # The features with version numbers such as 1.10.3, 1.12.0 are metafeatures
 # and is only available when the HDF5 library is at least this version.
 # Features have_direct and have_parallel are also metafeatures and dependent

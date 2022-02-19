@@ -47,7 +47,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with: {toolchain: nightly, profile: minimal, override: true}
       - name: Document workspace
-        run: env RUSTDOCFLAGS="--cfg docsrs" cargo doc --features hdf5-sys/static,hdf5-sys/zlib,blosc,lzf
+        run: env RUSTDOCFLAGS="--cfg docsrs" cargo doc --features static,zlib,blosc,lzf
 
   brew:
     name: brew
@@ -144,14 +144,14 @@ jobs:
         uses: actions-rs/toolchain@v1
         with: {toolchain: '${{matrix.rust}}', profile: minimal, override: true}
       - name: Build and test all crates
-        run: cargo test --workspace -v --features hdf5-sys/static,hdf5-sys/zlib --exclude hdf5-derive
+        run: cargo test --workspace -v --features static,zlib --exclude hdf5-derive
       - name: Build and test with filters
-        run: cargo test --workspace -v --features hdf5-sys/static,hdf5-sys/zlib,lzf,blosc --exclude hdf5-derive
+        run: cargo test --workspace -v --features static,zlib,lzf,blosc --exclude hdf5-derive
         if: matrix.rust != 'stable-gnu'
       - name: Run examples
         run: |
-          cargo r --example simple --features hdf5-sys/static,hdf5-sys/zlib,lzf,blosc
-          cargo r --example chunking --features hdf5-sys/static,hdf5-sys/zlib,lzf,blosc
+          cargo r --example simple --features static,zlib,lzf,blosc
+          cargo r --example chunking --features static,zlib,lzf,blosc
         if: matrix.rust != 'stable-gnu'
 
   apt:
@@ -248,7 +248,7 @@ jobs:
         with: {toolchain: 1.51, profile: minimal, override: true}
       - name: Build and test all crates
         run:
-          cargo test --workspace -vv --features=hdf5-sys/static --exclude=hdf5-derive
+          cargo test --workspace -vv --features=static --exclude=hdf5-derive
 
   wine:
     name: wine
@@ -263,7 +263,7 @@ jobs:
       - name: Install dependencies
         run: sudo apt-get update && sudo apt install wine64 mingw-w64
       - name: Build and test
-        run: env CARGO_TARGET_X86_64_PC_WINDOWS_GNU_RUNNER=wine64 cargo test --features hdf5-sys/static --target x86_64-pc-windows-gnu -- --skip test_compile_fail
+        run: env CARGO_TARGET_X86_64_PC_WINDOWS_GNU_RUNNER=wine64 cargo test --features static --target x86_64-pc-windows-gnu -- --skip test_compile_fail
   addr_san:
     name: Address sanitizer
     runs-on: ubuntu-latest
@@ -275,4 +275,4 @@ jobs:
         uses: actions-rs/toolchain@v1
         with: {toolchain: nightly, profile: minimal, override: true}
       - name: Run test with sanitizer
-        run: env RUSTFLAGS="-Z sanitizer=address" cargo test --features hdf5-sys/static --target x86_64-unknown-linux-gnu --workspace --exclude hdf5-derive
+        run: env RUSTFLAGS="-Z sanitizer=address" cargo test --features static --target x86_64-unknown-linux-gnu --workspace --exclude hdf5-derive
