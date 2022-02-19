@@ -9,7 +9,8 @@ use hdf5_types::TypeDescriptor;
 mod common;
 
 use self::common::gen::{
-    gen_arr, gen_slice, Enum, FixedStruct, Gen, RenameStruct, TupleStruct, VarLenStruct,
+    gen_arr, gen_slice, Enum, FixedStruct, Gen, RenameEnum, RenameStruct, RenameTupleStruct,
+    TupleStruct, VarLenStruct,
 };
 use self::common::util::new_in_memory_file;
 
@@ -272,5 +273,8 @@ fn test_create_on_databuilder() {
 
 #[test]
 fn test_read_write_rename_fields() -> hdf5::Result<()> {
-    test_read_write::<RenameStruct>()
+    test_read_write::<RenameStruct>()?;
+    test_read_write::<RenameTupleStruct>()?;
+    test_read_write::<RenameEnum>()?;
+    Ok(())
 }

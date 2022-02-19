@@ -244,3 +244,28 @@ impl Gen for RenameStruct {
         RenameStruct { first: Gen::gen(rng), second: Gen::gen(rng) }
     }
 }
+
+#[derive(H5Type, Clone, Copy, Debug, PartialEq)]
+#[repr(C)]
+pub struct RenameTupleStruct(#[hdf5(rename = "my_boolean")] bool, #[hdf5(rename = "my_enum")] Enum);
+
+impl Gen for RenameTupleStruct {
+    fn gen<R: Rng + ?Sized>(rng: &mut R) -> Self {
+        RenameTupleStruct(Gen::gen(rng), Gen::gen(rng))
+    }
+}
+
+#[derive(H5Type, Clone, Copy, Debug, PartialEq)]
+#[repr(i16)]
+pub enum RenameEnum {
+    #[hdf5(rename = "coord.x")]
+    X = -2,
+    #[hdf5(rename = "coord.y")]
+    Y = 3,
+}
+
+impl Gen for RenameEnum {
+    fn gen<R: Rng + ?Sized>(rng: &mut R) -> Self {
+        *[RenameEnum::X, RenameEnum::Y].choose(rng).unwrap()
+    }
+}

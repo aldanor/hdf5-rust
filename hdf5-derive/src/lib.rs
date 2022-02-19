@@ -8,8 +8,8 @@ use proc_macro2::{Ident, Span, TokenStream};
 use proc_macro_error::{abort, proc_macro_error};
 use quote::{quote, ToTokens};
 use syn::{
-    parse_macro_input, AttrStyle, Attribute, Data, DeriveInput, Expr, Field, Fields, Index, Lit,
-    Meta, NestedMeta, Type, TypeGenerics, TypePath,
+    parse_macro_input, AttrStyle, Attribute, Data, DeriveInput, Expr, Fields, Index, Lit, Meta,
+    NestedMeta, Type, TypeGenerics, TypePath,
 };
 
 #[proc_macro_derive(H5Type, attributes(hdf5))]
@@ -67,7 +67,7 @@ fn impl_transparent(ty: &Type) -> TokenStream {
     }
 }
 
-fn impl_enum(names: &[Ident], values: &[Expr], repr: &Ident) -> TokenStream {
+fn impl_enum(names: &[String], values: &[Expr], repr: &Ident) -> TokenStream {
     let size = Ident::new(
         &format!(
             "U{}",
@@ -84,7 +84,7 @@ fn impl_enum(names: &[Ident], values: &[Expr], repr: &Ident) -> TokenStream {
                 signed: #signed,
                 members: vec![#(
                     _h5::types::EnumMember {
-                        name: stringify!(#names).to_owned(),
+                        name: #names.to_owned(),
                         value: (#values) as #repr as _,
                     }
                 ),*],
@@ -132,10 +132,10 @@ fn find_repr(attrs: &[Attribute], expected: &[&str]) -> Option<Ident> {
     None
 }
 
-fn extract_field_name(field: &Field) -> String {
-    if let Some(attr) = field.attrs.iter().find(|a| a.path.is_ident("hdf5")) {
+fn find_hdf5_rename(attrs: &[Attribute]) -> Option<String> {
+    if let Some(attr) = attrs.iter().find(|a| a.path.is_ident("hdf5")) {
         if let Ok(Meta::List(meta_list)) = attr.parse_meta() {
-            let rename = meta_list.nested.iter().find_map(|n| {
+            let rename_literal = meta_list.nested.iter().find_map(|n| {
                 if let NestedMeta::Meta(Meta::NameValue(name_value)) = n {
                     if name_value.path.is_ident("rename") {
                         return Some(&name_value.lit);
@@ -144,13 +144,14 @@ fn extract_field_name(field: &Field) -> String {
 
                 None
             });
-            if let Some(Lit::Str(renamed)) = rename {
-                return renamed.value();
+
+            if let Some(Lit::Str(renamed)) = rename_literal {
+                return Some(renamed.value());
             }
         }
     }
 
-    field.ident.as_ref().unwrap().to_string()
+    None
 }
 
 fn pluck<'a, I, F, T, S>(iter: I, func: F) -> Vec<S>
@@ -187,7 +188,10 @@ fn impl_trait(
                     impl_transparent(&fields[0].ty)
                 } else {
                     let types = pluck(fields.iter(), |f| f.ty.clone());
-                    let names = pluck(fields.iter(), |f| extract_field_name(*f));
+                    let names = pluck(fields.iter(), |f| {
+                        find_hdf5_rename(&f.attrs)
+                            .unwrap_or_else(|| f.ident.as_ref().unwrap().to_string())
+                    });
                     let fields = pluck(fields.iter(), |f| f.ident.clone().unwrap());
                     impl_compound(ty, ty_generics, &fields, &names, &types)
                 }
@@ -212,7 +216,11 @@ fn impl_trait(
                     assert_eq!(fields.len(), 1);
                     impl_transparent(&fields[0].ty)
                 } else {
-                    let names = (0..fields.len()).map(|f| f.to_string()).collect::<Vec<_>>();
+                    let names = fields
+                        .iter()
+                        .enumerate()
+                        .map(|(n, f)| find_hdf5_rename(&f.attrs).unwrap_or_else(|| n.to_string()))
+                        .collect::<Vec<_>>();
                     let types = pluck(fields.iter(), |f| f.ty.clone());
                     impl_compound(ty, ty_generics, &index, &names, &types)
                 }
@@ -234,7 +242,10 @@ fn impl_trait(
             let repr = find_repr(attrs, enum_reprs).unwrap_or_else(|| {
                 abort!(ty, "`H5Type` can only be derived for enums with explicit representation")
             });
-            let names = pluck(variants.iter(), |v| v.ident.clone());
+            let names = variants
+                .iter()
+                .map(|v| find_hdf5_rename(&v.attrs).unwrap_or_else(|| v.ident.to_string()))
+                .collect::<Vec<_>>();
             let values = pluck(variants.iter(), |v| v.discriminant.clone().unwrap().1);
             impl_enum(&names, &values, &repr)
         }
