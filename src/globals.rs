@@ -329,18 +329,18 @@ lazy_static! {
 
 // File drivers
 lazy_static! {
-    pub static ref H5FD_CORE: hid_t = unsafe { h5lock!(H5FD_core_init()) };
-    pub static ref H5FD_SEC2: hid_t = unsafe { h5lock!(H5FD_sec2_init()) };
-    pub static ref H5FD_STDIO: hid_t = unsafe { h5lock!(H5FD_stdio_init()) };
-    pub static ref H5FD_FAMILY: hid_t = unsafe { h5lock!(H5FD_family_init()) };
-    pub static ref H5FD_LOG: hid_t = unsafe { h5lock!(H5FD_log_init()) };
-    pub static ref H5FD_MULTI: hid_t = unsafe { h5lock!(H5FD_multi_init()) };
+    pub static ref H5FD_CORE: hid_t = h5lock!(H5FD_core_init());
+    pub static ref H5FD_SEC2: hid_t = h5lock!(H5FD_sec2_init());
+    pub static ref H5FD_STDIO: hid_t = h5lock!(H5FD_stdio_init());
+    pub static ref H5FD_FAMILY: hid_t = h5lock!(H5FD_family_init());
+    pub static ref H5FD_LOG: hid_t = h5lock!(H5FD_log_init());
+    pub static ref H5FD_MULTI: hid_t = h5lock!(H5FD_multi_init());
 }
 
 // MPI-IO file driver
 #[cfg(feature = "have-parallel")]
 lazy_static! {
-    pub static ref H5FD_MPIO: hid_t = unsafe { h5lock!(H5FD_mpio_init()) };
+    pub static ref H5FD_MPIO: hid_t = h5lock!(H5FD_mpio_init());
 }
 #[cfg(not(feature = "have-parallel"))]
 lazy_static! {
@@ -350,7 +350,7 @@ lazy_static! {
 // Direct VFD
 #[cfg(feature = "have-direct")]
 lazy_static! {
-    pub static ref H5FD_DIRECT: hid_t = unsafe { h5lock!(H5FD_direct_init()) };
+    pub static ref H5FD_DIRECT: hid_t = h5lock!(H5FD_direct_init());
 }
 #[cfg(not(feature = "have-direct"))]
 lazy_static! {
