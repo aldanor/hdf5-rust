@@ -1,3 +1,9 @@
-[submodule "hdf5"]
-	path = hdf5-src/ext/hdf5
+[submodule "hdf5-src/ext/1_13_0"]
+	path = hdf5-src/ext/1_13
+	url = https://github.com/HDFGroup/hdf5.git
+[submodule "hdf5-src/ext/1_12_0"]
+	path = hdf5-src/ext/1_12
+	url = https://github.com/HDFGroup/hdf5.git
+[submodule "hdf5-src/ext/1_10_0"]
+	path = hdf5-src/ext/1_10
 	url = https://github.com/HDFGroup/hdf5.git
