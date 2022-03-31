@@ -53,6 +53,24 @@ pub fn test_datatype_roundtrip() {
     });
     check_roundtrip!(X, x_desc);
 
+    #[allow(dead_code)]
+    #[derive(H5Type)]
+    #[repr(i64)]
+    enum Y {
+        #[hdf5(rename = "variant.a")]
+        A = 1,
+        B = -2,
+    }
+    let y_desc = TD::Enum(EnumType {
+        size: IntSize::U8,
+        signed: true,
+        members: vec![
+            EnumMember { name: "variant.a".into(), value: 1 },
+            EnumMember { name: "B".into(), value: -2i64 as _ },
+        ],
+    });
+    check_roundtrip!(Y, y_desc);
+
     #[derive(H5Type)]
     #[repr(C)]
     struct A {
@@ -84,6 +102,35 @@ pub fn test_datatype_roundtrip() {
         size: 2 * 8 + 4 * 32 * 16,
     });
     check_roundtrip!(C, c_desc);
+
+    #[derive(H5Type)]
+    #[repr(C)]
+    struct D {
+        #[hdf5(rename = "field.one")]
+        a: f64,
+        #[hdf5(rename = "field.two")]
+        b: u64,
+    }
+    let d_desc = TD::Compound(CompoundType {
+        fields: vec![
+            CompoundField::typed::<f64>("field.one", 0, 0),
+            CompoundField::typed::<u64>("field.two", 8, 1),
+        ],
+        size: 16,
+    });
+    check_roundtrip!(D, d_desc);
+
+    #[derive(H5Type)]
+    #[repr(C)]
+    struct E(#[hdf5(rename = "alpha")] u64, f64);
+    let e_desc = TD::Compound(CompoundType {
+        fields: vec![
+            CompoundField::typed::<u64>("alpha", 0, 0),
+            CompoundField::typed::<f64>("1", 8, 1),
+        ],
+        size: 16,
+    });
+    check_roundtrip!(E, e_desc);
 }
 
 #[test]

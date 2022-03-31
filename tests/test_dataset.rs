@@ -8,7 +8,10 @@ use hdf5_types::TypeDescriptor;
 
 mod common;
 
-use self::common::gen::{gen_arr, gen_slice, Enum, FixedStruct, Gen, TupleStruct, VarLenStruct};
+use self::common::gen::{
+    gen_arr, gen_slice, Enum, FixedStruct, Gen, RenameEnum, RenameStruct, RenameTupleStruct,
+    TupleStruct, VarLenStruct,
+};
 use self::common::util::new_in_memory_file;
 
 fn test_write_slice<T, R>(
@@ -266,4 +269,12 @@ fn test_create_on_databuilder() {
     let _ds = file.new_dataset_builder().with_data(&[1_i32, 2, 3]).create("ds2").unwrap();
     let _ds = file.new_dataset::<i32>().create("ds3").unwrap();
     let _ds = file.new_dataset::<i32>().shape(2).create("ds4").unwrap();
+}
+
+#[test]
+fn test_read_write_rename_fields() -> hdf5::Result<()> {
+    test_read_write::<RenameStruct>()?;
+    test_read_write::<RenameTupleStruct>()?;
+    test_read_write::<RenameEnum>()?;
+    Ok(())
 }

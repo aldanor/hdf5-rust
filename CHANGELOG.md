@@ -5,6 +5,7 @@
 ### Added
 
 - Support for HDF5 version 1.13.0.
+- Support field renaming via `#[hdf5(rename = "new_name")]` helper attribute.
 
 ### Changed
 
@@ -25,7 +26,7 @@ Release date: Nov 21, 2021.
   extents (like tuples of integers) where `impl TryInto<Extents>` is required.
 - Support for HDF5 versions 1.12.1 and 1.10.8.
 - `#[derive(H5Type)]` now supports structs / tuple structs with `repr(packed)`.
-- `#[derive(H5Type)]` now supports structs / tuple structs with 
+- `#[derive(H5Type)]` now supports structs / tuple structs with
   `repr(transparent)` (the generated HDF5 type is equivalent to the type of
   the field and is not compound).
 
@@ -93,7 +94,7 @@ Release date: Oct 23, 2021.
   memchecker option enabled. This option is force-enabled by default if using
   a dll version of the HDF5 library on Windows.
 - Added new `DynValue` type which represents a dynamic self-describing HDF5
-  object that also knows how to deallocate itself. It supports all the HDF5 
+  object that also knows how to deallocate itself. It supports all the HDF5
   types including compound types, strings and arrays.
 - Added support for attributes and a new `Attribute` object type. The attribute
   API uses the new dataset API with some restrictions imposed by HDF5 library
@@ -113,7 +114,7 @@ Release date: Oct 23, 2021.
   - `get_all_of_type`: find all objects in a group of a given type.
   - Shortcut methods for finding all objects in a group of a given type:
     `datasets`, `groups`, `named_datatypes`, `link_external`.
-- Added to `Handle`: 
+- Added to `Handle`:
   - `id_type`: get native HDF5 object type.
   - `try_borrow`: instantiate a handle but don't take ownership of the object.
   - `Handle` now implements `Debug`.
@@ -169,7 +170,7 @@ Release date: Oct 23, 2021.
 ### Fixed
 
 - A potential memory leak of identifier handles has been identified and fixed.
-- A potential race condition occurring in multi-thread library initialisation 
+- A potential race condition occurring in multi-thread library initialisation
   has been identified and fixed.
 
 ### Removed
@@ -189,7 +190,7 @@ Release date: Jan 27, 2021.
 
 ### Changed
 
-- Dependencies are bumped to the newest major versions; `ndarray` users may 
+- Dependencies are bumped to the newest major versions; `ndarray` users may
   now use both version `0.13` and version `0.14`.
 
 ### Fixed
@@ -207,8 +208,8 @@ Release date: Aug 9, 2020.
   via `hdf5-sys/static` feature (as of this release, the version of the bundled
   sources of HDF5 is 1.10.6). CMake is required for building. For further
   details, see the docs for `hdf5-sys`.
-- Thanks to static build option, the documentation will now be built on 
-  [docs.rs](https://docs.rs/crate/hdf5); if it builds successfully, this 
+- Thanks to static build option, the documentation will now be built on
+  [docs.rs](https://docs.rs/crate/hdf5); if it builds successfully, this
   will be the official documentation source from now on.
 - Add support for HDF5 1.12 on all platforms and include it in CI.
 
@@ -227,8 +228,8 @@ Release date: Aug 9, 2020.
 - We now force the variable-length allocator that HDF5 uses when reading data
   to use `libc::malloc` and `libc::free`, so that they can be deallocated
   properly by `VarLenString` and `VarLenArray` in `hdf5-types`. Previously,
-  this could cause a rare but serious failure for Windows builds when the 
-  default allocator used for vlen types by HDF5 was not matching the 
+  this could cause a rare but serious failure for Windows builds when the
+  default allocator used for vlen types by HDF5 was not matching the
   libc deallocator.
 - Use `std::panic::catch_unwind` in all cases where we use extern C callbacks,
   so that they are panic-safe.
@@ -404,7 +405,7 @@ Release date: Mar 8, 2019.
   `Deref`-based hierarchy instead (53eff4f). `ID` and `FromID` traits have been
   removed. Traits like `Location`, `Object` and a few others have been replaced
   with real types (wrappers around HDF5 handles, same as the concrete types
-  like `File`). Subtypes then dereference into parent types, so the user can 
+  like `File`). Subtypes then dereference into parent types, so the user can
   call methods of the parent type without having to import any traits into
   scope (for instance, `File` dereferences into `Group`, which dereferences
   into `Location`, which dereferences into `Object`).
@@ -441,11 +442,11 @@ Release date: Jul 29, 2015.
 ### Added
 
 - Full support of `msvc` target on Windows. CI tests on AppVeyor now use
-  official releases of HDF5 binaries (1.8.16, VS2015, x86_x64). The `gnu` 
+  official releases of HDF5 binaries (1.8.16, VS2015, x86_x64). The `gnu`
   target are still unofficially supported but won't be tested.
 - If `HDF5_LIBDIR` is not specified when building on Windows and `PATH`
   contains what looks like the `bin` folder of HDF5 installation, the library
-  directory will be inferred automatically. The official HDF5 installers add 
+  directory will be inferred automatically. The official HDF5 installers add
   the `bin` folder to user path, so the official MSVC releases should just work
   out of the box without having to set any environment variables.
 - The library is now split into three crates: `hdf5-lib` (requests linkage to
@@ -475,7 +476,7 @@ Release date: Jul 29, 2015.
 
 ### Fixed
 
-- Fixed dangling pointer problems when strings were passed as pointers to 
+- Fixed dangling pointer problems when strings were passed as pointers to
   the C API.
 - Fixed target path not being passed correctly in `Container::link_soft`.
 
