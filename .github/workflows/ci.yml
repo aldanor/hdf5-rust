@@ -58,7 +58,7 @@ jobs:
         include:
           - {version: hdf5@1.8}
           - {version: hdf5@1.10}
-          - {version: hdf5@1.13}
+          # - {version: hdf5@1.12}
           - {version: hdf5-mpi, mpi: true}
     steps:
       - name: Checkout repository
