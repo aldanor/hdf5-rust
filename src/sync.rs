@@ -1,5 +1,11 @@
+use std::sync::atomic::{AtomicBool, Ordering};
+
 use lazy_static::lazy_static;
 use parking_lot::ReentrantMutex;
+
+thread_local! {
+    pub static SILENCED: AtomicBool = AtomicBool::new(false);
+}
 
 lazy_static! {
     pub(crate) static ref LIBRARY_INIT: () = {
@@ -29,6 +35,16 @@ where
             ReentrantMutex::new(())
         };
     }
+    SILENCED.with(|silence| {
+        let is_silenced = silence.load(Ordering::Acquire);
+        if !is_silenced {
+            let _guard = LOCK.lock();
+            unsafe {
+                crate::error::silence_errors_no_sync(true);
+            }
+            silence.store(true, Ordering::Release);
+        }
+    });
     let _guard = LOCK.lock();
     func()
 }
