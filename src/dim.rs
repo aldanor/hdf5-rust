@@ -72,7 +72,7 @@ macro_rules! impl_tuple {
             #[inline]
             fn dims(&self) -> Vec<Ix> {
                 unsafe {
-                    slice::from_raw_parts(self as *const _ as *const _, self.ndim())
+                    slice::from_raw_parts((self as *const Self).cast(), self.ndim())
                 }.iter().cloned().collect()
             }
         }

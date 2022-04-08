@@ -21,7 +21,8 @@ pub fn to_cstring<S: Borrow<str>>(string: S) -> Result<CString> {
 /// Convert a fixed-length (possibly zero-terminated) char buffer to a string.
 pub fn string_from_fixed_bytes(bytes: &[c_char], len: usize) -> String {
     let len = bytes.iter().position(|&c| c == 0).unwrap_or(len);
-    let s = unsafe { str::from_utf8_unchecked(&*(&bytes[..len] as *const _ as *const _)) };
+    let bytes = &bytes[..len];
+    let s = unsafe { str::from_utf8_unchecked(&*(bytes as *const [c_char] as *const [u8])) };
     s.to_owned()
 }
 

@@ -2,7 +2,7 @@
 
 use std::fmt::{self, Debug};
 use std::ops::Deref;
-use std::ptr;
+use std::ptr::{self, addr_of_mut};
 
 #[cfg(feature = "1.10.0")]
 use bitflags::bitflags;
@@ -809,8 +809,8 @@ impl DatasetCreate {
                     idx as _,
                     NAME_LEN as _,
                     name.as_mut_ptr(),
-                    &mut offset as *mut _,
-                    &mut size as *mut _,
+                    addr_of_mut!(offset),
+                    addr_of_mut!(size),
                 ));
                 #[allow(clippy::absurd_extreme_comparisons)]
                 external.push(ExternalFile {

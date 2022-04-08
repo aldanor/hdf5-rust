@@ -24,6 +24,7 @@ unsafe fn get_points_selection(space_id: hid_t) -> Result<Array2<Ix>> {
     let mut coords = vec![0; npoints * ndim];
     h5check(H5Sget_select_elem_pointlist(space_id, 0, npoints as _, coords.as_mut_ptr()))?;
     let coords = if mem::size_of::<hsize_t>() == mem::size_of::<Ix>() {
+        #[allow(clippy::transmute_undefined_repr)]
         mem::transmute(coords)
     } else {
         coords.iter().map(|&x| x as _).collect()
