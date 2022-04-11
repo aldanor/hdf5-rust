@@ -18,6 +18,7 @@
 
 - Fixed a bug where `H5Pget_fapl_direct` was only included when HDF5 was compiled
   with feature `have-parallel` instead of `have-direct`.
+- Fixed a missing symbol when building `hdf5-src` with `libz-sys`.
 
 ## 0.8.1
 
