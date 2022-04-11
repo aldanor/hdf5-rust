@@ -171,6 +171,15 @@ impl Dataset {
         self.dcpl().map_or(None, |pl| pl.chunk())
     }
 
+    /// Visit all chunks
+    #[cfg(feature = "1.13.0")]
+    pub fn chunks_visit<F>(&self, callback: F) -> Result<()>
+    where
+        F: for<'a> FnMut(crate::hl::chunks::ChunkInfoBorrowed<'a>) -> i32,
+    {
+        crate::hl::chunks::visit(self, callback)
+    }
+
     /// Returns the absolute byte offset of the dataset in the file if such offset is defined
     /// (which is not the case for datasets that are chunked, compact or not allocated yet).
     pub fn offset(&self) -> Option<u64> {

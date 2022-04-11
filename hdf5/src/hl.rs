@@ -1,4 +1,6 @@
 pub mod attribute;
+#[cfg(feature = "1.13.0")]
+pub mod chunks;
 pub mod container;
 pub mod dataset;
 pub mod dataspace;
