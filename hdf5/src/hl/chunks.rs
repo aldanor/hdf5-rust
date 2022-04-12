@@ -1,10 +1,10 @@
 use crate::internal_prelude::*;
 use hdf5_sys::h5d::H5Dchunk_iter;
 
-/// Borrowed version of [ChunkInfo](crate::hl::Dataset::ChunkInfo)
+/// Borrowed version of [ChunkInfo](crate::dataset::ChunkInfo)
 #[derive(Debug)]
 pub struct ChunkInfoBorrowed<'a> {
-    pub offset: &'a [hsize_t],
+    pub offset: &'a [u64],
     pub filter_mask: u32,
     pub addr: u64,
     pub size: u64,
