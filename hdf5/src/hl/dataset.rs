@@ -8,8 +8,6 @@ use hdf5_sys::h5d::{
     H5Dcreate2, H5Dcreate_anon, H5Dget_access_plist, H5Dget_create_plist, H5Dget_offset,
     H5Dset_extent,
 };
-#[cfg(feature = "1.10.5")]
-use hdf5_sys::h5d::{H5Dget_chunk_info, H5Dget_num_chunks};
 use hdf5_sys::h5l::H5Ldelete;
 use hdf5_sys::h5p::H5P_DEFAULT;
 use hdf5_sys::h5z::H5Z_filter_t;
@@ -66,36 +64,6 @@ impl Deref for Dataset {
     }
 }
 
-#[cfg(feature = "1.10.5")]
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct ChunkInfo {
-    /// Array with a size equal to the dataset’s rank whose elements contain 0-based
-    /// logical positions of the chunk’s first element in each dimension.
-    pub offset: Vec<u64>,
-    /// Filter mask that indicates which filters were used with the chunk when written.
-    /// A zero value indicates that all enabled filters are applied on the chunk.
-    /// A filter is skipped if the bit corresponding to the filter’s position in
-    /// the pipeline (0 ≤ position < 32) is turned on.
-    pub filter_mask: u32,
-    /// Chunk address in the file.
-    pub addr: u64,
-    /// Chunk size in bytes.
-    pub size: u64,
-}
-
-#[cfg(feature = "1.10.5")]
-impl ChunkInfo {
-    pub(crate) fn new(ndim: usize) -> Self {
-        let offset = vec![0; ndim];
-        Self { offset, filter_mask: 0, addr: 0, size: 0 }
-    }
-
-    /// Returns positional indices of disabled filters.
-    pub fn disabled_filters(&self) -> Vec<usize> {
-        (0..32).filter(|i| self.filter_mask & (1 << i) != 0).collect()
-    }
-}
-
 impl Dataset {
     /// Returns a copy of the dataset access property list.
     pub fn access_plist(&self) -> Result<DatasetAccess> {
@@ -135,35 +103,13 @@ impl Dataset {
     #[cfg(feature = "1.10.5")]
     /// Returns the number of chunks if the dataset is chunked.
     pub fn num_chunks(&self) -> Option<usize> {
-        if !self.is_chunked() {
-            return None;
-        }
-        h5lock!(self.space().map_or(None, |s| {
-            let mut n: hsize_t = 0;
-            h5check(H5Dget_num_chunks(self.id(), s.id(), &mut n)).map(|_| n as _).ok()
-        }))
+        crate::hl::chunks::get_num_chunks(self)
     }
 
     #[cfg(feature = "1.10.5")]
     /// Retrieves the chunk information for the chunk specified by its index.
-    pub fn chunk_info(&self, index: usize) -> Option<ChunkInfo> {
-        if !self.is_chunked() {
-            return None;
-        }
-        h5lock!(self.space().map_or(None, |s| {
-            let mut chunk_info = ChunkInfo::new(self.ndim());
-            h5check(H5Dget_chunk_info(
-                self.id(),
-                s.id(),
-                index as _,
-                chunk_info.offset.as_mut_ptr(),
-                &mut chunk_info.filter_mask,
-                &mut chunk_info.addr,
-                &mut chunk_info.size,
-            ))
-            .map(|_| chunk_info)
-            .ok()
-        }))
+    pub fn chunk_info(&self, index: usize) -> Option<crate::dataset::ChunkInfo> {
+        crate::hl::chunks::chunk_info(self, index)
     }
 
     /// Returns the chunk shape if the dataset is chunked.
@@ -175,7 +121,7 @@ impl Dataset {
     #[cfg(feature = "1.13.0")]
     pub fn chunks_visit<F>(&self, callback: F) -> Result<()>
     where
-        F: for<'a> FnMut(crate::hl::chunks::ChunkInfoBorrowed<'a>) -> i32,
+        F: for<'a> FnMut(crate::dataset::ChunkInfoBorrowed<'a>) -> i32,
     {
         crate::hl::chunks::visit(self, callback)
     }
