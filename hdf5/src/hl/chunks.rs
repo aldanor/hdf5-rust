@@ -69,13 +69,32 @@ pub(crate) fn get_num_chunks(ds: &Dataset) -> Option<usize> {
 mod one_thirteen {
     use super::*;
     use hdf5_sys::h5d::H5Dchunk_iter;
+
     /// Borrowed version of [ChunkInfo](crate::dataset::ChunkInfo)
-    #[derive(Debug)]
+    #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct ChunkInfoBorrowed<'a> {
         pub offset: &'a [u64],
         pub filter_mask: u32,
         pub addr: u64,
         pub size: u64,
+    }
+
+    impl<'a> ChunkInfoBorrowed<'a> {
+        /// Returns positional indices of disabled filters.
+        pub fn disabled_filters(&self) -> Vec<usize> {
+            (0..32).filter(|i| self.filter_mask & (1 << i) != 0).collect()
+        }
+    }
+
+    impl<'a> From<ChunkInfoBorrowed<'a>> for ChunkInfo {
+        fn from(val: ChunkInfoBorrowed<'a>) -> Self {
+            Self {
+                offset: val.offset.to_owned(),
+                filter_mask: val.filter_mask,
+                addr: val.addr,
+                size: val.size,
+            }
+        }
     }
 
     struct RustCallback<F> {
