@@ -15,7 +15,7 @@
 
 - The `H5Type` derive macro now uses `proc-macro-error` to emit error messages.
 - MSRV is now `1.64.0` and Rust edition has now been bumped to 2021.
-- Types in ChunkInfo has been changed to match HDF5
+- Types in ChunkInfo has been changed to match HDF5.
 
 ### Fixed
 
@@ -25,6 +25,7 @@
 - Fixed a bug where errors were only silenced on the main thread.
 - Fixed a memory leak when opening datasets.
 - Avoid creating unaligned references in `H5Type` derive macro.
+- Applying filters without chunking will now produce an explicit error.
 
 ## 0.8.1
 

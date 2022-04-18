@@ -517,11 +517,15 @@ impl Filter {
             Ok(filters)
         })
     }
+
+    pub(crate) fn requires_chunking(&self) -> bool {
+        COMP_FILTER_IDS.contains(&self.id())
+    }
 }
 
-pub(crate) fn validate_filters(filters: &[Filter], type_class: H5T_class_t) -> Result<()> {
-    const COMP_FILTER_IDS: &[H5Z_filter_t] = &[H5Z_FILTER_DEFLATE, H5Z_FILTER_SZIP, 32000, 32001];
+const COMP_FILTER_IDS: &[H5Z_filter_t] = &[H5Z_FILTER_DEFLATE, H5Z_FILTER_SZIP, 32000, 32001];
 
+pub(crate) fn validate_filters(filters: &[Filter], type_class: H5T_class_t) -> Result<()> {
     let mut map: HashMap<H5Z_filter_t, &Filter> = HashMap::new();
     let mut comp_filter: Option<&Filter> = None;
 
@@ -627,6 +631,7 @@ mod tests {
 
             let mut b = DatasetCreate::build();
             b.set_filters(&pipeline);
+            b.chunk(10);
             let plist = b.finish()?;
             assert_eq!(Filter::extract_pipeline(plist.id())?, pipeline);
 
