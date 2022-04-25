@@ -1,10 +1,11 @@
 use std::convert::TryFrom;
 use std::fmt;
+use std::io::{Read, Seek, SeekFrom};
 
 use ndarray::{s, Array1, Array2, ArrayD, IxDyn, SliceInfo};
 use rand::prelude::{Rng, SeedableRng, SmallRng};
 
-use hdf5_types::TypeDescriptor;
+use hdf5_types::{H5Type, TypeDescriptor};
 
 mod common;
 
@@ -171,6 +172,85 @@ where
     Ok(())
 }
 
+fn test_byte_read_seek_impl(ds: &hdf5::Dataset, arr: &ArrayD<u8>, ndim: usize) -> hdf5::Result<()> {
+    let mut rng = SmallRng::seed_from_u64(42);
+    ds.write(arr)?;
+
+    // Read whole
+    let reader = ds.as_byte_reader();
+    let mut reader = if ndim != 1 {
+        assert!(reader.is_err());
+        return Ok(());
+    } else {
+        reader.unwrap()
+    };
+    let mut out_bytes = vec![0u8; arr.len()];
+    reader.read(&mut out_bytes.as_mut_slice()).expect("io::Read failed");
+    assert_eq!(out_bytes.as_slice(), arr.as_slice().unwrap());
+
+    // Read in chunks
+    let mut reader = reader.clone();
+    reader.seek(std::io::SeekFrom::Start(0)).expect("io::Seek failed");
+    let mut pos = 0;
+    while pos < arr.len() {
+        let chunk_len: usize = rng.gen_range(1..arr.len() + 1);
+        let mut chunk = vec![0u8; chunk_len];
+        let n_read = reader.read(&mut chunk).expect("io::Read failed");
+        if pos + chunk_len < arr.len() {
+            // We did not read until end. Thus, the chunk should be fully filled.
+            assert_eq!(chunk_len, n_read);
+        }
+        assert_eq!(&chunk[..n_read], arr.slice(s![pos..pos + n_read]).as_slice().unwrap());
+        pos += chunk_len;
+    }
+
+    // Seek to the begining and read again
+    reader.seek(SeekFrom::Start(0)).expect("io::Seek failed");
+    let mut out_bytes = vec![0u8; arr.len()];
+    reader.read(&mut out_bytes.as_mut_slice()).expect("io::Read failed");
+    assert_eq!(out_bytes.as_slice(), arr.as_slice().unwrap());
+
+    // Seek to a random position from start
+    let pos = rng.gen_range(0..arr.len() + 1) as u64;
+    let seeked_pos = reader.seek(SeekFrom::Start(pos)).expect("io::Seek failed") as usize;
+    let mut out_bytes = vec![0u8; arr.len() - seeked_pos];
+    reader.read(&mut out_bytes.as_mut_slice()).expect("io::Read failed");
+    assert_eq!(out_bytes.as_slice(), arr.slice(s![seeked_pos..]).as_slice().unwrap());
+
+    // Seek from current position
+    let orig_pos = reader.seek(SeekFrom::Start(pos)).expect("io::Seek failed") as i64;
+    let rel_pos = rng.gen_range(-(arr.len() as i64)..arr.len() as i64 + 1);
+    let pos_res = reader.seek(SeekFrom::Current(rel_pos));
+    if (rel_pos + orig_pos) < 0 {
+        assert!(pos_res.is_err()) // We cannot seek before start
+    } else {
+        let seeked_pos = pos_res.unwrap() as usize;
+        assert_eq!(rel_pos + orig_pos, seeked_pos as i64);
+        let mut out_bytes = vec![0u8; arr.len() - seeked_pos];
+        reader.read(&mut out_bytes.as_mut_slice()).expect("io::Read failed");
+        assert_eq!(out_bytes.as_slice(), arr.slice(s![seeked_pos..]).as_slice().unwrap());
+    }
+
+    // Seek to a random position from end
+    let pos = -(rng.gen_range(0..arr.len() + 1) as i64);
+    let seeked_pos = reader.seek(SeekFrom::End(pos)).expect("io::Seek failed") as usize;
+    assert_eq!(pos, seeked_pos as i64 - arr.len() as i64);
+    let mut out_bytes = vec![0u8; arr.len() - seeked_pos];
+    reader.read(&mut out_bytes.as_mut_slice()).expect("io::Read failed");
+    assert_eq!(out_bytes.as_slice(), arr.slice(s![seeked_pos..]).as_slice().unwrap());
+
+    // Seek before start
+    assert!(reader.seek(SeekFrom::End(-(arr.len() as i64) - 1)).is_err());
+
+    // Test stream position start
+    // Requires Rust 1.55.0: reader.rewind().expect("io::Seek::rewind failed");
+    assert_eq!(0, reader.seek(SeekFrom::Start(0)).unwrap());
+    assert_eq!(0, reader.stream_position().unwrap());
+    assert_eq!(0, reader.seek(SeekFrom::End(-(arr.len() as i64))).unwrap());
+    assert_eq!(0, reader.stream_position().unwrap());
+    Ok(())
+}
+
 fn test_read_write<T>() -> hdf5::Result<()>
 where
     T: hdf5::H5Type + fmt::Debug + PartialEq + Gen + Clone,
@@ -276,5 +356,26 @@ fn test_read_write_rename_fields() -> hdf5::Result<()> {
     test_read_write::<RenameStruct>()?;
     test_read_write::<RenameTupleStruct>()?;
     test_read_write::<RenameEnum>()?;
+    Ok(())
+}
+
+#[test]
+fn test_byte_read_seek() -> hdf5::Result<()> {
+    let mut rng = SmallRng::seed_from_u64(42);
+    let file = new_in_memory_file()?;
+
+    for ndim in 0..=2 {
+        for _ in 0..=20 {
+            let arr: ArrayD<u8> = gen_arr(&mut rng, ndim);
+
+            let ds: hdf5::Dataset = file.new_dataset::<u8>().shape(arr.shape()).create("x")?;
+            let ds = scopeguard::guard(ds, |ds| {
+                drop(ds);
+                drop(file.unlink("x"));
+            });
+
+            test_byte_read_seek_impl(&ds, &arr, ndim)?;
+        }
+    }
     Ok(())
 }

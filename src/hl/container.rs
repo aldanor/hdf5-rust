@@ -1,5 +1,6 @@
 use std::convert::TryInto;
 use std::fmt::{self, Debug};
+use std::io;
 use std::mem;
 use std::ops::Deref;
 
@@ -346,6 +347,99 @@ impl<'a> Writer<'a> {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct ByteReader {
+    obj: Container,
+    pos: u64,
+    dt: Datatype,
+    obj_space: Dataspace,
+    xfer: PropertyList,
+}
+
+impl ByteReader {
+    pub fn new(obj: &Container) -> Result<Self> {
+        ensure!(!obj.is_attr(), "ByteReader cannot be used on attribute datasets");
+
+        let obj = obj.clone();
+        let file_dtype = obj.dtype()?;
+        let mem_dtype = Datatype::from_type::<u8>()?;
+        file_dtype.ensure_convertible(&mem_dtype, Conversion::NoOp)?;
+
+        let obj_space = obj.space()?;
+        ensure!(obj_space.shape().len() == 1, "Only rank 1 datasets can be read via ByteReader");
+        let xfer = PropertyList::from_id(h5call!(H5Pcreate(*crate::globals::H5P_DATASET_XFER))?)?;
+        if !hdf5_types::USING_H5_ALLOCATOR {
+            crate::hl::plist::set_vlen_manager_libc(xfer.id())?;
+        }
+        Ok(ByteReader { obj, pos: 0, obj_space, dt: mem_dtype, xfer })
+    }
+
+    fn dataset_len(&self) -> usize {
+        self.obj_space.shape()[0]
+    }
+
+    fn remaining_len(&self) -> usize {
+        self.dataset_len().saturating_sub(self.pos as usize)
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.pos >= self.dataset_len() as u64
+    }
+}
+
+impl io::Read for ByteReader {
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        let pos = self.pos as usize;
+        let amt = std::cmp::min(buf.len(), self.remaining_len());
+        let selection = Selection::new(pos..pos + amt);
+        let out_shape = selection.out_shape(&self.obj_space.shape())?;
+        let fspace = self.obj_space.select(selection)?;
+        let mspace = Dataspace::try_new(&out_shape)?;
+        h5call!(H5Dread(
+            self.obj.id(),
+            self.dt.id(),
+            mspace.id(),
+            fspace.id(),
+            self.xfer.id(),
+            buf.as_mut_ptr().cast()
+        ))?;
+        self.pos += amt as u64;
+        Ok(out_shape[0])
+    }
+}
+
+impl io::Seek for ByteReader {
+    fn seek(&mut self, style: io::SeekFrom) -> io::Result<u64> {
+        let (base_pos, offset) = match style {
+            io::SeekFrom::Start(n) => {
+                self.pos = n;
+                return Ok(n);
+            }
+            io::SeekFrom::End(n) => (self.dataset_len() as u64, n),
+            io::SeekFrom::Current(n) => (self.pos, n),
+        };
+        let new_pos = if offset.is_negative() {
+            base_pos.checked_sub(offset.wrapping_abs() as u64)
+        } else {
+            base_pos.checked_add(offset as u64)
+        };
+        match new_pos {
+            Some(n) => {
+                self.pos = n;
+                Ok(self.pos)
+            }
+            None => Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "invalid seek to a negative or overflowing position",
+            )),
+        }
+    }
+
+    fn stream_position(&mut self) -> io::Result<u64> {
+        Ok(self.pos)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone)]
 /// An object which can be read or written to.
@@ -393,6 +487,14 @@ impl Container {
     /// set custom type conversion options when writing.
     pub fn as_writer(&self) -> Writer {
         Writer::new(self)
+    }
+
+    /// Creates `ByteReader` which implements [`Read`](std::io::Read)
+    /// and [`Seek`](std::io::Seek).
+    ///
+    /// ``ByteReader`` only supports 1-D `u8` datasets.
+    pub fn as_byte_reader(&self) -> Result<ByteReader> {
+        ByteReader::new(&self)
     }
 
     /// Returns the datatype of the dataset/attribute.

@@ -17,7 +17,7 @@ pub use self::{
         Attribute, AttributeBuilder, AttributeBuilderData, AttributeBuilderEmpty,
         AttributeBuilderEmptyShape,
     },
-    container::{Container, Reader, Writer},
+    container::{ByteReader, Container, Reader, Writer},
     dataset::{
         Dataset, DatasetBuilder, DatasetBuilderData, DatasetBuilderEmpty, DatasetBuilderEmptyShape,
     },
