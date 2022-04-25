@@ -347,19 +347,20 @@ impl<'a> Writer<'a> {
     }
 }
 
-#[derive(Debug)]
-pub struct ByteReader<'a> {
-    obj: &'a Container,
+#[derive(Debug, Clone)]
+pub struct ByteReader {
+    obj: Container,
     pos: u64,
     dt: Datatype,
     obj_space: Dataspace,
     xfer: PropertyList,
 }
 
-impl<'a> ByteReader<'a> {
-    pub fn new(obj: &'a Container) -> Result<Self> {
+impl ByteReader {
+    pub fn new(obj: &Container) -> Result<Self> {
         ensure!(!obj.is_attr(), "ByteReader cannot be used on attribute datasets");
 
+        let obj = obj.clone();
         let file_dtype = obj.dtype()?;
         let mem_dtype = Datatype::from_type::<u8>()?;
         file_dtype.ensure_convertible(&mem_dtype, Conversion::NoOp)?;
@@ -386,7 +387,7 @@ impl<'a> ByteReader<'a> {
     }
 }
 
-impl<'a> io::Read for ByteReader<'a> {
+impl io::Read for ByteReader {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         let pos = self.pos as usize;
         let amt = std::cmp::min(buf.len(), self.remaining_len());
@@ -407,7 +408,7 @@ impl<'a> io::Read for ByteReader<'a> {
     }
 }
 
-impl<'a> io::Seek for ByteReader<'a> {
+impl io::Seek for ByteReader {
     fn seek(&mut self, style: io::SeekFrom) -> io::Result<u64> {
         let (base_pos, offset) = match style {
             io::SeekFrom::Start(n) => {
@@ -493,7 +494,7 @@ impl Container {
     ///
     /// ``ByteReader`` only supports 1-D `u8` datasets.
     pub fn as_byte_reader(&self) -> Result<ByteReader> {
-        ByteReader::new(self)
+        ByteReader::new(&self)
     }
 
     /// Returns the datatype of the dataset/attribute.

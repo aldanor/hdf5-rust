@@ -178,17 +178,19 @@ fn test_byte_read_seek_impl(ds: &hdf5::Dataset, arr: &ArrayD<u8>, ndim: usize) -
 
     // Read whole
     let reader = ds.as_byte_reader();
-    if ndim != 1 {
+    let mut reader = if ndim != 1 {
         assert!(reader.is_err());
         return Ok(());
     } else {
-        let mut out_bytes = vec![0u8; arr.len()];
-        reader?.read(&mut out_bytes.as_mut_slice()).expect("io::Read failed");
-        assert_eq!(out_bytes.as_slice(), arr.as_slice().unwrap());
-    }
+        reader.unwrap()
+    };
+    let mut out_bytes = vec![0u8; arr.len()];
+    reader.read(&mut out_bytes.as_mut_slice()).expect("io::Read failed");
+    assert_eq!(out_bytes.as_slice(), arr.as_slice().unwrap());
 
     // Read in chunks
-    let mut reader = ds.as_byte_reader()?;
+    let mut reader = reader.clone();
+    reader.seek(std::io::SeekFrom::Start(0)).expect("io::Seek failed");
     let mut pos = 0;
     while pos < arr.len() {
         let chunk_len: usize = rng.gen_range(1..arr.len() + 1);
