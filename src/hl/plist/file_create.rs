@@ -47,10 +47,11 @@ impl ObjectClass for FileCreate {
     }
 
     fn validate(&self) -> Result<()> {
-        let class = self.class()?;
-        if class != PropertyListClass::FileCreate {
-            fail!("expected file create property list, got {:?}", class);
-        }
+        ensure!(
+            self.is_class(PropertyListClass::FileCreate),
+            "expected file create property list, got {:?}",
+            self.class()
+        );
         Ok(())
     }
 }

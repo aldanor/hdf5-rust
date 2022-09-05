@@ -99,10 +99,11 @@ impl ObjectClass for FileAccess {
     }
 
     fn validate(&self) -> Result<()> {
-        let class = self.class()?;
-        if class != PropertyListClass::FileAccess {
-            fail!("expected file access property list, got {:?}", class);
-        }
+        ensure!(
+            self.is_class(PropertyListClass::FileAccess),
+            "expected file access property list, got {:?}",
+            self.class()
+        );
         Ok(())
     }
 }

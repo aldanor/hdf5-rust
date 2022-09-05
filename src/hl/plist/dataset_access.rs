@@ -43,10 +43,11 @@ impl ObjectClass for DatasetAccess {
     }
 
     fn validate(&self) -> Result<()> {
-        let class = self.class()?;
-        if class != PropertyListClass::DatasetAccess {
-            fail!("expected dataset access property list, got {:?}", class);
-        }
+        ensure!(
+            self.is_class(PropertyListClass::DatasetAccess),
+            "expected dataset access property list, got {:?}",
+            self.class()
+        );
         Ok(())
     }
 }
