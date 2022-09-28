@@ -63,7 +63,7 @@ where
     let len = 1_isize + (func(ptr::null_mut(), 0)).try_into().unwrap_or(-1);
     ensure!(len > 0, "negative string length in get_h5_str()");
     if len == 1 {
-        Ok("".to_owned())
+        Ok(String::new())
     } else {
         let mut buf = vec![0; len as usize];
         func(buf.as_mut_ptr(), len as _);

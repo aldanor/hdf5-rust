@@ -702,7 +702,7 @@ impl Default for MetadataCacheConfig {
             rpt_fcn_enabled: false,
             open_trace_file: false,
             close_trace_file: false,
-            trace_file_name: "".into(),
+            trace_file_name: String::new(),
             evictions_enabled: true,
             set_initial_size: true,
             initial_size: 1 << 21,
@@ -857,18 +857,11 @@ mod cache_image_config {
 pub use self::cache_image_config::*;
 
 #[cfg(feature = "1.10.0")]
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct CacheLogOptions {
     pub is_enabled: bool,
     pub location: String,
     pub start_on_access: bool,
-}
-
-#[cfg(feature = "1.10.0")]
-impl Default for CacheLogOptions {
-    fn default() -> Self {
-        Self { is_enabled: false, location: "".into(), start_on_access: false }
-    }
 }
 
 #[cfg(feature = "1.10.2")]
