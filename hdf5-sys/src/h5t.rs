@@ -22,7 +22,7 @@ pub use {
 use crate::internal_prelude::*;
 
 #[repr(C)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
 pub enum H5T_class_t {
     H5T_NO_CLASS = -1,
     H5T_INTEGER = 0,
@@ -41,7 +41,7 @@ pub enum H5T_class_t {
 
 #[cfg(feature = "1.8.6")]
 #[repr(C)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
 pub enum H5T_order_t {
     H5T_ORDER_ERROR = -1,
     H5T_ORDER_LE = 0,
@@ -53,7 +53,7 @@ pub enum H5T_order_t {
 
 #[cfg(not(feature = "1.8.6"))]
 #[repr(C)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
 pub enum H5T_order_t {
     H5T_ORDER_ERROR = -1,
     H5T_ORDER_LE = 0,
@@ -63,7 +63,7 @@ pub enum H5T_order_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
 pub enum H5T_sign_t {
     H5T_SGN_ERROR = -1,
     H5T_SGN_NONE = 0,
@@ -72,7 +72,7 @@ pub enum H5T_sign_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
 pub enum H5T_norm_t {
     H5T_NORM_ERROR = -1,
     H5T_NORM_IMPLIED = 0,
@@ -81,7 +81,7 @@ pub enum H5T_norm_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
 pub enum H5T_cset_t {
     H5T_CSET_ERROR = -1,
     H5T_CSET_ASCII = 0,
@@ -111,7 +111,7 @@ impl Default for H5T_cset_t {
 pub const H5T_NCSET: H5T_cset_t = H5T_CSET_RESERVED_2;
 
 #[repr(C)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
 pub enum H5T_str_t {
     H5T_STR_ERROR = -1,
     H5T_STR_NULLTERM = 0,
@@ -135,7 +135,7 @@ pub enum H5T_str_t {
 pub const H5T_NSTR: H5T_str_t = H5T_STR_RESERVED_3;
 
 #[repr(C)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
 pub enum H5T_pad_t {
     H5T_PAD_ERROR = -1,
     H5T_PAD_ZERO = 0,
@@ -145,7 +145,7 @@ pub enum H5T_pad_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
 pub enum H5T_cmd_t {
     H5T_CONV_INIT = 0,
     H5T_CONV_CONV = 1,
@@ -153,7 +153,7 @@ pub enum H5T_cmd_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
 pub enum H5T_bkg_t {
     H5T_BKG_NO = 0,
     H5T_BKG_TEMP = 1,
@@ -176,7 +176,7 @@ impl Default for H5T_cdata_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
 pub enum H5T_pers_t {
     H5T_PERS_DONTCARE = -1,
     H5T_PERS_HARD = 0,
@@ -184,7 +184,7 @@ pub enum H5T_pers_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
 pub enum H5T_direction_t {
     H5T_DIR_DEFAULT = 0,
     H5T_DIR_ASCEND = 1,
@@ -192,7 +192,7 @@ pub enum H5T_direction_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
 pub enum H5T_conv_except_t {
     H5T_CONV_EXCEPT_RANGE_HI = 0,
     H5T_CONV_EXCEPT_RANGE_LOW = 1,
@@ -204,7 +204,7 @@ pub enum H5T_conv_except_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
 pub enum H5T_conv_ret_t {
     H5T_CONV_ABORT = -1,
     H5T_CONV_UNHANDLED = 0,

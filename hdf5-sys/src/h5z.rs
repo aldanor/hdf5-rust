@@ -62,7 +62,7 @@ pub const H5Z_FILTER_CONFIG_ENCODE_ENABLED: c_uint = 0x0001;
 pub const H5Z_FILTER_CONFIG_DECODE_ENABLED: c_uint = 0x0002;
 
 #[repr(C)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
 pub enum H5Z_SO_scale_type_t {
     H5Z_SO_FLOAT_DSCALE = 0,
     H5Z_SO_FLOAT_ESCALE = 1,
@@ -70,7 +70,7 @@ pub enum H5Z_SO_scale_type_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
 pub enum H5Z_EDC_t {
     H5Z_ERROR_EDC = -1,
     H5Z_DISABLE_EDC = 0,
@@ -79,7 +79,7 @@ pub enum H5Z_EDC_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
 pub enum H5Z_cb_return_t {
     H5Z_CB_ERROR = -1,
     H5Z_CB_FAIL = 0,

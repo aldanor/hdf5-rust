@@ -82,7 +82,7 @@ pub const H5O_NATIVE_INFO_META_SIZE: c_uint = 0x0010;
 pub const H5O_NATIVE_INFO_ALL: c_uint = H5O_NATIVE_INFO_HDR | H5O_NATIVE_INFO_META_SIZE;
 
 #[repr(C)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
 pub enum H5O_type_t {
     H5O_TYPE_UNKNOWN = -1,
     H5O_TYPE_GROUP,
@@ -195,7 +195,7 @@ pub type H5O_iterate2_t = Option<
 >;
 
 #[repr(C)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
 pub enum H5O_mcdt_search_ret_t {
     H5O_MCDT_SEARCH_ERROR = -1,
     H5O_MCDT_SEARCH_CONT = 0,

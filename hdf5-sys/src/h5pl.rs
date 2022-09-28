@@ -6,7 +6,7 @@ mod hdf5_1_8_15 {
     use super::*;
 
     #[repr(C)]
-    #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+    #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
     pub enum H5PL_type_t {
         H5PL_TYPE_ERROR = -1,
         H5PL_TYPE_FILTER = 0,

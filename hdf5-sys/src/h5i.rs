@@ -4,7 +4,7 @@ pub use self::H5I_type_t::*;
 use crate::internal_prelude::*;
 
 #[repr(C)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
 pub enum H5I_type_t {
     H5I_UNINIT = -2,
     H5I_BADID = -1,

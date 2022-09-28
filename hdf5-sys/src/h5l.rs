@@ -14,7 +14,7 @@ pub const H5L_SAME_LOC: hid_t = 0;
 pub const H5L_LINK_CLASS_T_VERS: c_uint = 0;
 
 #[repr(C)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
 pub enum H5L_type_t {
     H5L_TYPE_ERROR = -1,
     H5L_TYPE_HARD = 0,
