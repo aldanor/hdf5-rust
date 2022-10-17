@@ -371,7 +371,7 @@ impl ByteReader {
         if !hdf5_types::USING_H5_ALLOCATOR {
             crate::hl::plist::set_vlen_manager_libc(xfer.id())?;
         }
-        Ok(ByteReader { obj, pos: 0, obj_space, dt: mem_dtype, xfer })
+        Ok(Self { obj, pos: 0, obj_space, dt: mem_dtype, xfer })
     }
 
     fn dataset_len(&self) -> usize {
@@ -494,7 +494,7 @@ impl Container {
     ///
     /// ``ByteReader`` only supports 1-D `u8` datasets.
     pub fn as_byte_reader(&self) -> Result<ByteReader> {
-        ByteReader::new(&self)
+        ByteReader::new(self)
     }
 
     /// Returns the datatype of the dataset/attribute.

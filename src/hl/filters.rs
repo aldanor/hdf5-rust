@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::ptr;
+use std::ptr::{self, addr_of_mut};
 
 use hdf5_sys::h5p::{
     H5Pget_filter2, H5Pget_nfilters, H5Pset_deflate, H5Pset_filter, H5Pset_fletcher32, H5Pset_nbit,
@@ -180,7 +180,7 @@ impl Filter {
             return FilterInfo::default();
         }
         let mut flags: c_uint = 0;
-        h5lock!(H5Zget_filter_info(filter_id, &mut flags as *mut _));
+        h5lock!(H5Zget_filter_info(filter_id, addr_of_mut!(flags)));
         FilterInfo {
             is_available: true,
             encode_enabled: flags & H5Z_FILTER_CONFIG_ENCODE_ENABLED != 0,
@@ -503,8 +503,8 @@ impl Filter {
                 let filter_id = h5try!(H5Pget_filter2(
                     plist_id,
                     idx as _,
-                    &mut flags as *mut _,
-                    &mut cd_nelmts as *mut _,
+                    addr_of_mut!(flags),
+                    addr_of_mut!(cd_nelmts),
                     cd_values.as_mut_ptr(),
                     name.len() as _,
                     name.as_mut_ptr(),

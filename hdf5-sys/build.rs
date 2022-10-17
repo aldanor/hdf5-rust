@@ -565,7 +565,7 @@ impl LibrarySearcher {
                     }
                 }
             }
-            let header = Header::parse(&inc_dir);
+            let header = Header::parse(inc_dir);
             if let Some(version) = self.version {
                 assert_eq!(header.version, version, "HDF5 header version mismatch",);
             }

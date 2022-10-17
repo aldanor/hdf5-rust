@@ -13,7 +13,7 @@ use std::fmt::{self, Debug};
 use std::iter;
 use std::mem;
 use std::ops::Deref;
-use std::ptr;
+use std::ptr::{self, addr_of, addr_of_mut};
 
 use bitflags::bitflags;
 
@@ -702,7 +702,7 @@ impl Default for MetadataCacheConfig {
             rpt_fcn_enabled: false,
             open_trace_file: false,
             close_trace_file: false,
-            trace_file_name: "".into(),
+            trace_file_name: String::new(),
             evictions_enabled: true,
             set_initial_size: true,
             initial_size: 1 << 21,
@@ -857,18 +857,11 @@ mod cache_image_config {
 pub use self::cache_image_config::*;
 
 #[cfg(feature = "1.10.0")]
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct CacheLogOptions {
     pub is_enabled: bool,
     pub location: String,
     pub start_on_access: bool,
-}
-
-#[cfg(feature = "1.10.0")]
-impl Default for CacheLogOptions {
-    fn default() -> Self {
-        Self { is_enabled: false, location: "".into(), start_on_access: false }
-    }
 }
 
 #[cfg(feature = "1.10.2")]
@@ -1449,7 +1442,8 @@ impl FileAccessBuilder {
                 h5try!(H5Pset_evict_on_close(id, hbool_t::from(v)));
             }
             if let Some(v) = self.mdc_image_config {
-                h5try!(H5Pset_mdc_image_config(id, &v.into() as *const _));
+                let v = v.into();
+                h5try!(H5Pset_mdc_image_config(id, addr_of!(v)));
             }
         }
         if let Some(v) = self.sieve_buf_size {
@@ -1480,7 +1474,8 @@ impl FileAccessBuilder {
             }
         }
         if let Some(ref v) = self.mdc_config {
-            h5try!(H5Pset_mdc_config(id, &v.clone().into() as *const _));
+            let v = v.clone().into();
+            h5try!(H5Pset_mdc_config(id, addr_of!(v)));
         }
         Ok(())
     }
@@ -1516,7 +1511,7 @@ impl FileAccess {
         let mut drv = CoreDriver::default();
         let mut increment: size_t = 0;
         let mut filebacked: hbool_t = 0;
-        h5try!(H5Pget_fapl_core(self.id(), &mut increment as *mut _, &mut filebacked as *mut _));
+        h5try!(H5Pget_fapl_core(self.id(), addr_of_mut!(increment), addr_of_mut!(filebacked)));
         drv.increment = increment as _;
         drv.filebacked = filebacked > 0;
         #[cfg(feature = "1.8.13")]
@@ -1525,8 +1520,8 @@ impl FileAccess {
             let mut page_size: size_t = 0;
             h5try!(H5Pget_core_write_tracking(
                 self.id(),
-                &mut is_enabled as *mut _,
-                &mut page_size as *mut _,
+                addr_of_mut!(is_enabled),
+                addr_of_mut!(page_size),
             ));
             if is_enabled > 0 {
                 drv.write_tracking = page_size;
@@ -1558,7 +1553,7 @@ impl FileAccess {
             memb_fapl.as_mut_ptr(),
             memb_name.as_mut_ptr(),
             memb_addr.as_mut_ptr(),
-            &mut relax as *mut _,
+            addr_of_mut!(relax),
         ));
         let mut mapping: [u8; N] = unsafe { mem::zeroed() };
         let mut layout = MultiLayout::default();

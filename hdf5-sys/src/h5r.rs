@@ -11,7 +11,7 @@ use crate::h5g::H5G_obj_t;
 use crate::h5o::H5O_type_t;
 
 #[repr(C)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
 #[cfg(not(feature = "1.12.0"))]
 pub enum H5R_type_t {
     H5R_BADTYPE = -1,
@@ -21,7 +21,7 @@ pub enum H5R_type_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
 #[cfg(feature = "1.12.0")]
 pub enum H5R_type_t {
     H5R_BADTYPE = -1,

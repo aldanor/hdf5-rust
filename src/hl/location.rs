@@ -70,13 +70,13 @@ impl Location {
     /// have a name (e.g., an anonymous dataset).
     pub fn name(&self) -> String {
         // TODO: should this return Result<String> or an empty string if it fails?
-        h5lock!(get_h5_str(|m, s| H5Iget_name(self.id(), m, s)).unwrap_or_else(|_| "".to_string()))
+        h5lock!(get_h5_str(|m, s| H5Iget_name(self.id(), m, s)).unwrap_or_else(|_| String::new()))
     }
 
     /// Returns the name of the file containing the named object (or the file itself).
     pub fn filename(&self) -> String {
         // TODO: should this return Result<String> or an empty string if it fails?
-        h5lock!(get_h5_str(|m, s| H5Fget_name(self.id(), m, s)).unwrap_or_else(|_| "".to_string()))
+        h5lock!(get_h5_str(|m, s| H5Fget_name(self.id(), m, s)).unwrap_or_else(|_| String::new()))
     }
 
     /// Returns a handle to the file containing the named object (or the file itself).

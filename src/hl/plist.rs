@@ -1,7 +1,7 @@
 use std::fmt::{self, Debug, Display};
 use std::ops::Deref;
 use std::panic;
-use std::ptr;
+use std::ptr::{self, addr_of_mut};
 use std::str::FromStr;
 
 use hdf5_sys::h5p::{
@@ -184,7 +184,7 @@ impl PropertyList {
         }
 
         let mut data = Vec::new();
-        let data_ptr: *mut c_void = (&mut data as *mut Vec<_>).cast();
+        let data_ptr: *mut c_void = addr_of_mut!(data).cast();
 
         h5lock!(H5Piterate(self.id(), ptr::null_mut(), Some(callback), data_ptr));
         data

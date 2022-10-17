@@ -1,5 +1,6 @@
 use std::fmt::{self, Debug};
 use std::ops::Deref;
+use std::ptr::addr_of_mut;
 
 use hdf5_sys::{
     h5::{H5_index_t, H5_iter_order_t},
@@ -62,7 +63,7 @@ impl Attribute {
         let callback_fn: H5A_operator2_t = Some(attributes_callback);
         let iteration_position: *mut hsize_t = &mut { 0_u64 };
         let mut result: Vec<String> = Vec::new();
-        let other_data: *mut c_void = &mut result as *const _ as *mut c_void;
+        let other_data: *mut c_void = addr_of_mut!(result).cast();
 
         h5call!(H5Aiterate2(
             obj.handle().id(),

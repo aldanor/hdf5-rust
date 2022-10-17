@@ -271,7 +271,7 @@ impl DatasetAccess {
 
     #[cfg(feature = "1.8.17")]
     pub fn efile_prefix(&self) -> String {
-        self.get_efile_prefix().ok().unwrap_or_else(|| "".into())
+        self.get_efile_prefix().ok().unwrap_or_default()
     }
 
     #[cfg(feature = "1.10.0")]

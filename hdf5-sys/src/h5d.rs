@@ -18,7 +18,7 @@ pub const H5D_CHUNK_CACHE_W0_DEFAULT: c_float = -1.0;
 
 #[cfg(not(feature = "1.10.0"))]
 #[repr(C)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
 pub enum H5D_layout_t {
     H5D_LAYOUT_ERROR = -1,
     H5D_COMPACT = 0,
@@ -39,7 +39,7 @@ pub const H5D_CHUNK_BTREE: H5D_chunk_index_t = 0;
 pub const H5D_CHUNK_IDX_BTREE: H5D_chunk_index_t = H5D_CHUNK_BTREE;
 
 #[repr(C)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
 pub enum H5D_alloc_time_t {
     H5D_ALLOC_TIME_ERROR = -1,
     H5D_ALLOC_TIME_DEFAULT = 0,
@@ -55,7 +55,7 @@ impl Default for H5D_alloc_time_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
 pub enum H5D_space_status_t {
     H5D_SPACE_STATUS_ERROR = -1,
     H5D_SPACE_STATUS_NOT_ALLOCATED = 0,
@@ -64,7 +64,7 @@ pub enum H5D_space_status_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
 pub enum H5D_fill_time_t {
     H5D_FILL_TIME_ERROR = -1,
     H5D_FILL_TIME_ALLOC = 0,
@@ -79,7 +79,7 @@ impl Default for H5D_fill_time_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
 pub enum H5D_fill_value_t {
     H5D_FILL_VALUE_ERROR = -1,
     H5D_FILL_VALUE_UNDEFINED = 0,
@@ -94,7 +94,7 @@ impl Default for H5D_fill_value_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
 pub enum H5D_mpio_actual_chunk_opt_mode_t {
     H5D_MPIO_NO_CHUNK_OPTIMIZATION = 0,
     H5D_MPIO_LINK_CHUNK = 1,
@@ -102,7 +102,7 @@ pub enum H5D_mpio_actual_chunk_opt_mode_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
 pub enum H5D_mpio_actual_io_mode_t {
     H5D_MPIO_NO_COLLECTIVE = 0,
     H5D_MPIO_CHUNK_INDEPENDENT = 1,
@@ -112,7 +112,7 @@ pub enum H5D_mpio_actual_io_mode_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
 pub enum H5D_mpio_no_collective_cause_t {
     H5D_MPIO_COLLECTIVE = 0,
     H5D_MPIO_SET_INDEPENDENT = 1,
@@ -218,7 +218,7 @@ mod hdf5_1_10_0 {
     use super::*;
 
     #[repr(C)]
-    #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+    #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
     pub enum H5D_layout_t {
         H5D_LAYOUT_ERROR = -1,
         H5D_COMPACT = 0,
@@ -229,7 +229,7 @@ mod hdf5_1_10_0 {
     }
 
     #[repr(C)]
-    #[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+    #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
     pub enum H5D_vds_view_t {
         H5D_VDS_ERROR = -1,
         H5D_VDS_FIRST_MISSING = 0,

@@ -21,7 +21,8 @@ pub fn to_cstring<S: Borrow<str>>(string: S) -> Result<CString> {
 /// Convert a fixed-length (possibly zero-terminated) char buffer to a string.
 pub fn string_from_fixed_bytes(bytes: &[c_char], len: usize) -> String {
     let len = bytes.iter().position(|&c| c == 0).unwrap_or(len);
-    let s = unsafe { str::from_utf8_unchecked(&*(&bytes[..len] as *const _ as *const _)) };
+    let bytes = &bytes[..len];
+    let s = unsafe { str::from_utf8_unchecked(&*(bytes as *const [c_char] as *const [u8])) };
     s.to_owned()
 }
 
@@ -62,7 +63,7 @@ where
     let len = 1_isize + (func(ptr::null_mut(), 0)).try_into().unwrap_or(-1);
     ensure!(len > 0, "negative string length in get_h5_str()");
     if len == 1 {
-        Ok("".to_owned())
+        Ok(String::new())
     } else {
         let mut buf = vec![0; len as usize];
         func(buf.as_mut_ptr(), len as _);

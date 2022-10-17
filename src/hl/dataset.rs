@@ -684,7 +684,7 @@ impl DatasetBuilderInner {
     ///
     /// This requires the `lzf` crate feature
     pub fn lzf(&mut self) {
-        self.with_dcpl(|pl| pl.lzf());
+        self.with_dcpl(DatasetCreateBuilder::lzf);
     }
 
     #[cfg(feature = "blosc")]

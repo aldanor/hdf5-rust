@@ -27,7 +27,7 @@ pub type hbool_t = u8;
 pub type hbool_t = c_uint;
 
 #[repr(C)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
 pub enum H5_iter_order_t {
     H5_ITER_UNKNOWN = -1,
     H5_ITER_INC = 0,
@@ -37,7 +37,7 @@ pub enum H5_iter_order_t {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
 pub enum H5_index_t {
     H5_INDEX_UNKNOWN = -1,
     H5_INDEX_NAME = 0,

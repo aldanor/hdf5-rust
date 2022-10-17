@@ -40,6 +40,7 @@
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::missing_panics_doc))]
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::missing_const_for_fn))]
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::option_if_let_else))]
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::return_self_not_must_use))]
 #![cfg_attr(all(feature = "cargo-clippy", test), allow(clippy::cyclomatic_complexity))]
 #![cfg_attr(not(test), allow(dead_code))]
 // To build docs locally:

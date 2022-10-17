@@ -1,6 +1,6 @@
 use std::fmt;
 use std::mem;
-use std::ptr;
+use std::ptr::{self, addr_of};
 
 use crate::internal_prelude::*;
 
@@ -53,7 +53,7 @@ pub trait ObjectClass: Sized {
     unsafe fn cast_unchecked<T: ObjectClass>(self) -> T {
         // This method requires you to be 18 years or older to use it
         // (note: if it wasn't a trait method, it could be marked as const)
-        let obj = ptr::read((&self as *const Self).cast());
+        let obj = ptr::read(addr_of!(self).cast());
         mem::forget(self);
         obj
     }

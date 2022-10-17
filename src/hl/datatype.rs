@@ -2,6 +2,7 @@ use std::borrow::Borrow;
 use std::cmp::{Ordering, PartialEq, PartialOrd};
 use std::fmt::{self, Debug, Display};
 use std::ops::Deref;
+use std::ptr::{addr_of, addr_of_mut};
 
 use hdf5_sys::h5t::{
     H5T_cdata_t, H5T_class_t, H5T_cset_t, H5T_order_t, H5T_sign_t, H5T_str_t, H5Tarray_create2,
@@ -171,8 +172,8 @@ impl Datatype {
         let dst = dst.borrow();
         let mut cdata = H5T_cdata_t::default();
         h5lock!({
-            let noop = H5Tfind(*H5T_NATIVE_INT, *H5T_NATIVE_INT, &mut (&mut cdata as *mut _));
-            if H5Tfind(self.id(), dst.id(), &mut (&mut cdata as *mut _)) == noop {
+            let noop = H5Tfind(*H5T_NATIVE_INT, *H5T_NATIVE_INT, &mut addr_of_mut!(cdata));
+            if H5Tfind(self.id(), dst.id(), &mut addr_of_mut!(cdata)) == noop {
                 Some(Conversion::NoOp)
             } else {
                 match H5Tcompiler_conv(self.id(), dst.id()) {
@@ -235,7 +236,7 @@ impl Datatype {
                     let mut members: Vec<EnumMember> = Vec::new();
                     for idx in 0..h5try!(H5Tget_nmembers(id)) as _ {
                         let mut value: u64 = 0;
-                        h5try!(H5Tget_member_value(id, idx, (&mut value as *mut u64).cast()));
+                        h5try!(H5Tget_member_value(id, idx, addr_of_mut!(value).cast()));
                         let name = H5Tget_member_name(id, idx);
                         members.push(EnumMember { name: string_from_cstr(name), value });
                         h5_free_memory(name.cast());
@@ -277,7 +278,7 @@ impl Datatype {
                     let ndims = h5try!(H5Tget_array_ndims(id));
                     if ndims == 1 {
                         let mut len: hsize_t = 0;
-                        h5try!(H5Tget_array_dims2(id, &mut len as *mut _));
+                        h5try!(H5Tget_array_dims2(id, addr_of_mut!(len)));
                         Ok(TD::FixedArray(Box::new(base_dt.to_descriptor()?), len as _))
                     } else {
                         Err("Multi-dimensional array datatypes are not supported".into())
@@ -344,15 +345,17 @@ impl Datatype {
                 }),
                 TD::Boolean => {
                     let bool_id = h5try!(H5Tenum_create(*H5T_NATIVE_INT8));
+                    let zero = 0_i8;
                     h5try!(H5Tenum_insert(
                         bool_id,
                         b"FALSE\0".as_ptr().cast(),
-                        (&0_i8 as *const i8).cast()
+                        addr_of!(zero).cast(),
                     ));
+                    let one = 1_i8;
                     h5try!(H5Tenum_insert(
                         bool_id,
                         b"TRUE\0".as_ptr().cast(),
-                        (&1_i8 as *const i8).cast()
+                        addr_of!(one).cast(),
                     ));
                     Ok(bool_id)
                 }
@@ -364,7 +367,7 @@ impl Datatype {
                         h5try!(H5Tenum_insert(
                             enum_id,
                             name.as_ptr(),
-                            (&member.value as *const u64).cast()
+                            addr_of!(member.value).cast()
                         ));
                     }
                     Ok(enum_id)
@@ -383,7 +386,7 @@ impl Datatype {
                 TD::FixedArray(ref ty, len) => {
                     let elem_dt = Self::from_descriptor(ty)?;
                     let dims = len as hsize_t;
-                    Ok(h5try!(H5Tarray_create2(elem_dt.id(), 1, &dims as *const _)))
+                    Ok(h5try!(H5Tarray_create2(elem_dt.id(), 1, addr_of!(dims))))
                 }
                 TD::FixedAscii(size) => string_type(Some(size), H5T_cset_t::H5T_CSET_ASCII),
                 TD::FixedUnicode(size) => string_type(Some(size), H5T_cset_t::H5T_CSET_UTF8),

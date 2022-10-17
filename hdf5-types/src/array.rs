@@ -67,7 +67,7 @@ impl<T: Copy> Drop for VarLenArray<T> {
 impl<T: Copy> Clone for VarLenArray<T> {
     #[inline]
     fn clone(&self) -> Self {
-        Self::from_slice(&*self)
+        Self::from_slice(self)
     }
 }
 

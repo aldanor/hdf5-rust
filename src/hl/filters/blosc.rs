@@ -1,4 +1,4 @@
-use std::ptr;
+use std::ptr::{self, addr_of_mut};
 use std::slice;
 
 use lazy_static::lazy_static;
@@ -25,7 +25,7 @@ const BLOSC_FILTER_NAME: &[u8] = b"blosc\0";
 pub const BLOSC_FILTER_ID: H5Z_filter_t = 32001;
 const BLOSC_FILTER_VERSION: c_uint = 2;
 
-const BLOSC_FILTER_INFO: H5Z_class2_t = H5Z_class2_t {
+const BLOSC_FILTER_INFO: &H5Z_class2_t = &H5Z_class2_t {
     version: H5Z_CLASS_T_VERS as _,
     id: BLOSC_FILTER_ID,
     encoder_present: 1,
@@ -41,7 +41,7 @@ lazy_static! {
         unsafe {
             blosc_init();
         }
-        let ret = unsafe { H5Zregister((&BLOSC_FILTER_INFO as *const H5Z_class2_t).cast()) };
+        let ret = unsafe { H5Zregister((BLOSC_FILTER_INFO as *const H5Z_class2_t).cast()) };
         if H5ErrorCode::is_err_code(ret) {
             return Err("Can't register Blosc filter");
         }
@@ -62,8 +62,8 @@ extern "C" fn set_local_blosc(dcpl_id: hid_t, type_id: hid_t, _space_id: hid_t) 
         H5Pget_filter_by_id2(
             dcpl_id,
             BLOSC_FILTER_ID,
-            &mut flags as *mut _,
-            &mut nelmts as *mut _,
+            addr_of_mut!(flags),
+            addr_of_mut!(nelmts),
             values.as_mut_ptr(),
             0,
             ptr::null_mut(),
@@ -158,7 +158,7 @@ fn parse_blosc_cdata(cd_nelmts: size_t, cd_values: *const c_uint) -> Option<Blos
         cfg.doshuffle = cdata[5] as _;
     }
     if cdata.len() >= 7 {
-        let r = unsafe { blosc_compcode_to_compname(cdata[6] as _, &mut cfg.compname as *mut _) };
+        let r = unsafe { blosc_compcode_to_compname(cdata[6] as _, addr_of_mut!(cfg.compname)) };
         if r == -1 {
             let complist = string_from_cstr(unsafe { blosc_list_compressors() });
             let errmsg = format!(
@@ -221,9 +221,9 @@ unsafe fn filter_blosc_decompress(
     let (mut cbytes, mut blocksize): (size_t, size_t) = (0, 0);
     blosc_cbuffer_sizes(
         *buf,
-        &mut outbuf_size as *mut _,
-        &mut cbytes as *mut _,
-        &mut blocksize as *mut _,
+        addr_of_mut!(outbuf_size),
+        addr_of_mut!(cbytes),
+        addr_of_mut!(blocksize),
     );
     let outbuf = libc::malloc(outbuf_size);
     if outbuf.is_null() {

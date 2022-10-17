@@ -1,4 +1,4 @@
-use std::ptr;
+use std::ptr::{self, addr_of_mut};
 use std::slice;
 
 use lazy_static::lazy_static;
@@ -15,7 +15,7 @@ const LZF_FILTER_NAME: &[u8] = b"lzf\0";
 pub const LZF_FILTER_ID: H5Z_filter_t = 32000;
 const LZF_FILTER_VERSION: c_uint = 4;
 
-const LZF_FILTER_INFO: H5Z_class2_t = H5Z_class2_t {
+const LZF_FILTER_INFO: &H5Z_class2_t = &H5Z_class2_t {
     version: H5Z_CLASS_T_VERS as _,
     id: LZF_FILTER_ID,
     encoder_present: 1,
@@ -28,7 +28,7 @@ const LZF_FILTER_INFO: H5Z_class2_t = H5Z_class2_t {
 
 lazy_static! {
     static ref LZF_INIT: Result<(), &'static str> = {
-        let ret = unsafe { H5Zregister((&LZF_FILTER_INFO as *const H5Z_class2_t).cast()) };
+        let ret = unsafe { H5Zregister((LZF_FILTER_INFO as *const H5Z_class2_t).cast()) };
         if H5ErrorCode::is_err_code(ret) {
             return Err("Can't register LZF filter");
         }
@@ -49,8 +49,8 @@ extern "C" fn set_local_lzf(dcpl_id: hid_t, type_id: hid_t, _space_id: hid_t) ->
         H5Pget_filter_by_id2(
             dcpl_id,
             LZF_FILTER_ID,
-            &mut flags as *mut _,
-            &mut nelmts as *mut _,
+            addr_of_mut!(flags),
+            addr_of_mut!(nelmts),
             values.as_mut_ptr(),
             0,
             ptr::null_mut(),

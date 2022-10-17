@@ -41,7 +41,7 @@ fn main() {
         let zlib_lib = "z";
         cfg.define("HDF5_ENABLE_Z_LIB_SUPPORT", "ON")
             .define("H5_ZLIB_HEADER", &zlib_header)
-            .define("ZLIB_STATIC_LIBRARY", &zlib_lib);
+            .define("ZLIB_STATIC_LIBRARY", zlib_lib);
         println!("cargo:zlib_header={}", zlib_header.to_str().unwrap());
         println!("cargo:zlib={}", zlib_lib);
     }

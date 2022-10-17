@@ -1,6 +1,7 @@
 use std::fmt::{self, Debug};
 use std::ops::Deref;
 use std::panic;
+use std::ptr::addr_of_mut;
 
 use hdf5_sys::{
     h5::{hsize_t, H5_index_t, H5_iter_order_t},
@@ -339,7 +340,7 @@ impl Group {
 
         // Store our references on the heap
         let mut vtable = Vtable { f: &mut op, d: &mut val };
-        let other_data = (&mut vtable as *mut Vtable<_, _>).cast::<c_void>();
+        let other_data = addr_of_mut!(vtable).cast::<c_void>();
 
         h5call!(H5Literate(
             self.id(),

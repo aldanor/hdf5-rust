@@ -143,9 +143,9 @@ impl Dataspace {
             } else {
                 h5lock!({
                     let mut len: size_t = 0;
-                    h5try!(H5Sencode1(self.id(), ptr::null_mut(), &mut len as *mut _));
+                    h5try!(H5Sencode1(self.id(), ptr::null_mut(), ptr::addr_of_mut!(len)));
                     let mut buf = vec![0_u8; len];
-                    h5try!(H5Sencode1(self.id(), buf.as_mut_ptr().cast(), &mut len as *mut _));
+                    h5try!(H5Sencode1(self.id(), buf.as_mut_ptr().cast(), ptr::addr_of_mut!(len)));
                     Ok(buf)
                 })
             }

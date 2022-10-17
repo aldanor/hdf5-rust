@@ -50,7 +50,7 @@ impl ObjectClass for File {
     fn short_repr(&self) -> Option<String> {
         let basename = match Path::new(&self.filename()).file_name() {
             Some(s) => s.to_string_lossy().into_owned(),
-            None => "".to_owned(),
+            None => String::new(),
         };
         let mode = if self.is_read_only() { "read-only" } else { "read/write" };
         Some(format!("\"{}\" ({})", basename, mode))
