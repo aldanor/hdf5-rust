@@ -55,10 +55,11 @@ impl ObjectClass for DatasetCreate {
     }
 
     fn validate(&self) -> Result<()> {
-        let class = self.class()?;
-        if class != PropertyListClass::DatasetCreate {
-            fail!("expected dataset creation property list, got {:?}", class);
-        }
+        ensure!(
+            self.is_class(PropertyListClass::DatasetCreate),
+            "expected dataset creation property list, got {:?}",
+            self.class()
+        );
         Ok(())
     }
 }

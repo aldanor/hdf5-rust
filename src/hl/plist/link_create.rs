@@ -29,10 +29,11 @@ impl ObjectClass for LinkCreate {
     }
 
     fn validate(&self) -> Result<()> {
-        let class = self.class()?;
-        if class != PropertyListClass::LinkCreate {
-            fail!("expected link create property list, got {:?}", class);
-        }
+        ensure!(
+            self.is_class(PropertyListClass::LinkCreate),
+            "expected link create property list, got {:?}",
+            self.class()
+        );
         Ok(())
     }
 }

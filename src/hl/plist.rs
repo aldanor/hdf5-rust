@@ -5,8 +5,8 @@ use std::ptr::{self, addr_of_mut};
 use std::str::FromStr;
 
 use hdf5_sys::h5p::{
-    H5Pcopy, H5Pequal, H5Pexist, H5Pget_class, H5Pget_class_name, H5Pget_nprops, H5Piterate,
-    H5Pset_vlen_mem_manager,
+    H5Pcopy, H5Pequal, H5Pexist, H5Pget_class, H5Pget_class_name, H5Pget_nprops, H5Pisa_class,
+    H5Piterate, H5Pset_vlen_mem_manager,
 };
 
 use crate::internal_prelude::*;
@@ -206,6 +206,33 @@ impl PropertyList {
             let name = string_from_cstr(buf);
             h5_free_memory(buf.cast());
             PropertyListClass::from_str(&name)
+        })
+    }
+
+    pub fn is_class(&self, class: PropertyListClass) -> bool {
+        use crate::globals::*;
+        h5lock!({
+            let class = match class {
+                PropertyListClass::FileCreate => *H5P_FILE_CREATE,
+                PropertyListClass::AttributeCreate => *H5P_ATTRIBUTE_CREATE,
+                PropertyListClass::DatasetAccess => *H5P_DATASET_ACCESS,
+                PropertyListClass::DatasetCreate => *H5P_DATASET_CREATE,
+                PropertyListClass::DataTransfer => *H5P_DATASET_XFER,
+                PropertyListClass::DatatypeAccess => *H5P_DATATYPE_ACCESS,
+                PropertyListClass::DatatypeCreate => *H5P_DATATYPE_CREATE,
+                PropertyListClass::FileAccess => *H5P_FILE_ACCESS,
+                PropertyListClass::FileMount => *H5P_FILE_MOUNT,
+                PropertyListClass::GroupAccess => *H5P_GROUP_ACCESS,
+                PropertyListClass::GroupCreate => *H5P_GROUP_CREATE,
+                PropertyListClass::LinkAccess => *H5P_LINK_ACCESS,
+                PropertyListClass::LinkCreate => *H5P_LINK_CREATE,
+                PropertyListClass::ObjectCopy => *H5P_OBJECT_COPY,
+                PropertyListClass::ObjectCreate => *H5P_OBJECT_CREATE,
+                PropertyListClass::StringCreate => *H5P_STRING_CREATE,
+            };
+            let tri = H5Pisa_class(self.id(), class);
+
+            tri == 1
         })
     }
 }
