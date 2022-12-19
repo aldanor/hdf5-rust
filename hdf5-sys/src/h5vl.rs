@@ -27,7 +27,7 @@ pub struct H5VL_class_t {
     pub attr_cls: H5VL_attr_class_t,
     pub dataset_cls: H5VL_dataset_class_t,
     pub datatype_cls: H5VL_datatype_class_t,
-    pub file_cl: H5VL_file_class_t,
+    pub file_cls: H5VL_file_class_t,
     pub group_cls: H5VL_group_class_t,
     pub link_cls: H5VL_link_class_t,
     pub object_cls: H5VL_object_class_t,
