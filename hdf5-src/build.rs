@@ -6,8 +6,8 @@ fn feature_enabled(feature: &str) -> bool {
 
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
-    let mut cfg = if feature_enabled("1_13") {
-        cmake::Config::new("ext/1_13")
+    let mut cfg = if feature_enabled("1_14") {
+        cmake::Config::new("ext/1_14")
     } else if feature_enabled("1_12") {
         cmake::Config::new("ext/1_12")
     } else if feature_enabled("1_10") {
@@ -31,6 +31,7 @@ fn main() {
     ] {
         cfg.define(option, "OFF");
     }
+    cfg.define("DEFAULT_API_VERSION", "none");
 
     // disable these by default, can be enabled via features
     for option in &[

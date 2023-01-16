@@ -42,7 +42,7 @@ deprecated = []
 threadsafe = []
 1_10 = []
 1_12 = []
-1_13 = []
+1_14 = []
 
 [dependencies]
 libz-sys = { version = "1.0.25", features = ["static", "libc"], optional = true, default-features=false }
