@@ -65,7 +65,7 @@ pub(crate) fn get_num_chunks(ds: &Dataset) -> Option<usize> {
     }))
 }
 
-#[cfg(feature = "1.13.0")]
+#[cfg(feature = "1.14.0")]
 mod one_thirteen {
     use super::*;
     use hdf5_sys::h5d::H5Dchunk_iter;
@@ -103,7 +103,8 @@ mod one_thirteen {
     }
 
     extern "C" fn chunks_callback<F>(
-        offset: *const hsize_t, filter_mask: u32, addr: haddr_t, nbytes: u32, op_data: *mut c_void,
+        offset: *const hsize_t, filter_mask: c_uint, addr: haddr_t, size: hsize_t,
+        op_data: *mut c_void,
     ) -> herr_t
     where
         F: FnMut(ChunkInfoBorrowed) -> i32,
@@ -116,12 +117,8 @@ mod one_thirteen {
 
                 let offset = std::slice::from_raw_parts(offset, ndims);
 
-                let info = ChunkInfoBorrowed {
-                    offset,
-                    filter_mask,
-                    addr: addr as u64,
-                    size: nbytes as u64,
-                };
+                let info =
+                    ChunkInfoBorrowed { offset, filter_mask, addr: addr as u64, size: size as u64 };
 
                 callback(info)
             })
