@@ -29,7 +29,7 @@ impl Version {
     }
 
     pub fn parse(s: &str) -> Option<Self> {
-        let re = Regex::new(r"^(1)\.(8|10|12|13)\.(\d\d?)(_\d+)?(-patch\d+)?$").ok()?;
+        let re = Regex::new(r"^(1)\.(8|10|12|13|14)\.(\d\d?)(_\d+)?(-patch\d+)?$").ok()?;
         let captures = re.captures(s)?;
         Some(Self {
             major: captures.get(1).and_then(|c| c.as_str().parse::<u8>().ok())?,
@@ -71,6 +71,13 @@ fn is_inc_dir<P: AsRef<Path>>(path: P) -> bool {
 #[allow(dead_code)]
 fn is_root_dir<P: AsRef<Path>>(path: P) -> bool {
     is_inc_dir(path.as_ref().join("include"))
+}
+
+#[allow(dead_code)]
+fn is_msvc() -> bool {
+    // `cfg!(target = "msvc")` will report wrong value when using
+    // MSVC toolchain targeting GNU.
+    std::env::var("CARGO_CFG_TARGET_ENV").unwrap() == "msvc"
 }
 
 #[derive(Clone, Debug)]
@@ -115,7 +122,7 @@ fn get_runtime_version_single<P: AsRef<Path>>(path: P) -> Result<Version, Box<dy
 
 fn validate_runtime_version(config: &Config) {
     println!("Looking for HDF5 library binary...");
-    let libfiles = &["libhdf5.dylib", "libhdf5.so", "hdf5.dll"];
+    let libfiles = &["libhdf5.dylib", "libhdf5.so", "hdf5.dll", "libhdf5-0.dll"];
     let mut link_paths = config.link_paths.clone();
     if cfg!(all(unix, not(target_os = "macos"))) {
         if let Some(ldv) = run_command("ld", &["--verbose"]) {
@@ -451,7 +458,7 @@ mod windows {
 
     pub fn find_hdf5_via_winreg(config: &mut LibrarySearcher) {
         // Official HDF5 binaries on Windows are built for MSVC toolchain only.
-        if config.inc_dir.is_some() || !cfg!(target_env = "msvc") {
+        if config.inc_dir.is_some() || !is_msvc() {
             return;
         }
         // Check the list of installed programs, see if there's HDF5 anywhere;
@@ -492,7 +499,7 @@ impl LibrarySearcher {
             config.user_provided_dir = true;
             config.inc_dir = Some(root.join("include"));
         }
-        if cfg!(target_env = "msvc") {
+        if is_msvc() {
             // in order to allow HDF5_DIR to be pointed to a conda environment, we have
             // to support MSVC as a special case (where the root is in $PREFIX/Library)
             if let Some(ref inc_dir) = config.inc_dir {
@@ -560,9 +567,7 @@ impl LibrarySearcher {
             if link_paths.is_empty() {
                 if let Some(root_dir) = inc_dir.parent() {
                     link_paths.push(root_dir.join("lib"));
-                    if cfg!(target_env = "msvc") {
-                        link_paths.push(root_dir.join("bin"));
-                    }
+                    link_paths.push(root_dir.join("bin"));
                 }
             }
             let header = Header::parse(inc_dir);
@@ -594,7 +599,7 @@ impl Config {
         println!("cargo:rerun-if-env-changed=HDF5_DIR");
         println!("cargo:rerun-if-env-changed=HDF5_VERSION");
 
-        if cfg!(target_env = "msvc") {
+        if is_msvc() {
             println!("cargo:msvc_dll_indirection=1");
         }
         println!("cargo:include={}", self.inc_dir.to_str().unwrap());
