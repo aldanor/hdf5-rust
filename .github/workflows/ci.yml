@@ -247,7 +247,7 @@ jobs:
         with: {submodules: true}
       - name: Install Rust (${{matrix.rust}})
         uses: actions-rs/toolchain@v1
-        with: {toolchain: '${{matrix.rust}}', profile: minimal, override: true}
+        with: {toolchain: '${{matrix.rust}}', target: x86_64-pc-windows-gnu, profile: minimal, override: true}
       - name: Install HDF5
         shell: pwsh
         run: |
@@ -259,7 +259,7 @@ jobs:
         run: |
           $env:HDF5_DIR="C:\msys64\mingw64"
           $env:PATH="$env:PATH;C:\msys64\mingw64\bin;"
-          cargo test -vv
+          cargo test -vv --target=x86_64-pc-windows-gnu
 
   msrv:
     name: Minimal Supported Rust Version
