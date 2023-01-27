@@ -122,7 +122,7 @@ fn get_runtime_version_single<P: AsRef<Path>>(path: P) -> Result<Version, Box<dy
 
 fn validate_runtime_version(config: &Config) {
     println!("Looking for HDF5 library binary...");
-    let libfiles = &["libhdf5.dylib", "libhdf5.so", "hdf5.dll", "libhdf5-0.dll"];
+    let libfiles = &["libhdf5.dylib", "libhdf5.so", "hdf5.dll", "libhdf5-0.dll", "libhdf5-310.dll"];
     let mut link_paths = config.link_paths.clone();
     if cfg!(all(unix, not(target_os = "macos"))) {
         if let Some(ldv) = run_command("ld", &["--verbose"]) {
