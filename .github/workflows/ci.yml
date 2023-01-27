@@ -257,7 +257,6 @@ jobs:
       - name: Build and test all crates
         shell: pwsh
         run: |
-          $env:HDF5_DIR="C:\msys64\mingw64"
           $env:PATH="$env:PATH;C:\msys64\mingw64\bin;"
           cargo test -vv --target=x86_64-pc-windows-gnu
 
