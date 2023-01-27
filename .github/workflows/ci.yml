@@ -253,7 +253,7 @@ jobs:
         run: |
           $env:PATH="$env:PATH;C:\msys64\mingw64\bin;C:\msys64\usr\bin;"
           C:\msys64\usr\bin\pacman.exe -Syu --noconfirm
-          C:\msys64\usr\bin\pacman.exe -S --noconfirm mingw-w64-x86_64-hdf5
+          C:\msys64\usr\bin\pacman.exe -S --noconfirm mingw-w64-x86_64-hdf5 mingw-w64-x86_64-pkgconf
       - name: Build and test all crates
         shell: pwsh
         run: |
