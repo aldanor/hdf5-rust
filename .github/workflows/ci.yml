@@ -234,6 +234,33 @@ jobs:
       - name: Build and test all crates
         run: cargo test -vv
 
+  mingw:
+    name: mingw
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        rust: [stable]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with: {submodules: true}
+      - name: Install Rust (${{matrix.rust}})
+        uses: actions-rs/toolchain@v1
+        with: {toolchain: '${{matrix.rust}}', profile: minimal, override: true}
+      - name: Install HDF5
+        shell: pwsh
+        run: |
+          $env:PATH="$env:PATH;C:\msys64\mingw64\bin;C:\msys64\usr\bin;"
+          C:\msys64\usr\bin\pacman.exe -Syu --noconfirm
+          C:\msys64\usr\bin\pacman.exe -S --noconfirm mingw-w64-x86_64-hdf5
+      - name: Build and test all crates
+        shell: pwsh
+        run: |
+          $env:HDF5_DIR="C:\msys64\mingw64"
+          $env:PATH="$env:PATH;C:\msys64\mingw64\bin;"
+          cargo test -vv
+
   msrv:
     name: Minimal Supported Rust Version
     runs-on: ubuntu-18.04
