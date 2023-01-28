@@ -492,9 +492,11 @@ mod windows {
             let var_path = env::var("PATH").unwrap_or_else(|_| Default::default());
             let bin_dir = inc_dir.parent().unwrap().join("bin").canonicalize().unwrap();
             for path in env::split_paths(&var_path) {
-                if path.canonicalize().unwrap() == bin_dir {
-                    println!("Found in PATH: {:?}", path);
-                    return;
+                if let Ok(path) = path.canonicalize() {
+                    if path == bin_dir {
+                        println!("Found in PATH: {:?}", path);
+                        return;
+                    }
                 }
             }
             panic!("{:?} not found in PATH.", bin_dir);
