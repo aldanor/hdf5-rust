@@ -21,6 +21,7 @@
 - Fixed a missing symbol when building `hdf5-src` with `libz-sys`.
 - Fixed a bug where errors were only silenced on the main thread.
 - Fixed a memory leak when opening datasets.
+- Fixed library finding on Windows with MSYS2-distributed MinGW HDF5.
 
 ## 0.8.1
 
