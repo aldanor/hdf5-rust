@@ -6,13 +6,13 @@ use std::ptr;
 use std::slice;
 
 #[repr(C)]
-pub struct VarLenArray<T: Copy> {
+pub struct VarLenArray<T: Clone> {
     len: usize,
     ptr: *const T,
     tag: PhantomData<T>,
 }
 
-impl<T: Copy> VarLenArray<T> {
+impl<T: Clone> VarLenArray<T> {
     pub unsafe fn from_parts(p: *const T, len: usize) -> Self {
         let (len, ptr) = if !p.is_null() && len != 0 {
             let dst = crate::malloc(len * mem::size_of::<T>());
@@ -50,7 +50,7 @@ impl<T: Copy> VarLenArray<T> {
     }
 }
 
-impl<T: Copy> Drop for VarLenArray<T> {
+impl<T: Clone> Drop for VarLenArray<T> {
     fn drop(&mut self) {
         if !self.ptr.is_null() {
             unsafe {
@@ -64,14 +64,14 @@ impl<T: Copy> Drop for VarLenArray<T> {
     }
 }
 
-impl<T: Copy> Clone for VarLenArray<T> {
+impl<T: Clone> Clone for VarLenArray<T> {
     #[inline]
     fn clone(&self) -> Self {
         Self::from_slice(self)
     }
 }
 
-impl<T: Copy> Deref for VarLenArray<T> {
+impl<T: Clone> Deref for VarLenArray<T> {
     type Target = [T];
 
     #[inline]
@@ -84,58 +84,58 @@ impl<T: Copy> Deref for VarLenArray<T> {
     }
 }
 
-impl<'a, T: Copy> From<&'a [T]> for VarLenArray<T> {
+impl<'a, T: Clone> From<&'a [T]> for VarLenArray<T> {
     #[inline]
     fn from(arr: &[T]) -> Self {
         Self::from_slice(arr)
     }
 }
 
-impl<T: Copy> From<VarLenArray<T>> for Vec<T> {
+impl<T: Clone> From<VarLenArray<T>> for Vec<T> {
     #[inline]
     fn from(v: VarLenArray<T>) -> Self {
-        v.iter().copied().collect()
+        v.iter().cloned().collect()
     }
 }
 
-impl<T: Copy, const N: usize> From<[T; N]> for VarLenArray<T> {
+impl<T: Clone, const N: usize> From<[T; N]> for VarLenArray<T> {
     #[inline]
     fn from(arr: [T; N]) -> Self {
         unsafe { Self::from_parts(arr.as_ptr(), arr.len()) }
     }
 }
 
-impl<T: Copy> Default for VarLenArray<T> {
+impl<T: Clone> Default for VarLenArray<T> {
     #[inline]
     fn default() -> Self {
         unsafe { Self::from_parts(ptr::null(), 0) }
     }
 }
 
-impl<T: Copy + PartialEq> PartialEq for VarLenArray<T> {
+impl<T: Clone + PartialEq> PartialEq for VarLenArray<T> {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
         self.as_slice() == other.as_slice()
     }
 }
 
-impl<T: Copy + Eq> Eq for VarLenArray<T> {}
+impl<T: Clone + Eq> Eq for VarLenArray<T> {}
 
-impl<T: Copy + PartialEq> PartialEq<[T]> for VarLenArray<T> {
+impl<T: Clone + PartialEq> PartialEq<[T]> for VarLenArray<T> {
     #[inline]
     fn eq(&self, other: &[T]) -> bool {
         self.as_slice() == other
     }
 }
 
-impl<T: Copy + PartialEq, const N: usize> PartialEq<[T; N]> for VarLenArray<T> {
+impl<T: Clone + PartialEq, const N: usize> PartialEq<[T; N]> for VarLenArray<T> {
     #[inline]
     fn eq(&self, other: &[T; N]) -> bool {
         self.as_slice() == other
     }
 }
 
-impl<T: Copy + fmt::Debug> fmt::Debug for VarLenArray<T> {
+impl<T: Clone + fmt::Debug> fmt::Debug for VarLenArray<T> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.as_slice().fmt(f)
