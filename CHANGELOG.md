@@ -13,6 +13,9 @@
 
 - The `H5Type` derive macro now uses `proc-macro-error` to emit error messages.
 - MSRV is now `1.54` following a bump in a dependency.
+- `hdf5-src` can now be built from several versions of `hdf5` using compile-time
+  flags. Enable this using the features `1_14`, `1_12`, or `1_10` of `hdf5-src`.
+  More recent versions take priority if multiple versions has been selected.
 
 ### Fixed
 
