@@ -36,6 +36,7 @@ exclude = [
 ]
 
 [features]
+default = ["1_12"]
 hl = []
 zlib = ["libz-sys"]
 deprecated = []
@@ -45,7 +46,7 @@ threadsafe = []
 1_14 = []
 
 [dependencies]
-libz-sys = { version = "1.0.25", features = ["static", "libc"], optional = true, default-features=false }
+libz-sys = { version = "1.1.9", features = ["static", "libc"], optional = true, default-features=false }
 
 [build-dependencies]
 cmake = "0.1.44"
