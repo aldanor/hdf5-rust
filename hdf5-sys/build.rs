@@ -614,7 +614,7 @@ impl Config {
         assert!(version >= Version::new(1, 8, 4), "required HDF5 version: >=1.8.4");
         let mut vs: Vec<_> = (5..=21).map(|v| Version::new(1, 8, v)).collect(); // 1.8.[5-21]
         vs.extend((0..=8).map(|v| Version::new(1, 10, v))); // 1.10.[0-8]
-        vs.extend((0..=1).map(|v| Version::new(1, 12, v))); // 1.12.[0-1]
+        vs.extend((0..=3).map(|v| Version::new(1, 12, v))); // 1.12.[0-3]
         vs.extend((0..=0).map(|v| Version::new(1, 13, v))); // 1.13.[0-0]
         for v in vs.into_iter().filter(|&v| version >= v) {
             println!("cargo:rustc-cfg=feature=\"{}.{}.{}\"", v.major, v.minor, v.micro);
