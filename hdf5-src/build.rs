@@ -68,6 +68,7 @@ fn main() {
     }
 
     let targeting_windows = env::var("CARGO_CFG_TARGET_OS").unwrap() == "windows";
+    let targeting_macos = env::var("CARGO_CFG_TARGET_OS").unwrap() == "macos";
     let debug_postfix = if targeting_windows { "_D" } else { "_debug" };
 
     if feature_enabled("HL") {
@@ -87,6 +88,11 @@ fn main() {
             if env::var("CARGO_CFG_TARGET_ARCH").unwrap() == "x86_64" { "wine64" } else { "wine" };
         // when cross-compiling to windows, use Wine to run code generation programs
         cfg.define("CMAKE_CROSSCOMPILING_EMULATOR", wine_exec);
+    }
+
+    if env::consts::OS != "macos" && targeting_macos {
+        println!("Cross compiling to macos, so setting emulator to darling");
+        cfg.define("CMAKE_CROSSCOMPILING_EMULATOR", "darling");
     }
 
     let dst = cfg.build();
