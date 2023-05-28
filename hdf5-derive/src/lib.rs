@@ -44,12 +44,16 @@ where
     F: ToTokens,
 {
     quote! {
-        let origin: *const #ty #ty_generics = ::std::ptr::null();
+        let origin = ::std::mem::MaybeUninit::<#ty #ty_generics>::uninit();
+        let origin_ptr = origin.as_ptr();
         let mut fields = vec![#(
             _h5::types::CompoundField {
                 name: #names.to_owned(),
                 ty: <#types as _h5::types::H5Type>::type_descriptor(),
-                offset: unsafe { &((*origin).#fields) as *const _ as _ },
+                offset: unsafe {
+                    ::std::ptr::addr_of!((*origin_ptr).#fields).cast::<u8>()
+                        .offset_from(origin_ptr.cast()) as usize
+                },
                 index: 0,
             }
         ),*];
