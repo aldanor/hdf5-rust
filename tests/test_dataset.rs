@@ -5,7 +5,7 @@ use std::io::{Read, Seek, SeekFrom};
 use ndarray::{s, Array1, Array2, ArrayD, IxDyn, SliceInfo};
 use rand::prelude::{Rng, SeedableRng, SmallRng};
 
-use hdf5_types::{H5Type, TypeDescriptor};
+use hdf5_types::TypeDescriptor;
 
 mod common;
 

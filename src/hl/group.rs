@@ -40,7 +40,7 @@ impl ObjectClass for Group {
         let members = match self.len() {
             0 => "empty".to_owned(),
             1 => "1 member".to_owned(),
-            x => format!("{} members", x),
+            x => format!("{x} members"),
         };
         Some(format!("\"{}\" ({})", self.name(), members))
     }
@@ -326,11 +326,9 @@ impl Group {
                 let info = unsafe { info.as_ref().expect("iter_vist: null info ptr") };
                 let handle = Handle::try_borrow(id).expect("iter_visit: unable to create a handle");
                 let group = Group::from_handle(handle);
-                if (vtable.f)(&group, name.to_string_lossy().as_ref(), info.into(), vtable.d) {
-                    0
-                } else {
-                    1
-                }
+                let success =
+                    (vtable.f)(&group, name.to_string_lossy().as_ref(), info.into(), vtable.d);
+                herr_t::from(!success)
             })
             .unwrap_or(-1)
         }

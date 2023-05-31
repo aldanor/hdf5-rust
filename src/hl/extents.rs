@@ -18,7 +18,7 @@ pub struct Extent {
 
 impl Debug for Extent {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Extent({})", self)
+        write!(f, "Extent({self})")
     }
 }
 
@@ -190,7 +190,7 @@ impl Deref for SimpleExtents {
 
 impl Debug for SimpleExtents {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "SimpleExtents({})", self)
+        write!(f, "SimpleExtents({self})")
     }
 }
 
@@ -202,7 +202,7 @@ impl Display for SimpleExtents {
             write!(f, "({},)", self[0])
         } else {
             let extents = self.iter().map(ToString::to_string).collect::<Vec<_>>().join(", ");
-            write!(f, "({})", extents)
+            write!(f, "({extents})")
         }
     }
 }
@@ -466,7 +466,7 @@ impl Display for Extents {
         match self {
             Self::Null => write!(f, "null"),
             Self::Scalar => write!(f, "scalar"),
-            Self::Simple(ref e) => write!(f, "{}", e),
+            Self::Simple(ref e) => write!(f, "{e}"),
         }
     }
 }

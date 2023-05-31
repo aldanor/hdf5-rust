@@ -157,7 +157,7 @@ impl From<H5T_order_t> for ByteOrder {
 impl Datatype {
     /// Get the total size of the datatype in bytes.
     pub fn size(&self) -> usize {
-        h5lock!(H5Tget_size(self.id())) as usize
+        h5lock!(H5Tget_size(self.id()))
     }
 
     /// Get the byte order of the datatype.
@@ -217,7 +217,7 @@ impl Datatype {
 
         h5lock!({
             let id = self.id();
-            let size = H5Tget_size(id) as usize;
+            let size = H5Tget_size(id);
             match H5Tget_class(id) {
                 H5T_class_t::H5T_INTEGER => {
                     let signed = match H5Tget_sign(id) {

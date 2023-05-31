@@ -341,19 +341,14 @@ mod hdf5_1_10_1 {
     use super::*;
 
     #[repr(C)]
-    #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Debug)]
+    #[derive(Copy, Clone, Default, PartialEq, Eq, PartialOrd, Debug)]
     pub enum H5F_fspace_strategy_t {
+        #[default]
         H5F_FSPACE_STRATEGY_FSM_AGGR = 0,
         H5F_FSPACE_STRATEGY_PAGE = 1,
         H5F_FSPACE_STRATEGY_AGGR = 2,
         H5F_FSPACE_STRATEGY_NONE = 3,
         H5F_FSPACE_STRATEGY_NTYPES = 4,
-    }
-
-    impl Default for H5F_fspace_strategy_t {
-        fn default() -> Self {
-            H5F_FSPACE_STRATEGY_FSM_AGGR
-        }
     }
 
     pub use self::H5F_fspace_strategy_t::*;

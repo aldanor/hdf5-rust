@@ -124,7 +124,7 @@ impl Display for PropertyListClass {
 
 impl From<PropertyListClass> for String {
     fn from(v: PropertyListClass) -> Self {
-        format!("{}", v)
+        format!("{v}")
     }
 }
 
@@ -149,7 +149,7 @@ impl FromStr for PropertyListClass {
             "object copy" => Ok(Self::ObjectCopy),
             "object create" => Ok(Self::ObjectCreate),
             "string create" => Ok(Self::StringCreate),
-            _ => fail!(format!("invalid property list class: {}", s)),
+            _ => fail!(format!("invalid property list class: {s}")),
         }
     }
 }

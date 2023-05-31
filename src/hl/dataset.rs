@@ -445,11 +445,7 @@ impl DatasetBuilderInner {
     }
 
     fn compute_chunk_shape(&self, dtype: &Datatype, extents: &Extents) -> Result<Option<Vec<Ix>>> {
-        let extents = if let Extents::Simple(extents) = extents {
-            extents
-        } else {
-            return Ok(None);
-        };
+        let Extents::Simple(extents) = extents else { return Ok(None) };
         let has_filters = self.dcpl_builder.has_filters()
             || self.dcpl_base.as_ref().map_or(false, DatasetCreate::has_filters);
         let chunking_required = has_filters || extents.is_resizable();

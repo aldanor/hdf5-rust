@@ -1771,7 +1771,7 @@ impl FileAccess {
             &mut location_size,
             &mut start_on_access
         ));
-        let mut buf = vec![0; 1 + (location_size as usize)];
+        let mut buf = vec![0; 1 + location_size];
         h5try!(H5Pget_mdc_log_options(
             self.id(),
             &mut is_enabled,

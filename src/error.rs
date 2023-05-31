@@ -123,7 +123,7 @@ impl ErrorFrame {
             func: func.into(),
             major: major.into(),
             minor: minor.into(),
-            description: format!("{}(): {}", func, desc),
+            description: format!("{func}(): {desc}"),
         }
     }
 
@@ -265,7 +265,7 @@ impl StdError for Error {}
 
 impl From<ShapeError> for Error {
     fn from(err: ShapeError) -> Self {
-        format!("shape error: {}", err).into()
+        format!("shape error: {err}").into()
     }
 }
 

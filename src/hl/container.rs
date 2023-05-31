@@ -78,7 +78,7 @@ impl<'a> Reader<'a> {
         let selection = selection.try_into()?;
         let obj_space = self.obj.space()?;
 
-        let out_shape = selection.out_shape(&obj_space.shape())?;
+        let out_shape = selection.out_shape(obj_space.shape())?;
         let out_size: Ix = out_shape.iter().product();
         let fspace = obj_space.select(selection)?;
 
@@ -250,7 +250,7 @@ impl<'a> Writer<'a> {
         let selection = selection.try_into()?;
         let obj_space = self.obj.space()?;
 
-        let out_shape = selection.out_shape(&obj_space.shape())?;
+        let out_shape = selection.out_shape(obj_space.shape())?;
         let out_size: Ix = out_shape.iter().product();
         let fspace = obj_space.select(selection)?;
         let view = arr.into();
@@ -392,7 +392,7 @@ impl io::Read for ByteReader {
         let pos = self.pos as usize;
         let amt = std::cmp::min(buf.len(), self.remaining_len());
         let selection = Selection::new(pos..pos + amt);
-        let out_shape = selection.out_shape(&self.obj_space.shape())?;
+        let out_shape = selection.out_shape(self.obj_space.shape())?;
         let fspace = self.obj_space.select(selection)?;
         let mspace = Dataspace::try_new(&out_shape)?;
         h5call!(H5Dread(
