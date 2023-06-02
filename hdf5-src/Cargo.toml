@@ -3,7 +3,7 @@ name = "hdf5-src"
 version = "0.8.1"  # !V
 authors = ["Ivan Smirnov <i.s.smirnov@gmail.com>"]
 keywords = ["hdf5"]
-license-file = "ext/hdf5/COPYING"
+license-file = "ext/1_13/COPYING"
 build = "build.rs"
 repository = "https://github.com/aldanor/hdf5-rust"
 homepage = "https://github.com/aldanor/hdf5-rust"
@@ -13,18 +13,26 @@ links = "hdf5src"
 readme = "README.md"
 categories = ["ffi"]
 exclude = [
-    "ext/hdf5/bin/**",
-    "ext/hdf5/c++/**",
-    "ext/hdf5/examples/**",
-    "ext/hdf5/fortran/**",
-    "ext/hdf5/java/**",
-    "ext/hdf5/release_docs/**",
-    "ext/hdf5/test/**",
-    "ext/hdf5/testpar/**",
-    "ext/hdf5/tools/**",
-    "ext/hdf5/hl/test/**",
-    "ext/hdf5/hl/tools/**",
-    "ext/hdf5/hl/examples/**",
+    "ext/*/bin/**",
+    "ext/*/c++/**",
+    "ext/*/examples/**",
+    "ext/*/fortran/**",
+    "ext/*/java/**",
+    "ext/*/release_docs/**",
+    "ext/*/test/**",
+    "ext/*/testpar/**",
+    "ext/*/tools/**",
+    "ext/*/m4/**",
+    "ext/*/configure",
+    "ext/*/MANIFEST",
+    "ext/*/hl/test/**",
+    "ext/*/hl/tools/**",
+    "ext/*/hl/examples/**",
+    "ext/*/hl/fortran/**",
+    "ext/*/hl/c++/**",
+    "ext/*/oxygen/**",
+    "ext/*/doxygen/**",
+    "ext/*/config/cmake_ext_mod/hdf.icns",
 ]
 
 [features]
@@ -32,6 +40,9 @@ hl = []
 zlib = ["libz-sys"]
 deprecated = []
 threadsafe = []
+1_10 = []
+1_12 = []
+1_14 = []
 
 [dependencies]
 libz-sys = { version = "1.0.25", features = ["static", "libc"], optional = true, default-features=false }

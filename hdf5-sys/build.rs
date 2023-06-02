@@ -604,6 +604,9 @@ impl Config {
         if feature_enabled("HL") {
             println!("cargo:hl_library=hdf5_hl");
         }
+
+        let version = self.header.version;
+        println!("cargo:h5version={}.{}.{}", version.major, version.minor, version.micro);
     }
 
     pub fn emit_cfg_flags(&self) {

@@ -58,7 +58,7 @@ jobs:
         include:
           - {version: hdf5@1.8}
           - {version: hdf5@1.10}
-          - {version: hdf5@1.12}
+          # - {version: hdf5@1.12}
           - {version: hdf5-mpi, mpi: true}
     steps:
       - name: Checkout repository
@@ -132,10 +132,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {os: ubuntu, rust: stable}
-          - {os: windows, rust: stable-msvc}
-          - {os: windows, rust: stable-gnu}
-          - {os: macos, rust: stable}
+          - {os: ubuntu, rust: stable, h5version: 1_14}
+          - {os: windows, rust: stable-msvc, h5version: 1_12}
+          - {os: windows, rust: stable-gnu, h5version: 1_10}
+          - {os: macos, rust: stable, h5version: 1_10}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -144,9 +144,9 @@ jobs:
         uses: actions-rs/toolchain@v1
         with: {toolchain: '${{matrix.rust}}', profile: minimal, override: true}
       - name: Build and test all crates
-        run: cargo test --workspace -v --features hdf5-sys/static,hdf5-sys/zlib --exclude hdf5-derive
+        run: cargo test --workspace -v --features hdf5-sys/static,hdf5-sys/zlib,hdf5-src/${{matrix.h5version}} --exclude hdf5-derive
       - name: Build and test with filters
-        run: cargo test --workspace -v --features hdf5-sys/static,hdf5-sys/zlib,lzf,blosc --exclude hdf5-derive
+        run: cargo test --workspace -v --features hdf5-sys/static,hdf5-sys/zlib,lzf,blosc,hdf5-src/${{matrix.h5version}} --exclude hdf5-derive
         if: matrix.rust != 'stable-gnu'
       - name: Run examples
         run: |
@@ -194,7 +194,7 @@ jobs:
       fail-fast: false
       matrix:
         rust: [stable]
-        version: ["1.8", "1.10", "1.12", "1.13"]
+        version: ["1.8", "1.10", "1.12", "1.14"]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -218,9 +218,9 @@ jobs:
             DL_PATH=hdf5-1.12.0-Std-win10_64-vs16.zip
             echo "MSI_PATH=hdf\\HDF5-1.12.0-win64.msi" >> $GITHUB_ENV
           else
-            VERSION=1.13.2
-            DL_PATH=windows/hdf5-1.13.2-Std-win10_64-vs16.zip
-            echo "MSI_PATH=hdf\\HDF5-1.13.2-win64.msi" >> $GITHUB_ENV
+            VERSION=1.14.0
+            DL_PATH=windows/hdf5-1.14.0-Std-win10_64-vs16.zip
+            echo "MSI_PATH=hdf\\HDF5-1.14.0-win64.msi" >> $GITHUB_ENV
           fi
           BASE_URL=https://support.hdfgroup.org/ftp/HDF5/releases
           echo "DL_URL=$BASE_URL/hdf5-${{matrix.version}}/hdf5-$VERSION/bin/$DL_PATH" >> $GITHUB_ENV
