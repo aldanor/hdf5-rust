@@ -69,6 +69,10 @@ mod export {
     #[doc(hidden)]
     pub use crate::error::h5check;
 
+    pub mod macros {
+        pub use crate::macros::*;
+    }
+
     pub use hdf5_derive::H5Type;
     pub use hdf5_types::H5Type;
 
@@ -137,7 +141,7 @@ pub mod globals;
 mod handle;
 #[doc(hidden)]
 pub mod sync;
-mod util;
+pub mod util;
 
 mod hl;
 

@@ -169,6 +169,7 @@ impl_h5get!(a: A, b: B);
 impl_h5get!(a: A, b: B, c: C);
 impl_h5get!(a: A, b: B, c: C, d: D);
 
+#[macro_export]
 macro_rules! h5err {
     ($msg:expr, $major:expr, $minor:expr) => {
         let line = line!();

@@ -6,7 +6,15 @@ fn feature_enabled(feature: &str) -> bool {
 
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
-    let mut cfg = cmake::Config::new("ext/hdf5");
+    let mut cfg = if feature_enabled("1_14") {
+        cmake::Config::new("ext/1_14")
+    } else if feature_enabled("1_12") {
+        cmake::Config::new("ext/1_12")
+    } else if feature_enabled("1_10") {
+        cmake::Config::new("ext/1_10")
+    } else {
+        cmake::Config::new("ext/1_10")
+    };
 
     // only build the static c library, disable everything else
     cfg.define("HDF5_NO_PACKAGES", "ON");
@@ -23,6 +31,7 @@ fn main() {
     ] {
         cfg.define(option, "OFF");
     }
+    cfg.define("DEFAULT_API_VERSION", "none");
 
     // disable these by default, can be enabled via features
     for option in &[
@@ -59,6 +68,7 @@ fn main() {
     }
 
     let targeting_windows = env::var("CARGO_CFG_TARGET_OS").unwrap() == "windows";
+    let targeting_macos = env::var("CARGO_CFG_TARGET_OS").unwrap() == "macos";
     let debug_postfix = if targeting_windows { "_D" } else { "_debug" };
 
     if feature_enabled("HL") {
@@ -78,6 +88,11 @@ fn main() {
             if env::var("CARGO_CFG_TARGET_ARCH").unwrap() == "x86_64" { "wine64" } else { "wine" };
         // when cross-compiling to windows, use Wine to run code generation programs
         cfg.define("CMAKE_CROSSCOMPILING_EMULATOR", wine_exec);
+    }
+
+    if env::consts::OS != "macos" && targeting_macos {
+        println!("Cross compiling to macos, so setting emulator to darling");
+        cfg.define("CMAKE_CROSSCOMPILING_EMULATOR", "darling");
     }
 
     let dst = cfg.build();
