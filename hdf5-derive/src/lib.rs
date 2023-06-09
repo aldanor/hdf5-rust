@@ -134,10 +134,8 @@ fn find_hdf5_rename(attrs: &[Attribute]) -> Option<String> {
     let mut rename = None;
     let attr = attrs.iter().find(|a| a.path().is_ident("hdf5"))?;
     attr.parse_nested_meta(|meta| {
-        if meta.path.is_ident("rename") {
-            if rename.is_none() {
-                rename = Some(meta.value()?.parse::<LitStr>()?.value());
-            }
+        if meta.path.is_ident("rename") && rename.is_none() {
+            rename = Some(meta.value()?.parse::<LitStr>()?.value());
         }
         Ok(())
     })

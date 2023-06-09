@@ -156,6 +156,7 @@ impl From<H5T_order_t> for ByteOrder {
 
 impl Datatype {
     /// Get the total size of the datatype in bytes.
+    #[allow(clippy::unnecessary_cast)]
     pub fn size(&self) -> usize {
         h5lock!(H5Tget_size(self.id())) as usize
     }
@@ -217,6 +218,7 @@ impl Datatype {
 
         h5lock!({
             let id = self.id();
+            #[allow(clippy::unnecessary_cast)]
             let size = H5Tget_size(id) as usize;
             match H5Tget_class(id) {
                 H5T_class_t::H5T_INTEGER => {
