@@ -517,10 +517,6 @@ impl Filter {
             Ok(filters)
         })
     }
-
-    pub(crate) fn requires_chunking(&self) -> bool {
-        COMP_FILTER_IDS.contains(&self.id())
-    }
 }
 
 const COMP_FILTER_IDS: &[H5Z_filter_t] = &[H5Z_FILTER_DEFLATE, H5Z_FILTER_SZIP, 32000, 32001];

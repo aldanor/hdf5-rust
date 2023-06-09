@@ -582,10 +582,10 @@ impl DatasetCreateBuilder {
     }
 
     fn populate_plist(&self, id: hid_t) -> Result<()> {
+        if !self.filters.is_empty() {
+            ensure!(self.chunk.is_some(), "Filter requires dataset to be chunked");
+        }
         for filter in &self.filters {
-            if filter.requires_chunking() {
-                ensure!(self.chunk.is_some(), "Filter requires dataset to be chunked");
-            }
             filter.apply_to_plist(id)?;
         }
         if let Some(v) = self.alloc_time {
