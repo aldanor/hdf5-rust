@@ -1,0 +1,54 @@
+[package]
+name = "hdf5"
+readme = "../README.md"
+description = "Thread-safe Rust bindings for the HDF5 library."
+build = "build.rs"
+categories = ["science", "filesystem"]
+version.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+edition.workspace = true
+
+[features]
+default = []
+mpio = ["mpi-sys", "hdf5-sys/mpio"]
+lzf = ["lzf-sys", "errno"]
+blosc = ["blosc-sys"]
+# The features with version numbers such as 1.10.3, 1.12.0 are metafeatures
+# and is only available when the HDF5 library is at least this version.
+# Features have_direct and have_parallel are also metafeatures and dependent
+# on the HDF5 library which is linked against.
+
+[dependencies]
+# external
+bitflags = "2.3"
+blosc-sys = { version = "0.2", package = "blosc-src", optional = true }
+cfg-if = { workspace = true }
+errno = { version = "0.3", optional = true }
+lazy_static = "1.4"
+libc = { workspace = true }
+lzf-sys = { version = "0.1", optional = true }
+mpi-sys = { workspace = true, optional = true }
+ndarray = "0.15"
+parking_lot = "0.12"
+paste = "1.0"
+# internal
+hdf5-derive = { workspace = true }
+hdf5-sys = { workspace = true }
+hdf5-types = { workspace = true }
+
+[dev-dependencies]
+paste = "1.0"
+pretty_assertions = "1.3"
+rand = { version = "0.8", features = ["small_rng"] }
+regex = { workspace = true }
+scopeguard = "1.1"
+tempfile = "3.6"
+
+[package.metadata.docs.rs]
+features = ["hdf5-sys/static", "hdf5-sys/zlib", "blosc", "lzf"]
+rustdoc-args = ["--cfg", "docsrs"]
