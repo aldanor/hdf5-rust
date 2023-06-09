@@ -8,7 +8,7 @@ use hdf5_sys::h5d::{H5Dget_chunk_info, H5Dget_num_chunks};
 pub struct ChunkInfo {
     /// Array with a size equal to the dataset’s rank whose elements contain 0-based
     /// logical positions of the chunk’s first element in each dimension.
-    pub offset: Vec<u64>,
+    pub offset: Vec<hsize_t>,
     /// Filter mask that indicates which filters were used with the chunk when written.
     ///
     /// A zero value indicates that all enabled filters are applied on the chunk.
@@ -16,9 +16,9 @@ pub struct ChunkInfo {
     /// the pipeline (0 ≤ position < 32) is turned on.
     pub filter_mask: u32,
     /// Chunk address in the file.
-    pub addr: u64,
+    pub addr: haddr_t,
     /// Chunk size in bytes.
-    pub size: u64,
+    pub size: hsize_t,
 }
 
 #[cfg(feature = "1.10.5")]
@@ -67,28 +67,28 @@ pub(crate) fn get_num_chunks(ds: &Dataset) -> Option<usize> {
 }
 
 #[cfg(feature = "1.14.0")]
-mod one_thirteen {
+mod v1_14_0 {
     use super::*;
     use hdf5_sys::h5d::H5Dchunk_iter;
 
     /// Borrowed version of [ChunkInfo](crate::dataset::ChunkInfo)
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct ChunkInfoRef<'a> {
-        pub offset: &'a [u64],
+        pub offset: &'a [hsize_t],
         pub filter_mask: u32,
-        pub addr: u64,
-        pub size: u64,
+        pub addr: haddr_t,
+        pub size: hsize_t,
     }
 
-    impl<'a> ChunkInfoBorrowed<'a> {
+    impl<'a> ChunkInfoRef<'a> {
         /// Returns positional indices of disabled filters.
         pub fn disabled_filters(&self) -> Vec<usize> {
             (0..32).filter(|i| self.filter_mask & (1 << i) != 0).collect()
         }
     }
 
-    impl<'a> From<ChunkInfoBorrowed<'a>> for ChunkInfo {
-        fn from(val: ChunkInfoBorrowed<'a>) -> Self {
+    impl<'a> From<ChunkInfoRef<'a>> for ChunkInfo {
+        fn from(val: ChunkInfoRef<'a>) -> Self {
             Self {
                 offset: val.offset.to_owned(),
                 filter_mask: val.filter_mask,
@@ -109,7 +109,7 @@ mod one_thirteen {
         op_data: *mut c_void,
     ) -> herr_t
     where
-        F: FnMut(ChunkInfoBorrowed) -> i32,
+        F: FnMut(ChunkInfoRef) -> i32,
     {
         unsafe {
             std::panic::catch_unwind(|| {
@@ -117,10 +117,9 @@ mod one_thirteen {
                 let ndims = (*data).ndims;
                 let callback = &mut (*data).callback;
 
-                let offset = std::slice::from_raw_parts(offset, ndims);
+                let offset = std::slice::from_raw_parts(offset, ndims as usize);
 
-                let info =
-                    ChunkInfoBorrowed { offset, filter_mask, addr: addr as u64, size: size as u64 };
+                let info = ChunkInfoRef { offset, filter_mask, addr, size };
 
                 callback(info)
             })
@@ -130,9 +129,9 @@ mod one_thirteen {
 
     pub(crate) fn visit<F>(ds: &Dataset, callback: F) -> Result<()>
     where
-        F: for<'a> FnMut(ChunkInfoBorrowed<'a>) -> i32,
+        F: for<'a> FnMut(ChunkInfoRef<'a>) -> i32,
     {
-        let mut data = RustCallback::<F> { ndims: ds.ndim(), callback };
+        let mut data = RustCallback::<F> { ndims: ds.ndim() as _, callback };
 
         h5try!(H5Dchunk_iter(
             ds.id(),
@@ -159,7 +158,7 @@ mod one_thirteen {
                 ds.write(&ndarray::arr2(&[[1, 2], [3, 4], [5, 6]])).unwrap();
 
                 let mut i = 0;
-                let f = |c: ChunkInfoBorrowed| {
+                let f = |c: ChunkInfoRef| {
                     match i {
                         0 => assert_eq!(c.offset, [0, 0]),
                         1 => assert_eq!(c.offset, [0, 1]),
@@ -179,5 +178,5 @@ mod one_thirteen {
         }
     }
 }
-#[cfg(feature = "1.13.0")]
-pub use one_thirteen::*;
+#[cfg(feature = "1.14.0")]
+pub use v1_14_0::*;
