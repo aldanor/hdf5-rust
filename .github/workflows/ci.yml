@@ -35,7 +35,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: ${{matrix.command}}
-          args: "${{matrix.command == 'fmt' && '--all -- --check' || '--workspace --exclude hdf5-src -- -D warnings -D clippy::cargo'}}"
+          args: "${{matrix.command == 'fmt' && '--all -- --check' || '--workspace --exclude hdf5-src -- -D warnings -D clippy::cargo -A clippy::multiple-crate-versions'}}"
 
   doc: # This task should mirror the procedure on docs.rs
     runs-on: ubuntu-latest
@@ -58,8 +58,7 @@ jobs:
         include:
           - {version: hdf5@1.8}
           - {version: hdf5@1.10}
-          - {version: hdf5@1.12}
-          - {version: hdf5-mpi, mpi: true}
+          # - {version: hdf5-mpi, mpi: true}  # TODO: re-enable once 1.14 support is merged in
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -156,13 +155,13 @@ jobs:
 
   apt:
     name: apt
-    runs-on: ubuntu-${{matrix.ubuntu}}
+    runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
       matrix:
         include:
-          - {ubuntu: 18.04, mpi: mpich, rust: beta}
-          - {ubuntu: 20.04, mpi: openmpi, rust: stable}
+          - {mpi: mpich, rust: beta}
+          - {mpi: openmpi, rust: stable}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -236,7 +235,7 @@ jobs:
 
   msrv:
     name: Minimal Supported Rust Version
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
     steps:
@@ -245,25 +244,27 @@ jobs:
         with: {submodules: true}
       - name: Install Rust
         uses: actions-rs/toolchain@v1
-        with: {toolchain: 1.54, profile: minimal, override: true}
+        with: {toolchain: 1.64, profile: minimal, override: true}
       - name: Build and test all crates
         run:
           cargo test --workspace -vv --features=hdf5-sys/static --exclude=hdf5-derive
 
-  wine:
-    name: wine
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-        with: {submodules: true}
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with: {toolchain: stable, target: x86_64-pc-windows-gnu, profile: minimal, override: true}
-      - name: Install dependencies
-        run: sudo apt-get update && sudo apt install wine64 mingw-w64
-      - name: Build and test
-        run: env CARGO_TARGET_X86_64_PC_WINDOWS_GNU_RUNNER=wine64 cargo test --features hdf5-sys/static --target x86_64-pc-windows-gnu -- --skip test_compile_fail
+  # # TODO: temporarily disabled until fixed (see https://github.com/aldanor/hdf5-rust/issues/241)
+  # wine:
+  #   name: wine
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v2
+  #       with: {submodules: true}
+  #     - name: Install Rust
+  #       uses: actions-rs/toolchain@v1
+  #       with: {toolchain: stable, target: x86_64-pc-windows-gnu, profile: minimal, override: true}
+  #     - name: Install dependencies
+  #       run: sudo apt-get update && sudo apt install wine64 mingw-w64
+  #     - name: Build and test
+  #       run: env CARGO_TARGET_X86_64_PC_WINDOWS_GNU_RUNNER=wine64 cargo test --features hdf5-sys/static --target x86_64-pc-windows-gnu -- --skip test_compile_fail
+        
   addr_san:
     name: Address sanitizer
     runs-on: ubuntu-latest

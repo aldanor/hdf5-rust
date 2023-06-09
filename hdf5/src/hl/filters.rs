@@ -553,12 +553,12 @@ pub(crate) fn validate_filters(filters: &[Filter], type_class: H5T_class_t) -> R
                 }
                 _ => fail!("Can only use scale-offset with ints/floats, got: {:?}", type_class),
             }
-        } else if let Filter::SZip(_, _) = filter {
+        } else if matches!(filter, Filter::SZip(_, _)) {
             // https://github.com/h5py/h5py/issues/953
             if map.contains_key(&H5Z_FILTER_FLETCHER32) {
                 fail!("Fletcher32 filter must be placed after szip filter");
             }
-        } else if let Filter::Shuffle = filter {
+        } else if matches!(filter, Filter::Shuffle) {
             if let Some(comp_filter) = comp_filter {
                 fail!("Shuffle filter placed after compression filter: {:?}", comp_filter);
             }

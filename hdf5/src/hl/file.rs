@@ -53,7 +53,7 @@ impl ObjectClass for File {
             None => String::new(),
         };
         let mode = if self.is_read_only() { "read-only" } else { "read/write" };
-        Some(format!("\"{}\" ({})", basename, mode))
+        Some(format!("\"{basename}\" ({mode})"))
     }
 }
 
@@ -227,9 +227,7 @@ impl FileBuilder {
             }
         }
         let filename = to_cstring(
-            filename
-                .to_str()
-                .ok_or_else(|| format!("Invalid UTF-8 in file name: {:?}", filename))?,
+            filename.to_str().ok_or_else(|| format!("Invalid UTF-8 in file name: {filename:?}"))?,
         )?;
         let flags = match mode {
             OpenMode::Read => H5F_ACC_RDONLY,

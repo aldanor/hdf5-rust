@@ -12,7 +12,7 @@
 ### Changed
 
 - The `H5Type` derive macro now uses `proc-macro-error` to emit error messages.
-- MSRV is now `1.54` following a bump in a dependency.
+- MSRV is now `1.64.0` and Rust edition has now been bumped to 2021.
 
 ### Fixed
 
@@ -21,6 +21,7 @@
 - Fixed a missing symbol when building `hdf5-src` with `libz-sys`.
 - Fixed a bug where errors were only silenced on the main thread.
 - Fixed a memory leak when opening datasets.
+- Avoid creating unaligned references in `H5Type` derive macro.
 
 ## 0.8.1
 

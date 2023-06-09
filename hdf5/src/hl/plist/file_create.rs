@@ -155,6 +155,7 @@ pub struct PhaseChangeInfo {
 
 bitflags! {
     /// Types of messages that can be stored in a shared message index.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     pub struct SharedMessageType: u32 {
         /// No shared messages.
         const NONE = H5O_SHMESG_NONE_FLAG;

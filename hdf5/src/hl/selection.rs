@@ -530,43 +530,43 @@ impl From<RangeTo<usize>> for Selection {
 impl Display for SliceOrIndex {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Self::Index(index) => write!(f, "{}", index)?,
+            Self::Index(index) => write!(f, "{index}")?,
             Self::SliceTo { start, end, step, block } => {
                 if start != 0 {
-                    write!(f, "{}", start)?;
+                    write!(f, "{start}")?;
                 }
                 write!(f, "..")?;
-                write!(f, "{}", end)?;
+                write!(f, "{end}")?;
                 if step != 1 {
-                    write!(f, ";{}", step)?;
+                    write!(f, ";{step}")?;
                 }
                 if block != 1 {
-                    write!(f, "(Bx{})", block)?;
+                    write!(f, "(Bx{block})")?;
                 }
             }
             Self::SliceCount { start, step, count, block } => {
                 if start != 0 {
-                    write!(f, "{}", start)?;
+                    write!(f, "{start}")?;
                 }
-                write!(f, "+{}", count)?;
+                write!(f, "+{count}")?;
                 if step != 1 {
-                    write!(f, ";{}", step)?;
+                    write!(f, ";{step}")?;
                 }
                 if block != 1 {
-                    write!(f, "(Bx{})", block)?;
+                    write!(f, "(Bx{block})")?;
                 }
             }
             Self::Unlimited { start, step, block } => {
                 if start != 0 {
-                    write!(f, "{}", start)?;
+                    write!(f, "{start}")?;
                 }
                 // \u{221e} = ∞
                 write!(f, "..\u{221e}")?;
                 if step != 1 {
-                    write!(f, ";{}", step)?;
+                    write!(f, ";{step}")?;
                 }
                 if block != 1 {
-                    write!(f, "(Bx{})", block)?;
+                    write!(f, "(Bx{block})")?;
                 }
             }
         }
@@ -719,7 +719,7 @@ where
 
 /// Turns `SliceOrIndex` into real dimensions given `dim` as the maximum dimension
 fn slice_info_to_raw(axis: usize, slice: &SliceOrIndex, dim: Ix) -> Result<RawSlice> {
-    let err_msg = || format!("out of bounds for axis {} with size {}", axis, dim);
+    let err_msg = || format!("out of bounds for axis {axis} with size {dim}");
     let (start, step, count, block) = match *slice {
         SliceOrIndex::Index(index) => {
             ensure!(index < dim, "Index {} {}", index, err_msg());
@@ -760,7 +760,7 @@ impl Display for Hyperslab {
             if i != 0 {
                 write!(f, ", ")?;
             }
-            write!(f, "{}", s)?;
+            write!(f, "{s}")?;
         }
         if slice.len() == 1 {
             write!(f, ",")?;
@@ -908,10 +908,10 @@ impl Display for Selection {
                 if points.shape() == [0, 0] {
                     write!(f, "[]")
                 } else {
-                    write!(f, "{}", points)
+                    write!(f, "{points}")
                 }
             }
-            Self::Hyperslab(hyper) => write!(f, "{}", hyper),
+            Self::Hyperslab(hyper) => write!(f, "{hyper}"),
         }
     }
 }

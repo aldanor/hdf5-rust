@@ -148,6 +148,7 @@ impl From<Layout> for H5D_layout_t {
 
 #[cfg(feature = "1.10.0")]
 bitflags! {
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     pub struct ChunkOpts: u32 {
         const DONT_FILTER_PARTIAL_CHUNKS = H5D_CHUNK_DONT_FILTER_PARTIAL_CHUNKS;
     }

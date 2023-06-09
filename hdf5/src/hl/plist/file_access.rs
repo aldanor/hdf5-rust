@@ -195,6 +195,7 @@ impl Default for FamilyDriver {
 }
 
 bitflags! {
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     pub struct LogFlags: u64 {
         const TRUNCATE = H5FD_LOG_TRUNCATE;
         const META_IO = H5FD_LOG_META_IO;
@@ -1760,6 +1761,7 @@ impl FileAccess {
 
     #[cfg(feature = "1.10.0")]
     #[doc(hidden)]
+    #[allow(clippy::unnecessary_cast)]
     pub fn get_mdc_log_options(&self) -> Result<CacheLogOptions> {
         let mut is_enabled: hbool_t = 0;
         let mut location_size: size_t = 0;

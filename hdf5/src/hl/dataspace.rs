@@ -36,7 +36,7 @@ impl ObjectClass for Dataspace {
 
     fn short_repr(&self) -> Option<String> {
         if let Ok(e) = self.extents() {
-            Some(format!("{}", e))
+            Some(format!("{e}"))
         } else {
             Some("(invalid)".into())
         }
@@ -200,7 +200,7 @@ impl Dataspace {
     }
 
     pub fn select<S: Into<Selection>>(&self, selection: S) -> Result<Self> {
-        let raw_sel = selection.into().into_raw(&self.shape())?;
+        let raw_sel = selection.into().into_raw(self.shape())?;
         self.select_raw(raw_sel)
     }
 

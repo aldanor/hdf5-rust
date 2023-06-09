@@ -1,55 +1,26 @@
-[package]
-name = "hdf5"
+[workspace]
+members = ["hdf5", "hdf5-types", "hdf5-derive", "hdf5-sys", "hdf5-src"]
+default-members = ["hdf5", "hdf5-types", "hdf5-derive", "hdf5-sys"]
+
+[workspace.package]
 version = "0.8.1"  # !V
-authors = ["Ivan Smirnov <i.s.smirnov@gmail.com>"]
+rust-version = "1.64.0"
+authors = ["Ivan Smirnov <aldanor@users.noreply.github.com>", "Magnus Ulimoen <mulimoen@users.noreply.github.com>"]
 keywords = ["hdf5"]
 license = "MIT OR Apache-2.0"
-readme = "README.md"
-description = "Thread-safe Rust bindings for the HDF5 library."
 repository = "https://github.com/aldanor/hdf5-rust"
 homepage = "https://github.com/aldanor/hdf5-rust"
-build = "build.rs"
-edition = "2018"
-categories = ["science", "filesystem"]
+edition = "2021"
 
-[features]
-default = []
-mpio = ["mpi-sys", "hdf5-sys/mpio"]
-lzf = ["lzf-sys", "errno"]
-blosc = ["blosc-sys"]
-# The features with version numbers such as 1.10.3, 1.12.0 are metafeatures
-# and is only available when the HDF5 library is at least this version.
-# Features have_direct and have_parallel are also metafeatures and dependent
-# on the HDF5 library which is linked against.
-
-[workspace]
-members = [".", "hdf5-types", "hdf5-derive", "hdf5-sys", "hdf5-src"]
-default-members = [".", "hdf5-types", "hdf5-derive", "hdf5-sys"]
-
-[dependencies]
-bitflags = "1.2"
-lazy_static = "1.4"
-libc = "0.2"
-parking_lot = "0.11"
-ndarray = "0.15"
-paste = "1.0"
-mpi-sys = { version = "0.1", optional = true }
-errno = { version = "0.2", optional = true }
-hdf5-sys = { path = "hdf5-sys", version = "0.8.1" }  # !V
-hdf5-types = { path = "hdf5-types", version = "0.8.1" }  # !V
-hdf5-derive = { path = "hdf5-derive", version = "0.8.1" }  # !V
-blosc-sys = { version = "0.1.1", package = "blosc-src", optional = true }
-lzf-sys = { version = "0.1", optional = true }
+[workspace.dependencies]
+# external
 cfg-if = "1.0"
-
-[dev-dependencies]
-paste = "1.0"
-pretty_assertions = "1.0"
-rand = { version = "0.8", features = ["small_rng"] }
-regex = "1.3"
-scopeguard = "1.0"
-tempfile = "3.2"
-
-[package.metadata.docs.rs]
-features = ["hdf5-sys/static", "hdf5-sys/zlib", "blosc", "lzf"]
-rustdoc-args = ["--cfg", "docsrs"]
+libc = "0.2"
+libz-sys = { version = "1.1", default-features = false }
+mpi-sys = "0.2"
+regex = "1.8"
+# internal
+hdf5-derive = { version = "0.8.1", path = "hdf5-derive" }  # !V
+hdf5-src = { version = "0.8.1", path = "hdf5-src" }  # !V
+hdf5-sys = { version = "0.8.1", path = "hdf5-sys" }  # !V
+hdf5-types = { version = "0.8.1", path = "hdf5-types" }  # !V
