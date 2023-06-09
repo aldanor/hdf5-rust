@@ -35,7 +35,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: ${{matrix.command}}
-          args: "${{matrix.command == 'fmt' && '--all -- --check' || '--workspace --exclude hdf5-src -- -D warnings -D clippy::cargo'}}"
+          args: "${{matrix.command == 'fmt' && '--all -- --check' || '--workspace --exclude hdf5-src -- -D warnings -D clippy::cargo -A clippy::multiple-crate-versions'}}"
 
   doc: # This task should mirror the procedure on docs.rs
     runs-on: ubuntu-latest
