@@ -12,7 +12,7 @@
 ### Changed
 
 - The `H5Type` derive macro now uses `proc-macro-error` to emit error messages.
-- MSRV is now `1.54` following a bump in a dependency.
+- MSRV is now `1.64.0` and Rust edition has now been bumped to 2021.
 
 ### Fixed
 
