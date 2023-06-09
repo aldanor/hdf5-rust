@@ -38,28 +38,28 @@ members = [".", "hdf5-types", "hdf5-derive", "hdf5-sys", "hdf5-src"]
 default-members = [".", "hdf5-types", "hdf5-derive", "hdf5-sys"]
 
 [dependencies]
-bitflags = "1.2"
+bitflags = "2.3"
 lazy_static = "1.4"
 libc = "0.2"
-parking_lot = "0.11"
+parking_lot = "0.12"
 ndarray = "0.15"
 paste = "1.0"
-mpi-sys = { version = "0.1", optional = true }
-errno = { version = "0.2", optional = true }
+mpi-sys = { version = "0.2", optional = true }
+errno = { version = "0.3", optional = true }
 hdf5-sys = { path = "hdf5-sys", version = "0.8.1" }  # !V
 hdf5-types = { path = "hdf5-types", version = "0.8.1" }  # !V
 hdf5-derive = { path = "hdf5-derive", version = "0.8.1" }  # !V
-blosc-sys = { version = "0.1.1", package = "blosc-src", optional = true }
+blosc-sys = { version = "0.2", package = "blosc-src", optional = true }
 lzf-sys = { version = "0.1", optional = true }
 cfg-if = "1.0"
 
 [dev-dependencies]
 paste = "1.0"
-pretty_assertions = "1.0"
+pretty_assertions = "1.3"
 rand = { version = "0.8", features = ["small_rng"] }
-regex = "1.3"
-scopeguard = "1.0"
-tempfile = "3.2"
+regex = "1.8"
+scopeguard = "1.1"
+tempfile = "3.6"
 
 [package.metadata.docs.rs]
 features = ["hdf5-sys/static", "hdf5-sys/zlib", "blosc", "lzf"]

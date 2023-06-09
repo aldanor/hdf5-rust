@@ -16,10 +16,10 @@ edition.workspace = true
 proc-macro = true
 
 [dependencies]
-proc-macro-error = { version = "1.0.4", default-features = false }
+proc-macro-error = { version = "1.0", default-features = false }
 proc-macro2 = "1.0"
-quote = "^1.0.2"
-syn = { version = "^1.0.5", features = ["derive", "extra-traits"]}
+quote = "1.0"
+syn = { version = "2.0", features = ["derive", "extra-traits"]}
 
 [dev-dependencies]
 trybuild = "1.0"
