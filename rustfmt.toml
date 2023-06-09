@@ -4,4 +4,4 @@ use_try_shorthand = true
 empty_item_single_line = true
 edition = "2018"
 unstable_features = true
-fn_args_layout = "Compressed"
+fn_params_layout = "Compressed"
