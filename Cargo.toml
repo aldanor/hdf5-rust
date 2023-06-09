@@ -38,26 +38,41 @@ members = [".", "hdf5-types", "hdf5-derive", "hdf5-sys", "hdf5-src"]
 default-members = [".", "hdf5-types", "hdf5-derive", "hdf5-sys"]
 
 [dependencies]
+# external
 bitflags = "2.3"
-lazy_static = "1.4"
-libc = "0.2"
-parking_lot = "0.12"
-ndarray = "0.15"
-paste = "1.0"
-mpi-sys = { version = "0.2", optional = true }
-errno = { version = "0.3", optional = true }
-hdf5-sys = { path = "hdf5-sys", version = "0.8.1" }  # !V
-hdf5-types = { path = "hdf5-types", version = "0.8.1" }  # !V
-hdf5-derive = { path = "hdf5-derive", version = "0.8.1" }  # !V
 blosc-sys = { version = "0.2", package = "blosc-src", optional = true }
+cfg-if = { workspace = true }
+errno = { version = "0.3", optional = true }
+lazy_static = "1.4"
+libc = { workspace = true }
 lzf-sys = { version = "0.1", optional = true }
+mpi-sys = { workspace = true, optional = true }
+ndarray = "0.15"
+parking_lot = "0.12"
+paste = "1.0"
+# internal
+hdf5-derive = { workspace = true }
+hdf5-sys = { workspace = true }
+hdf5-types = { workspace = true }
+
+[workspace.dependencies]
+# external
 cfg-if = "1.0"
+libc = "0.2"
+libz-sys = { version = "1.1", default-features = false }
+mpi-sys = "0.2"
+regex = "1.8"
+# internal
+hdf5-derive = { version = "0.8.1", path = "hdf5-derive" }  # !V
+hdf5-src = { version = "0.8.1", path = "hdf5-src" }  # !V
+hdf5-sys = { version = "0.8.1", path = "hdf5-sys" }  # !V
+hdf5-types = { version = "0.8.1", path = "hdf5-types" }  # !V
 
 [dev-dependencies]
 paste = "1.0"
 pretty_assertions = "1.3"
 rand = { version = "0.8", features = ["small_rng"] }
-regex = "1.8"
+regex = { workspace = true }
 scopeguard = "1.1"
 tempfile = "3.6"
 

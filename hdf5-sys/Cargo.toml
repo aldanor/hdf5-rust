@@ -15,10 +15,10 @@ homepage.workspace = true
 edition.workspace = true
 
 [dependencies]
-libc = "0.2"
-mpi-sys = { version = "0.2", optional = true }
-libz-sys = { version = "1.1", optional = true, default-features = false }
-hdf5-src = { path = "../hdf5-src", version = "0.8.1", optional = true }  # !V
+libc = { workspace = true }
+mpi-sys = { workspace = true, optional = true }
+libz-sys = { workspace = true, optional = true }
+hdf5-src = { workspace = true, optional = true }
 
 # Please see README for further explanation of these feature flags
 [features]
@@ -32,7 +32,7 @@ deprecated = ["hdf5-src/deprecated"]
 
 [build-dependencies]
 libloading = "0.8"
-regex = { version = "1.8", features = ["std"] }
+regex = { workspace = true }
 
 [target.'cfg(all(unix, not(target_os = "macos")))'.build-dependencies]
 pkg-config = "0.3"
