@@ -23,12 +23,12 @@ hdf5-src = { workspace = true, optional = true }
 # Please see README for further explanation of these feature flags
 [features]
 default = []
-mpio = ["mpi-sys"]
-hl = ["hdf5-src/hl"]
-threadsafe = ["hdf5-src/threadsafe"]
-zlib = ["libz-sys", "hdf5-src/zlib"]
-static = ["hdf5-src"]
-deprecated = ["hdf5-src/deprecated"]
+mpio = ["dep:mpi-sys"]
+hl = ["hdf5-src?/hl"]
+threadsafe = ["hdf5-src?/threadsafe"]
+zlib = ["libz-sys", "hdf5-src?/zlib"]
+static = ["dep:hdf5-src"]
+deprecated = ["hdf5-src?/deprecated"]
 
 [build-dependencies]
 libloading = "0.8"
