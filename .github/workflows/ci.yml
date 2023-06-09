@@ -156,13 +156,13 @@ jobs:
 
   apt:
     name: apt
-    runs-on: ubuntu-${{matrix.ubuntu}}
+    runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
       matrix:
         include:
-          - {ubuntu: 18.04, mpi: mpich, rust: beta}
-          - {ubuntu: 20.04, mpi: openmpi, rust: stable}
+          - {mpi: mpich, rust: beta}
+          - {mpi: openmpi, rust: stable}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -236,7 +236,7 @@ jobs:
 
   msrv:
     name: Minimal Supported Rust Version
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
     steps:
