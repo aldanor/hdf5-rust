@@ -5,6 +5,7 @@
 ### Added
 
 - Support for HDF5 version 1.13.0.
+- Support for HDF5 version 1.14.0.
 - Support field renaming via `#[hdf5(rename = "new_name")]` helper attribute.
 - Add a `ByteReader` which implements `std::io::{Read, Seek}` for 1D `u8`
   datasets. Usage via `Dataset::as_byte_reader()`.
