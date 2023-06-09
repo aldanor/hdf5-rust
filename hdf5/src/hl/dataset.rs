@@ -118,7 +118,7 @@ impl Dataset {
     }
 
     /// Visit all chunks
-    #[cfg(feature = "1.13.0")]
+    #[cfg(feature = "1.14.0")]
     pub fn chunks_visit<F>(&self, callback: F) -> Result<()>
     where
         F: for<'a> FnMut(crate::dataset::ChunkInfoRef<'a>) -> i32,

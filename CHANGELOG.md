@@ -9,11 +9,13 @@
 - Support field renaming via `#[hdf5(rename = "new_name")]` helper attribute.
 - Add a `ByteReader` which implements `std::io::{Read, Seek}` for 1D `u8`
   datasets. Usage via `Dataset::as_byte_reader()`.
+- Add `chunk_visit` to visit all chunks in a dataset.
 
 ### Changed
 
 - The `H5Type` derive macro now uses `proc-macro-error` to emit error messages.
 - MSRV is now `1.64.0` and Rust edition has now been bumped to 2021.
+- Types in ChunkInfo has been changed to match HDF5
 
 ### Fixed
 
