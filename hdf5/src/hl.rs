@@ -1,4 +1,5 @@
 pub mod attribute;
+pub mod chunks;
 pub mod container;
 pub mod dataset;
 pub mod dataspace;
