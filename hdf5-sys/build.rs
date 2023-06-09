@@ -29,7 +29,7 @@ impl Version {
     }
 
     pub fn parse(s: &str) -> Option<Self> {
-        let re = Regex::new(r"^(1)\.(8|10|12|14)\.(\d\d?)(_\d+)?((-|.)(patch)?\d+)?$").ok()?;
+        let re = Regex::new(r"^(1)\.(8|10|12|14)\.(\d\d?)(_|.\d+)?((-|.)(patch)?\d+)?$").ok()?;
         let captures = re.captures(s)?;
         Some(Self {
             major: captures.get(1).and_then(|c| c.as_str().parse::<u8>().ok())?,
