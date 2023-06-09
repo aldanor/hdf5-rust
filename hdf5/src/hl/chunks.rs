@@ -5,6 +5,7 @@ use hdf5_sys::h5d::{H5Dget_chunk_info, H5Dget_num_chunks};
 
 #[cfg(feature = "1.10.5")]
 #[derive(Clone, Debug, PartialEq, Eq)]
+/// Information on a chunk in a Dataset
 pub struct ChunkInfo {
     /// Array with a size equal to the dataset’s rank whose elements contain 0-based
     /// logical positions of the chunk’s first element in each dimension.
