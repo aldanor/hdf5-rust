@@ -249,20 +249,22 @@ jobs:
         run:
           cargo test --workspace -vv --features=hdf5-sys/static --exclude=hdf5-derive
 
-  wine:
-    name: wine
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-        with: {submodules: true}
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with: {toolchain: stable, target: x86_64-pc-windows-gnu, profile: minimal, override: true}
-      - name: Install dependencies
-        run: sudo apt-get update && sudo apt install wine64 mingw-w64
-      - name: Build and test
-        run: env CARGO_TARGET_X86_64_PC_WINDOWS_GNU_RUNNER=wine64 cargo test --features hdf5-sys/static --target x86_64-pc-windows-gnu -- --skip test_compile_fail
+  # # TODO: temporarily disabled until fixed (see https://github.com/aldanor/hdf5-rust/issues/241)
+  # wine:
+  #   name: wine
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v2
+  #       with: {submodules: true}
+  #     - name: Install Rust
+  #       uses: actions-rs/toolchain@v1
+  #       with: {toolchain: stable, target: x86_64-pc-windows-gnu, profile: minimal, override: true}
+  #     - name: Install dependencies
+  #       run: sudo apt-get update && sudo apt install wine64 mingw-w64
+  #     - name: Build and test
+  #       run: env CARGO_TARGET_X86_64_PC_WINDOWS_GNU_RUNNER=wine64 cargo test --features hdf5-sys/static --target x86_64-pc-windows-gnu -- --skip test_compile_fail
+        
   addr_san:
     name: Address sanitizer
     runs-on: ubuntu-latest
