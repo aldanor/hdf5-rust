@@ -10,6 +10,7 @@ pub struct ChunkInfo {
     /// logical positions of the chunk’s first element in each dimension.
     pub offset: Vec<u64>,
     /// Filter mask that indicates which filters were used with the chunk when written.
+    ///
     /// A zero value indicates that all enabled filters are applied on the chunk.
     /// A filter is skipped if the bit corresponding to the filter’s position in
     /// the pipeline (0 ≤ position < 32) is turned on.
@@ -72,7 +73,7 @@ mod one_thirteen {
 
     /// Borrowed version of [ChunkInfo](crate::dataset::ChunkInfo)
     #[derive(Clone, Debug, PartialEq, Eq)]
-    pub struct ChunkInfoBorrowed<'a> {
+    pub struct ChunkInfoRef<'a> {
         pub offset: &'a [u64],
         pub filter_mask: u32,
         pub addr: u64,
@@ -97,9 +98,10 @@ mod one_thirteen {
         }
     }
 
+    #[repr(C)]
     struct RustCallback<F> {
-        ndims: usize,
-        callback: F,
+        pub ndims: hsize_t,
+        pub callback: F,
     }
 
     extern "C" fn chunks_callback<F>(
