@@ -58,7 +58,7 @@ jobs:
         include:
           - {version: hdf5@1.8}
           - {version: hdf5@1.10}
-          - {version: hdf5-mpi, mpi: true}
+          # - {version: hdf5-mpi, mpi: true}  # TODO: re-enable once 1.14 support is merged in
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
