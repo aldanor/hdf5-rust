@@ -195,6 +195,7 @@ impl Default for FamilyDriver {
 }
 
 bitflags! {
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     pub struct LogFlags: u64 {
         const TRUNCATE = H5FD_LOG_TRUNCATE;
         const META_IO = H5FD_LOG_META_IO;
