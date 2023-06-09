@@ -1,16 +1,27 @@
 [package]
 name = "hdf5"
+readme = "README.md"
+description = "Thread-safe Rust bindings for the HDF5 library."
+build = "build.rs"
+categories = ["science", "filesystem"]
+version.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+edition.workspace = true
+
+[workspace.package]
 version = "0.8.1"  # !V
+rust-version = "1.64.0"
 authors = ["Ivan Smirnov <i.s.smirnov@gmail.com>"]
 keywords = ["hdf5"]
 license = "MIT OR Apache-2.0"
-readme = "README.md"
-description = "Thread-safe Rust bindings for the HDF5 library."
 repository = "https://github.com/aldanor/hdf5-rust"
 homepage = "https://github.com/aldanor/hdf5-rust"
-build = "build.rs"
-edition = "2018"
-categories = ["science", "filesystem"]
+edition = "2021"
 
 [features]
 default = []

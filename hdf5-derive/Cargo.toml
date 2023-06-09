@@ -1,15 +1,16 @@
 [package]
 name = "hdf5-derive"
-version = "0.8.1"  # !V
-authors = ["Ivan Smirnov <i.s.smirnov@gmail.com>"]
-keywords = ["hdf5"]
-license = "MIT OR Apache-2.0"
 description = "Derive macro for HDF5 structs and enums."
-repository = "https://github.com/aldanor/hdf5-rust"
-homepage = "https://github.com/aldanor/hdf5-rust"
-edition = "2018"
-readme = "README.md"
 categories = ["procedural-macro-helpers"]
+readme = "README.md"
+version.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+edition.workspace = true
 
 [lib]
 proc-macro = true
