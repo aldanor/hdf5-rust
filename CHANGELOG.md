@@ -10,6 +10,7 @@
 - Add a `ByteReader` which implements `std::io::{Read, Seek}` for 1D `u8`
   datasets. Usage via `Dataset::as_byte_reader()`.
 - Add `chunk_visit` to visit all chunks in a dataset.
+- Implement `H5Type` for `num_complex::Complex`.
 
 ### Changed
 
@@ -26,6 +27,7 @@
 - Fixed a memory leak when opening datasets.
 - Avoid creating unaligned references in `H5Type` derive macro.
 - Applying filters without chunking will now produce an explicit error.
+- Fixed a bug where chunking could not be enabled for zero-sized extents.
 - Fixed library finding on Windows with MSYS2-distributed MinGW HDF5.
 
 ## 0.8.1

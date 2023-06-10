@@ -414,6 +414,8 @@ impl DatasetBuilderInner {
             chunk.clone()
         } else if chunking_required && chunking_allowed {
             Chunk::MinKB(DEFAULT_CHUNK_SIZE_KB)
+        } else if extents.size() == 0 {
+            Chunk::Exact(vec![1; extents.ndim()])
         } else {
             Chunk::None
         };
@@ -437,7 +439,13 @@ impl DatasetBuilderInner {
             let chunk_size = chunk.iter().product::<usize>();
             ensure!(chunk_size > 0, "All chunk dimensions must be positive, got {:?}", chunk);
             let dims_ok = extents.iter().zip(chunk).all(|(e, c)| e.max.is_none() || *c <= e.dim);
-            ensure!(dims_ok, "Chunk dimensions ({:?}) exceed data shape ({:?})", chunk, extents);
+            let no_extent = extents.size() == 0;
+            ensure!(
+                dims_ok || no_extent,
+                "Chunk dimensions ({:?}) exceed data shape ({:?})",
+                chunk,
+                extents
+            );
         }
         Ok(chunk_shape)
     }

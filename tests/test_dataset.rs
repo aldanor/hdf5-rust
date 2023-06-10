@@ -352,6 +352,17 @@ fn test_create_on_databuilder() {
 }
 
 #[test]
+fn test_issue_223() {
+    let file = new_in_memory_file().unwrap();
+
+    let data: &[u16] = &[];
+    let _ds = file.new_dataset_builder().deflate(3).with_data(data).create("ds2").unwrap();
+
+    let data: Array2<u16> = Array2::from_shape_fn((0, 0), |(_i, _j)| unreachable!());
+    let _ds = file.new_dataset_builder().deflate(3).with_data(&data).create("ds3").unwrap();
+}
+
+#[test]
 fn test_read_write_rename_fields() -> hdf5::Result<()> {
     test_read_write::<RenameStruct>()?;
     test_read_write::<RenameTupleStruct>()?;
