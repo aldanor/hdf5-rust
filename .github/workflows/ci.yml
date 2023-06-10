@@ -46,7 +46,7 @@ jobs:
       - name: Document workspace
         env:
           RUSTDOCFLAGS: "--cfg docsrs"
-        run: cargo doc --features static,zlib,blosc,lzf
+        run: cargo doc --features static,zlib,blosc,lzf,f16,complex
 
   brew:
     name: brew
