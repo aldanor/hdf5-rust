@@ -28,6 +28,7 @@
 - Avoid creating unaligned references in `H5Type` derive macro.
 - Applying filters without chunking will now produce an explicit error.
 - Fixed a bug where chunking could not be enabled for zero-sized extents.
+- Fixed library finding on Windows with MSYS2-distributed MinGW HDF5.
 
 ## 0.8.1
 

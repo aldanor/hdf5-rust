@@ -29,7 +29,7 @@ impl Version {
     }
 
     pub fn parse(s: &str) -> Option<Self> {
-        let re = Regex::new(r"^(1)\.(8|10|12|13|14)\.(\d\d?)(_\d+)?(-(patch)?\d+)?$").ok()?;
+        let re = Regex::new(r"^(1)\.(8|10|12|13|14)\.(\d\d?)(_\d+)?((-|.)(patch)?\d+)?$").ok()?;
         let captures = re.captures(s)?;
         Some(Self {
             major: captures.get(1).and_then(|c| c.as_str().parse::<u8>().ok())?,
@@ -71,6 +71,13 @@ fn is_inc_dir<P: AsRef<Path>>(path: P) -> bool {
 #[allow(dead_code)]
 fn is_root_dir<P: AsRef<Path>>(path: P) -> bool {
     is_inc_dir(path.as_ref().join("include"))
+}
+
+#[allow(dead_code)]
+fn is_msvc() -> bool {
+    // `cfg!(target_env = "msvc")` will report wrong value when using
+    // MSVC toolchain targeting GNU.
+    std::env::var("CARGO_CFG_TARGET_ENV").unwrap() == "msvc"
 }
 
 #[derive(Clone, Debug)]
@@ -115,7 +122,7 @@ fn get_runtime_version_single<P: AsRef<Path>>(path: P) -> Result<Version, Box<dy
 
 fn validate_runtime_version(config: &Config) {
     println!("Looking for HDF5 library binary...");
-    let libfiles = &["libhdf5.dylib", "libhdf5.so", "hdf5.dll"];
+    let libfiles = &["libhdf5.dylib", "libhdf5.so", "hdf5.dll", "libhdf5-0.dll", "libhdf5-310.dll"];
     let mut link_paths = config.link_paths.clone();
     if cfg!(all(unix, not(target_os = "macos"))) {
         if let Some(ldv) = run_command("ld", &["--verbose"]) {
@@ -233,16 +240,24 @@ pub struct LibrarySearcher {
     pub inc_dir: Option<PathBuf>,
     pub link_paths: Vec<PathBuf>,
     pub user_provided_dir: bool,
+    pub pkg_conf_found: bool,
 }
 
-#[cfg(all(unix, not(target_os = "macos")))]
-mod unix {
+#[cfg(any(all(unix, not(target_os = "macos")), windows))]
+mod pkgconf {
     use super::{is_inc_dir, LibrarySearcher};
 
     pub fn find_hdf5_via_pkg_config(config: &mut LibrarySearcher) {
         if config.inc_dir.is_some() {
             return;
         }
+
+        // If we're going to windows-gnu we can use pkg-config, but only so long as
+        // we're coming from a windows host.
+        if cfg!(windows) {
+            std::env::set_var("PKG_CONFIG_ALLOW_CROSS", "1");
+        }
+
         // Try pkg-config. Note that HDF5 only ships pkg-config metadata
         // in CMake builds (which is not what homebrew uses, for example).
         // Still, this would work sometimes on Linux.
@@ -272,8 +287,16 @@ mod unix {
             } else {
                 println!("Unable to locate HDF5 headers from pkg-config info.");
             }
+
+            config.pkg_conf_found = true;
         }
     }
+}
+
+#[cfg(all(unix, not(target_os = "macos")))]
+mod unix {
+    pub use super::pkgconf::find_hdf5_via_pkg_config;
+    use super::{is_inc_dir, LibrarySearcher};
 
     pub fn find_hdf5_in_default_location(config: &mut LibrarySearcher) {
         if config.inc_dir.is_some() {
@@ -373,6 +396,7 @@ mod macos {
 
 #[cfg(windows)]
 mod windows {
+    pub use super::pkgconf::find_hdf5_via_pkg_config;
     use super::*;
 
     use std::io;
@@ -461,7 +485,7 @@ mod windows {
 
     pub fn find_hdf5_via_winreg(config: &mut LibrarySearcher) {
         // Official HDF5 binaries on Windows are built for MSVC toolchain only.
-        if config.inc_dir.is_some() || !cfg!(target_env = "msvc") {
+        if config.inc_dir.is_some() || !is_msvc() {
             return;
         }
         // Check the list of installed programs, see if there's HDF5 anywhere;
@@ -476,11 +500,13 @@ mod windows {
     pub fn validate_env_path(config: &LibrarySearcher) {
         if let Some(ref inc_dir) = config.inc_dir {
             let var_path = env::var("PATH").unwrap_or_else(|_| Default::default());
-            let bin_dir = inc_dir.parent().unwrap().join("bin");
+            let bin_dir = inc_dir.parent().unwrap().join("bin").canonicalize().unwrap();
             for path in env::split_paths(&var_path) {
-                if path == bin_dir {
-                    println!("Found in PATH: {:?}", path);
-                    return;
+                if let Ok(path) = path.canonicalize() {
+                    if path == bin_dir {
+                        println!("Found in PATH: {:?}", path);
+                        return;
+                    }
                 }
             }
             panic!("{:?} not found in PATH.", bin_dir);
@@ -502,7 +528,7 @@ impl LibrarySearcher {
             config.user_provided_dir = true;
             config.inc_dir = Some(root.join("include"));
         }
-        if cfg!(target_env = "msvc") {
+        if is_msvc() {
             // in order to allow HDF5_DIR to be pointed to a conda environment, we have
             // to support MSVC as a special case (where the root is in $PREFIX/Library)
             if let Some(ref inc_dir) = config.inc_dir {
@@ -541,6 +567,7 @@ impl LibrarySearcher {
         #[cfg(windows)]
         {
             self::windows::find_hdf5_via_winreg(self);
+            self::windows::find_hdf5_via_pkg_config(self);
             // the check below is for dynamic linking only
             self::windows::validate_env_path(self);
         }
@@ -570,9 +597,7 @@ impl LibrarySearcher {
             if link_paths.is_empty() {
                 if let Some(root_dir) = inc_dir.parent() {
                     link_paths.push(root_dir.join("lib"));
-                    if cfg!(target_env = "msvc") {
-                        link_paths.push(root_dir.join("bin"));
-                    }
+                    link_paths.push(root_dir.join("bin"));
                 }
             }
             let header = Header::parse(inc_dir);
@@ -580,7 +605,12 @@ impl LibrarySearcher {
                 assert_eq!(header.version, version, "HDF5 header version mismatch",);
             }
             let config = Config { inc_dir: inc_dir.clone(), link_paths, header };
-            validate_runtime_version(&config);
+            // Don't check version if pkg-config finds the library and this is a windows target.
+            // We trust the pkg-config provided path, to avoid updating dll names every time
+            // the package updates.
+            if !(self.pkg_conf_found && cfg!(windows)) {
+                validate_runtime_version(&config);
+            }
             config
         } else {
             panic!("Unable to determine HDF5 location (set HDF5_DIR to specify it manually).");
@@ -604,7 +634,7 @@ impl Config {
         println!("cargo:rerun-if-env-changed=HDF5_DIR");
         println!("cargo:rerun-if-env-changed=HDF5_VERSION");
 
-        if cfg!(target_env = "msvc") {
+        if is_msvc() {
             println!("cargo:msvc_dll_indirection=1");
         }
         println!("cargo:include={}", self.inc_dir.to_str().unwrap());
