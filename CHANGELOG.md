@@ -9,7 +9,8 @@
 - Add a `ByteReader` which implements `std::io::{Read, Seek}` for 1D `u8`
   datasets. Usage via `Dataset::as_byte_reader()`.
 - Add `chunk_visit` to visit all chunks in a dataset.
-- Implement `H5Type` for `num_complex::Complex`.
+- Add support for float16 values (`half::f16`), enabled via "f16" feature.
+- Add support for complex numbers (`num_complex::Complex`), enabled via "complex".
 - Adding feature `static` for the `hdf5` crate which downloads and builds a bundled HDF5.
 
 ### Changed
