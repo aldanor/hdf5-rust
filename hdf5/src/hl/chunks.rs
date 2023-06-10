@@ -15,7 +15,7 @@ pub struct ChunkInfo {
     /// A zero value indicates that all enabled filters are applied on the chunk.
     /// A filter is skipped if the bit corresponding to the filter’s position in
     /// the pipeline (0 ≤ position < 32) is turned on.
-    pub filter_mask: u32,
+    pub filter_mask: c_uint,
     /// Chunk address in the file.
     pub addr: haddr_t,
     /// Chunk size in bytes.
@@ -76,7 +76,7 @@ mod v1_14_0 {
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct ChunkInfoRef<'a> {
         pub offset: &'a [hsize_t],
-        pub filter_mask: u32,
+        pub filter_mask: c_uint,
         pub addr: haddr_t,
         pub size: hsize_t,
     }

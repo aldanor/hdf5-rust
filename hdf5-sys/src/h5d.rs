@@ -287,20 +287,18 @@ extern "C" {
     pub fn H5Dget_num_chunks(dset_id: hid_t, fspace_id: hid_t, nchunks: *mut hsize_t) -> herr_t;
 }
 
-#[cfg(feature = "1.13.0")]
+#[cfg(feature = "1.14.0")]
 pub type H5D_chunk_iter_op_t = Option<
     extern "C" fn(
         offset: *const hsize_t,
-        #[cfg(feature = "1.14.0")] filter_mask: c_uint,
-        #[cfg(not(feature = "1.14.0"))] filter_mask: u32,
+        filter_mask: c_uint,
         addr: haddr_t,
-        #[cfg(not(feature = "1.14.0"))] nbytes: u32,
-        #[cfg(feature = "1.14.0")] size: hsize_t,
+        size: hsize_t,
         op_data: *mut c_void,
     ) -> c_int,
 >;
 
-#[cfg(feature = "1.13.0")]
+#[cfg(feature = "1.14.0")]
 extern "C" {
     pub fn H5Dchunk_iter(
         dset_id: hid_t, dxpl: hid_t, cb: H5D_chunk_iter_op_t, op_data: *mut c_void,

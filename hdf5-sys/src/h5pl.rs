@@ -12,7 +12,7 @@ mod hdf5_1_8_15 {
         H5PL_TYPE_FILTER = 0,
         #[cfg(feature = "1.12.0")]
         H5PL_TYPE_VOL,
-        #[cfg(feature = "1.13.0")]
+        #[cfg(feature = "1.14.0")]
         H5PL_TYPE_VFD,
         #[cfg(feature = "1.12.0")]
         H5PL_TYPE_NONE,

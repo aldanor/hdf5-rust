@@ -138,7 +138,7 @@ pub struct H5G_stat_t {
     ohdr: H5O_stat_t,
 }
 
-#[cfg(feature = "1.13.0")]
+#[cfg(feature = "1.14.0")]
 extern "C" {
     pub fn H5Gclose_async(
         app_file: *const c_char, app_func: *const c_char, app_line: c_uint, group_id: hid_t,

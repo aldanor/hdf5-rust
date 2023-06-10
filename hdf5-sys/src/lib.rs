@@ -46,7 +46,7 @@ pub mod h5z;
 #[cfg(feature = "1.8.15")]
 pub mod h5pl;
 
-#[cfg(feature = "1.13.0")]
+#[cfg(feature = "1.14.0")]
 pub mod h5es;
 
 #[allow(non_camel_case_types)]

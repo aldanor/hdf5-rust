@@ -476,7 +476,7 @@ mod globals {
     extern_static!(H5O_TOKEN_UNDEF, __imp_H5O_TOKEN_UNDEF_g);
 }
 
-#[cfg(feature = "1.13.0")]
+#[cfg(feature = "1.14.0")]
 extern "C" {
     pub fn H5Oclose_async(
         app_file: *const c_char, app_func: *const c_char, app_line: c_uint, object_id: hid_t,
