@@ -245,11 +245,11 @@ jobs:
         rust: [stable]
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with: {submodules: true}
       - name: Install Rust (${{matrix.rust}})
-        uses: actions-rs/toolchain@v1
-        with: {toolchain: '${{matrix.rust}}', target: x86_64-pc-windows-gnu, profile: minimal, override: true}
+        uses: dtolnay/rust-toolchain@stable
+        with: {toolchain: '${{matrix.rust}}', targets: x86_64-pc-windows-gnu}
       - name: Install HDF5
         shell: pwsh
         run: |
