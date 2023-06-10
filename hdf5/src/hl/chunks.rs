@@ -72,7 +72,7 @@ mod v1_14_0 {
     use super::*;
     use hdf5_sys::h5d::H5Dchunk_iter;
 
-    /// Borrowed version of [ChunkInfo](crate::dataset::ChunkInfo)
+    /// Borrowed version of [`ChunkInfo`](crate::dataset::ChunkInfo)
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct ChunkInfoRef<'a> {
         pub offset: &'a [hsize_t],
