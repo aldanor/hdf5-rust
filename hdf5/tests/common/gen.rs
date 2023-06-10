@@ -1,12 +1,16 @@
 use std::convert::TryFrom;
-use std::fmt;
+use std::fmt::{self, Debug};
 use std::iter;
 
 use hdf5::types::{FixedAscii, FixedUnicode, VarLenArray, VarLenAscii, VarLenUnicode};
 use hdf5::H5Type;
 
+use half::f16;
 use ndarray::{ArrayD, SliceInfo, SliceInfoElem};
+use num_complex::Complex;
+use rand::distributions::Standard;
 use rand::distributions::{Alphanumeric, Uniform};
+use rand::prelude::Distribution;
 use rand::prelude::{Rng, SliceRandom};
 
 pub fn gen_shape<R: Rng + ?Sized>(rng: &mut R, ndim: usize) -> Vec<usize> {
@@ -92,6 +96,21 @@ macro_rules! impl_gen_tuple {
 }
 
 impl_gen_tuple! { A, B, C, D, E, F, G, H, I, J, K, L }
+
+impl Gen for f16 {
+    fn gen<R: Rng + ?Sized>(rng: &mut R) -> Self {
+        Self::from_f32(rng.gen())
+    }
+}
+
+impl<T: Debug> Gen for Complex<T>
+where
+    Standard: Distribution<T>,
+{
+    fn gen<R: Rng + ?Sized>(rng: &mut R) -> Self {
+        Self::new(rng.gen(), rng.gen())
+    }
+}
 
 pub fn gen_vec<R: Rng + ?Sized, T: Gen>(rng: &mut R, size: usize) -> Vec<T> {
     iter::repeat(()).map(|_| T::gen(rng)).take(size).collect()

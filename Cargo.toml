@@ -15,9 +15,11 @@ edition = "2021"
 [workspace.dependencies]
 # external
 cfg-if = "1.0"
+half = { version = "2.2", default-features = false }
 libc = "0.2"
 libz-sys = { version = "1.1", default-features = false }
 mpi-sys = "0.2"
+num-complex = { version = "0.4", default-features = false }
 regex = "1.8"
 # internal
 hdf5-derive = { version = "0.8.1", path = "hdf5-derive" }  # !V
