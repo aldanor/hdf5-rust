@@ -686,7 +686,7 @@ impl Config {
     fn check_against_features_required(&self) {
         let h = &self.header;
         for (flag, feature, native) in [
-            (h.have_no_deprecated, "deprecated", "HDF5_ENABLE_DEPRECATED_SYMBOLS"),
+            (!h.have_no_deprecated, "deprecated", "HDF5_ENABLE_DEPRECATED_SYMBOLS"),
             (h.have_threadsafe, "threadsafe", "HDF5_ENABLE_THREADSAFE"),
             (h.have_zlib, "zlib", "HDF5_ENABLE_Z_LIB_SUPPORT"),
         ] {
