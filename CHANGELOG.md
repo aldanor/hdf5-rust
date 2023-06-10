@@ -10,6 +10,7 @@
 - Add a `ByteReader` which implements `std::io::{Read, Seek}` for 1D `u8`
   datasets. Usage via `Dataset::as_byte_reader()`.
 - Add `chunk_visit` to visit all chunks in a dataset.
+- Implement `H5Type` for `num_complex::Complex`.
 
 ### Changed
 

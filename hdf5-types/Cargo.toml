@@ -15,12 +15,14 @@ edition.workspace = true
 
 [features]
 h5-alloc = []
+complex = ["num-complex"]
 
 [dependencies]
 ascii = "1.1"
 cfg-if = { workspace = true }
 hdf5-sys = { workspace = true }
 libc = { workspace = true }
+num-complex = { version = "0.4", optional = true, default-features = false }
 
 [dev-dependencies]
 quickcheck = { version = "1.0", default-features = false }
