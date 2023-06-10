@@ -26,6 +26,7 @@
 - Fixed a memory leak when opening datasets.
 - Avoid creating unaligned references in `H5Type` derive macro.
 - Applying filters without chunking will now produce an explicit error.
+- Fixed a bug where chunking could not be enabled for zero-sized extents.
 
 ## 0.8.1
 
