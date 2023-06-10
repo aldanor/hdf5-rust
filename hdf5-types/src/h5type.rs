@@ -40,18 +40,24 @@ impl IntSize {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum FloatSize {
+    #[cfg(feature = "f16")]
+    U2 = 2,
     U4 = 4,
     U8 = 8,
 }
 
 impl FloatSize {
     pub const fn from_int(size: usize) -> Option<Self> {
-        if size == 4 {
-            Some(Self::U4)
-        } else if size == 8 {
-            Some(Self::U8)
-        } else {
-            None
+        #[cfg(feature = "f16")]
+        {
+            if size == 2 {
+                return Some(Self::U2);
+            }
+        }
+        match size {
+            4 => Some(Self::U4),
+            8 => Some(Self::U8),
+            _ => None,
         }
     }
 }
@@ -167,6 +173,8 @@ impl Display for TypeDescriptor {
             TypeDescriptor::Unsigned(IntSize::U2) => write!(f, "uint16"),
             TypeDescriptor::Unsigned(IntSize::U4) => write!(f, "uint32"),
             TypeDescriptor::Unsigned(IntSize::U8) => write!(f, "uint64"),
+            #[cfg(feature = "f16")]
+            TypeDescriptor::Float(FloatSize::U2) => write!(f, "float16"),
             TypeDescriptor::Float(FloatSize::U4) => write!(f, "float32"),
             TypeDescriptor::Float(FloatSize::U8) => write!(f, "float64"),
             TypeDescriptor::Boolean => write!(f, "bool"),
@@ -251,6 +259,8 @@ impl_h5type!(u8, Unsigned, IntSize::U1);
 impl_h5type!(u16, Unsigned, IntSize::U2);
 impl_h5type!(u32, Unsigned, IntSize::U4);
 impl_h5type!(u64, Unsigned, IntSize::U8);
+#[cfg(feature = "f16")]
+impl_h5type!(::half::f16, Float, FloatSize::U2);
 impl_h5type!(f32, Float, FloatSize::U4);
 impl_h5type!(f64, Float, FloatSize::U8);
 
