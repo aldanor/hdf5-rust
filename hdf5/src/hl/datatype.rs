@@ -327,6 +327,16 @@ impl Datatype {
             Ok(string_id)
         }
 
+        #[cfg(feature = "f16")]
+        unsafe fn f16_type() -> Result<hid_t> {
+            use hdf5_sys::h5t::{H5Tset_ebias, H5Tset_fields};
+            let f16_id = be_le!(H5T_IEEE_F32BE, H5T_IEEE_F32LE);
+            h5try!(H5Tset_fields(f16_id, 15, 10, 5, 0, 10)); // cf. h5py/h5py#339
+            h5try!(H5Tset_size(f16_id, 2));
+            h5try!(H5Tset_ebias(f16_id, 15));
+            Ok(f16_id)
+        }
+
         let datatype_id: Result<_> = h5lock!({
             match *desc {
                 TD::Integer(size) => Ok(match size {
@@ -342,6 +352,8 @@ impl Datatype {
                     IntSize::U8 => be_le!(H5T_STD_U64BE, H5T_STD_U64LE),
                 }),
                 TD::Float(size) => Ok(match size {
+                    #[cfg(feature = "f16")]
+                    FloatSize::U2 => f16_type()?,
                     FloatSize::U4 => be_le!(H5T_IEEE_F32BE, H5T_IEEE_F32LE),
                     FloatSize::U8 => be_le!(H5T_IEEE_I16BE, H5T_IEEE_F64LE),
                 }),
