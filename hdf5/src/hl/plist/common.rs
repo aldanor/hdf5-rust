@@ -37,7 +37,7 @@ bitflags! {
     /// the object creation property list. HDF5 currently provides no mechanism to turn
     /// on attribute creation order tracking at object creation time and to build the
     /// index later.
-    #[derive(Default)]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
     pub struct AttrCreationOrder: u32 {
         /// Attribute creation order is tracked but not necessarily indexed.
         const TRACKED = H5P_CRT_ORDER_TRACKED as _;

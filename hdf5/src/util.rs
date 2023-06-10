@@ -15,7 +15,7 @@ pub fn string_from_cstr(string: *const c_char) -> String {
 pub fn to_cstring<S: Borrow<str>>(string: S) -> Result<CString> {
     let string = string.borrow();
     #[allow(clippy::map_err_ignore)]
-    CString::new(string).map_err(|_| format!("null byte in string: {:?}", string).into())
+    CString::new(string).map_err(|_| format!("null byte in string: {string:?}").into())
 }
 
 /// Convert a fixed-length (possibly zero-terminated) char buffer to a string.

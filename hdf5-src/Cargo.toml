@@ -1,14 +1,8 @@
 [package]
 name = "hdf5-src"
-version = "0.8.1"  # !V
-authors = ["Ivan Smirnov <i.s.smirnov@gmail.com>"]
-keywords = ["hdf5"]
 license-file = "ext/hdf5/COPYING"
 build = "build.rs"
-repository = "https://github.com/aldanor/hdf5-rust"
-homepage = "https://github.com/aldanor/hdf5-rust"
 description = "Build script for compiling HDF5 C library from source."
-edition = "2018"
 links = "hdf5src"
 readme = "README.md"
 categories = ["ffi"]
@@ -26,6 +20,13 @@ exclude = [
     "ext/hdf5/hl/tools/**",
     "ext/hdf5/hl/examples/**",
 ]
+version.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+keywords.workspace = true
+repository.workspace = true
+homepage.workspace = true
+edition.workspace = true
 
 [features]
 hl = []
@@ -34,7 +35,7 @@ deprecated = []
 threadsafe = []
 
 [dependencies]
-libz-sys = { version = "1.0.25", features = ["static", "libc"], optional = true, default-features=false }
+libz-sys = { workspace = true, optional = true, features = ["static", "libc"] }
 
 [build-dependencies]
-cmake = "0.1.44"
+cmake = "0.1"

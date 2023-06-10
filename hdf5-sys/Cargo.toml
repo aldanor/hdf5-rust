@@ -1,23 +1,24 @@
 [package]
 name = "hdf5-sys"
-version = "0.8.1"  # !V
-authors = ["Ivan Smirnov <i.s.smirnov@gmail.com>"]
-keywords = ["hdf5"]
-license = "MIT OR Apache-2.0"
 build = "build.rs"
-repository = "https://github.com/aldanor/hdf5-rust"
-homepage = "https://github.com/aldanor/hdf5-rust"
 description = "Native bindings to the HDF5 library."
-edition = "2018"
 links = "hdf5"
 readme = "README.md"
 categories = ["ffi", "filesystem", "science"]
+version.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+edition.workspace = true
 
 [dependencies]
-libc = "0.2"
-mpi-sys = { version = "0.1", optional = true }
-libz-sys = { version = "1.0.25", optional = true, default-features = false }
-hdf5-src = { path = "../hdf5-src", version = "0.8.1", optional = true }  # !V
+libc = { workspace = true }
+mpi-sys = { workspace = true, optional = true }
+libz-sys = { workspace = true, optional = true }
+hdf5-src = { workspace = true, optional = true }
 
 # Please see README for further explanation of these feature flags
 [features]
@@ -30,8 +31,8 @@ static = ["hdf5-src"]
 deprecated = ["hdf5-src/deprecated"]
 
 [build-dependencies]
-libloading = "0.7"
-regex = { version = "1.3", features = ["std"] }
+libloading = "0.8"
+regex = { workspace = true }
 
 [target.'cfg(any(all(unix, not(target_os = "macos")), windows))'.build-dependencies]
 pkg-config = "0.3"
@@ -39,7 +40,7 @@ pkg-config = "0.3"
 [target.'cfg(windows)'.build-dependencies]
 serde = "1.0"
 serde_derive = "1.0"
-winreg = { version = "0.10", features = ["serialization-serde"]}
+winreg = { version = "0.50", features = ["serialization-serde"]}
 
 [package.metadata.docs.rs]
 features = ["static", "zlib"]

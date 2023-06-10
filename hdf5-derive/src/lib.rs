@@ -8,8 +8,8 @@ use proc_macro2::{Ident, Span, TokenStream};
 use proc_macro_error::{abort, proc_macro_error};
 use quote::{quote, ToTokens};
 use syn::{
-    parse_macro_input, AttrStyle, Attribute, Data, DeriveInput, Expr, Fields, Index, Lit, Meta,
-    NestedMeta, Type, TypeGenerics, TypePath,
+    parse_macro_input, AttrStyle, Attribute, Data, DeriveInput, Expr, Fields, Index, LitStr, Type,
+    TypeGenerics, TypePath,
 };
 
 #[proc_macro_derive(H5Type, attributes(hdf5))]
@@ -44,12 +44,16 @@ where
     F: ToTokens,
 {
     quote! {
-        let origin: *const #ty #ty_generics = ::std::ptr::null();
+        let origin = ::std::mem::MaybeUninit::<#ty #ty_generics>::uninit();
+        let origin_ptr = origin.as_ptr();
         let mut fields = vec![#(
             _h5::types::CompoundField {
                 name: #names.to_owned(),
                 ty: <#types as _h5::types::H5Type>::type_descriptor(),
-                offset: unsafe { &((*origin).#fields) as *const _ as _ },
+                offset: unsafe {
+                    ::std::ptr::addr_of!((*origin_ptr).#fields).cast::<u8>()
+                        .offset_from(origin_ptr.cast()) as usize
+                },
                 index: 0,
             }
         ),*];
@@ -103,55 +107,40 @@ fn is_phantom_data(ty: &Type) -> bool {
 }
 
 fn find_repr(attrs: &[Attribute], expected: &[&str]) -> Option<Ident> {
+    let mut repr = None;
     for attr in attrs.iter() {
         if attr.style != AttrStyle::Outer {
             continue;
         }
-        let list = match attr.parse_meta() {
-            Ok(Meta::List(list)) => list,
-            _ => continue,
-        };
-        if !list.path.get_ident().map_or(false, |ident| ident == "repr") {
+        if !attr.path().is_ident("repr") {
             continue;
         }
-        for item in list.nested.iter() {
-            let path = match item {
-                NestedMeta::Meta(Meta::Path(ref path)) => path,
-                _ => continue,
-            };
-            let ident = match path.get_ident() {
-                Some(ident) => ident,
-                _ => continue,
-            };
-            if expected.iter().any(|&s| ident == s) {
-                return Some(Ident::new(&ident.to_string(), Span::call_site()));
+        attr.parse_nested_meta(|meta| {
+            if expected.iter().any(|s| meta.path.is_ident(s)) {
+                if repr.is_some() {
+                    abort!(meta.path, "ambiguous repr attribute");
+                } else {
+                    repr = meta.path.get_ident().cloned();
+                }
             }
-        }
+            Ok(())
+        })
+        .ok()?;
     }
-
-    None
+    repr
 }
 
 fn find_hdf5_rename(attrs: &[Attribute]) -> Option<String> {
-    if let Some(attr) = attrs.iter().find(|a| a.path.is_ident("hdf5")) {
-        if let Ok(Meta::List(meta_list)) = attr.parse_meta() {
-            let rename_literal = meta_list.nested.iter().find_map(|n| {
-                if let NestedMeta::Meta(Meta::NameValue(name_value)) = n {
-                    if name_value.path.is_ident("rename") {
-                        return Some(&name_value.lit);
-                    }
-                }
-
-                None
-            });
-
-            if let Some(Lit::Str(renamed)) = rename_literal {
-                return Some(renamed.value());
-            }
+    let mut rename = None;
+    let attr = attrs.iter().find(|a| a.path().is_ident("hdf5"))?;
+    attr.parse_nested_meta(|meta| {
+        if meta.path.is_ident("rename") && rename.is_none() {
+            rename = Some(meta.value()?.parse::<LitStr>()?.value());
         }
-    }
-
-    None
+        Ok(())
+    })
+    .ok()?;
+    rename
 }
 
 fn pluck<'a, I, F, T, S>(iter: I, func: F) -> Vec<S>

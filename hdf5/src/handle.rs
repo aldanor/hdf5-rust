@@ -20,7 +20,7 @@ impl Handle {
             // Drop on an invalid handle could cause closing an unrelated object
             // in the destructor, hence it's important to prevent the drop here.
             mem::forget(handle);
-            Err(From::from(format!("Invalid handle id: {}", id)))
+            Err(From::from(format!("Invalid handle id: {id}")))
         }
     }
 
