@@ -123,7 +123,7 @@ extern "C" {
     ) -> herr_t;
 }
 
-#[cfg(feature = "1.13.0")]
+#[cfg(feature = "1.14.0")]
 extern "C" {
     pub fn H5Aclose_async(
         app_file: *const c_char, app_func: *const c_char, app_line: c_uint, attr_id: hid_t,

@@ -382,7 +382,7 @@ pub mod tests {
              [Property lists: Unable to free object]"
         );
 
-        #[cfg(not(feature = "1.13.0"))]
+        #[cfg(not(feature = "1.14.0"))]
         {
             assert_eq!(stack[stack.len() - 1].description(), "H5I_dec_ref(): can't locate ID");
             assert_eq!(
@@ -391,7 +391,7 @@ pub mod tests {
              [Object atom: Unable to find atom information (already closed?)]"
             );
         }
-        #[cfg(feature = "1.13.0")]
+        #[cfg(feature = "1.14.0")]
         {
             assert_eq!(stack[stack.len() - 1].description(), "H5I__dec_ref(): can't locate ID");
             assert_eq!(

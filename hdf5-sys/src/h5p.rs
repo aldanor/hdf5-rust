@@ -17,7 +17,7 @@ use crate::h5o::H5O_mcdt_search_cb_t;
 #[cfg(feature = "1.10.1")]
 use crate::{h5ac::H5AC_cache_image_config_t, h5f::H5F_fspace_strategy_t};
 
-#[cfg(feature = "1.13.0")]
+#[cfg(feature = "1.14.0")]
 use crate::{h5fd::H5FD_class_value_t, h5s::H5S_seloper_t};
 
 pub const H5P_CRT_ORDER_TRACKED: c_uint = 0x0001;
@@ -792,7 +792,7 @@ extern "C" {
     pub fn H5Pset_vol(plist_id: hid_t, new_vol_id: hid_t, new_vol_id: *const c_void) -> herr_t;
 }
 
-#[cfg(feature = "1.13.0")]
+#[cfg(feature = "1.14.0")]
 extern "C" {
     pub fn H5Pget_driver_config_str(
         fapl_id: hid_t, config_buf: *mut c_char, buf_size: size_t,

@@ -128,7 +128,7 @@ pub enum H5F_libver_t {
     H5F_LIBVER_V110 = 2,
     #[cfg(feature = "1.12.0")]
     H5F_LIBVER_V112 = 3,
-    #[cfg(feature = "1.13.0")]
+    #[cfg(feature = "1.14.0")]
     H5F_LIBVER_V114 = 4,
     H5F_LIBVER_NBOUNDS,
 }
@@ -175,9 +175,9 @@ extern "C" {
     pub fn H5Fget_freespace(file_id: hid_t) -> hssize_t;
     pub fn H5Fget_filesize(file_id: hid_t, size: *mut hsize_t) -> herr_t;
     pub fn H5Fget_mdc_config(file_id: hid_t, config_ptr: *mut H5AC_cache_config_t) -> herr_t;
-    #[cfg(not(feature = "1.13.0"))]
+    #[cfg(not(feature = "1.14.0"))]
     pub fn H5Fset_mdc_config(file_id: hid_t, config_ptr: *mut H5AC_cache_config_t) -> herr_t;
-    #[cfg(feature = "1.13.0")]
+    #[cfg(feature = "1.14.0")]
     pub fn H5Fset_mdc_config(file_id: hid_t, config_ptr: *const H5AC_cache_config_t) -> herr_t;
     pub fn H5Fget_mdc_hit_rate(file_id: hid_t, hit_rate_ptr: *mut c_double) -> herr_t;
     pub fn H5Fget_mdc_size(
@@ -374,7 +374,7 @@ extern "C" {
     pub fn H5Fset_dset_no_attrs_hint(file_id: hid_t, minimize: hbool_t) -> herr_t;
 }
 
-#[cfg(feature = "1.13.0")]
+#[cfg(feature = "1.14.0")]
 extern "C" {
     pub fn H5Fclose_async(
         app_file: *const c_char, app_func: *const c_char, app_line: c_uint, file_id: hid_t,
