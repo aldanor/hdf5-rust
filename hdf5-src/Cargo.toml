@@ -30,7 +30,7 @@ edition.workspace = true
 
 [features]
 hl = []
-zlib = ["libz-sys"]
+zlib = ["dep:libz-sys"]
 deprecated = []
 threadsafe = []
 

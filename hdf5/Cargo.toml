@@ -15,9 +15,11 @@ edition.workspace = true
 
 [features]
 default = []
-mpio = ["mpi-sys", "hdf5-sys/mpio"]
-lzf = ["lzf-sys", "errno"]
-blosc = ["blosc-sys"]
+mpio = ["dep:mpi-sys", "hdf5-sys/mpio"]
+lzf = ["dep:lzf-sys", "dep:errno"]
+blosc = ["dep:blosc-sys"]
+static = ["hdf5-sys/static"]
+zlib = ["hdf5-sys/zlib"]
 # The features with version numbers such as 1.10.3, 1.12.0 are metafeatures
 # and is only available when the HDF5 library is at least this version.
 # Features have_direct and have_parallel are also metafeatures and dependent

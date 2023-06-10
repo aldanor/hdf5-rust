@@ -175,6 +175,8 @@ pub struct Header {
     pub have_direct: bool,
     pub have_parallel: bool,
     pub have_threadsafe: bool,
+    pub have_zlib: bool,
+    pub have_no_deprecated: bool,
     pub version: Version,
 }
 
@@ -200,6 +202,10 @@ impl Header {
                 hdr.have_parallel = value > 0;
             } else if name == "H5_HAVE_THREADSAFE" {
                 hdr.have_threadsafe = value > 0;
+            } else if name == "H5_HAVE_FILTER_DEFLATE" {
+                hdr.have_zlib = value > 0;
+            } else if name == "H5_NO_DEPRECATED_SYMBOLS" {
+                hdr.have_no_deprecated = value > 0;
             }
         }
 
@@ -611,6 +617,7 @@ impl LibrarySearcher {
             if !(self.pkg_conf_found && cfg!(windows)) {
                 validate_runtime_version(&config);
             }
+            config.check_against_features_required();
             config
         } else {
             panic!("Unable to determine HDF5 location (set HDF5_DIR to specify it manually).");
@@ -673,6 +680,22 @@ impl Config {
         if self.header.have_threadsafe {
             println!("cargo:rustc-cfg=feature=\"have-threadsafe\"");
             println!("cargo:have_threadsafe=1");
+        }
+    }
+
+    fn check_against_features_required(&self) {
+        let h = &self.header;
+        for (flag, feature, native) in [
+            (!h.have_no_deprecated, "deprecated", "HDF5_ENABLE_DEPRECATED_SYMBOLS"),
+            (h.have_threadsafe, "threadsafe", "HDF5_ENABLE_THREADSAFE"),
+            (h.have_zlib, "zlib", "HDF5_ENABLE_Z_LIB_SUPPORT"),
+        ] {
+            if feature_enabled(&feature.to_ascii_uppercase()) {
+                assert!(
+                    flag,
+                    "Enabled feature {feature:?} but the HDF5 library was not built with {native}"
+                );
+            }
         }
     }
 }

@@ -11,12 +11,18 @@
   datasets. Usage via `Dataset::as_byte_reader()`.
 - Add `chunk_visit` to visit all chunks in a dataset.
 - Implement `H5Type` for `num_complex::Complex`.
+- Adding feature `static` for the `hdf5` crate which downloads and builds a bundled HDF5.
 
 ### Changed
 
 - The `H5Type` derive macro now uses `proc-macro-error` to emit error messages.
 - MSRV is now `1.64.0` and Rust edition has now been bumped to 2021.
 - Types in ChunkInfo has been changed to match HDF5.
+- Dependencies now uses the `dep:` syntax and are only enabled through features.
+- Some features are made weak and will not enable e.g. static build when asking for a
+  library which is threadsafe.
+- Requesting a feature which is not compiled in the dynamic HDF5 library will
+  now cause a compile time error.
 
 ### Fixed
 
