@@ -115,12 +115,68 @@ impl From<DynInteger> for DynValue<'_> {
 }
 
 #[derive(Copy, Clone, PartialEq)]
-pub enum DynScalar {
-    Integer(DynInteger),
+pub enum DynFloat {
     #[cfg(feature = "f16")]
     Float16(::half::f16),
     Float32(f32),
     Float64(f64),
+}
+
+impl DynFloat {
+    pub(self) fn read(buf: &[u8], size: FloatSize) -> Self {
+        match size {
+            #[cfg(feature = "f16")]
+            FloatSize::U2 => Self::Float16(read_raw(buf)),
+            FloatSize::U4 => Self::Float32(read_raw(buf)),
+            FloatSize::U8 => Self::Float64(read_raw(buf)),
+        }
+    }
+}
+
+unsafe impl DynClone for DynFloat {
+    fn dyn_clone(&mut self, out: &mut [u8]) {
+        match self {
+            #[cfg(feature = "f16")]
+            Self::Float16(x) => write_raw(out, *x),
+            Self::Float32(x) => write_raw(out, *x),
+            Self::Float64(x) => write_raw(out, *x),
+        }
+    }
+}
+
+impl Debug for DynFloat {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            #[cfg(feature = "f16")]
+            Self::Float16(x) => Debug::fmt(&x, f),
+            Self::Float32(x) => Debug::fmt(&x, f),
+            Self::Float64(x) => Debug::fmt(&x, f),
+        }
+    }
+}
+
+impl Display for DynFloat {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        Debug::fmt(self, f)
+    }
+}
+
+impl From<DynFloat> for DynScalar {
+    fn from(value: DynFloat) -> Self {
+        Self::Float(value)
+    }
+}
+
+impl From<DynFloat> for DynValue<'_> {
+    fn from(value: DynFloat) -> Self {
+        DynScalar::Float(value).into()
+    }
+}
+
+#[derive(Copy, Clone, PartialEq)]
+pub enum DynScalar {
+    Integer(DynInteger),
+    Float(DynFloat),
     Boolean(bool),
 }
 
@@ -128,10 +184,7 @@ unsafe impl DynClone for DynScalar {
     fn dyn_clone(&mut self, out: &mut [u8]) {
         match self {
             Self::Integer(x) => x.dyn_clone(out),
-            #[cfg(feature = "f16")]
-            Self::Float16(x) => write_raw(out, *x),
-            Self::Float32(x) => write_raw(out, *x),
-            Self::Float64(x) => write_raw(out, *x),
+            Self::Float(x) => x.dyn_clone(out),
             Self::Boolean(x) => write_raw(out, *x),
         }
     }
@@ -141,10 +194,7 @@ impl Debug for DynScalar {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::Integer(x) => Debug::fmt(&x, f),
-            #[cfg(feature = "f16")]
-            Self::Float16(x) => Debug::fmt(&x, f),
-            Self::Float32(x) => Debug::fmt(&x, f),
-            Self::Float64(x) => Debug::fmt(&x, f),
+            Self::Float(x) => Debug::fmt(&x, f),
             Self::Boolean(x) => Debug::fmt(&x, f),
         }
     }
@@ -643,10 +693,7 @@ impl<'a> DynValue<'a> {
 
         match tp {
             Integer(size) | Unsigned(size) => DynInteger::read(buf, true, *size).into(),
-            #[cfg(feature = "f16")]
-            Float(FloatSize::U2) => DynScalar::Float16(read_raw(buf)).into(),
-            Float(FloatSize::U4) => DynScalar::Float32(read_raw(buf)).into(),
-            Float(FloatSize::U8) => DynScalar::Float64(read_raw(buf)).into(),
+            Float(size) => DynFloat::read(buf, *size).into(),
             Boolean => DynScalar::Boolean(read_raw(buf)).into(),
             Enum(ref tp) => DynEnum::new(tp, DynInteger::read(buf, tp.signed, tp.size)).into(),
             Compound(ref tp) => DynCompound::new(tp, buf).into(),
