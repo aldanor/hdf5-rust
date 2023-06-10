@@ -6,6 +6,8 @@ use num_complex::Complex;
 
 unsafe impl<T: H5Type> H5Type for Complex<T> {
     fn type_descriptor() -> TypeDescriptor {
+        // Complex<T> should be FFI-equivalent to [T; 2]
+        // https://docs.rs/num-complex/0.4.3/num_complex/struct.Complex.html#representation-and-foreign-function-interface-compatibility
         TypeDescriptor::Compound(CompoundType {
             fields: vec![
                 // Compatible with h5py definition of complex
