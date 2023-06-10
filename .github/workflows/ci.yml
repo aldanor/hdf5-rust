@@ -25,29 +25,28 @@ jobs:
           - {command: clippy, rust: stable}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Install Rust (${{matrix.rust}})
-        uses: actions-rs/toolchain@v1
-        with: {profile: minimal, toolchain: '${{matrix.rust}}', override: true, components: 'rustfmt, clippy'}
+        uses: dtolnay/rust-toolchain@stable
+        with: {toolchain: '${{matrix.rust}}', components: 'rustfmt, clippy'}
       - name: Install HDF5
         run: sudo apt-get install libhdf5-dev
       - name: Run cargo ${{matrix.command}}
-        uses: actions-rs/cargo@v1
-        with:
-          command: ${{matrix.command}}
-          args: "${{matrix.command == 'fmt' && '--all -- --check' || '--workspace --exclude hdf5-src -- -D warnings -D clippy::cargo -A clippy::multiple-crate-versions'}}"
+        run: cargo ${{matrix.command}} ${{matrix.command == 'fmt' && '--all -- --check' || '--workspace --exclude hdf5-src -- -D warnings -D clippy::cargo -A clippy::multiple-crate-versions'}}
 
   doc: # This task should mirror the procedure on docs.rs
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with: {submodules: true}
       - name: Install Rust (${{matrix.rust}})
-        uses: actions-rs/toolchain@v1
-        with: {toolchain: nightly, profile: minimal, override: true}
+        uses: dtolnay/rust-toolchain@stable
+        with: {toolchain: nightly}
       - name: Document workspace
-        run: env RUSTDOCFLAGS="--cfg docsrs" cargo doc --features hdf5-sys/static,hdf5-sys/zlib,blosc,lzf
+        env:
+          RUSTDOCFLAGS: "--cfg docsrs"
+        run: cargo doc --features hdf5-sys/static,hdf5-sys/zlib,blosc,lzf
 
   brew:
     name: brew
@@ -62,11 +61,11 @@ jobs:
           - {version: hdf5-mpi, mpi: true}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with: {submodules: true}
       - name: Install Rust (${{matrix.rust}})
-        uses: actions-rs/toolchain@v1
-        with: {toolchain: stable, profile: minimal, override: true}
+        uses: dtolnay/rust-toolchain@stable
+        with: {toolchain: stable}
       - name: Install HDF5 (${{matrix.version}})
         run: brew install ${{matrix.version}}
       - name: Build and test all crates
@@ -107,11 +106,11 @@ jobs:
         shell: bash -l {0}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with: {submodules: true}
       - name: Install Rust (${{matrix.rust}})
-        uses: actions-rs/toolchain@v1
-        with: {toolchain: '${{matrix.rust}}', profile: minimal, override: true}
+        uses: dtolnay/rust-toolchain@stable
+        with: {toolchain: '${{matrix.rust}}'}
       - name: Install conda
         uses: conda-incubator/setup-miniconda@v2
         with: {auto-update-conda: false, activate-environment: testenv}
@@ -141,11 +140,11 @@ jobs:
           - {os: macos, rust: stable}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with: {submodules: true}
       - name: Install Rust (${{matrix.rust}})
-        uses: actions-rs/toolchain@v1
-        with: {toolchain: '${{matrix.rust}}', profile: minimal, override: true}
+        uses: dtolnay/rust-toolchain@stable
+        with: {toolchain: '${{matrix.rust}}'}
       - name: Build and test all crates
         run: cargo test --workspace -v --features hdf5-sys/static,hdf5-sys/zlib --exclude hdf5-derive
       - name: Build and test with filters
@@ -168,11 +167,11 @@ jobs:
           - {mpi: openmpi, rust: stable}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with: {submodules: true}
       - name: Install Rust (${{matrix.rust}})
-        uses: actions-rs/toolchain@v1
-        with: {toolchain: '${{matrix.rust}}', profile: minimal, override: true}
+        uses: dtolnay/rust-toolchain@stable
+        with: {toolchain: '${{matrix.rust}}'}
       - name: Install HDF5 (${{matrix.mpi}})
         run: |
           [ "${{matrix.mpi}}" == "mpich" ] && PACKAGES="libhdf5-mpich-dev mpich"
@@ -200,11 +199,11 @@ jobs:
         version: ["1.8", "1.10", "1.12", "1.14"]
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with: {submodules: true}
       - name: Install Rust (${{matrix.rust}})
-        uses: actions-rs/toolchain@v1
-        with: {toolchain: '${{matrix.rust}}', profile: minimal, override: true}
+        uses: dtolnay/rust-toolchain@stable
+        with: {toolchain: '${{matrix.rust}}'}
       - name: Configure environment
         shell: bash
         run: |
@@ -246,11 +245,11 @@ jobs:
         rust: [stable]
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with: {submodules: true}
       - name: Install Rust (${{matrix.rust}})
-        uses: actions-rs/toolchain@v1
-        with: {toolchain: '${{matrix.rust}}', target: x86_64-pc-windows-gnu, profile: minimal, override: true}
+        uses: dtolnay/rust-toolchain@stable
+        with: {toolchain: '${{matrix.rust}}', targets: x86_64-pc-windows-gnu}
       - name: Install HDF5
         shell: pwsh
         run: |
@@ -270,40 +269,43 @@ jobs:
       fail-fast: false
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with: {submodules: true}
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with: {toolchain: 1.64, profile: minimal, override: true}
+        uses: dtolnay/rust-toolchain@stable
+        with: {toolchain: 1.64}
       - name: Build and test all crates
         run:
           cargo test --workspace -vv --features=hdf5-sys/static --exclude=hdf5-derive
 
-  # # TODO: temporarily disabled until fixed (see https://github.com/aldanor/hdf5-rust/issues/241)
-  # wine:
-  #   name: wine
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v2
-  #       with: {submodules: true}
-  #     - name: Install Rust
-  #       uses: actions-rs/toolchain@v1
-  #       with: {toolchain: stable, target: x86_64-pc-windows-gnu, profile: minimal, override: true}
-  #     - name: Install dependencies
-  #       run: sudo apt-get update && sudo apt install wine64 mingw-w64
-  #     - name: Build and test
-  #       run: env CARGO_TARGET_X86_64_PC_WINDOWS_GNU_RUNNER=wine64 cargo test --features hdf5-sys/static --target x86_64-pc-windows-gnu -- --skip test_compile_fail
-        
+  wine:
+    name: wine
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with: {submodules: true}
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with: {toolchain: stable, targets: x86_64-pc-windows-gnu}
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt install wine64 mingw-w64
+      - name: Build and test
+        env:
+          CARGO_TARGET_X86_64_PC_WINDOWS_GNU_RUNNER: wine64
+        run: cargo test --features hdf5-sys/static --target x86_64-pc-windows-gnu -- --skip test_compile_fail
+
   addr_san:
     name: Address sanitizer
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with: {submodules: true}
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with: {toolchain: nightly, profile: minimal, override: true}
       - name: Run test with sanitizer
-        run: env RUSTFLAGS="-Z sanitizer=address" cargo test --features hdf5-sys/static --target x86_64-unknown-linux-gnu --workspace --exclude hdf5-derive
+        env:
+          RUSTFLAGS: "-Z sanitizer=address"
+        run: cargo test --features hdf5-sys/static --target x86_64-unknown-linux-gnu --workspace --exclude hdf5-derive
