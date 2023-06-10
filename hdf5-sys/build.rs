@@ -684,20 +684,18 @@ impl Config {
     }
 
     fn check_against_features_required(&self) {
-        if feature_enabled("DEPRECATED") {
-            assert!(!self.header.have_no_deprecated, "Required deprecated symbols are not present")
-        }
-        if feature_enabled("THREADSAFE") {
-            assert!(
-                self.header.have_threadsafe,
-                "Required threadsafe but library was not build using the threadsafe option"
-            );
-        }
-        if feature_enabled("ZLIB") {
-            assert!(
-                self.header.have_zlib,
-                "Required zlib filter but library does not have builtin support for this options"
-            );
+        let h = &self.header;
+        for (flag, feature, native) in [
+            (h.have_no_deprecated, "deprecated", "HDF5_ENABLE_DEPRECATED_SYMBOLS"),
+            (h.have_threadsafe, "threadsafe", "HDF5_ENABLE_THREADSAFE"),
+            (h.have_zlib, "zlib", "HDF5_ENABLE_Z_LIB_SUPPORT"),
+        ] {
+            if feature_enabled(&feature.to_ascii_uppercase()) {
+                assert!(
+                    flag,
+                    "Enabled feature {feature:?} but the HDF5 library was not built with {native}"
+                );
+            }
         }
     }
 }
