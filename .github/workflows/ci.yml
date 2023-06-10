@@ -32,7 +32,7 @@ jobs:
       - name: Install HDF5
         run: sudo apt-get install libhdf5-dev
       - name: Run cargo ${{matrix.command}}
-        run: cargo ${{matrix.command}} "${{matrix.command == 'fmt' && '--all -- --check' || '--workspace --exclude hdf5-src -- -D warnings -D clippy::cargo -A clippy::multiple-crate-versions'}}"
+        run: cargo ${{matrix.command}} ${{matrix.command == 'fmt' && '--all -- --check' || '--workspace --exclude hdf5-src -- -D warnings -D clippy::cargo -A clippy::multiple-crate-versions'}}
 
   doc: # This task should mirror the procedure on docs.rs
     runs-on: ubuntu-latest
