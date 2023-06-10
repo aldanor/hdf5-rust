@@ -45,7 +45,7 @@ jobs:
         with: {toolchain: nightly}
       - name: Document workspace
         env:
-          RUSTDOCFLAGS="--cfg docsrs"
+          RUSTDOCFLAGS: "--cfg docsrs"
         run: cargo doc --features hdf5-sys/static,hdf5-sys/zlib,blosc,lzf
 
   brew:
@@ -292,7 +292,7 @@ jobs:
         run: sudo apt-get update && sudo apt install wine64 mingw-w64
       - name: Build and test
         env:
-          CARGO_TARGET_X86_64_PC_WINDOWS_GNU_RUNNER=wine64
+          CARGO_TARGET_X86_64_PC_WINDOWS_GNU_RUNNER: wine64
         run: cargo test --features hdf5-sys/static --target x86_64-pc-windows-gnu -- --skip test_compile_fail
 
   addr_san:
@@ -307,5 +307,5 @@ jobs:
         with: {toolchain: nightly, profile: minimal, override: true}
       - name: Run test with sanitizer
         env:
-          RUSTFLAGS="-Z sanitizer=address"
+          RUSTFLAGS: "-Z sanitizer=address"
         run: cargo test --features hdf5-sys/static --target x86_64-unknown-linux-gnu --workspace --exclude hdf5-derive
