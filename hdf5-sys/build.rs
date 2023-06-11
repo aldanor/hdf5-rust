@@ -175,8 +175,8 @@ pub struct Header {
     pub have_direct: bool,
     pub have_parallel: bool,
     pub have_threadsafe: bool,
-    pub have_zlib: bool,
     pub have_no_deprecated: bool,
+    pub have_filter_deflate: bool,
     pub version: Version,
 }
 
@@ -203,7 +203,7 @@ impl Header {
             } else if name == "H5_HAVE_THREADSAFE" {
                 hdr.have_threadsafe = value > 0;
             } else if name == "H5_HAVE_FILTER_DEFLATE" {
-                hdr.have_zlib = value > 0;
+                hdr.have_filter_deflate = value > 0;
             } else if name == "H5_NO_DEPRECATED_SYMBOLS" {
                 hdr.have_no_deprecated = value > 0;
             }
@@ -680,6 +680,10 @@ impl Config {
             println!("cargo:rustc-cfg=feature=\"have-threadsafe\"");
             println!("cargo:have_threadsafe=1");
         }
+        if self.header.have_filter_deflate {
+            println!("cargo:rustc-cfg=feature=\"have-filter-deflate\"");
+            println!("cargo:have_filter_deflate=1");
+        }
     }
 
     fn check_against_features_required(&self) {
@@ -687,7 +691,7 @@ impl Config {
         for (flag, feature, native) in [
             (!h.have_no_deprecated, "deprecated", "HDF5_ENABLE_DEPRECATED_SYMBOLS"),
             (h.have_threadsafe, "threadsafe", "HDF5_ENABLE_THREADSAFE"),
-            (h.have_zlib, "zlib", "HDF5_ENABLE_Z_LIB_SUPPORT"),
+            (h.have_filter_deflate, "zlib", "HDF5_ENABLE_Z_LIB_SUPPORT"),
         ] {
             if feature_enabled(&feature.to_ascii_uppercase()) {
                 assert!(

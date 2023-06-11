@@ -26,6 +26,8 @@ pub fn test_datatype_roundtrip() {
     check_roundtrip!(u16, TD::Unsigned(IntSize::U2));
     check_roundtrip!(u32, TD::Unsigned(IntSize::U4));
     check_roundtrip!(u64, TD::Unsigned(IntSize::U8));
+    #[cfg(feature = "f16")]
+    check_roundtrip!(::half::f16, TD::Float(FloatSize::U2));
     check_roundtrip!(f32, TD::Float(FloatSize::U4));
     check_roundtrip!(f64, TD::Float(FloatSize::U8));
     check_roundtrip!(bool, TD::Boolean);

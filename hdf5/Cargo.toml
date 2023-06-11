@@ -15,11 +15,21 @@ edition.workspace = true
 
 [features]
 default = []
-mpio = ["dep:mpi-sys", "hdf5-sys/mpio"]
-lzf = ["dep:lzf-sys", "dep:errno"]
-blosc = ["dep:blosc-sys"]
+# Compile and statically link bundled HDF5 library.
 static = ["hdf5-sys/static"]
+# Enable zlib compression filter.
 zlib = ["hdf5-sys/zlib"]
+# Enable LZF compression filter.
+lzf = ["dep:lzf-sys", "dep:errno"]
+# Enable blosc compression filters.
+blosc = ["dep:blosc-sys"]
+# Enable MPI support.
+mpio = ["dep:mpi-sys", "hdf5-sys/mpio"]
+# Enable complex number type support.
+complex = ["hdf5-types/complex"]
+# Enable float16 type support.
+f16 = ["hdf5-types/f16"]
+
 # The features with version numbers such as 1.10.3, 1.12.0 are metafeatures
 # and is only available when the HDF5 library is at least this version.
 # Features have_direct and have_parallel are also metafeatures and dependent
@@ -44,6 +54,8 @@ hdf5-sys = { workspace = true }
 hdf5-types = { workspace = true }
 
 [dev-dependencies]
+half = { workspace = true }
+num-complex = { workspace = true }
 paste = "1.0"
 pretty_assertions = "1.3"
 rand = { version = "0.8", features = ["small_rng"] }
@@ -52,5 +64,5 @@ scopeguard = "1.1"
 tempfile = "3.6"
 
 [package.metadata.docs.rs]
-features = ["hdf5-sys/static", "hdf5-sys/zlib", "blosc", "lzf"]
+features = ["static", "zlib", "blosc", "lzf", "f16", "complex"]
 rustdoc-args = ["--cfg", "docsrs"]

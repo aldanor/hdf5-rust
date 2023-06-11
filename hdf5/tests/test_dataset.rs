@@ -313,6 +313,21 @@ fn test_read_write_primitive() -> hdf5::Result<()> {
     Ok(())
 }
 
+#[cfg(feature = "f16")]
+#[test]
+fn test_read_write_f16() -> hdf5::Result<()> {
+    test_read_write::<::half::f16>()?;
+    Ok(())
+}
+
+#[cfg(feature = "complex")]
+#[test]
+fn test_read_write_complex() -> hdf5::Result<()> {
+    test_read_write::<::num_complex::Complex32>()?;
+    test_read_write::<::num_complex::Complex64>()?;
+    Ok(())
+}
+
 #[test]
 fn test_read_write_enum() -> hdf5::Result<()> {
     test_read_write::<Enum>()
@@ -352,6 +367,7 @@ fn test_create_on_databuilder() {
 }
 
 #[test]
+#[cfg(feature = "have-filter-deflate")]
 fn test_issue_223() {
     let file = new_in_memory_file().unwrap();
 
