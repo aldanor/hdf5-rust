@@ -367,6 +367,7 @@ fn test_create_on_databuilder() {
 }
 
 #[test]
+#[cfg(feature = "have-filter-deflate")]
 fn test_issue_223() {
     let file = new_in_memory_file().unwrap();
 
