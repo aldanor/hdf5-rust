@@ -29,3 +29,6 @@ half = { workspace = true, optional = true }
 [dev-dependencies]
 quickcheck = { version = "1.0", default-features = false }
 unindent = "0.2"
+
+[package.metadata.docs.rs]
+features = ["f16", "complex"]
