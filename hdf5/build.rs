@@ -9,6 +9,7 @@ fn main() {
             "DEP_HDF5_HAVE_DIRECT" => print_feature("have-direct"),
             "DEP_HDF5_HAVE_PARALLEL" => print_feature("have-parallel"),
             "DEP_HDF5_HAVE_THREADSAFE" => print_feature("have-threadsafe"),
+            "DEP_HDF5_HAVE_FILTER_DEFLATE" => print_feature("have-filter-deflate"),
             // internal config flags
             "DEP_HDF5_MSVC_DLL_INDIRECTION" => print_cfg("msvc_dll_indirection"),
             // public version features

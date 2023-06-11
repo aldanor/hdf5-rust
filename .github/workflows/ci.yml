@@ -276,7 +276,7 @@ jobs:
         with: {toolchain: 1.64}
       - name: Build and test all crates
         run:
-          cargo test --workspace -vv --features=hdf5-sys/static --exclude=hdf5-derive
+          cargo test --workspace -vv --features=hdf5-sys/static,hdf5-sys/zlib --exclude=hdf5-derive
 
   wine:
     name: wine
