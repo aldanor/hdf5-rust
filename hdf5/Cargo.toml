@@ -64,5 +64,5 @@ scopeguard = "1.1"
 tempfile = "3.6"
 
 [package.metadata.docs.rs]
-features = ["hdf5-sys/static", "hdf5-sys/zlib", "blosc", "lzf"]
+features = ["static", "zlib", "blosc", "lzf", "f16", "complex"]
 rustdoc-args = ["--cfg", "docsrs"]
