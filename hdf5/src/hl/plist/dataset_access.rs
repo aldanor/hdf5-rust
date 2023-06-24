@@ -91,10 +91,13 @@ impl Clone for DatasetAccess {
     }
 }
 
+/// Options for including or excluding missing mapped elements in a virtual dataset view.
 #[cfg(feature = "1.10.0")]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum VirtualView {
+    /// Include all data before the first missing mapped data.
     FirstMissing,
+    /// Include all available mapped data, filling missing data with a fill value.
     LastAvailable,
 }
 
@@ -165,29 +168,35 @@ impl DatasetAccessBuilder {
         Ok(builder)
     }
 
+    /// Sets the [`ChunkCache`] options.
     pub fn chunk_cache(&mut self, nslots: usize, nbytes: usize, w0: f64) -> &mut Self {
         self.chunk_cache = Some(ChunkCache { nslots, nbytes, w0 });
         self
     }
 
+    /// Sets the external dataset storage file prefix.
     #[cfg(feature = "1.8.17")]
     pub fn efile_prefix(&mut self, prefix: &str) -> &mut Self {
         self.efile_prefix = Some(prefix.into());
         self
     }
 
+    /// Sets the [`VirtualView`] options.
     #[cfg(feature = "1.10.0")]
     pub fn virtual_view(&mut self, view: VirtualView) -> &mut Self {
         self.virtual_view = Some(view);
         self
     }
 
+    /// Sets the maximum number of files/datasets allowed to be missing when determining the extent
+    /// of an unlimited virtual dataset with printf-style mappings.
     #[cfg(feature = "1.10.0")]
     pub fn virtual_printf_gap(&mut self, gap_size: usize) -> &mut Self {
         self.virtual_printf_gap = Some(gap_size);
         self
     }
 
+    /// Sets metadata I/O mode for read options to collective or independent.
     #[cfg(all(feature = "1.10.0", feature = "have-parallel"))]
     pub fn all_coll_metadata_ops(&mut self, is_collective: bool) -> &mut Self {
         self.all_coll_metadata_ops = Some(is_collective);
@@ -223,10 +232,12 @@ impl DatasetAccessBuilder {
         Ok(())
     }
 
+    /// Copies the builder settings into a dataset access property list.
     pub fn apply(&self, plist: &mut DatasetAccess) -> Result<()> {
         h5lock!(self.populate_plist(plist.id()))
     }
 
+    /// Constructs a new dataset access property list.
     pub fn finish(&self) -> Result<DatasetAccess> {
         h5lock!({
             let mut plist = DatasetAccess::try_new()?;
@@ -237,14 +248,17 @@ impl DatasetAccessBuilder {
 
 /// Dataset access property list.
 impl DatasetAccess {
+    /// Creates a new dataset access property list.
     pub fn try_new() -> Result<Self> {
         Self::from_id(h5try!(H5Pcreate(*H5P_DATASET_ACCESS)))
     }
 
+    /// Creates a copy of the property list.
     pub fn copy(&self) -> Self {
         unsafe { self.deref().copy().cast_unchecked() }
     }
 
+    /// Creates a new dataset access property list builder.
     pub fn build() -> DatasetAccessBuilder {
         DatasetAccessBuilder::new()
     }
@@ -260,6 +274,7 @@ impl DatasetAccess {
         )
     }
 
+    /// Returns the raw data chunk cache parameters.
     pub fn chunk_cache(&self) -> ChunkCache {
         self.get_chunk_cache().unwrap_or_else(|_| ChunkCache::default())
     }
@@ -270,6 +285,7 @@ impl DatasetAccess {
         h5lock!(get_h5_str(|m, s| H5Pget_efile_prefix(self.id(), m, s)))
     }
 
+    /// Returns the external dataset storage file prefix.
     #[cfg(feature = "1.8.17")]
     pub fn efile_prefix(&self) -> String {
         self.get_efile_prefix().ok().unwrap_or_default()
@@ -281,6 +297,7 @@ impl DatasetAccess {
         h5get!(H5Pget_virtual_view(self.id()): H5D_vds_view_t).map(Into::into)
     }
 
+    /// Returns the virtual dataset view options.
     #[cfg(feature = "1.10.0")]
     pub fn virtual_view(&self) -> VirtualView {
         self.get_virtual_view().ok().unwrap_or_default()
@@ -292,6 +309,8 @@ impl DatasetAccess {
         h5get!(H5Pget_virtual_printf_gap(self.id()): hsize_t).map(|x| x as _)
     }
 
+    /// Returns the maximum number of files/datasets allowed to be missing when determining the
+    /// extent of an unlimited virtual dataset with printf-style mappings.
     #[cfg(feature = "1.10.0")]
     pub fn virtual_printf_gap(&self) -> usize {
         self.get_virtual_printf_gap().unwrap_or(0)
@@ -303,6 +322,7 @@ impl DatasetAccess {
         h5get!(H5Pget_all_coll_metadata_ops(self.id()): hbool_t).map(|x| x > 0)
     }
 
+    /// Returns `true` if metadata I/O reads are set to collective, or `false` if independent.
     #[cfg(all(feature = "1.10.0", feature = "have-parallel"))]
     pub fn all_coll_metadata_ops(&self) -> bool {
         self.get_all_coll_metadata_ops().unwrap_or(false)

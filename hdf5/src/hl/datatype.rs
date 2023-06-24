@@ -85,10 +85,14 @@ impl PartialEq for Datatype {
     }
 }
 
+/// A level of possible conversion between two types.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Conversion {
+    /// No conversion.
     NoOp = 1, // TODO: rename to "None"?
+    /// Functions employing compiler casting.
     Hard,
+    /// Functions not employing compiler casting.
     Soft,
 }
 
@@ -120,12 +124,18 @@ impl Default for Conversion {
     }
 }
 
+/// The byte order of a datatype.
 #[derive(Copy, Debug, Clone, PartialEq, Eq)]
 pub enum ByteOrder {
+    /// Little endian.
     LittleEndian,
+    /// Big endian.
     BigEndian,
+    /// VAX mixed endian.
     Vax,
+    /// Compound type with mixed member orders.
     Mixed,
+    /// No particular order.
     None,
 }
 
@@ -166,6 +176,7 @@ impl Datatype {
         h5lock!(H5Tget_order(self.id())).into()
     }
 
+    /// Returns the conversion function level from `self` to `dst`, if one exists.
     pub fn conv_path<D>(&self, dst: D) -> Option<Conversion>
     where
         D: Borrow<Self>,
@@ -186,14 +197,17 @@ impl Datatype {
         })
     }
 
+    /// Returns the conversion function level from `self` to a concrete type, if one exists.
     pub fn conv_to<T: H5Type>(&self) -> Option<Conversion> {
         Self::from_type::<T>().ok().and_then(|dtype| self.conv_path(dtype))
     }
 
+    /// Returns the conversion function level from a concrete type to `self`, if one exists.
     pub fn conv_from<T: H5Type>(&self) -> Option<Conversion> {
         Self::from_type::<T>().ok().and_then(|dtype| dtype.conv_path(self))
     }
 
+    /// Returns `true` if `self` represents a concrete type.
     pub fn is<T: H5Type>(&self) -> bool {
         Self::from_type::<T>().ok().map_or(false, |dtype| &dtype == self)
     }
@@ -213,6 +227,7 @@ impl Datatype {
         }
     }
 
+    /// Returns a type descriptor for the datatype.
     pub fn to_descriptor(&self) -> Result<TypeDescriptor> {
         use hdf5_types::TypeDescriptor as TD;
 
@@ -306,10 +321,12 @@ impl Datatype {
         })
     }
 
+    /// Creates a datatype from a concrete type.
     pub fn from_type<T: H5Type>() -> Result<Self> {
         Self::from_descriptor(&<T as H5Type>::type_descriptor())
     }
 
+    /// Creates a datatype from a type descriptor.
     pub fn from_descriptor(desc: &TypeDescriptor) -> Result<Self> {
         use hdf5_types::TypeDescriptor as TD;
 

@@ -772,8 +772,11 @@ impl Display for Hyperslab {
 #[derive(Clone, Debug, PartialEq, Eq)]
 /// A selection used for reading and writing to a [`Container`](Container).
 pub enum Selection {
+    /// The entire dataset.
     All,
+    /// A sequence of points.
     Points(Array2<Ix>),
+    /// A hyperslab or compound hyperslab.
     Hyperslab(Hyperslab),
 }
 
@@ -784,10 +787,16 @@ impl Default for Selection {
 }
 
 impl Selection {
+    /// Creates a new selection.
     pub fn new<T: Into<Self>>(selection: T) -> Self {
         selection.into()
     }
 
+    /// Tries to create a new selection.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the conversion method fails.
     pub fn try_new<T: TryInto<Self>>(selection: T) -> Result<Self, T::Error> {
         selection.try_into()
     }
@@ -829,6 +838,8 @@ impl Selection {
         })
     }
 
+    /// Returns the required number of dimensions for the input dataspace,
+    /// or `None` if selecting everything.
     pub fn in_ndim(&self) -> Option<usize> {
         match self {
             Self::All => None,
@@ -843,6 +854,7 @@ impl Selection {
         }
     }
 
+    /// Returns the number of dimensions in the output dataspace, or `None` if selecting everything.
     pub fn out_ndim(&self) -> Option<usize> {
         match self {
             Self::All => None,
@@ -853,6 +865,11 @@ impl Selection {
         }
     }
 
+    /// Returns the output shape that would result from applying the selection to some input shape.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the input shape is incompatible with the selection.
     pub fn out_shape<S: AsRef<[Ix]>>(&self, in_shape: S) -> Result<Vec<Ix>> {
         let in_shape = in_shape.as_ref();
         match self {
@@ -875,10 +892,12 @@ impl Selection {
         }
     }
 
+    /// Returns `true` if the selection is for the entire dataset.
     pub fn is_all(&self) -> bool {
         self == &Self::All
     }
 
+    /// Returns `true` if the selection is a sequence of points.
     pub fn is_points(&self) -> bool {
         if let Self::Points(ref points) = self {
             points.shape() != [0, 0]
@@ -887,6 +906,7 @@ impl Selection {
         }
     }
 
+    /// Returns `true` if the selection is empty.
     pub fn is_none(&self) -> bool {
         if let Self::Points(points) = self {
             points.shape() == [0, 0]
@@ -895,6 +915,7 @@ impl Selection {
         }
     }
 
+    /// Returns `true` if the selection is a hyperslab.
     pub fn is_hyperslab(&self) -> bool {
         matches!(self, Self::Hyperslab(_))
     }
