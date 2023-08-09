@@ -171,10 +171,11 @@ impl PropertyList {
 
     /// Iterates over properties in the property list, returning their names.
     pub fn properties(&self) -> Vec<String> {
-        extern "C" fn callback(_: hid_t, name: *const c_char, data: *mut c_void) -> herr_t {
+        unsafe extern "C" fn callback(_: hid_t, name: *const c_char, data: *mut c_void) -> herr_t {
             panic::catch_unwind(|| {
                 let data = unsafe { &mut *(data.cast::<Vec<String>>()) };
-                let name = string_from_cstr(name);
+                // SAFETY: caller guarantees name is a valid CStr and UTF-8
+                let name = unsafe { string_from_cstr(name) };
                 if !name.is_empty() {
                     data.push(name);
                 }
@@ -244,7 +245,7 @@ pub fn set_vlen_manager_libc(plist: hid_t) -> Result<()> {
     extern "C" fn alloc(size: size_t, _info: *mut c_void) -> *mut c_void {
         panic::catch_unwind(|| unsafe { libc::malloc(size) }).unwrap_or(ptr::null_mut())
     }
-    extern "C" fn free(ptr: *mut c_void, _info: *mut libc::c_void) {
+    unsafe extern "C" fn free(ptr: *mut c_void, _info: *mut libc::c_void) {
         let _p = panic::catch_unwind(|| unsafe {
             libc::free(ptr);
         });

@@ -1566,12 +1566,19 @@ impl FileAccess {
             ensure!(j < N, "member map index out of bounds: {} (expected 0-{})", j, N - 1);
             if mapping[j] == 0 {
                 mapping[j] = 0xff - (files.len() as u8);
-                files.push(MultiFile::new(&string_from_cstr(name), addr as _));
+                files.push(MultiFile::new(
+                    // SAFETY: name produced by HDF5 is nul-terminated and valid UTF-8
+                    unsafe { &string_from_cstr(name) },
+                    addr as _,
+                ));
             }
             *layout.get_mut(i - 1) = 0xff - mapping[j];
         }
         for &memb_name in &memb_name {
-            crate::util::h5_free_memory(memb_name as *mut _);
+            // SAFETY: the array contains pointers to strings allocated by the previous H5P call
+            unsafe {
+                crate::util::h5_free_memory(memb_name as *mut _);
+            }
         }
         let relax = relax > 0;
         let drv = MultiDriver { files, layout, relax };
@@ -1783,7 +1790,8 @@ impl FileAccess {
         ));
         Ok(CacheLogOptions {
             is_enabled: is_enabled > 0,
-            location: string_from_cstr(buf.as_ptr()),
+            // SAFETY: buf points to a valid UTF-8 CStr created by previous H5P call
+            location: unsafe { string_from_cstr(buf.as_ptr()) },
             start_on_access: start_on_access > 0,
         })
     }

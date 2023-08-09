@@ -105,7 +105,7 @@ mod v1_14_0 {
         pub callback: F,
     }
 
-    extern "C" fn chunks_callback<F>(
+    unsafe extern "C" fn chunks_callback<F>(
         offset: *const hsize_t, filter_mask: c_uint, addr: haddr_t, size: hsize_t,
         op_data: *mut c_void,
     ) -> herr_t

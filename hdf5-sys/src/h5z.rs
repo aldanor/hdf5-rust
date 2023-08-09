@@ -114,7 +114,7 @@ pub type H5Z_can_apply_func_t =
 pub type H5Z_set_local_func_t =
     Option<extern "C" fn(dcpl_id: hid_t, type_id: hid_t, space_id: hid_t) -> herr_t>;
 pub type H5Z_func_t = Option<
-    extern "C" fn(
+    unsafe extern "C" fn(
         flags: c_uint,
         cd_nelmts: size_t,
         cd_values: *const c_uint,

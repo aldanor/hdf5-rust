@@ -204,7 +204,7 @@ pub enum H5O_mcdt_search_ret_t {
 
 #[cfg(feature = "1.8.9")]
 pub type H5O_mcdt_search_cb_t =
-    Option<extern "C" fn(op_data: *mut c_void) -> H5O_mcdt_search_ret_t>;
+    Option<unsafe extern "C" fn(op_data: *mut c_void) -> H5O_mcdt_search_ret_t>;
 
 #[cfg(not(feature = "1.10.3"))]
 extern "C" {

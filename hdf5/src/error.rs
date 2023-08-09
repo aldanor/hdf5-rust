@@ -68,7 +68,7 @@ impl ErrorStack {
             stack: ExpandedErrorStack,
             err: Option<Error>,
         }
-        extern "C" fn callback(
+        unsafe extern "C" fn callback(
             _: c_uint, err_desc: *const H5E_error2_t, data: *mut c_void,
         ) -> herr_t {
             panic::catch_unwind(|| unsafe {

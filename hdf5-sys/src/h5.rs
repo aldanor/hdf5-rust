@@ -117,7 +117,7 @@ extern "C" {
 }
 
 #[cfg(feature = "1.14.0")]
-type H5_atclose_func_t = Option<extern "C" fn(ctx: *mut c_void)>;
+type H5_atclose_func_t = Option<unsafe extern "C" fn(ctx: *mut c_void)>;
 
 #[cfg(feature = "1.14.0")]
 extern "C" {

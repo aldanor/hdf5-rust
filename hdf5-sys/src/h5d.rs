@@ -125,7 +125,7 @@ pub enum H5D_mpio_no_collective_cause_t {
 }
 
 pub type H5D_operator_t = Option<
-    extern "C" fn(
+    unsafe extern "C" fn(
         elem: *mut c_void,
         type_id: hid_t,
         ndim: c_uint,
@@ -136,7 +136,7 @@ pub type H5D_operator_t = Option<
 
 #[cfg(feature = "1.8.11")]
 pub type H5D_scatter_func_t = Option<
-    extern "C" fn(
+    unsafe extern "C" fn(
         src_buf: *mut *const c_void,
         src_buf_bytes_used: *mut size_t,
         op_data: *mut c_void,
@@ -144,7 +144,7 @@ pub type H5D_scatter_func_t = Option<
 >;
 #[cfg(feature = "1.8.11")]
 pub type H5D_gather_func_t = Option<
-    extern "C" fn(
+    unsafe extern "C" fn(
         dst_buf: *const c_void,
         dst_buf_bytes_used: size_t,
         op_data: *mut c_void,
@@ -289,7 +289,7 @@ extern "C" {
 
 #[cfg(feature = "1.14.0")]
 pub type H5D_chunk_iter_op_t = Option<
-    extern "C" fn(
+    unsafe extern "C" fn(
         offset: *const hsize_t,
         filter_mask: c_uint,
         addr: haddr_t,
