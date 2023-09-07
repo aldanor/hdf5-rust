@@ -44,6 +44,8 @@ fn main() {
             .define("ZLIB_STATIC_LIBRARY", zlib_lib);
         println!("cargo:zlib_header={}", zlib_header.to_str().unwrap());
         println!("cargo:zlib={}", zlib_lib);
+    } else {
+        cfg.define("HDF5_ENABLE_Z_LIB_SUPPORT", "OFF");
     }
 
     if feature_enabled("DEPRECATED") {
