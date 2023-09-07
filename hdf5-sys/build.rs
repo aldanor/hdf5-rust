@@ -659,7 +659,7 @@ impl Config {
         let mut vs: Vec<_> = (5..=21).map(|v| Version::new(1, 8, v)).collect(); // 1.8.[5-23]
         vs.extend((0..=8).map(|v| Version::new(1, 10, v))); // 1.10.[0-10]
         vs.extend((0..=2).map(|v| Version::new(1, 12, v))); // 1.12.[0-2]
-        vs.extend((0..=1).map(|v| Version::new(1, 14, v))); // 1.14.[0-1]
+        vs.extend((0..=2).map(|v| Version::new(1, 14, v))); // 1.14.[0-2]
         for v in vs.into_iter().filter(|&v| version >= v) {
             println!("cargo:rustc-cfg=feature=\"{}.{}.{}\"", v.major, v.minor, v.micro);
             println!("cargo:version_{}_{}_{}=1", v.major, v.minor, v.micro);
