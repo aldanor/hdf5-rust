@@ -1440,8 +1440,13 @@ impl FileAccessBuilder {
                     v.min_raw_perc as _,
                 ));
             }
-            if let Some(v) = self.evict_on_close {
-                h5try!(H5Pset_evict_on_close(id, hbool_t::from(v)));
+            if let Some(evict) = self.evict_on_close {
+                // Issue #259: H5Pset_evict_on_close is not allowed to be called
+                // even if the argument is `false` on e.g. parallel/mpio setups
+                let has_evict_on_close = h5get!(H5Pget_evict_on_close(id): hbool_t).map(|x| x > 0);
+                if evict != has_evict_on_close.unwrap_or(false) {
+                    h5try!(H5Pset_evict_on_close(id, hbool_t::from(evict)));
+                }
             }
             if let Some(v) = self.mdc_image_config {
                 let v = v.into();
