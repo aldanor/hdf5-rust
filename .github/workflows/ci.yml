@@ -273,7 +273,7 @@ jobs:
         with: {submodules: true}
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
-        with: {toolchain: 1.64}
+        with: {toolchain: "1.70"}
       - name: Build and test all crates
         run:
           cargo test --workspace -vv --features=hdf5-sys/static,hdf5-sys/zlib --exclude=hdf5-derive
