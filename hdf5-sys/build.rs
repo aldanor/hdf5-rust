@@ -684,6 +684,10 @@ impl Config {
             println!("cargo:rustc-cfg=feature=\"have-filter-deflate\"");
             println!("cargo:have_filter_deflate=1");
         }
+
+        if cfg!(windows) && version >= Version::new(1, 14, 0) {
+            println!("cargo:rustc-link-lib=shlwapi");
+        }
     }
 
     fn check_against_features_required(&self) {
