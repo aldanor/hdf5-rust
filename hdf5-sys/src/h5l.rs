@@ -1,4 +1,5 @@
 //! Creating and manipulating links within an HDF5 group
+#[cfg(feature = "1.12.0")]
 use std::fmt;
 use std::mem;
 
