@@ -1,4 +1,6 @@
 //! Creating and manipulating links within an HDF5 group
+#[cfg(feature = "1.12.0")]
+use std::fmt;
 use std::mem;
 
 pub use self::H5L_type_t::*;
@@ -64,20 +66,43 @@ impl H5L_info1_t__u {
 }
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 #[cfg(feature = "1.12.0")]
 pub struct H5L_info2_t {
     pub type_: H5L_type_t,
     pub corder_valid: hbool_t,
     pub corder: int64_t,
     pub cset: H5T_cset_t,
-    pub u: H5L_info1_t__u,
+    pub u: H5L_info2_t__u,
 }
 
 #[cfg(feature = "1.12.0")]
 impl Default for H5L_info2_t {
     fn default() -> Self {
         unsafe { mem::zeroed() }
+    }
+}
+
+#[cfg(feature = "1.12.0")]
+impl fmt::Debug for H5L_info2_t {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut debug_struct = f.debug_struct("H5L_info2_t");
+        debug_struct
+            .field("type_", &self.type_)
+            .field("corder_valid", &self.corder_valid)
+            .field("corder", &self.corder)
+            .field("cset", &self.cset);
+
+        match self.type_ {
+            H5L_TYPE_HARD => {
+                debug_struct.field("token", unsafe { &self.u.token });
+            }
+            H5L_TYPE_SOFT | H5L_TYPE_EXTERNAL | H5L_TYPE_MAX => {
+                debug_struct.field("val_size", unsafe { &self.u.val_size });
+            }
+            H5L_TYPE_ERROR => {}
+        }
+        debug_struct.finish()
     }
 }
 
@@ -93,6 +118,16 @@ pub union H5L_info2_t__u {
 impl Default for H5L_info2_t__u {
     fn default() -> Self {
         unsafe { mem::zeroed() }
+    }
+}
+
+#[cfg(feature = "1.12.0")]
+impl H5L_info2_t__u {
+    pub unsafe fn token(&mut self) -> *mut H5O_token_t {
+        &mut self.token as *mut H5O_token_t
+    }
+    pub unsafe fn val_size(&mut self) -> *mut size_t {
+        &mut self.val_size as *mut size_t
     }
 }
 
