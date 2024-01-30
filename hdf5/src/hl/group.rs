@@ -312,7 +312,7 @@ impl Group {
         // Maps a closure to a C callback
         //
         // This function will be called multiple times, but never concurrently
-        extern "C" fn callback<F, G>(
+        unsafe extern "C" fn callback<F, G>(
             id: hid_t, name: *const c_char, info: *const H5L_info_t, op_data: *mut c_void,
         ) -> herr_t
         where

@@ -92,7 +92,7 @@ extern "C" fn set_local_lzf(dcpl_id: hid_t, type_id: hid_t, _space_id: hid_t) ->
     }
 }
 
-extern "C" fn filter_lzf(
+unsafe extern "C" fn filter_lzf(
     flags: c_uint, cd_nelmts: size_t, cd_values: *const c_uint, nbytes: size_t,
     buf_size: *mut size_t, buf: *mut *mut c_void,
 ) -> size_t {

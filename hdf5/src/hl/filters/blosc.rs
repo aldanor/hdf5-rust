@@ -160,13 +160,13 @@ fn parse_blosc_cdata(cd_nelmts: size_t, cd_values: *const c_uint) -> Option<Blos
     if cdata.len() >= 7 {
         let r = unsafe { blosc_compcode_to_compname(cdata[6] as _, addr_of_mut!(cfg.compname)) };
         if r == -1 {
-            let complist = string_from_cstr(unsafe { blosc_list_compressors() });
+            let complist = unsafe { string_from_cstr(blosc_list_compressors()) };
             let errmsg = format!(
                 concat!(
                     "This Blosc library does not have support for the '{}' compressor, ",
                     "but only for: {}"
                 ),
-                string_from_cstr(cfg.compname),
+                unsafe { string_from_cstr(cfg.compname) },
                 complist
             );
             h5err!(errmsg, H5E_PLIST, H5E_CALLBACK);
@@ -176,7 +176,7 @@ fn parse_blosc_cdata(cd_nelmts: size_t, cd_values: *const c_uint) -> Option<Blos
     Some(cfg)
 }
 
-extern "C" fn filter_blosc(
+unsafe extern "C" fn filter_blosc(
     flags: c_uint, cd_nelmts: size_t, cd_values: *const c_uint, nbytes: size_t,
     buf_size: *mut size_t, buf: *mut *mut c_void,
 ) -> size_t {

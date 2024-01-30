@@ -45,7 +45,7 @@ pub enum H5ES_status_t {
 }
 
 pub type H5ES_event_complete_func_t = Option<
-    extern "C" fn(
+    unsafe extern "C" fn(
         op_info: *mut H5ES_op_info_t,
         status: H5ES_status_t,
         err_stack: hid_t,
@@ -54,7 +54,7 @@ pub type H5ES_event_complete_func_t = Option<
 >;
 
 pub type H5ES_event_insert_func_t =
-    Option<extern "C" fn(op_info: *const H5ES_op_info_t, ctx: *mut c_void) -> c_int>;
+    Option<unsafe extern "C" fn(op_info: *const H5ES_op_info_t, ctx: *mut c_void) -> c_int>;
 
 extern "C" {
     pub fn H5ESinsert_request(es_id: hid_t, connector_id: hid_t, request: *mut c_void) -> herr_t;

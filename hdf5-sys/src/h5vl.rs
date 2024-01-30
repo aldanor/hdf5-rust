@@ -131,7 +131,7 @@ mod v1_14_0 {
     #[derive(Debug, Copy, Clone)]
     pub struct H5VL_info_class_t {
         pub size: size_t,
-        pub copy: Option<extern "C" fn(info: *const c_void) -> *mut c_void>,
+        pub copy: Option<unsafe extern "C" fn(info: *const c_void) -> *mut c_void>,
         pub cmp: Option<
             extern "C" fn(
                 cmp_value: *mut c_int,
@@ -139,17 +139,19 @@ mod v1_14_0 {
                 info2: *const c_void,
             ) -> herr_t,
         >,
-        pub free: Option<extern "C" fn(info: *mut c_void) -> herr_t>,
-        pub to_str: Option<extern "C" fn(info: *const c_void, str: *mut *mut c_char) -> herr_t>,
-        pub from_str: Option<extern "C" fn(str: *const c_char, info: *mut *mut c_void) -> herr_t>,
+        pub free: Option<unsafe extern "C" fn(info: *mut c_void) -> herr_t>,
+        pub to_str:
+            Option<unsafe extern "C" fn(info: *const c_void, str: *mut *mut c_char) -> herr_t>,
+        pub from_str:
+            Option<unsafe extern "C" fn(str: *const c_char, info: *mut *mut c_void) -> herr_t>,
     }
 
     #[repr(C)]
     #[derive(Debug, Copy, Clone)]
     pub struct H5VL_wrap_class_t {
-        pub get_object: Option<extern "C" fn(obj: *const c_void) -> *mut c_void>,
+        pub get_object: Option<unsafe extern "C" fn(obj: *const c_void) -> *mut c_void>,
         pub get_wrap_ctx:
-            Option<extern "C" fn(obj: *const c_void, wrap_ctx: *mut *mut c_void) -> herr_t>,
+            Option<unsafe extern "C" fn(obj: *const c_void, wrap_ctx: *mut *mut c_void) -> herr_t>,
         pub wrap_object: Option<
             extern "C" fn(
                 obj: *mut c_void,
@@ -157,8 +159,8 @@ mod v1_14_0 {
                 wrap_ctx: *mut c_void,
             ) -> *mut c_void,
         >,
-        pub unwrap_object: Option<extern "C" fn(obj: *mut c_void) -> *mut c_void>,
-        pub free_wrap_ctx: Option<extern "C" fn(wrap_ctx: *mut c_void) -> herr_t>,
+        pub unwrap_object: Option<unsafe extern "C" fn(obj: *mut c_void) -> *mut c_void>,
+        pub free_wrap_ctx: Option<unsafe extern "C" fn(wrap_ctx: *mut c_void) -> herr_t>,
     }
 
     #[repr(C)]
@@ -762,8 +764,9 @@ mod v1_14_0 {
                 req: *mut *mut c_void,
             ) -> herr_t,
         >,
-        pub close:
-            Option<extern "C" fn(dt: *mut c_void, dxpl_id: hid_t, req: *mut *mut c_void) -> herr_t>,
+        pub close: Option<
+            unsafe extern "C" fn(dt: *mut c_void, dxpl_id: hid_t, req: *mut *mut c_void) -> herr_t,
+        >,
     }
 
     #[repr(C)]
@@ -1602,7 +1605,7 @@ mod v1_14_0 {
             ) -> herr_t,
         >,
         pub get_cap_flags:
-            Option<extern "C" fn(info: *const c_void, cap_flags: *mut c_uint) -> herr_t>,
+            Option<unsafe extern "C" fn(info: *const c_void, cap_flags: *mut c_uint) -> herr_t>,
         pub opt_query: Option<
             extern "C" fn(
                 obj: *mut c_void,
@@ -1668,7 +1671,7 @@ mod v1_14_0 {
     );
 
     pub type H5VL_request_notify_t =
-        Option<extern "C" fn(ctx: *mut c_void, status: H5VL_request_status_t) -> herr_t>;
+        Option<unsafe extern "C" fn(ctx: *mut c_void, status: H5VL_request_status_t) -> herr_t>;
 
     #[repr(C)]
     #[derive(Debug, Copy, Clone)]
@@ -1683,14 +1686,16 @@ mod v1_14_0 {
         pub notify: Option<
             extern "C" fn(req: *mut c_void, cb: H5VL_request_notify_t, ctx: *mut c_void) -> herr_t,
         >,
-        pub cancel:
-            Option<extern "C" fn(req: *mut c_void, status: *mut H5VL_request_status_t) -> herr_t>,
+        pub cancel: Option<
+            unsafe extern "C" fn(req: *mut c_void, status: *mut H5VL_request_status_t) -> herr_t,
+        >,
         pub specific: Option<
             extern "C" fn(req: *mut c_void, args: *mut H5VL_request_specific_args_t) -> herr_t,
         >,
-        pub optional:
-            Option<extern "C" fn(req: *mut c_void, args: *mut H5VL_optional_args_t) -> herr_t>,
-        pub free: Option<extern "C" fn(req: *mut c_void) -> herr_t>,
+        pub optional: Option<
+            unsafe extern "C" fn(req: *mut c_void, args: *mut H5VL_optional_args_t) -> herr_t,
+        >,
+        pub free: Option<unsafe extern "C" fn(req: *mut c_void) -> herr_t>,
     }
 
     #[repr(C)]

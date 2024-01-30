@@ -43,14 +43,14 @@ pub type hid_t = c_int;
 pub const H5I_INVALID_HID: hid_t = -1;
 
 #[cfg(not(feature = "1.14.0"))]
-pub type H5I_free_t = Option<extern "C" fn(arg1: *mut c_void) -> herr_t>;
+pub type H5I_free_t = Option<unsafe extern "C" fn(arg1: *mut c_void) -> herr_t>;
 #[cfg(feature = "1.14.0")]
-pub type H5I_free_t = Option<extern "C" fn(*mut c_void, *mut *mut c_void) -> herr_t>;
+pub type H5I_free_t = Option<unsafe extern "C" fn(*mut c_void, *mut *mut c_void) -> herr_t>;
 
 pub type H5I_search_func_t =
-    Option<extern "C" fn(obj: *mut c_void, id: hid_t, key: *mut c_void) -> c_int>;
+    Option<unsafe extern "C" fn(obj: *mut c_void, id: hid_t, key: *mut c_void) -> c_int>;
 #[cfg(feature = "1.12.0")]
-pub type H5I_iterate_func_t = Option<extern "C" fn(id: hid_t, udata: *mut c_void) -> herr_t>;
+pub type H5I_iterate_func_t = Option<unsafe extern "C" fn(id: hid_t, udata: *mut c_void) -> herr_t>;
 
 extern "C" {
     pub fn H5Iregister(type_: H5I_type_t, object: *const c_void) -> hid_t;
@@ -79,11 +79,13 @@ extern "C" {
 }
 
 #[cfg(feature = "1.14.0")]
-pub type H5I_future_realize_func_t =
-    Option<extern "C" fn(future_object: *mut c_void, actual_object_id: *mut hid_t) -> herr_t>;
+pub type H5I_future_realize_func_t = Option<
+    unsafe extern "C" fn(future_object: *mut c_void, actual_object_id: *mut hid_t) -> herr_t,
+>;
 
 #[cfg(feature = "1.14.0")]
-pub type H5I_future_discard_func_t = Option<extern "C" fn(future_object: *mut c_void) -> herr_t>;
+pub type H5I_future_discard_func_t =
+    Option<unsafe extern "C" fn(future_object: *mut c_void) -> herr_t>;
 
 #[cfg(feature = "1.14.0")]
 extern "C" {

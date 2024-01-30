@@ -48,13 +48,14 @@ impl Deref for Attribute {
 impl Attribute {
     /// Returns names of all the members in the group, non-recursively.
     pub fn attr_names(obj: &Location) -> Result<Vec<String>> {
-        extern "C" fn attributes_callback(
+        unsafe extern "C" fn attributes_callback(
             _id: hid_t, attr_name: *const c_char, _info: *const H5A_info_t, op_data: *mut c_void,
         ) -> herr_t {
             std::panic::catch_unwind(|| {
                 let other_data: &mut Vec<String> =
                     unsafe { &mut *(op_data.cast::<std::vec::Vec<std::string::String>>()) };
-                other_data.push(string_from_cstr(attr_name));
+                // SAFETY: caller guarantees attr_name points to valid UTF-8 C string
+                other_data.push(unsafe { string_from_cstr(attr_name) });
                 0 // Continue iteration
             })
             .unwrap_or(-1)

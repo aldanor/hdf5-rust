@@ -26,7 +26,7 @@ impl Default for H5A_info_t {
 
 #[deprecated(note = "deprecated in HDF5 1.8.0, use H5A_operator2_t")]
 pub type H5A_operator1_t = Option<
-    extern "C" fn(
+    unsafe extern "C" fn(
         location_id: hid_t,
         attr_name: *const c_char,
         operator_data: *mut c_void,
@@ -34,7 +34,7 @@ pub type H5A_operator1_t = Option<
 >;
 
 pub type H5A_operator2_t = Option<
-    extern "C" fn(
+    unsafe extern "C" fn(
         location_id: hid_t,
         attr_name: *const c_char,
         ainfo: *const H5A_info_t,

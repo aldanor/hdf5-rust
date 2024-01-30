@@ -204,7 +204,7 @@ impl Default for H5L_class_t {
 }
 
 pub type H5L_iterate1_t = Option<
-    extern "C" fn(
+    unsafe extern "C" fn(
         group: hid_t,
         name: *const c_char,
         info: *const H5L_info1_t,
@@ -213,7 +213,7 @@ pub type H5L_iterate1_t = Option<
 >;
 #[cfg(feature = "1.12.0")]
 pub type H5L_iterate2_t = Option<
-    extern "C" fn(
+    unsafe extern "C" fn(
         group: hid_t,
         name: *const c_char,
         info: *const H5L_info2_t,

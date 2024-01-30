@@ -132,31 +132,33 @@ pub struct H5FD_class_t {
     pub fc_degree: H5F_close_degree_t,
     #[cfg(feature = "1.14.0")]
     pub terminate: Option<extern "C" fn() -> herr_t>,
-    pub sb_size: Option<extern "C" fn(file: *mut H5FD_t) -> hsize_t>,
-    pub sb_encode:
-        Option<extern "C" fn(file: *mut H5FD_t, name: *mut c_char, p: *mut c_uchar) -> herr_t>,
-    pub sb_decode:
-        Option<extern "C" fn(f: *mut H5FD_t, name: *const c_char, p: *const c_uchar) -> herr_t>,
+    pub sb_size: Option<unsafe extern "C" fn(file: *mut H5FD_t) -> hsize_t>,
+    pub sb_encode: Option<
+        unsafe extern "C" fn(file: *mut H5FD_t, name: *mut c_char, p: *mut c_uchar) -> herr_t,
+    >,
+    pub sb_decode: Option<
+        unsafe extern "C" fn(f: *mut H5FD_t, name: *const c_char, p: *const c_uchar) -> herr_t,
+    >,
     pub fapl_size: size_t,
-    pub fapl_get: Option<extern "C" fn(file: *mut H5FD_t) -> *mut c_void>,
-    pub fapl_copy: Option<extern "C" fn(fapl: *const c_void) -> *mut c_void>,
-    pub fapl_free: Option<extern "C" fn(fapl: *mut c_void) -> herr_t>,
+    pub fapl_get: Option<unsafe extern "C" fn(file: *mut H5FD_t) -> *mut c_void>,
+    pub fapl_copy: Option<unsafe extern "C" fn(fapl: *const c_void) -> *mut c_void>,
+    pub fapl_free: Option<unsafe extern "C" fn(fapl: *mut c_void) -> herr_t>,
     pub dxpl_size: size_t,
-    pub dxpl_copy: Option<extern "C" fn(dxpl: *const c_void) -> *mut c_void>,
-    pub dxpl_free: Option<extern "C" fn(dxpl: *mut c_void) -> herr_t>,
+    pub dxpl_copy: Option<unsafe extern "C" fn(dxpl: *const c_void) -> *mut c_void>,
+    pub dxpl_free: Option<unsafe extern "C" fn(dxpl: *mut c_void) -> herr_t>,
     pub open: Option<
-        extern "C" fn(
+        unsafe extern "C" fn(
             name: *const c_char,
             flags: c_uint,
             fapl: hid_t,
             maxaddr: haddr_t,
         ) -> *mut H5FD_t,
     >,
-    pub close: Option<extern "C" fn(file: *mut H5FD_t) -> herr_t>,
-    pub cmp: Option<extern "C" fn(f1: *const H5FD_t, f2: *const H5FD_t) -> c_int>,
-    pub query: Option<extern "C" fn(f1: *const H5FD_t, flags: *mut c_ulong) -> herr_t>,
+    pub close: Option<unsafe extern "C" fn(file: *mut H5FD_t) -> herr_t>,
+    pub cmp: Option<unsafe extern "C" fn(f1: *const H5FD_t, f2: *const H5FD_t) -> c_int>,
+    pub query: Option<unsafe extern "C" fn(f1: *const H5FD_t, flags: *mut c_ulong) -> herr_t>,
     pub get_type_map:
-        Option<extern "C" fn(file: *const H5FD_t, type_map: *mut H5FD_mem_t) -> herr_t>,
+        Option<unsafe extern "C" fn(file: *const H5FD_t, type_map: *mut H5FD_mem_t) -> herr_t>,
     pub alloc: Option<
         extern "C" fn(
             file: *mut H5FD_t,
@@ -174,10 +176,10 @@ pub struct H5FD_class_t {
             size: hsize_t,
         ) -> herr_t,
     >,
-    pub get_eoa: Option<extern "C" fn(file: *const H5FD_t, type_: H5FD_mem_t) -> haddr_t>,
+    pub get_eoa: Option<unsafe extern "C" fn(file: *const H5FD_t, type_: H5FD_mem_t) -> haddr_t>,
     pub set_eoa:
-        Option<extern "C" fn(file: *mut H5FD_t, type_: H5FD_mem_t, addr: haddr_t) -> herr_t>,
-    pub get_eof: Option<extern "C" fn(file: *const H5FD_t) -> haddr_t>,
+        Option<unsafe extern "C" fn(file: *mut H5FD_t, type_: H5FD_mem_t, addr: haddr_t) -> herr_t>,
+    pub get_eof: Option<unsafe extern "C" fn(file: *const H5FD_t) -> haddr_t>,
     pub get_handle: Option<
         extern "C" fn(file: *mut H5FD_t, fapl: hid_t, file_handle: *mut *mut c_void) -> herr_t,
     >,
@@ -201,9 +203,10 @@ pub struct H5FD_class_t {
             buffer: *const c_void,
         ) -> herr_t,
     >,
-    pub flush: Option<extern "C" fn(file: *mut H5FD_t, dxpl_id: hid_t, closing: c_uint) -> herr_t>,
+    pub flush:
+        Option<unsafe extern "C" fn(file: *mut H5FD_t, dxpl_id: hid_t, closing: c_uint) -> herr_t>,
     pub truncate:
-        Option<extern "C" fn(file: *mut H5FD_t, dxpl_id: hid_t, closing: hbool_t) -> herr_t>,
+        Option<unsafe extern "C" fn(file: *mut H5FD_t, dxpl_id: hid_t, closing: hbool_t) -> herr_t>,
     pub lock: Option<
         extern "C" fn(
             file: *mut H5FD_t,
@@ -213,9 +216,9 @@ pub struct H5FD_class_t {
         ) -> herr_t,
     >,
     pub unlock:
-        Option<extern "C" fn(file: *mut H5FD_t, oid: *mut c_uchar, last: hbool_t) -> herr_t>,
+        Option<unsafe extern "C" fn(file: *mut H5FD_t, oid: *mut c_uchar, last: hbool_t) -> herr_t>,
     #[cfg(feature = "1.14.0")]
-    pub del: Option<extern "C" fn(name: *const c_char, fapl: hid_t) -> herr_t>,
+    pub del: Option<unsafe extern "C" fn(name: *const c_char, fapl: hid_t) -> herr_t>,
     #[cfg(feature = "1.14.0")]
     pub ctl: Option<
         extern "C" fn(
@@ -316,8 +319,8 @@ pub struct H5FD_file_image_callbacks_t {
             udata: *mut c_void,
         ) -> herr_t,
     >,
-    pub udata_copy: Option<extern "C" fn(udata: *mut c_void) -> *mut c_void>,
-    pub udata_free: Option<extern "C" fn(udata: *mut c_void) -> herr_t>,
+    pub udata_copy: Option<unsafe extern "C" fn(udata: *mut c_void) -> *mut c_void>,
+    pub udata_free: Option<unsafe extern "C" fn(udata: *mut c_void) -> herr_t>,
     pub udata: *mut c_void,
 }
 
