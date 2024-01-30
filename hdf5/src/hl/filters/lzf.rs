@@ -38,7 +38,7 @@ lazy_static! {
 }
 
 pub fn register_lzf() -> Result<(), &'static str> {
-    (*LZF_INIT).clone()
+    *LZF_INIT
 }
 
 extern "C" fn set_local_lzf(dcpl_id: hid_t, type_id: hid_t, _space_id: hid_t) -> herr_t {
@@ -81,7 +81,7 @@ extern "C" fn set_local_lzf(dcpl_id: hid_t, type_id: hid_t, _space_id: hid_t) ->
     if bufsize == 0 {
         return -1;
     }
-    for &chunkdim in chunkdims[..(ndims as usize)].iter() {
+    for &chunkdim in &chunkdims[..(ndims as usize)] {
         bufsize *= chunkdim as size_t;
     }
     values[2] = bufsize as _;

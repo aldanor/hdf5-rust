@@ -657,7 +657,7 @@ impl DatasetCreateBuilder {
     pub fn finish(&self) -> Result<DatasetCreate> {
         h5lock!({
             let mut plist = DatasetCreate::try_new()?;
-            self.apply(&mut plist).map(|_| plist)
+            self.apply(&mut plist).map(|()| plist)
         })
     }
 }

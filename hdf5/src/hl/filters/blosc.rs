@@ -51,7 +51,7 @@ lazy_static! {
 }
 
 pub fn register_blosc() -> Result<(), &'static str> {
-    (*BLOSC_INIT).clone()
+    *BLOSC_INIT
 }
 
 extern "C" fn set_local_blosc(dcpl_id: hid_t, type_id: hid_t, _space_id: hid_t) -> herr_t {
@@ -103,7 +103,7 @@ extern "C" fn set_local_blosc(dcpl_id: hid_t, type_id: hid_t, _space_id: hid_t) 
     }
     values[2] = basetypesize as _;
     let mut bufsize = typesize;
-    for &chunkdim in chunkdims[..ndims as usize].iter() {
+    for &chunkdim in &chunkdims[..ndims as usize] {
         bufsize *= chunkdim as size_t;
     }
     values[3] = bufsize as _;

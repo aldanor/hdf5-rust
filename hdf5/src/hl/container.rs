@@ -130,7 +130,7 @@ impl<'a> Reader<'a> {
     pub fn read_raw<T: H5Type>(&self) -> Result<Vec<T>> {
         let size = self.obj.space()?.size();
         let mut vec = Vec::with_capacity(size);
-        self.read_into_buf(vec.as_mut_ptr(), None, None).map(|_| {
+        self.read_into_buf(vec.as_mut_ptr(), None, None).map(|()| {
             unsafe {
                 vec.set_len(size);
             };
@@ -184,7 +184,7 @@ impl<'a> Reader<'a> {
         let obj_ndim = self.obj.get_shape()?.ndim();
         ensure!(obj_ndim == 0, "ndim mismatch: expected scalar, got {}", obj_ndim);
         let mut val = mem::MaybeUninit::<T>::uninit();
-        self.read_into_buf(val.as_mut_ptr(), None, None).map(|_| unsafe { val.assume_init() })
+        self.read_into_buf(val.as_mut_ptr(), None, None).map(|()| unsafe { val.assume_init() })
     }
 }
 

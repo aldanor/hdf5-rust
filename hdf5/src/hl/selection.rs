@@ -103,7 +103,7 @@ fn check_coords(coords: &Array2<Ix>, shape: &[Ix]) -> Result<()> {
     let ndim = coords.shape()[1];
     ensure!(ndim == shape.len(), "Slice ndim ({}) != shape ndim ({})", ndim, shape.len());
     for (i, &dim) in shape.iter().enumerate() {
-        for &d in coords.slice(s![.., i]).iter() {
+        for &d in coords.slice(s![.., i]) {
             ensure!(d < dim, "Index {} out of bounds for axis {} with size {}", d, i, dim);
         }
     }
@@ -674,7 +674,7 @@ impl From<Vec<SliceOrIndex>> for Hyperslab {
 }
 
 impl From<()> for Hyperslab {
-    fn from(_: ()) -> Self {
+    fn from((): ()) -> Self {
         vec![].into()
     }
 }
@@ -929,7 +929,7 @@ impl From<RangeFull> for Selection {
 }
 
 impl From<()> for Selection {
-    fn from(_: ()) -> Self {
+    fn from((): ()) -> Self {
         Hyperslab::from(()).into()
     }
 }

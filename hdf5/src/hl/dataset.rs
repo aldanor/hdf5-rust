@@ -396,7 +396,7 @@ impl DatasetBuilderInner {
             Some(dapl) => dapl.clone(),
             None => DatasetAccess::try_new()?,
         };
-        self.dapl_builder.apply(&mut dapl).map(|_| dapl)
+        self.dapl_builder.apply(&mut dapl).map(|()| dapl)
     }
 
     fn compute_chunk_shape(&self, dtype: &Datatype, extents: &Extents) -> Result<Option<Vec<Ix>>> {
@@ -468,7 +468,7 @@ impl DatasetBuilderInner {
             Some(dcpl) => dcpl.clone(),
             None => DatasetCreate::try_new()?,
         };
-        dcpl_builder.apply(&mut dcpl).map(|_| dcpl)
+        dcpl_builder.apply(&mut dcpl).map(|()| dcpl)
     }
 
     fn build_lcpl(&self) -> Result<LinkCreate> {
@@ -476,7 +476,7 @@ impl DatasetBuilderInner {
             Some(lcpl) => lcpl.clone(),
             None => LinkCreate::try_new()?,
         };
-        self.lcpl_builder.apply(&mut lcpl).map(|_| lcpl)
+        self.lcpl_builder.apply(&mut lcpl).map(|()| lcpl)
     }
 
     fn try_unlink<'n, N: Into<Option<&'n str>>>(&self, name: N) {

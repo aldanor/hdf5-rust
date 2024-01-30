@@ -484,7 +484,7 @@ impl<T: Into<SimpleExtents>> From<T> for Extents {
 }
 
 impl From<()> for Extents {
-    fn from(_: ()) -> Self {
+    fn from((): ()) -> Self {
         Self::Scalar
     }
 }

@@ -127,7 +127,7 @@ impl LinkCreateBuilder {
     pub fn finish(&self) -> Result<LinkCreate> {
         h5lock!({
             let mut plist = LinkCreate::try_new()?;
-            self.apply(&mut plist).map(|_| plist)
+            self.apply(&mut plist).map(|()| plist)
         })
     }
 }
