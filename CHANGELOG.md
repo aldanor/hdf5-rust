@@ -16,7 +16,7 @@
 ### Changed
 
 - The `H5Type` derive macro now uses `proc-macro-error` to emit error messages.
-- MSRV is now `1.64.0` and Rust edition has now been bumped to 2021.
+- MSRV is now `1.70.0` and Rust edition has now been bumped to 2021.
 - Types in ChunkInfo has been changed to match HDF5.
 - Dependencies now uses the `dep:` syntax and are only enabled through features.
 - Some features are made weak and will not enable e.g. static build when asking for a
@@ -35,6 +35,7 @@
 - Applying filters without chunking will now produce an explicit error.
 - Fixed a bug where chunking could not be enabled for zero-sized extents.
 - Fixed library finding on Windows with MSYS2-distributed MinGW HDF5.
+- Fixed a bug which made parallel builds unusable.
 
 ## 0.8.1
 
