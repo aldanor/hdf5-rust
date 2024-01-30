@@ -293,7 +293,11 @@ jobs:
       - name: Build and test
         env:
           CARGO_TARGET_X86_64_PC_WINDOWS_GNU_RUNNER: wine64
-        run: cargo test --features hdf5-sys/static --target x86_64-pc-windows-gnu -- --skip test_compile_fail
+        run: cargo test --workspace --features hdf5-sys/static --target x86_64-pc-windows-gnu --exclude=hdf5-derive
+      - name: Build and test hdf5-derive
+        env:
+          CARGO_TARGET_X86_64_PC_WINDOWS_GNU_RUNNER: wine64
+        run: cargo test --package hdf5-derive --features hdf5/static --target x86_64-pc-windows-gnu
 
   addr_san:
     name: Address sanitizer

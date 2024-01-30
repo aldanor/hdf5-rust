@@ -26,6 +26,7 @@ mpi-sys = "0.2"
 num-complex = { version = "0.4", default-features = false }
 regex = "1.10"
 # internal
+hdf5 = { version = "0.8.1", path = "hdf5" }               # !V
 hdf5-derive = { version = "0.8.1", path = "hdf5-derive" } # !V
 hdf5-src = { version = "0.8.1", path = "hdf5-src" }       # !V
 hdf5-sys = { version = "0.8.1", path = "hdf5-sys" }       # !V
