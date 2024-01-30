@@ -24,7 +24,7 @@ libc = "0.2"
 libz-sys = { version = "1.1", default-features = false }
 mpi-sys = "0.2"
 num-complex = { version = "0.4", default-features = false }
-regex = "1.8"
+regex = "1.10"
 # internal
 hdf5-derive = { version = "0.8.1", path = "hdf5-derive" } # !V
 hdf5-src = { version = "0.8.1", path = "hdf5-src" }       # !V

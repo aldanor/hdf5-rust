@@ -37,8 +37,8 @@ f16 = ["hdf5-types/f16"]
 
 [dependencies]
 # external
-bitflags = "2.3"
-blosc-sys = { version = "0.2", package = "blosc-src", optional = true }
+bitflags = "2.4"
+blosc-sys = { version = "0.3", package = "blosc-src", optional = true }
 cfg-if = { workspace = true }
 errno = { version = "0.3", optional = true }
 lazy_static = "1.4"
@@ -57,11 +57,11 @@ hdf5-types = { workspace = true }
 half = { workspace = true }
 num-complex = { workspace = true }
 paste = "1.0"
-pretty_assertions = "1.3"
+pretty_assertions = "1.4"
 rand = { version = "0.8", features = ["small_rng"] }
 regex = { workspace = true }
-scopeguard = "1.1"
-tempfile = "3.6"
+scopeguard = "1.2"
+tempfile = "3.9"
 
 [package.metadata.docs.rs]
 features = ["static", "zlib", "blosc", "lzf", "f16", "complex"]
