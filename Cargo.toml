@@ -1,4 +1,5 @@
 [workspace]
+resolver = "2"
 members = ["hdf5", "hdf5-types", "hdf5-derive", "hdf5-sys", "hdf5-src"]
 default-members = ["hdf5", "hdf5-types", "hdf5-derive", "hdf5-sys"]
 
