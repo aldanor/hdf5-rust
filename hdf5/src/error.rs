@@ -179,7 +179,7 @@ impl ExpandedErrorStack {
     }
 
     pub fn top(&self) -> Option<&ErrorFrame> {
-        self.get(0)
+        self.first()
     }
 
     pub fn description(&self) -> &str {

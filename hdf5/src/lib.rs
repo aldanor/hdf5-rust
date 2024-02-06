@@ -62,7 +62,7 @@ mod export {
             AttributeBuilderEmptyShape, ByteReader, Container, Conversion, Dataset, DatasetBuilder,
             DatasetBuilderData, DatasetBuilderEmpty, DatasetBuilderEmptyShape, Dataspace, Datatype,
             File, FileBuilder, Group, LinkInfo, LinkType, Location, LocationInfo, LocationToken,
-            LocationType, Object, PropertyList, Reader, Writer,
+            LocationType, Object, OpenMode, PropertyList, Reader, Writer,
         },
     };
 
@@ -145,6 +145,7 @@ mod hl;
 
 mod internal_prelude {
     pub use libc::size_t;
+    #[allow(unused_imports)]
     pub use std::os::raw::{c_char, c_double, c_int, c_long, c_uint, c_void};
 
     pub use hdf5_sys::{
@@ -152,13 +153,13 @@ mod internal_prelude {
         h5i::H5I_type_t::{self, *},
         h5i::{hid_t, H5I_INVALID_HID},
         h5p::H5P_DEFAULT,
-        h5s::{H5S_ALL, H5S_UNLIMITED},
+        h5s::H5S_ALL,
     };
 
     pub use crate::{
         class::ObjectClass,
         dim::Dimension,
-        error::{h5check, H5ErrorCode},
+        error::h5check,
         export::*,
         handle::Handle,
         hl::plist::PropertyListClass,

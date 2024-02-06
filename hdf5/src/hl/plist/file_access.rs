@@ -1494,7 +1494,7 @@ impl FileAccessBuilder {
     pub fn finish(&self) -> Result<FileAccess> {
         h5lock!({
             let mut plist = FileAccess::try_new()?;
-            self.apply(&mut plist).map(|_| plist)
+            self.apply(&mut plist).map(|()| plist)
         })
     }
 }
@@ -1587,7 +1587,7 @@ impl FileAccess {
         }
         let relax = relax > 0;
         let drv = MultiDriver { files, layout, relax };
-        drv.validate().map(|_| drv)
+        drv.validate().map(|()| drv)
     }
 
     #[doc(hidden)]

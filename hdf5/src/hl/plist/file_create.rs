@@ -431,7 +431,7 @@ impl FileCreateBuilder {
     pub fn finish(&self) -> Result<FileCreate> {
         h5lock!({
             let mut plist = FileCreate::try_new()?;
-            self.apply(&mut plist).map(|_| plist)
+            self.apply(&mut plist).map(|()| plist)
         })
     }
 }

@@ -83,14 +83,14 @@ mod blosc_impl {
 
     #[cfg(feature = "blosc")]
     pub fn blosc_get_nthreads() -> u8 {
-        h5lock!(super::blosc::blosc_get_nthreads()).max(0).min(255) as _
+        h5lock!(super::blosc::blosc_get_nthreads()).clamp(0, 255) as _
     }
 
     #[cfg(feature = "blosc")]
     pub fn blosc_set_nthreads(num_threads: u8) -> u8 {
         use std::os::raw::c_int;
         let nthreads = h5lock!(super::blosc::blosc_set_nthreads(c_int::from(num_threads)));
-        nthreads.max(0).min(255) as _
+        nthreads.clamp(0, 255) as _
     }
 }
 
@@ -123,11 +123,11 @@ pub struct FilterInfo {
 pub(crate) fn register_filters() {
     #[cfg(feature = "lzf")]
     if let Err(e) = lzf::register_lzf() {
-        eprintln!("Error while registering LZF filter: {}", e);
+        eprintln!("Error while registering LZF filter: {e}");
     }
     #[cfg(feature = "blosc")]
     if let Err(e) = blosc::register_blosc() {
-        eprintln!("Error while registering Blosc filter: {}", e);
+        eprintln!("Error while registering Blosc filter: {e}");
     }
 }
 

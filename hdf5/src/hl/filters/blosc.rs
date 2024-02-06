@@ -7,6 +7,7 @@ use hdf5_sys::h5p::{H5Pget_chunk, H5Pget_filter_by_id2, H5Pmodify_filter};
 use hdf5_sys::h5t::{H5Tclose, H5Tget_class, H5Tget_size, H5Tget_super, H5T_ARRAY};
 use hdf5_sys::h5z::{H5Z_class2_t, H5Z_filter_t, H5Zregister, H5Z_CLASS_T_VERS, H5Z_FLAG_REVERSE};
 
+use crate::error::H5ErrorCode;
 use crate::globals::{H5E_CALLBACK, H5E_PLIST};
 use crate::internal_prelude::*;
 
@@ -50,7 +51,7 @@ lazy_static! {
 }
 
 pub fn register_blosc() -> Result<(), &'static str> {
-    (*BLOSC_INIT).clone()
+    *BLOSC_INIT
 }
 
 extern "C" fn set_local_blosc(dcpl_id: hid_t, type_id: hid_t, _space_id: hid_t) -> herr_t {
@@ -102,7 +103,7 @@ extern "C" fn set_local_blosc(dcpl_id: hid_t, type_id: hid_t, _space_id: hid_t) 
     }
     values[2] = basetypesize as _;
     let mut bufsize = typesize;
-    for &chunkdim in chunkdims[..ndims as usize].iter() {
+    for &chunkdim in &chunkdims[..ndims as usize] {
         bufsize *= chunkdim as size_t;
     }
     values[3] = bufsize as _;

@@ -58,6 +58,7 @@ mod internal_prelude {
     pub use crate::h5i::hid_t;
     pub use crate::h5t::H5T_cset_t;
     pub use libc::{int64_t, off_t, size_t, ssize_t, time_t, uint32_t, uint64_t, FILE};
+    #[allow(unused_imports)]
     pub use std::os::raw::{
         c_char, c_double, c_float, c_int, c_long, c_longlong, c_uchar, c_uint, c_ulong,
         c_ulonglong, c_void,

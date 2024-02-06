@@ -230,7 +230,7 @@ impl DatasetAccessBuilder {
     pub fn finish(&self) -> Result<DatasetAccess> {
         h5lock!({
             let mut plist = DatasetAccess::try_new()?;
-            self.apply(&mut plist).map(|_| plist)
+            self.apply(&mut plist).map(|()| plist)
         })
     }
 }

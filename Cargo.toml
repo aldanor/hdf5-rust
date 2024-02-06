@@ -1,11 +1,15 @@
 [workspace]
+resolver = "2"
 members = ["hdf5", "hdf5-types", "hdf5-derive", "hdf5-sys", "hdf5-src"]
 default-members = ["hdf5", "hdf5-types", "hdf5-derive", "hdf5-sys"]
 
 [workspace.package]
-version = "0.8.1"  # !V
+version = "0.8.1" # !V
 rust-version = "1.64.0"
-authors = ["Ivan Smirnov <aldanor@users.noreply.github.com>", "Magnus Ulimoen <mulimoen@users.noreply.github.com>"]
+authors = [
+    "Ivan Smirnov <aldanor@users.noreply.github.com>",
+    "Magnus Ulimoen <mulimoen@users.noreply.github.com>",
+]
 keywords = ["hdf5"]
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/aldanor/hdf5-rust"
@@ -20,9 +24,10 @@ libc = "0.2"
 libz-sys = { version = "1.1", default-features = false }
 mpi-sys = "0.2"
 num-complex = { version = "0.4", default-features = false }
-regex = "1.8"
+regex = "1.10"
 # internal
-hdf5-derive = { version = "0.8.1", path = "hdf5-derive" }  # !V
-hdf5-src = { version = "0.8.1", path = "hdf5-src" }  # !V
-hdf5-sys = { version = "0.8.1", path = "hdf5-sys" }  # !V
-hdf5-types = { version = "0.8.1", path = "hdf5-types" }  # !V
+hdf5 = { version = "0.8.1", path = "hdf5" }               # !V
+hdf5-derive = { version = "0.8.1", path = "hdf5-derive" } # !V
+hdf5-src = { version = "0.8.1", path = "hdf5-src" }       # !V
+hdf5-sys = { version = "0.8.1", path = "hdf5-sys" }       # !V
+hdf5-types = { version = "0.8.1", path = "hdf5-types" }   # !V

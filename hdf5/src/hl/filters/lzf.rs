@@ -2,14 +2,15 @@ use std::ptr::{self, addr_of_mut};
 use std::slice;
 
 use lazy_static::lazy_static;
+use lzf_sys::{lzf_compress, lzf_decompress, LZF_VERSION};
 
 use hdf5_sys::h5p::{H5Pget_chunk, H5Pget_filter_by_id2, H5Pmodify_filter};
 use hdf5_sys::h5t::H5Tget_size;
 use hdf5_sys::h5z::{H5Z_class2_t, H5Z_filter_t, H5Zregister, H5Z_CLASS_T_VERS, H5Z_FLAG_REVERSE};
 
+use crate::error::H5ErrorCode;
 use crate::globals::{H5E_CALLBACK, H5E_PLIST};
 use crate::internal_prelude::*;
-use lzf_sys::{lzf_compress, lzf_decompress, LZF_VERSION};
 
 const LZF_FILTER_NAME: &[u8] = b"lzf\0";
 pub const LZF_FILTER_ID: H5Z_filter_t = 32000;
@@ -37,7 +38,7 @@ lazy_static! {
 }
 
 pub fn register_lzf() -> Result<(), &'static str> {
-    (*LZF_INIT).clone()
+    *LZF_INIT
 }
 
 extern "C" fn set_local_lzf(dcpl_id: hid_t, type_id: hid_t, _space_id: hid_t) -> herr_t {
@@ -80,7 +81,7 @@ extern "C" fn set_local_lzf(dcpl_id: hid_t, type_id: hid_t, _space_id: hid_t) ->
     if bufsize == 0 {
         return -1;
     }
-    for &chunkdim in chunkdims[..(ndims as usize)].iter() {
+    for &chunkdim in &chunkdims[..(ndims as usize)] {
         bufsize *= chunkdim as size_t;
     }
     values[2] = bufsize as _;

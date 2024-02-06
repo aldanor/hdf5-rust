@@ -10,6 +10,10 @@ on:
   schedule:
     - cron: '0 18 * * *'
 
+concurrency:
+  group: ${{ github.workflow }}-@{{ github.ref }}
+  cancel-in-progress: true
+
 env:
   CARGO_TERM_COLOR: always
 
@@ -293,7 +297,7 @@ jobs:
       - name: Build and test
         env:
           CARGO_TARGET_X86_64_PC_WINDOWS_GNU_RUNNER: wine64
-        run: cargo test --features hdf5-sys/static --target x86_64-pc-windows-gnu -- --skip test_compile_fail
+        run: cargo test --workspace --features hdf5-sys/static --target x86_64-pc-windows-gnu --exclude=hdf5-derive
 
   addr_san:
     name: Address sanitizer
