@@ -282,6 +282,12 @@ impl AsAsciiStr for VarLenAscii {
     }
 }
 
+// Safety: `VarLenAscii` allocates and frees memory for its data, which is copied
+// from its original location; it never holds a reference to the data used to create it.
+unsafe impl Send for VarLenAscii {}
+// Safety: No interior mutability or potential for data races.
+unsafe impl Sync for VarLenAscii {}
+
 // ================================================================================
 
 #[repr(C)]
@@ -370,6 +376,12 @@ impl FromStr for VarLenUnicode {
         }
     }
 }
+
+// Safety: `VarLenUnicode` allocates and frees memory for its data, which is copied
+// from its original location; it never holds a reference to the data used to create it.
+unsafe impl Send for VarLenUnicode {}
+// Safety: No interior mutability or potential for data races.
+unsafe impl Sync for VarLenUnicode {}
 
 // ================================================================================
 
