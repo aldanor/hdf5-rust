@@ -142,11 +142,9 @@ impl<T: Copy + fmt::Debug> fmt::Debug for VarLenArray<T> {
     }
 }
 
-// Safety: `VarLenArray` allocates and frees memory for its data, which is copied
-// from its original location; it never holds a reference to the data used to create it.
-// Therefore if `T` is Send, so is `VarLenArray<T>`
+// Safety: Memory backed by `VarLenArray` can be accessed and freed from any thread
 unsafe impl<T: Copy + Send> Send for VarLenArray<T> {}
-// Safety: No interior mutability or potential for data races if `T` is `Sync`.
+// Safety: `VarLenArray` has no interior mutability
 unsafe impl<T: Copy + Sync> Sync for VarLenArray<T> {}
 
 #[cfg(test)]
