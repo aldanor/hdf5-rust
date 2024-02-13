@@ -142,6 +142,11 @@ impl<T: Copy + fmt::Debug> fmt::Debug for VarLenArray<T> {
     }
 }
 
+// Safety: Memory backed by `VarLenArray` can be accessed and freed from any thread
+unsafe impl<T: Copy + Send> Send for VarLenArray<T> {}
+// Safety: `VarLenArray` has no interior mutability
+unsafe impl<T: Copy + Sync> Sync for VarLenArray<T> {}
+
 #[cfg(test)]
 pub mod tests {
     use super::VarLenArray;

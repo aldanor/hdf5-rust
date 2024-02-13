@@ -282,6 +282,11 @@ impl AsAsciiStr for VarLenAscii {
     }
 }
 
+// Safety: Memory backed by `VarLenAscii` can be accessed and freed from any thread
+unsafe impl Send for VarLenAscii {}
+// Safety: `VarLenAscii` has no interior mutability
+unsafe impl Sync for VarLenAscii {}
+
 // ================================================================================
 
 #[repr(C)]
@@ -370,6 +375,11 @@ impl FromStr for VarLenUnicode {
         }
     }
 }
+
+// Safety: Memory backed by `VarLenUnicode` can be accessed and freed from any thread
+unsafe impl Send for VarLenUnicode {}
+// Safety: `VarLenUnicode` has no interior mutability
+unsafe impl Sync for VarLenUnicode {}
 
 // ================================================================================
 
