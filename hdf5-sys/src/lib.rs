@@ -1,11 +1,11 @@
 //! Rust bindings to the `hdf5` library for reading and writing data to and from storage
 #![allow(non_camel_case_types, non_snake_case, dead_code, deprecated)]
-#![cfg_attr(feature = "cargo-clippy", allow(clippy::unreadable_literal))]
-#![cfg_attr(feature = "cargo-clippy", allow(clippy::missing_safety_doc))]
-#![cfg_attr(feature = "cargo-clippy", allow(clippy::cognitive_complexity))]
-#![cfg_attr(feature = "cargo-clippy", allow(clippy::upper_case_acronyms))]
-#![cfg_attr(feature = "cargo-clippy", allow(clippy::wildcard_imports))]
-#![cfg_attr(feature = "cargo-clippy", allow(clippy::module_name_repetitions))]
+#![allow(clippy::unreadable_literal)]
+#![allow(clippy::missing_safety_doc)]
+#![allow(clippy::cognitive_complexity)]
+#![allow(clippy::upper_case_acronyms)]
+#![allow(clippy::wildcard_imports)]
+#![allow(clippy::module_name_repetitions)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
 macro_rules! extern_static {
