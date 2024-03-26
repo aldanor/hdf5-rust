@@ -52,6 +52,7 @@ pub(crate) unsafe fn free(ptr: *mut core::ffi::c_void) {
     }
 }
 
+/// Whether this crate is using the HDF5 library for allocations instead of `libc`.
 pub const USING_H5_ALLOCATOR: bool = {
     cfg_if::cfg_if! {
         if #[cfg(any(feature = "h5-alloc", windows_dll))] {

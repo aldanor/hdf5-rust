@@ -107,11 +107,16 @@ impl Clone for DatasetCreate {
     }
 }
 
+/// Options for how to store raw data for a dataset.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Layout {
+    /// Raw data is stored in the file's object header.
     Compact,
+    /// Raw data is stored in a contiguous chunk in the file, outside the object header.
     Contiguous,
+    /// Raw data is stored in separate chunks in the file.
     Chunked,
+    /// Raw data is drawn from multiple datasets in different files.
     #[cfg(feature = "1.10.0")]
     Virtual,
 }
@@ -148,8 +153,10 @@ impl From<Layout> for H5D_layout_t {
 
 #[cfg(feature = "1.10.0")]
 bitflags! {
+    /// Edge chunk option flags.
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     pub struct ChunkOpts: u32 {
+        /// Disable applying filters to partial edge chunks.
         const DONT_FILTER_PARTIAL_CHUNKS = H5D_CHUNK_DONT_FILTER_PARTIAL_CHUNKS;
     }
 }
@@ -161,10 +168,14 @@ impl Default for ChunkOpts {
     }
 }
 
+/// Options for when to allocate dataset storage space.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum AllocTime {
+    /// Allocate all space when the dataset is created.
     Early,
+    /// Allocate space incrementally as data is written to the dataset.
     Incr,
+    /// Allocate all space when data is first written to the dataset.
     Late,
 }
 
@@ -188,10 +199,15 @@ impl From<AllocTime> for H5D_alloc_time_t {
     }
 }
 
+/// Options for when to write fill values to a dataset.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum FillTime {
+    /// Write fill values to the dataset when storage is allocated only if a user-defined fill
+    /// value is set.
     IfSet,
+    /// Write fill values to the dataset when storage is allocated.
     Alloc,
+    /// Never write fill values to the dataset.
     Never,
 }
 
@@ -221,10 +237,14 @@ impl From<FillTime> for H5D_fill_time_t {
     }
 }
 
+/// The status of a dataset creation property list's fill value.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum FillValue {
+    /// Fill value is undefined.
     Undefined,
+    /// Fill value is the library default.
     Default,
+    /// Fill value is defined by the application.
     UserDefined,
 }
 
@@ -254,26 +274,38 @@ impl From<FillValue> for H5D_fill_value_t {
     }
 }
 
+/// Properties of data stored in an external file.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ExternalFile {
+    /// The name of the file.
     pub name: String,
+    /// The offset in bytes from the start of the file to the location where the data starts.
     pub offset: usize,
+    /// The number of bytes reserved in the file for data.
     pub size: usize,
 }
 
+/// Properties of a mapping between virtual and source datasets.
 #[cfg(feature = "1.10.0")]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct VirtualMapping {
+    /// The name of the HDF5 file containing the source dataset.
     pub src_filename: String,
+    /// The path to the source dataset inside the file.
     pub src_dataset: String,
+    /// The dimensionality of the source dataset.
     pub src_extents: Extents,
+    /// The selection of the source dataset to be mapped.
     pub src_selection: Selection,
+    /// The dimensionality of the virtual dataset.
     pub vds_extents: Extents,
+    /// The selection fo the virtual dataset to be mapped.
     pub vds_selection: Selection,
 }
 
 #[cfg(feature = "1.10.0")]
 impl VirtualMapping {
+    /// Constructs a `VirtualMapping` with the given parameters.
     pub fn new<F, D, E1, S1, E2, S2>(
         src_filename: F, src_dataset: D, src_extents: E1, src_selection: S1, vds_extents: E2,
         vds_selection: S2,
@@ -365,41 +397,49 @@ impl DatasetCreateBuilder {
         Ok(builder)
     }
 
+    /// Sets the dataset filters from a slice of filter specifiers.
     pub fn set_filters(&mut self, filters: &[Filter]) -> &mut Self {
         self.filters = filters.to_owned();
         self
     }
 
+    /// Adds a deflation filter with some compression level to the dataset.
     pub fn deflate(&mut self, level: u8) -> &mut Self {
         self.filters.push(Filter::deflate(level));
         self
     }
 
+    /// Adds a shuffle filter to the dataset.
     pub fn shuffle(&mut self) -> &mut Self {
         self.filters.push(Filter::shuffle());
         self
     }
 
+    /// Adds a Fletcher32 checksum filter to the dataset.
     pub fn fletcher32(&mut self) -> &mut Self {
         self.filters.push(Filter::fletcher32());
         self
     }
 
+    /// Adds an Szip compression filter with some coding method and pixels per block to the dataset.
     pub fn szip(&mut self, coding: SZip, px_per_block: u8) -> &mut Self {
         self.filters.push(Filter::szip(coding, px_per_block));
         self
     }
 
+    /// Adds an N-bit compression filter to the dataset.
     pub fn nbit(&mut self) -> &mut Self {
         self.filters.push(Filter::nbit());
         self
     }
 
+    /// Adds a scale-offset compression filter with some scaling mode to the dataset.
     pub fn scale_offset(&mut self, mode: ScaleOffset) -> &mut Self {
         self.filters.push(Filter::scale_offset(mode));
         self
     }
 
+    /// Adds an LZF compression filter to the dataset.
     #[cfg(feature = "lzf")]
     pub fn lzf(&mut self) -> &mut Self {
         self.filters.push(Filter::lzf());
@@ -421,6 +461,7 @@ impl DatasetCreateBuilder {
         self
     }
 
+    /// Adds a Blosc filter with LZ compression to the dataset.
     #[cfg(feature = "blosc")]
     pub fn blosc_blosclz<T>(&mut self, clevel: u8, shuffle: T) -> &mut Self
     where
@@ -430,6 +471,7 @@ impl DatasetCreateBuilder {
         self
     }
 
+    /// Adds a Blosc filter with LZ4 compression to the dataset.
     #[cfg(feature = "blosc")]
     pub fn blosc_lz4<T>(&mut self, clevel: u8, shuffle: T) -> &mut Self
     where
@@ -439,6 +481,7 @@ impl DatasetCreateBuilder {
         self
     }
 
+    /// Adds a Blosc filter with LZ4HC compression to the dataset.
     #[cfg(feature = "blosc")]
     pub fn blosc_lz4hc<T>(&mut self, clevel: u8, shuffle: T) -> &mut Self
     where
@@ -448,6 +491,7 @@ impl DatasetCreateBuilder {
         self
     }
 
+    /// Adds a Blosc filter with Snappy compression to the dataset.
     #[cfg(feature = "blosc")]
     pub fn blosc_snappy<T>(&mut self, clevel: u8, shuffle: T) -> &mut Self
     where
@@ -457,6 +501,7 @@ impl DatasetCreateBuilder {
         self
     }
 
+    /// Adds a Blosc filter with Zlib compression to the dataset.
     #[cfg(feature = "blosc")]
     pub fn blosc_zlib<T>(&mut self, clevel: u8, shuffle: T) -> &mut Self
     where
@@ -466,6 +511,7 @@ impl DatasetCreateBuilder {
         self
     }
 
+    /// Adds a Blosc filter with Zstd compression to the dataset.
     #[cfg(feature = "blosc")]
     pub fn blosc_zstd<T>(&mut self, clevel: u8, shuffle: T) -> &mut Self
     where
@@ -475,21 +521,25 @@ impl DatasetCreateBuilder {
         self
     }
 
+    /// Adds a user-defined filter with the given identifier and parameters to the dataset.
     pub fn add_filter(&mut self, id: H5Z_filter_t, cdata: &[c_uint]) -> &mut Self {
         self.filters.push(Filter::user(id, cdata));
         self
     }
 
+    /// Removes all filters from the dataset.
     pub fn clear_filters(&mut self) -> &mut Self {
         self.filters.clear();
         self
     }
 
+    /// Sets the dataset's storage space allocation timing.
     pub fn alloc_time(&mut self, alloc_time: Option<AllocTime>) -> &mut Self {
         self.alloc_time = Some(alloc_time);
         self
     }
 
+    /// Sets the time when fill values should be written to the dataset.
     pub fn fill_time(&mut self, fill_time: FillTime) -> &mut Self {
         self.fill_time = Some(fill_time);
         self
@@ -499,11 +549,13 @@ impl DatasetCreateBuilder {
         self.fill_time.is_some()
     }
 
+    /// Sets the dataset's fill value.
     pub fn fill_value<T: Into<OwnedDynValue>>(&mut self, fill_value: T) -> &mut Self {
         self.fill_value = Some(fill_value.into());
         self
     }
 
+    /// Clears the dataset's fill value.
     pub fn no_fill_value(&mut self) -> &mut Self {
         self.fill_value = None;
         self
@@ -521,27 +573,32 @@ impl DatasetCreateBuilder {
         self
     }
 
+    /// Clears the dataset's chunking settings.
     pub fn no_chunk(&mut self) -> &mut Self {
         self.chunk = None;
         self
     }
 
+    /// Sets the dataset's raw data layout.
     pub fn layout(&mut self, layout: Layout) -> &mut Self {
         self.layout = Some(layout);
         self
     }
 
+    /// Sets the dataset's edge chunk options.
     #[cfg(feature = "1.10.0")]
     pub fn chunk_opts(&mut self, opts: ChunkOpts) -> &mut Self {
         self.chunk_opts = Some(opts);
         self
     }
 
+    /// Adds an external file to the dataset.
     pub fn external(&mut self, name: &str, offset: usize, size: usize) -> &mut Self {
         self.external.push(ExternalFile { name: name.to_owned(), offset, size });
         self
     }
 
+    /// Adds a mapping between virtual and source datasets.
     #[cfg(feature = "1.10.0")]
     pub fn virtual_map<F, D, E1, S1, E2, S2>(
         &mut self, src_filename: F, src_dataset: D, src_extents: E1, src_selection: S1,
@@ -566,16 +623,19 @@ impl DatasetCreateBuilder {
         self
     }
 
+    /// Sets whether to record time data for the dataset.
     pub fn obj_track_times(&mut self, track_times: bool) -> &mut Self {
         self.obj_track_times = Some(track_times);
         self
     }
 
+    /// Sets the dataset's attribute storage phase change thresholds.
     pub fn attr_phase_change(&mut self, max_compact: u32, min_dense: u32) -> &mut Self {
         self.attr_phase_change = Some(AttrPhaseChange { max_compact, min_dense });
         self
     }
 
+    /// Sets whether to track and/or index the dataset's attribute creation order.
     pub fn attr_creation_order(&mut self, attr_creation_order: AttrCreationOrder) -> &mut Self {
         self.attr_creation_order = Some(attr_creation_order);
         self
@@ -650,10 +710,12 @@ impl DatasetCreateBuilder {
         !self.filters.is_empty()
     }
 
+    /// Copies the builder settings into a dataset creation property list.
     pub fn apply(&self, plist: &mut DatasetCreate) -> Result<()> {
         h5lock!(self.populate_plist(plist.id()))
     }
 
+    /// Constructs a new dataset creation property list.
     pub fn finish(&self) -> Result<DatasetCreate> {
         h5lock!({
             let mut plist = DatasetCreate::try_new()?;
@@ -664,18 +726,22 @@ impl DatasetCreateBuilder {
 
 /// Dataset creation property list.
 impl DatasetCreate {
+    /// Constructs a new dataset creation property list.
     pub fn try_new() -> Result<Self> {
         Self::from_id(h5try!(H5Pcreate(*H5P_DATASET_CREATE)))
     }
 
+    /// Returns a copy of the dataset creation property list.
     pub fn copy(&self) -> Self {
         unsafe { self.deref().copy().cast_unchecked() }
     }
 
+    /// Returns a builder for configuring a dataset creation property list.
     pub fn build() -> DatasetCreateBuilder {
         DatasetCreateBuilder::new()
     }
 
+    /// Returns `true` if all required filters are available.
     pub fn all_filters_avail(&self) -> bool {
         h5lock!(H5Pall_filters_avail(self.id())) > 0
     }
@@ -685,10 +751,12 @@ impl DatasetCreate {
         Filter::extract_pipeline(self.id())
     }
 
+    /// Returns a vector of the dataset's filter configurations.
     pub fn filters(&self) -> Vec<Filter> {
         self.get_filters().unwrap_or_default()
     }
 
+    /// Returns `true` if there is at least one filter configured.
     pub fn has_filters(&self) -> bool {
         !self.filters().is_empty()
     }
@@ -698,6 +766,7 @@ impl DatasetCreate {
         h5get!(H5Pget_alloc_time(self.id()): H5D_alloc_time_t).map(Into::into)
     }
 
+    /// Returns the storage allocation timing settings.
     pub fn alloc_time(&self) -> AllocTime {
         self.get_alloc_time().unwrap_or(AllocTime::Late)
     }
@@ -707,6 +776,7 @@ impl DatasetCreate {
         h5get!(H5Pget_fill_time(self.id()): H5D_fill_time_t).map(Into::into)
     }
 
+    /// Returns the fill value timing settings.
     pub fn fill_time(&self) -> FillTime {
         self.get_fill_time().unwrap_or_default()
     }
@@ -716,6 +786,7 @@ impl DatasetCreate {
         h5get!(H5Pfill_value_defined(self.id()): H5D_fill_value_t).map(Into::into)
     }
 
+    /// Returns the fill value status.
     pub fn fill_value_defined(&self) -> FillValue {
         self.get_fill_value_defined().unwrap_or(FillValue::Undefined)
     }
@@ -736,6 +807,7 @@ impl DatasetCreate {
         }
     }
 
+    /// Returns the fill value converted to a dynamic type, or `None` if not set.
     pub fn fill_value(&self, tp: &TypeDescriptor) -> Option<OwnedDynValue> {
         self.get_fill_value(tp).unwrap_or_default()
     }
@@ -752,6 +824,7 @@ impl DatasetCreate {
             .transpose()
     }
 
+    /// Returns the fill value converted to a concrete type, or `None` if not set.
     pub fn fill_value_as<T: H5Type>(&self) -> Option<T> {
         self.get_fill_value_as::<T>().unwrap_or_default()
     }
@@ -768,6 +841,7 @@ impl DatasetCreate {
         }
     }
 
+    /// Returns a vector of chunk dimensions for the dataset, or `None` if it is not chunked.
     pub fn chunk(&self) -> Option<Vec<usize>> {
         self.get_chunk().unwrap_or_default()
     }
@@ -779,6 +853,7 @@ impl DatasetCreate {
         Ok(layout.into())
     }
 
+    /// Returns the layout setting for the dataset's raw data.
     pub fn layout(&self) -> Layout {
         self.get_layout().unwrap_or_default()
     }
@@ -794,6 +869,7 @@ impl DatasetCreate {
         }
     }
 
+    /// Returns the edge chunk option setting, or `None` if the dataset is not chunked.
     #[cfg(feature = "1.10.0")]
     pub fn chunk_opts(&self) -> Option<ChunkOpts> {
         self.get_chunk_opts().unwrap_or_default()
@@ -828,6 +904,7 @@ impl DatasetCreate {
         })
     }
 
+    /// Returns a vector of external file specifiers for the dataset.
     pub fn external(&self) -> Vec<ExternalFile> {
         self.get_external().unwrap_or_default()
     }
@@ -868,6 +945,7 @@ impl DatasetCreate {
         })
     }
 
+    /// Returns a vector of virtual mapping specifiers for the dataset.
     #[cfg(feature = "1.10.0")]
     pub fn virtual_map(&self) -> Vec<VirtualMapping> {
         self.get_virtual_map().unwrap_or_default()
@@ -878,6 +956,7 @@ impl DatasetCreate {
         h5get!(H5Pget_obj_track_times(self.id()): hbool_t).map(|x| x > 0)
     }
 
+    /// Returns `true` if object time tracking is enabled for the dataset.
     pub fn obj_track_times(&self) -> bool {
         self.get_obj_track_times().unwrap_or(true)
     }
@@ -888,6 +967,7 @@ impl DatasetCreate {
             .map(|(mc, md)| AttrPhaseChange { max_compact: mc as _, min_dense: md as _ })
     }
 
+    /// Returns the attribute storage phase change thresholds.
     pub fn attr_phase_change(&self) -> AttrPhaseChange {
         self.get_attr_phase_change().unwrap_or_default()
     }
@@ -898,6 +978,7 @@ impl DatasetCreate {
             .map(AttrCreationOrder::from_bits_truncate)
     }
 
+    /// Returns flags for whether attribute creation order will be tracked/indexed.
     pub fn attr_creation_order(&self) -> AttrCreationOrder {
         self.get_attr_creation_order().unwrap_or_default()
     }

@@ -164,10 +164,14 @@ impl Clone for FileAccess {
     }
 }
 
+/// Core file driver properties.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct CoreDriver {
+    /// Size, in bytes, of memory increments.
     pub increment: usize,
+    /// Whether to write the file contents to disk when the file is closed.
     pub filebacked: bool,
+    /// Size, in bytes, of write aggregation pages. Setting to 1 enables tracking with no paging.
     #[cfg(feature = "1.8.13")]
     pub write_tracking: usize,
 }
@@ -183,8 +187,10 @@ impl Default for CoreDriver {
     }
 }
 
+/// Family file driver properties.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct FamilyDriver {
+    /// Size in bytes of each file member.
     pub member_size: usize,
 }
 
@@ -195,32 +201,63 @@ impl Default for FamilyDriver {
 }
 
 bitflags! {
+    /// Flags specifying types of logging activity for the logging virtual file driver.
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     pub struct LogFlags: u64 {
+        /// Track truncate operations.
         const TRUNCATE = H5FD_LOG_TRUNCATE;
+        /// Track "meta" operations (e.g. truncate).
         const META_IO = H5FD_LOG_META_IO;
+        /// Track the location of every read.
         const LOC_READ = H5FD_LOG_LOC_READ;
+        /// Track the location of every write.
         const LOC_WRITE = H5FD_LOG_LOC_WRITE;
+        /// Track the location of every seek.
         const LOC_SEEK = H5FD_LOG_LOC_SEEK;
+        /// Track all I/O locations and lengths.
+        /// Equivalent to `LOC_READ | LOC_WRITE | LOC_SEEK`.
         const LOC_IO = H5FD_LOG_LOC_IO;
+        /// Track the number of times each byte is read.
         const FILE_READ = H5FD_LOG_FILE_READ;
+        /// Track the number of times each byte is written.
         const FILE_WRITE = H5FD_LOG_FILE_WRITE;
+        /// Track the number of all types of I/O operations.
+        /// Equivalent to `FILE_READ | FILE_WRITE`.
         const FILE_IO = H5FD_LOG_FILE_IO;
+        /// Track the type of information stored at each byte.
         const FLAVOR = H5FD_LOG_FLAVOR;
+        /// Track the total number of read operations.
         const NUM_READ = H5FD_LOG_NUM_READ;
+        /// Track the total number of write operations.
         const NUM_WRITE = H5FD_LOG_NUM_WRITE;
+        /// Track the total number of seek operations.
         const NUM_SEEK = H5FD_LOG_NUM_SEEK;
+        /// Track the total number of truncate operations.
         const NUM_TRUNCATE = H5FD_LOG_NUM_TRUNCATE;
+        /// Track the total number of all types of I/O operations.
+        /// Equivalent to `NUM_READ | NUM_WRITE | NUM_SEEK | NUM_TRUNCATE`.
         const NUM_IO = H5FD_LOG_NUM_IO;
+        /// Track the time spent in open operations.
         const TIME_OPEN = H5FD_LOG_TIME_OPEN;
+        /// Track the time spent in stat operations.
         const TIME_STAT = H5FD_LOG_TIME_STAT;
+        /// Track the time spent in read operations.
         const TIME_READ = H5FD_LOG_TIME_READ;
+        /// Track the time spent in write operations.
         const TIME_WRITE = H5FD_LOG_TIME_WRITE;
+        /// Track the time spent in seek operations.
         const TIME_SEEK = H5FD_LOG_TIME_SEEK;
+        /// Track the time spent in truncate operations.
         const TIME_TRUNCATE = H5FD_LOG_TIME_TRUNCATE;
+        /// Track the time spent in close operations.
         const TIME_CLOSE = H5FD_LOG_TIME_CLOSE;
+        /// Track the time spent in each I/O operation.
+        /// Equivalent to `TIME_OPEN | TIME_STAT | TIME_READ | TIME_WRITE | TIME_SEEK
+        /// | TIME_TRUNCATE | TIME_CLOSE`.
         const TIME_IO = H5FD_LOG_TIME_IO;
+        /// Track releases of space in the file.
         const FREE = H5FD_LOG_FREE;
+        /// Track everything.
         const ALL = H5FD_LOG_ALL;
     }
 }
@@ -231,6 +268,7 @@ impl Default for LogFlags {
     }
 }
 
+/// Logging virtual file driver properties.
 #[derive(Clone, Default, Debug, PartialEq, Eq)]
 pub struct LogOptions {
     logfile: Option<String>,
@@ -248,25 +286,36 @@ static FD_MEM_TYPES: &[H5F_mem_t] = &[
     H5F_mem_t::H5FD_MEM_OHDR,
 ];
 
+/// Properties for a data storage used by the multi-file driver.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MultiFile {
+    /// Name of the member file.
     pub name: String,
+    /// Offset within virtual address space where the storage begins.
     pub addr: u64,
 }
 
 impl MultiFile {
+    /// Creates a new `MultiFile`.
     pub fn new(name: &str, addr: u64) -> Self {
         Self { name: name.into(), addr }
     }
 }
 
+/// A mapping of memory usage types to storage indices.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MultiLayout {
+    /// Index of the superblock.
     pub mem_super: u8,
+    /// Index of the B-tree data.
     pub mem_btree: u8,
+    /// Index of the raw data.
     pub mem_draw: u8,
+    /// Index of the global heap data.
     pub mem_gheap: u8,
+    /// Index of the local heap data.
     pub mem_lheap: u8,
+    /// Index of the object headers.
     pub mem_object: u8,
 }
 
@@ -302,10 +351,14 @@ impl MultiLayout {
     }
 }
 
+/// Multi-file driver properties.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MultiDriver {
+    /// The names and offsets of each type of data storage.
     pub files: Vec<MultiFile>,
+    /// The mapping of memory usage types to file indices.
     pub layout: MultiLayout,
+    /// Whether to allow read-only access to incomplete file sets.
     pub relax: bool,
 }
 
@@ -345,9 +398,12 @@ impl MultiDriver {
     }
 }
 
+/// Split file driver properties.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SplitDriver {
+    /// Metadata filename extension.
     pub meta_ext: String,
+    /// Raw data filename extension.
     pub raw_ext: String,
 }
 
@@ -396,9 +452,12 @@ mod mpio {
 
     use super::{c_int, Result};
 
+    /// MPI-I/O file driver properties.
     #[derive(Debug)]
     pub struct MpioDriver {
+        /// MPI-2 communicator.
         pub comm: MPI_Comm,
+        /// MPI-2 info object.
         pub info: MPI_Info,
     }
 
@@ -453,11 +512,15 @@ mod mpio {
 #[cfg(feature = "mpio")]
 pub use self::mpio::*;
 
+/// Direct I/O driver properties.
 #[cfg(feature = "have-direct")]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct DirectDriver {
+    /// Required memory alignment boundary.
     pub alignment: usize,
+    /// File system block size.
     pub block_size: usize,
+    /// Size in bytes of the copy buffer.
     pub cbuf_size: usize,
 }
 
@@ -468,26 +531,43 @@ impl Default for DirectDriver {
     }
 }
 
+/// A low-level file driver configuration.
 #[derive(Clone, Debug)]
 pub enum FileDriver {
+    /// Uses POSIX filesystem functions to perform unbuffered access to a single file.
     Sec2,
+    /// Uses functions from the standard C `stdio.h` to perform buffered access to a single file.
     Stdio,
+    /// SEC2 with logging capabilities.
     Log,
+    /// Keeps file contents in memory until the file is closed, enabling faster access.
     Core(CoreDriver),
+    /// Partitions file address space into pieces and sends them to separate storage files.
     Family(FamilyDriver),
+    /// Allows data to be stored in multiple files according to the type of data.
     Multi(MultiDriver),
+    /// Special case of the Multi driver that stores metadata and raw data in separate files.
     Split(SplitDriver),
+    /// Uses the MPI standard for communication and I/O.
     #[cfg(feature = "mpio")]
     Mpio(MpioDriver),
+    /// SEC2 except data is accessed synchronously without being cached by the system.
     #[cfg(feature = "have-direct")]
     Direct(DirectDriver),
 }
 
+/// Options for what to do when trying to close a file while there are open objects inside it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum FileCloseDegree {
+    /// Let the driver choose the behavior.
+    ///
+    /// All drivers set this to `Weak`, except for MPI-I/O, which sets it to `Semi`.
     Default,
+    /// Terminate file identifier access, but delay closing until all objects are closed.
     Weak,
+    /// Return an error if the file has open objects.
     Semi,
+    /// Close all open objects, then close the file.
     Strong,
 }
 
@@ -519,22 +599,33 @@ impl From<FileCloseDegree> for H5F_close_degree_t {
     }
 }
 
+/// File alignment properties.
+///
+/// Any file object with size of at least `threshold` bytes will be aligned on an address that is
+/// a multiple of `alignment`. Addresses are relative to the end of the user block.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Alignment {
+    /// The byte size threshold.
     pub threshold: u64,
+    /// The alignment value.
     pub alignment: u64,
 }
 
 impl Default for Alignment {
+    /// Returns the default threshold and alignment of 1 (i.e. no alignment).
     fn default() -> Self {
         Self { threshold: 1, alignment: 1 }
     }
 }
 
+/// Raw data chunk cache parameters.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct ChunkCache {
+    /// The number of objects in the cache.
     pub nslots: usize,
+    /// The total size of the cache in bytes.
     pub nbytes: usize,
+    /// The chunk preemption policy.
     pub w0: f64,
 }
 
@@ -546,16 +637,25 @@ impl Default for ChunkCache {
 
 impl Eq for ChunkCache {}
 
+/// Page buffer size properties.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct PageBufferSize {
+    /// Maximum size, in bytes, of the page buffer.
     pub buf_size: usize,
+    /// Minimum metadata percentage to keep in the buffer before allowing pages with metadata to be
+    /// evicted.
     pub min_meta_perc: u32,
+    /// Minimum raw data percentage to keep in the buffer before allowing pages with raw data to be
+    /// evicted.
     pub min_raw_perc: u32,
 }
 
+/// Automatic cache size increase mode.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CacheIncreaseMode {
+    /// Automatic increase is disabled.
     Off,
+    /// Automatic increase uses the hit rate threshold algorithm.
     Threshold,
 }
 
@@ -577,9 +677,12 @@ impl From<CacheIncreaseMode> for H5C_cache_incr_mode {
     }
 }
 
+/// Flash cache size increase mode.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum FlashIncreaseMode {
+    /// Flash cache size increase is disabled.
     Off,
+    /// Flash cache size increase uses the add space algorithm.
     AddSpace,
 }
 
@@ -601,11 +704,16 @@ impl From<FlashIncreaseMode> for H5C_cache_flash_incr_mode {
     }
 }
 
+/// Automatic cache size decrease mode.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CacheDecreaseMode {
+    /// Automatic decrease is disabled.
     Off,
+    /// Automatic decrease uses the hit rate threshold algorithm.
     Threshold,
+    /// Automatic decrease uses the ageout algorithm.
     AgeOut,
+    /// Automatic decrease uses the ageout with hit rate threshold algorithm.
     AgeOutWithThreshold,
 }
 
@@ -631,9 +739,13 @@ impl From<CacheDecreaseMode> for H5C_cache_decr_mode {
     }
 }
 
+/// A strategy for writing metadata to disk.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MetadataWriteStrategy {
+    /// Only process zero is allowed to write dirty metadata to disk.
     ProcessZeroOnly,
+    /// Process zero decides what entries to flush, but the flushes are distributed across
+    /// processes.
     Distributed,
 }
 
@@ -661,36 +773,76 @@ impl From<MetadataWriteStrategy> for c_int {
     }
 }
 
+/// Metadata cache configuration.
 #[derive(Clone, Debug, PartialEq)]
 pub struct MetadataCacheConfig {
+    /// Whether the adaptive cache resize report function is enabled.
     pub rpt_fcn_enabled: bool,
+    /// Whether `trace_file_name` should be used to open a trace file for the cache.
     pub open_trace_file: bool,
+    /// Whether the current trace file (if any) should be closed.
     pub close_trace_file: bool,
+    /// Full path of the trace file to be opened if `open_trace_file` is `true`.
     pub trace_file_name: String,
+    /// Whether evictions from the metadata cache are enabled.
     pub evictions_enabled: bool,
+    /// Whether the cache should be created with a user-specified initial size.
     pub set_initial_size: bool,
+    /// Initial cache size in bytes if `set_initial_size` is `true`.
     pub initial_size: usize,
+    /// Minimum fraction of the cache that must be kept clean or empty.
     pub min_clean_fraction: f64,
+    /// Maximum number of bytes that adaptive cache resizing can select as the maximum cache size.
     pub max_size: usize,
+    /// Minimum number of bytes that adaptive cache resizing can select as the minimum cache size.
     pub min_size: usize,
+    /// Number of cache accesses between runs of the adaptive cache resize code.
     pub epoch_length: i64,
+    /// Automatic cache size increase mode.
     pub incr_mode: CacheIncreaseMode,
+    /// Hit rate threshold for the hit rate threshold cache size increment algorithm.
     pub lower_hr_threshold: f64,
+    /// Factor by which the hit rate threshold cache size increment algorithm multiplies the current
+    /// cache max size to obtain a tentative new size.
     pub increment: f64,
+    /// Whether to apply an upper limit to the size of cache size increases.
     pub apply_max_increment: bool,
+    /// Maximum number of bytes by which cache size can be increased in a single step,
+    /// if applicable.
     pub max_increment: usize,
+    /// Flash cache size increase mode.
     pub flash_incr_mode: FlashIncreaseMode,
+    /// Factor by which the size of the triggering entry / entry size increase is multiplied to
+    /// obtain the initial cache size increment.
     pub flash_multiple: f64,
+    /// Factor by which the current maximum cache size is multiplied to obtain the minimum size
+    /// entry / entry size increase which may trigger a flash cache size increase.
     pub flash_threshold: f64,
+    /// Automatic cache size decrease mode.
     pub decr_mode: CacheDecreaseMode,
+    /// Hit rate threshold for hit-rate-based cache size decrease algorithms.
     pub upper_hr_threshold: f64,
+    /// Factor by which the hit rate threshold cache size decrease algorithm multiplies the current
+    /// cache max size to obtain a tentative new size.
     pub decrement: f64,
+    /// Whether an upper limit should be applied to the size of cache size decreases.
     pub apply_max_decrement: bool,
+    /// Maximum number of bytes by which cache size can be decreased in a single step,
+    /// if applicable.
     pub max_decrement: usize,
+    /// Minimum number of epochs that an entry must remain unaccessed in cache before ageout-based
+    /// reduction algorithms try to evict it.
     pub epochs_before_eviction: i32,
+    /// Whether ageout-based decrement algorithms will maintain an empty reserve.
     pub apply_empty_reserve: bool,
+    /// Empty reserve as a fraction of maximum cache size.
+    /// Ageout-based algorithms will not decrease the maximum size unless the empty reserve can be
+    /// met.
     pub empty_reserve: f64,
+    /// Threshold number of bytes of dirty metadata that will trigger synchronization of
+    /// parallel metadata caches.
     pub dirty_bytes_threshold: usize,
+    /// Strategy for writing metadata to disk.
     pub metadata_write_strategy: MetadataWriteStrategy,
 }
 
@@ -816,10 +968,15 @@ impl From<H5AC_cache_config_t> for MetadataCacheConfig {
 mod cache_image_config {
     use super::*;
 
+    /// Metadata cache image configuration.
     #[derive(Copy, Clone, Debug, PartialEq, Eq)]
     pub struct CacheImageConfig {
+        /// Whether a cache image should be created on file close.
         pub generate_image: bool,
+        /// Whether the cache image should include the adaptive cache resize configuration and
+        /// status.
         pub save_resize_status: bool,
+        /// Maximum number of times a prefetched entry can appear in subsequent cache images.
         pub entry_ageout: i32,
     }
 
@@ -858,11 +1015,15 @@ mod cache_image_config {
 #[cfg(feature = "1.10.1")]
 pub use self::cache_image_config::*;
 
+/// Metadata cache logging options.
 #[cfg(feature = "1.10.0")]
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct CacheLogOptions {
+    /// Whether logging is enabled.
     pub is_enabled: bool,
+    /// File path of the log. (Must be ASCII on Windows)
     pub location: String,
+    /// Whether to begin logging as soon as the file is opened
     pub start_on_access: bool,
 }
 
@@ -870,18 +1031,24 @@ pub struct CacheLogOptions {
 mod libver {
     use super::*;
 
+    /// Options for which library format version to use when storing objects.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
     pub enum LibraryVersion {
+        /// Use the earliest possible format.
         Earliest = 0,
+        /// Use the latest v18 format.
         V18 = 1,
+        /// Use the latest v110 format.
         V110 = 2,
     }
 
     impl LibraryVersion {
+        /// Returns `true` if the version is set to `Earliest`.
         pub fn is_earliest(self) -> bool {
             self == Self::Earliest
         }
 
+        /// Returns the latest library version.
         pub const fn latest() -> Self {
             Self::V110
         }
@@ -907,9 +1074,12 @@ mod libver {
         }
     }
 
+    /// Library format version bounds for writing objects to a file.
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     pub struct LibVerBounds {
+        /// The earliest version to use for writing objects.
         pub low: LibraryVersion,
+        /// The latest version to use for writing objects.
         pub high: LibraryVersion,
     }
 
@@ -1037,27 +1207,32 @@ impl FileAccessBuilder {
         self
     }
 
+    /// Sets the file alignment parameters.
     pub fn alignment(&mut self, threshold: u64, alignment: u64) -> &mut Self {
         self.alignment = Some(Alignment { threshold, alignment });
         self
     }
 
+    /// Sets the raw data chunk cache parameters.
     pub fn chunk_cache(&mut self, nslots: usize, nbytes: usize, w0: f64) -> &mut Self {
         self.chunk_cache = Some(ChunkCache { nslots, nbytes, w0 });
         self
     }
 
+    /// Sets the number of files that can be held open in an external link open file cache.
     #[cfg(feature = "1.8.7")]
     pub fn elink_file_cache_size(&mut self, efc_size: u32) -> &mut Self {
         self.elink_file_cache_size = Some(efc_size);
         self
     }
 
+    /// Sets the minimum metadata block size in bytes.
     pub fn meta_block_size(&mut self, size: u64) -> &mut Self {
         self.meta_block_size = Some(size);
         self
     }
 
+    /// Sets the page buffer size properties.
     #[cfg(feature = "1.10.1")]
     pub fn page_buffer_size(
         &mut self, buf_size: usize, min_meta_perc: u32, min_raw_perc: u32,
@@ -1066,28 +1241,34 @@ impl FileAccessBuilder {
         self
     }
 
+    /// Sets the maximum size of the data sieve buffer.
     pub fn sieve_buf_size(&mut self, size: usize) -> &mut Self {
         self.sieve_buf_size = Some(size);
         self
     }
 
+    /// Sets whether object metadata should be evicted from cache when an object is closed.
     #[cfg(feature = "1.10.1")]
     pub fn evict_on_close(&mut self, evict_on_close: bool) -> &mut Self {
         self.evict_on_close = Some(evict_on_close);
         self
     }
 
+    /// Sets the number of reads that the library will try when reading checksummed metadata in a
+    /// file opened with SWMR access.
     #[cfg(feature = "1.10.0")]
     pub fn metadata_read_attempts(&mut self, attempts: u32) -> &mut Self {
         self.metadata_read_attempts = Some(attempts);
         self
     }
 
+    /// Sets the metadata cache configuration.
     pub fn mdc_config(&mut self, config: &MetadataCacheConfig) -> &mut Self {
         self.mdc_config = Some(config.clone());
         self
     }
 
+    /// Sets whether a cache image should be created on file close.
     #[cfg(feature = "1.10.1")]
     pub fn mdc_image_config(&mut self, generate_image: bool) -> &mut Self {
         self.mdc_image_config = Some(CacheImageConfig {
@@ -1098,6 +1279,7 @@ impl FileAccessBuilder {
         self
     }
 
+    /// Sets metadata cache logging options.
     #[cfg(feature = "1.10.0")]
     pub fn mdc_log_options(
         &mut self, is_enabled: bool, location: &str, start_on_access: bool,
@@ -1107,67 +1289,80 @@ impl FileAccessBuilder {
         self
     }
 
+    /// Sets whether metadata reads are collective.
     #[cfg(all(feature = "1.10.0", feature = "have-parallel"))]
     pub fn all_coll_metadata_ops(&mut self, is_collective: bool) -> &mut Self {
         self.all_coll_metadata_ops = Some(is_collective);
         self
     }
 
+    /// Sets whether metadata writes are collective.
     #[cfg(all(feature = "1.10.0", feature = "have-parallel"))]
     pub fn coll_metadata_write(&mut self, is_collective: bool) -> &mut Self {
         self.coll_metadata_write = Some(is_collective);
         self
     }
 
+    /// Sets whether reference garbage collection is enabled.
     pub fn gc_references(&mut self, gc_ref: bool) -> &mut Self {
         self.gc_references = Some(gc_ref);
         self
     }
 
+    /// Sets the maximum size in bytes of a contiguous block reserved for small data.
     pub fn small_data_block_size(&mut self, size: u64) -> &mut Self {
         self.small_data_block_size = Some(size);
         self
     }
 
+    /// Sets the range of library versions to use when writing objects.
     #[cfg(feature = "1.10.2")]
     pub fn libver_bounds(&mut self, low: LibraryVersion, high: LibraryVersion) -> &mut Self {
         self.libver_bounds = Some(LibVerBounds { low, high });
         self
     }
 
+    /// Allows use of the earliest library version when writing objects.
     #[cfg(feature = "1.10.2")]
     pub fn libver_earliest(&mut self) -> &mut Self {
         self.libver_bounds(LibraryVersion::Earliest, LibraryVersion::latest())
     }
 
+    /// Sets the earliest library version for writing objects to v18.
     #[cfg(feature = "1.10.2")]
     pub fn libver_v18(&mut self) -> &mut Self {
         self.libver_bounds(LibraryVersion::V18, LibraryVersion::latest())
     }
 
+    /// Sets the earliest library version for writing objects to v110.
     #[cfg(feature = "1.10.2")]
     pub fn libver_v110(&mut self) -> &mut Self {
         self.libver_bounds(LibraryVersion::V110, LibraryVersion::latest())
     }
 
+    /// Allows only the latest library version when writing objects.
     #[cfg(feature = "1.10.2")]
     pub fn libver_latest(&mut self) -> &mut Self {
         self.libver_bounds(LibraryVersion::latest(), LibraryVersion::latest())
     }
 
+    /// Sets which file driver to use.
     pub fn driver(&mut self, file_driver: &FileDriver) -> &mut Self {
         self.file_driver = Some(file_driver.clone());
         self
     }
 
+    /// Sets the file driver to SEC2 (POSIX).
     pub fn sec2(&mut self) -> &mut Self {
         self.driver(&FileDriver::Sec2)
     }
 
+    /// Sets the file driver to STDIO.
     pub fn stdio(&mut self) -> &mut Self {
         self.driver(&FileDriver::Stdio)
     }
 
+    /// Sets the file driver to SEC2 with logging and configures it.
     pub fn log_options(
         &mut self, logfile: Option<&str>, flags: LogFlags, buf_size: usize,
     ) -> &mut Self {
@@ -1177,38 +1372,46 @@ impl FileAccessBuilder {
         self.driver(&FileDriver::Log)
     }
 
+    /// Sets the file driver to SEC2 with logging.
     pub fn log(&mut self) -> &mut Self {
         self.log_options(None, LogFlags::LOC_IO, 0)
     }
 
+    /// Sets the file driver to Core and configures it.
     pub fn core_options(&mut self, increment: usize, filebacked: bool) -> &mut Self {
         let drv = CoreDriver { increment, filebacked, ..CoreDriver::default() };
         self.driver(&FileDriver::Core(drv))
     }
 
+    /// Sets the file driver to Core and sets whether to write file contents to disk upon closing.
     pub fn core_filebacked(&mut self, filebacked: bool) -> &mut Self {
         let drv = CoreDriver { filebacked, ..CoreDriver::default() };
         self.driver(&FileDriver::Core(drv))
     }
 
+    /// Sets the file driver to Core.
     pub fn core(&mut self) -> &mut Self {
         self.driver(&FileDriver::Core(CoreDriver::default()))
     }
 
+    /// Sets the write tracking page size for the Core file driver.
     #[cfg(feature = "1.8.13")]
     pub fn write_tracking(&mut self, page_size: usize) -> &mut Self {
         self.write_tracking = Some(page_size);
         self
     }
 
+    /// Sets the file driver to Family.
     pub fn family(&mut self) -> &mut Self {
         self.driver(&FileDriver::Family(FamilyDriver::default()))
     }
 
+    /// Sets the file driver to Family and configures the file member size.
     pub fn family_options(&mut self, member_size: usize) -> &mut Self {
         self.driver(&FileDriver::Family(FamilyDriver { member_size }))
     }
 
+    /// Sets the file driver to Multi and configures it.
     pub fn multi_options(
         &mut self, files: &[MultiFile], layout: &MultiLayout, relax: bool,
     ) -> &mut Self {
@@ -1219,10 +1422,12 @@ impl FileAccessBuilder {
         }))
     }
 
+    /// Sets the file driver to Multi.
     pub fn multi(&mut self) -> &mut Self {
         self.driver(&FileDriver::Multi(MultiDriver::default()))
     }
 
+    /// Sets the file driver to Split and configures it.
     pub fn split_options(&mut self, meta_ext: &str, raw_ext: &str) -> &mut Self {
         self.driver(&FileDriver::Split(SplitDriver {
             meta_ext: meta_ext.into(),
@@ -1230,16 +1435,19 @@ impl FileAccessBuilder {
         }))
     }
 
+    /// Sets the file driver to Split.
     pub fn split(&mut self) -> &mut Self {
         self.driver(&FileDriver::Split(SplitDriver::default()))
     }
 
+    /// Sets the file driver to MPI-I/O and configures it.
     #[cfg(feature = "mpio")]
     pub fn mpio(&mut self, comm: mpi_sys::MPI_Comm, info: Option<mpi_sys::MPI_Info>) -> &mut Self {
         // We use .unwrap() here since MPI will almost surely terminate the process anyway.
         self.driver(&FileDriver::Mpio(MpioDriver::try_new(comm, info).unwrap()))
     }
 
+    /// Sets the file driver to Direct and configures it.
     #[cfg(feature = "have-direct")]
     pub fn direct_options(
         &mut self, alignment: usize, block_size: usize, cbuf_size: usize,
@@ -1247,6 +1455,7 @@ impl FileAccessBuilder {
         self.driver(&FileDriver::Direct(DirectDriver { alignment, block_size, cbuf_size }))
     }
 
+    /// Sets the file driver to Direct.
     #[cfg(feature = "have-direct")]
     pub fn direct(&mut self) -> &mut Self {
         self.driver(&FileDriver::Direct(DirectDriver::default()))
@@ -1487,10 +1696,12 @@ impl FileAccessBuilder {
         Ok(())
     }
 
+    /// Copies the builder settings into a file access property list.
     pub fn apply(&self, plist: &mut FileAccess) -> Result<()> {
         h5lock!(self.populate_plist(plist.id()))
     }
 
+    /// Constructs a new file access property list.
     pub fn finish(&self) -> Result<FileAccess> {
         h5lock!({
             let mut plist = FileAccess::try_new()?;
@@ -1501,14 +1712,17 @@ impl FileAccessBuilder {
 
 /// File access property list.
 impl FileAccess {
+    /// Creates a new file access property list.
     pub fn try_new() -> Result<Self> {
         Self::from_id(h5try!(H5Pcreate(*H5P_FILE_ACCESS)))
     }
 
+    /// Creates a copy of the property list.
     pub fn copy(&self) -> Self {
         unsafe { self.deref().copy().cast_unchecked() }
     }
 
+    /// Creates a new file access property list builder.
     pub fn build() -> FileAccessBuilder {
         FileAccessBuilder::new()
     }
@@ -1640,6 +1854,7 @@ impl FileAccess {
         }
     }
 
+    /// Returns the file driver properties.
     pub fn driver(&self) -> FileDriver {
         self.get_driver().unwrap_or(FileDriver::Sec2)
     }
@@ -1649,6 +1864,7 @@ impl FileAccess {
         h5get!(H5Pget_fclose_degree(self.id()): H5F_close_degree_t).map(Into::into)
     }
 
+    /// Returns the file close degree.
     pub fn fclose_degree(&self) -> FileCloseDegree {
         self.get_fclose_degree().unwrap_or_else(|_| FileCloseDegree::default())
     }
@@ -1660,6 +1876,7 @@ impl FileAccess {
         })
     }
 
+    /// Returns the file alignment properties.
     pub fn alignment(&self) -> Alignment {
         self.get_alignment().unwrap_or_else(|_| Alignment::default())
     }
@@ -1675,6 +1892,7 @@ impl FileAccess {
         )
     }
 
+    /// Returns the raw data chunk cache properties.
     pub fn chunk_cache(&self) -> ChunkCache {
         self.get_chunk_cache().unwrap_or_else(|_| ChunkCache::default())
     }
@@ -1695,6 +1913,7 @@ impl FileAccess {
         h5get!(H5Pget_meta_block_size(self.id()): hsize_t).map(|x| x as _)
     }
 
+    /// Returns the metadata block size.
     pub fn meta_block_size(&self) -> u64 {
         self.get_meta_block_size().unwrap_or(2048)
     }
@@ -1711,6 +1930,7 @@ impl FileAccess {
         )
     }
 
+    /// Returns the page buffer size properties.
     #[cfg(feature = "1.10.1")]
     pub fn page_buffer_size(&self) -> PageBufferSize {
         self.get_page_buffer_size().unwrap_or_else(|_| PageBufferSize::default())
@@ -1721,6 +1941,7 @@ impl FileAccess {
         h5get!(H5Pget_sieve_buf_size(self.id()): size_t).map(|x| x as _)
     }
 
+    /// Returns the maximum data sieve buffer size.
     pub fn sieve_buf_size(&self) -> usize {
         self.get_sieve_buf_size().unwrap_or(64 * 1024)
     }
@@ -1731,6 +1952,8 @@ impl FileAccess {
         h5get!(H5Pget_evict_on_close(self.id()): hbool_t).map(|x| x > 0)
     }
 
+    /// Returns `true` if an object will be evicted from the metadata cache when the object is
+    /// closed.
     #[cfg(feature = "1.10.1")]
     pub fn evict_on_close(&self) -> bool {
         self.get_evict_on_close().unwrap_or(false)
@@ -1742,6 +1965,7 @@ impl FileAccess {
         h5get!(H5Pget_metadata_read_attempts(self.id()): c_uint).map(|x| x as _)
     }
 
+    /// Returns the number of read attempts for SWMR access.
     #[cfg(feature = "1.10.0")]
     pub fn metadata_read_attempts(&self) -> u32 {
         self.get_metadata_read_attempts().unwrap_or(1)
@@ -1754,6 +1978,7 @@ impl FileAccess {
         h5call!(H5Pget_mdc_config(self.id(), &mut config)).map(|_| config.into())
     }
 
+    /// Returns the metadata cache configuration.
     pub fn mdc_config(&self) -> MetadataCacheConfig {
         self.get_mdc_config().ok().unwrap_or_default()
     }
@@ -1766,6 +1991,7 @@ impl FileAccess {
         h5call!(H5Pget_mdc_image_config(self.id(), &mut config)).map(|_| config.into())
     }
 
+    /// Returns the metadata cache image configuration.
     #[cfg(feature = "1.10.1")]
     pub fn mdc_image_config(&self) -> CacheImageConfig {
         self.get_mdc_image_config().ok().unwrap_or_default()
@@ -1801,6 +2027,7 @@ impl FileAccess {
         })
     }
 
+    /// Returns the metadata cache logging options.
     #[cfg(feature = "1.10.0")]
     pub fn mdc_log_options(&self) -> CacheLogOptions {
         self.get_mdc_log_options().ok().unwrap_or_default()
@@ -1812,6 +2039,7 @@ impl FileAccess {
         h5get!(H5Pget_all_coll_metadata_ops(self.id()): hbool_t).map(|x| x > 0)
     }
 
+    /// Returns `true` if metadata reads are collective.
     #[cfg(all(feature = "1.10.0", feature = "have-parallel"))]
     pub fn all_coll_metadata_ops(&self) -> bool {
         self.get_all_coll_metadata_ops().unwrap_or(false)
@@ -1823,6 +2051,7 @@ impl FileAccess {
         h5get!(H5Pget_coll_metadata_write(self.id()): hbool_t).map(|x| x > 0)
     }
 
+    /// Returns `true` if metadata writes are collective.
     #[cfg(all(feature = "1.10.0", feature = "have-parallel"))]
     pub fn coll_metadata_write(&self) -> bool {
         self.get_coll_metadata_write().unwrap_or(false)
@@ -1833,6 +2062,7 @@ impl FileAccess {
         h5get!(H5Pget_gc_references(self.id()): c_uint).map(|x| x > 0)
     }
 
+    /// Returns `true` if reference garbage collection is enabled.
     pub fn gc_references(&self) -> bool {
         self.get_gc_references().unwrap_or(false)
     }
@@ -1842,6 +2072,7 @@ impl FileAccess {
         h5get!(H5Pget_small_data_block_size(self.id()): hsize_t).map(|x| x as _)
     }
 
+    /// Returns the size setting in bytes of the small data block.
     pub fn small_data_block_size(&self) -> u64 {
         self.get_small_data_block_size().unwrap_or(2048)
     }
@@ -1853,11 +2084,13 @@ impl FileAccess {
             .map(|(low, high)| LibVerBounds { low: low.into(), high: high.into() })
     }
 
+    /// Returns the library format version bounds for writing objects to a file.
     #[cfg(feature = "1.10.2")]
     pub fn libver_bounds(&self) -> LibVerBounds {
         self.get_libver_bounds().ok().unwrap_or_default()
     }
 
+    /// Returns the lower library format version bound for writing objects to a file.
     #[cfg(feature = "1.10.2")]
     pub fn libver(&self) -> LibraryVersion {
         self.get_libver_bounds().ok().unwrap_or_default().low

@@ -69,9 +69,12 @@ impl Clone for LinkCreate {
     }
 }
 
+/// The character encoding used to create a link or attribute name.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CharEncoding {
+    /// US ASCII.
     Ascii,
+    /// UTF-8.
     Utf8,
 }
 
@@ -96,11 +99,13 @@ impl LinkCreateBuilder {
         Ok(builder)
     }
 
+    /// Sets whether to create intermediate groups upon creation of an object.
     pub fn create_intermediate_group(&mut self, create: bool) -> &mut Self {
         self.create_intermediate_group = Some(create);
         self
     }
 
+    /// Sets the character encoding to use when creating links.
     pub fn char_encoding(&mut self, encoding: CharEncoding) -> &mut Self {
         self.char_encoding = Some(encoding);
         self
@@ -120,10 +125,12 @@ impl LinkCreateBuilder {
         Ok(())
     }
 
+    /// Copies the builder settings into a link creation property list.
     pub fn apply(&self, plist: &mut LinkCreate) -> Result<()> {
         h5lock!(self.populate_plist(plist.id()))
     }
 
+    /// Constructs a new link creation property list.
     pub fn finish(&self) -> Result<LinkCreate> {
         h5lock!({
             let mut plist = LinkCreate::try_new()?;
@@ -134,14 +141,17 @@ impl LinkCreateBuilder {
 
 /// Link create property list.
 impl LinkCreate {
+    /// Creates a new link creation property list.
     pub fn try_new() -> Result<Self> {
         Self::from_id(h5try!(H5Pcreate(*H5P_LINK_CREATE)))
     }
 
+    /// Creates a copy of the link creation property list.
     pub fn copy(&self) -> Self {
         unsafe { self.deref().copy().cast_unchecked() }
     }
 
+    /// Returns a builder for configuring a link creation property list.
     pub fn build() -> LinkCreateBuilder {
         LinkCreateBuilder::new()
     }
@@ -151,6 +161,7 @@ impl LinkCreate {
         h5get!(H5Pget_create_intermediate_group(self.id()): c_uint).map(|x| x > 0)
     }
 
+    /// Returns `true` if intermediate groups will be created upon object creation.
     pub fn create_intermediate_group(&self) -> bool {
         self.get_create_intermediate_group().unwrap_or(false)
     }
@@ -164,6 +175,7 @@ impl LinkCreate {
         })
     }
 
+    /// Returns the character encoding used to create links.
     pub fn char_encoding(&self) -> CharEncoding {
         self.get_char_encoding().unwrap_or(CharEncoding::Ascii)
     }

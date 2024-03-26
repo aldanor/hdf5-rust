@@ -93,7 +93,7 @@ pub enum PropertyListClass {
     LinkCreate,
     /// Properties for object copying process.
     ObjectCopy,
-    /// Properties for object creatio.
+    /// Properties for object creation.
     ObjectCreate,
     /// Properties for character encoding.
     StringCreate,
@@ -210,6 +210,7 @@ impl PropertyList {
         })
     }
 
+    /// Returns `true` if the property list is a member of `class`.
     pub fn is_class(&self, class: PropertyListClass) -> bool {
         use crate::globals::*;
         h5lock!({

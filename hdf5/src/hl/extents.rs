@@ -68,6 +68,7 @@ impl<T: Into<Self> + Clone> From<&T> for Extent {
 }
 
 impl Extent {
+    /// Creates a new extent with a current size and (optional) maximum size.
     pub fn new(dim: Ix, max: Option<Ix>) -> Self {
         Self { dim, max }
     }
@@ -82,18 +83,22 @@ impl Extent {
         Self { dim, max: None }
     }
 
+    /// Returns `true` if the current dimension size is at least the maximum size, if set.
     pub fn is_fixed(&self) -> bool {
         self.max.map_or(false, |max| self.dim >= max)
     }
 
+    /// Returns `true` if the dimension is resizable.
     pub fn is_resizable(&self) -> bool {
         self.max.is_none()
     }
 
+    /// Returns `true` if the dimension has unlimited maximum size.
     pub fn is_unlimited(&self) -> bool {
         self.is_resizable()
     }
 
+    /// Returns `true` if the current dimension size is not greater than the maximum.
     pub fn is_valid(&self) -> bool {
         self.max.unwrap_or(self.dim) >= self.dim
     }
@@ -113,10 +118,12 @@ pub struct SimpleExtents {
 }
 
 impl SimpleExtents {
+    /// Creates extents from a vector of `Extent` values.
     pub fn from_vec(extents: Vec<Extent>) -> Self {
         Self { inner: extents }
     }
 
+    /// Creates extents from an iterable of extent-like values.
     pub fn new<T>(extents: T) -> Self
     where
         T: IntoIterator,
@@ -125,6 +132,8 @@ impl SimpleExtents {
         Self::from_vec(extents.into_iter().map(Into::into).collect())
     }
 
+    /// Creates extents from an iterable of dimension sizes and sets their
+    /// maximum sizes equal to their current sizes.
     pub fn fixed<T>(extents: T) -> Self
     where
         T: IntoIterator,
@@ -142,38 +151,48 @@ impl SimpleExtents {
         Self::from_vec(extents.into_iter().map(|x| Extent::resizable(*x.borrow())).collect())
     }
 
+    /// Returns the number of dimensions.
     pub fn ndim(&self) -> usize {
         self.inner.len()
     }
 
+    /// Returns a vector containing the current size of each dimension.
     pub fn dims(&self) -> Vec<Ix> {
         self.inner.iter().map(|e| e.dim).collect()
     }
 
+    /// Returns a vector containing the maximum size (if set) of each dimension.
     pub fn maxdims(&self) -> Vec<Option<Ix>> {
         self.inner.iter().map(|e| e.max).collect()
     }
 
+    /// Returns the number of elements that the space can hold.
     pub fn size(&self) -> usize {
         self.inner.iter().fold(1, |acc, x| acc * x.dim)
     }
 
+    /// Returns `true` if there is at least one dimension and they all have fixed maximum size.
     pub fn is_fixed(&self) -> bool {
         !self.inner.is_empty() && self.inner.iter().map(Extent::is_fixed).all(identity)
     }
 
+    /// Returns `true` if there is at least one resizable dimension.
     pub fn is_resizable(&self) -> bool {
         !self.inner.is_empty() && self.inner.iter().map(Extent::is_unlimited).any(identity)
     }
 
+    /// Returns `true` if there is at least one dimension of unlimited size.
     pub fn is_unlimited(&self) -> bool {
         self.inner.iter().map(Extent::is_unlimited).any(identity)
     }
 
+    /// Returns `true` if the extents are valid and the dimensionality does not exceed
+    /// HDF5's max rank.
     pub fn is_valid(&self) -> bool {
         self.inner.iter().map(Extent::is_valid).all(identity) && self.ndim() <= H5S_MAX_RANK as _
     }
 
+    /// Returns an iterator over the `Extent` values for each dimension.
     pub fn iter(
         &self,
     ) -> impl ExactSizeIterator<Item = &Extent> + DoubleEndedIterator<Item = &Extent> {
@@ -290,6 +309,7 @@ impl_from!(RangeFrom<Ix>);
 impl_from!(RangeInclusive<Ix>);
 impl_from!(Extent);
 
+/// The dimensionality of a dataspace.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Extents {
     /// A null dataspace contains no data elements.
@@ -324,6 +344,7 @@ pub enum Extents {
 }
 
 impl Extents {
+    /// Creates extents from a value.
     pub fn new<T: Into<Self>>(extents: T) -> Self {
         extents.into()
     }
@@ -389,18 +410,22 @@ impl Extents {
         }
     }
 
+    /// Returns `true` if the extents are valid.
     pub fn is_valid(&self) -> bool {
         self.as_simple().map_or(true, SimpleExtents::is_valid)
     }
 
+    /// Returns `true` if the extents have unlimited maximum size.
     pub fn is_unlimited(&self) -> bool {
         self.as_simple().map_or(true, SimpleExtents::is_unlimited)
     }
 
+    /// Returns `true` if there is at least one resizable dimension.
     pub fn is_resizable(&self) -> bool {
         self.as_simple().map_or(true, SimpleExtents::is_resizable)
     }
 
+    /// Returns a version of `self` that is resizable along all dimensions.
     pub fn resizable(self) -> Self {
         match self {
             Self::Simple(extents) => SimpleExtents::resizable(extents.dims()).into(),
@@ -408,12 +433,15 @@ impl Extents {
         }
     }
 
+    /// Returns an iterator of `Extent` values, one for each dimension.
     pub fn iter(
         &self,
     ) -> impl ExactSizeIterator<Item = &Extent> + DoubleEndedIterator<Item = &Extent> {
         ExtentsIter { inner: self.as_simple().map(SimpleExtents::iter) }
     }
 
+    /// Returns a slice containing an `Extent` for each dimension, or `None` if the extents are
+    /// null or scalar.
     pub fn slice(&self) -> Option<&[Extent]> {
         if let Self::Simple(x) = self {
             Some(x)
@@ -423,6 +451,7 @@ impl Extents {
     }
 }
 
+/// An iterator over the dimensions of an `Extents`.
 pub struct ExtentsIter<A> {
     inner: Option<A>,
 }

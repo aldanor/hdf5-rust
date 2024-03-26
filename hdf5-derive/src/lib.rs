@@ -12,6 +12,7 @@ use syn::{
     TypeGenerics, TypePath,
 };
 
+/// Derive macro generating an impl of the trait `H5Type`.
 #[proc_macro_derive(H5Type, attributes(hdf5))]
 #[proc_macro_error]
 pub fn derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {

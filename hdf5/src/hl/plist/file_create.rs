@@ -424,10 +424,12 @@ impl FileCreateBuilder {
         Ok(())
     }
 
+    /// Copies the builder settings into a file creation property list.
     pub fn apply(&self, plist: &mut FileCreate) -> Result<()> {
         h5lock!(self.populate_plist(plist.id()))
     }
 
+    /// Constructs a new file creation property list.
     pub fn finish(&self) -> Result<FileCreate> {
         h5lock!({
             let mut plist = FileCreate::try_new()?;
@@ -438,14 +440,17 @@ impl FileCreateBuilder {
 
 /// File creation property list.
 impl FileCreate {
+    /// Creates a new file creation property list.
     pub fn try_new() -> Result<Self> {
         Self::from_id(h5try!(H5Pcreate(*H5P_FILE_CREATE)))
     }
 
+    /// Creates a copy of the file creation property list.
     pub fn copy(&self) -> Self {
         unsafe { self.deref().copy().cast_unchecked() }
     }
 
+    /// Returns a builder for configuring a file creation property list.
     pub fn build() -> FileCreateBuilder {
         FileCreateBuilder::new()
     }

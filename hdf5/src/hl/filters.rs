@@ -14,6 +14,7 @@ use hdf5_sys::h5z::{
     H5_SZIP_NN_OPTION_MASK,
 };
 
+/// A filter identifier.
 pub use hdf5_sys::h5z::H5Z_filter_t;
 
 use crate::internal_prelude::*;
@@ -23,20 +24,27 @@ mod blosc;
 #[cfg(feature = "lzf")]
 mod lzf;
 
+/// Coding methods for Szip compression.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SZip {
+    /// Entropy coding method.
     Entropy,
+    /// Nearest-neighbor coding method.
     NearestNeighbor,
 }
 
+/// Scaling methods for scale-offset compression.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ScaleOffset {
+    /// Integer scaling with some MinBits value.
     Integer(u16),
+    /// Floating-point D-scaling with some decimal scale factor.
     FloatDScale(u8),
 }
 
 #[cfg(feature = "blosc")]
 mod blosc_impl {
+    /// Available compressors for Blosc compression.
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     #[cfg(feature = "blosc")]
     pub enum Blosc {
@@ -97,25 +105,39 @@ mod blosc_impl {
 #[cfg(feature = "blosc")]
 pub use blosc_impl::*;
 
+/// An HDF5 filter configuration.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Filter {
+    /// Gzip compression (deflation) with some compression level.
     Deflate(u8),
+    /// Shuffle algorithm.
     Shuffle,
+    /// Fletcher32 checksum.
     Fletcher32,
+    /// SZIP compression with some coding method and pixels per block.
     SZip(SZip, u8),
+    /// N-bit compression.
     NBit,
+    /// Scale-offset compression with some scaling mode.
     ScaleOffset(ScaleOffset),
+    /// LZF compression.
     #[cfg(feature = "lzf")]
     LZF,
+    /// Blosc compression with some compressor, compression level, and shuffle mode.
     #[cfg(feature = "blosc")]
     Blosc(Blosc, u8, BloscShuffle),
+    /// A user-defined filter with some parameters.
     User(H5Z_filter_t, Vec<c_uint>),
 }
 
+/// Information about whether a filter is available and enabled for encoding/decoding.
 #[derive(Default, Clone, Copy, Debug, PartialEq, Eq)]
 pub struct FilterInfo {
+    /// Whether the filter is available.
     pub is_available: bool,
+    /// Whether the filter is configured to encode data.
     pub encode_enabled: bool,
+    /// Whether the filter is configured to decode data.
     pub decode_enabled: bool,
 }
 
@@ -159,6 +181,7 @@ pub fn blosc_available() -> bool {
 }
 
 impl Filter {
+    /// Returns the filter's identifier.
     pub fn id(&self) -> H5Z_filter_t {
         match self {
             Self::Deflate(_) => H5Z_FILTER_DEFLATE,
@@ -175,6 +198,7 @@ impl Filter {
         }
     }
 
+    /// Returns metadata for the filter with the given identifier.
     pub fn get_info(filter_id: H5Z_filter_t) -> FilterInfo {
         if !h5call!(H5Zfilter_avail(filter_id)).map(|x| x > 0).unwrap_or_default() {
             return FilterInfo::default();
@@ -188,47 +212,59 @@ impl Filter {
         }
     }
 
+    /// Returns `true` if the filter is available.
     pub fn is_available(&self) -> bool {
         Self::get_info(self.id()).is_available
     }
 
+    /// Returns `true` if the filter is configured to encode data.
     pub fn encode_enabled(&self) -> bool {
         Self::get_info(self.id()).encode_enabled
     }
 
+    /// Returns `true` if the filter is configured to decode data.
     pub fn decode_enabled(&self) -> bool {
         Self::get_info(self.id()).decode_enabled
     }
 
+    /// Creates a deflation filter configuration with some compression level.
     pub fn deflate(level: u8) -> Self {
         Self::Deflate(level)
     }
 
+    /// Returns the shuffle algorithm filter configuration.
     pub fn shuffle() -> Self {
         Self::Shuffle
     }
 
+    /// Returns the Fletcher32 checksum filter configuration.
     pub fn fletcher32() -> Self {
         Self::Fletcher32
     }
 
+    /// Creates an Szip filter configuration with some coding method and pixels per block.
     pub fn szip(coding: SZip, px_per_block: u8) -> Self {
         Self::SZip(coding, px_per_block)
     }
 
+    /// Returns the N-bit compression filter configuration.
     pub fn nbit() -> Self {
         Self::NBit
     }
 
+    /// Creates a scale-offset compression filter configuration with some scaling mode.
     pub fn scale_offset(mode: ScaleOffset) -> Self {
         Self::ScaleOffset(mode)
     }
 
+    /// Returns the LZF compression filter.
     #[cfg(feature = "lzf")]
     pub fn lzf() -> Self {
         Self::LZF
     }
 
+    /// Creates a Blosc compression filter configuration with some compressor,
+    /// compression level, and shuffle mode.
     #[cfg(feature = "blosc")]
     pub fn blosc<T>(complib: Blosc, clevel: u8, shuffle: T) -> Self
     where
@@ -237,6 +273,8 @@ impl Filter {
         Self::Blosc(complib, clevel, shuffle.into())
     }
 
+    /// Creates a Blosc LZ compression filter configuration with some compression level and
+    /// shuffle mode.
     #[cfg(feature = "blosc")]
     pub fn blosc_blosclz<T>(clevel: u8, shuffle: T) -> Self
     where
@@ -245,6 +283,8 @@ impl Filter {
         Self::blosc(Blosc::BloscLZ, clevel, shuffle)
     }
 
+    /// Creates a Blosc LZ4 compression filter configuration with some compression level and
+    /// shuffle mode.
     #[cfg(feature = "blosc")]
     pub fn blosc_lz4<T>(clevel: u8, shuffle: T) -> Self
     where
@@ -253,6 +293,8 @@ impl Filter {
         Self::blosc(Blosc::LZ4, clevel, shuffle)
     }
 
+    /// Creates a Blosc LZ4HC compression filter configuration with some compression level and
+    /// shuffle mode.
     #[cfg(feature = "blosc")]
     pub fn blosc_lz4hc<T>(clevel: u8, shuffle: T) -> Self
     where
@@ -261,6 +303,8 @@ impl Filter {
         Self::blosc(Blosc::LZ4HC, clevel, shuffle)
     }
 
+    /// Creates a Blosc Snappy compression filter configuration with some compression level and
+    /// shuffle mode.
     #[cfg(feature = "blosc")]
     pub fn blosc_snappy<T>(clevel: u8, shuffle: T) -> Self
     where
@@ -269,6 +313,8 @@ impl Filter {
         Self::blosc(Blosc::Snappy, clevel, shuffle)
     }
 
+    /// Creates a Blosc Zlib compression filter configuration with some compression level and
+    /// shuffle mode.
     #[cfg(feature = "blosc")]
     pub fn blosc_zlib<T>(clevel: u8, shuffle: T) -> Self
     where
@@ -277,6 +323,8 @@ impl Filter {
         Self::blosc(Blosc::ZLib, clevel, shuffle)
     }
 
+    /// Creates a Blosc Zstd compression filter configuration with some compression level and
+    /// shuffle mode.
     #[cfg(feature = "blosc")]
     pub fn blosc_zstd<T>(clevel: u8, shuffle: T) -> Self
     where
@@ -285,6 +333,7 @@ impl Filter {
         Self::blosc(Blosc::ZStd, clevel, shuffle)
     }
 
+    /// Creates a user-defined filter configuration with some filter identifier and parameters.
     pub fn user(id: H5Z_filter_t, cdata: &[c_uint]) -> Self {
         Self::User(id, cdata.to_vec())
     }
@@ -386,6 +435,12 @@ impl Filter {
         Ok(Self::blosc(complib, clevel, shuffle))
     }
 
+    /// Tries to create a filter configuration from a filter identifier and parameters.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the identifier is invalid or the parameters are invalid
+    /// for the specified filter.
     pub fn from_raw(filter_id: H5Z_filter_t, cdata: &[c_uint]) -> Result<Self> {
         ensure!(filter_id > 0, "invalid filter id: {}", filter_id);
         match filter_id {

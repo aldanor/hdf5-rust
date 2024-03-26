@@ -81,6 +81,20 @@ pub trait ObjectClass: Sized {
     }
 }
 
+/// Takes ownership of an object via its identifier.
+///
+/// # Errors
+///
+/// Returns an error if `id` does not refer to an object of type `T`.
+///
+/// # Safety
+///
+/// This should only be called with an identifier obtained from an object constructor in the HDF5 C
+/// library. The reference count of a newly created object is 1, so this function creates a handle
+/// for the object without incrementing its reference count.
+///
+/// This function is unsafe because improper use may lead to the object being closed before all its
+/// handles are dropped.
 pub unsafe fn from_id<T: ObjectClass>(id: hid_t) -> Result<T> {
     T::from_id(id)
 }

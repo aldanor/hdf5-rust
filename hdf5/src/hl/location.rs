@@ -84,14 +84,14 @@ impl Location {
         File::from_id(h5try!(H5Iget_file_id(self.id())))
     }
 
-    /// Returns the commment attached to the named object, if any.
+    /// Returns the comment attached to the named object, if any.
     pub fn comment(&self) -> Option<String> {
         // TODO: should this return Result<Option<String>> or fail silently?
         let comment = h5lock!(get_h5_str(|m, s| H5Oget_comment(self.id(), m, s)).ok());
         comment.and_then(|c| if c.is_empty() { None } else { Some(c) })
     }
 
-    /// Set or the commment attached to the named object.
+    /// Set or the comment attached to the named object.
     #[deprecated(note = "attributes are preferred to comments")]
     pub fn set_comment(&self, comment: &str) -> Result<()> {
         // TODO: &mut self?
@@ -100,7 +100,7 @@ impl Location {
         h5call!(H5Oset_comment(self.id(), comment.as_ptr())).and(Ok(()))
     }
 
-    /// Clear the commment attached to the named object.
+    /// Clear the comment attached to the named object.
     #[deprecated(note = "attributes are preferred to comments")]
     pub fn clear_comment(&self) -> Result<()> {
         // TODO: &mut self?
@@ -108,52 +108,75 @@ impl Location {
         h5call!(H5Oset_comment(self.id(), ptr::null_mut())).and(Ok(()))
     }
 
+    /// Create a builder for a new attribute of known type.
     pub fn new_attr<T: H5Type>(&self) -> AttributeBuilderEmpty {
         AttributeBuilder::new(self).empty::<T>()
     }
 
+    /// Create a builder for a new attribute.
     pub fn new_attr_builder(&self) -> AttributeBuilder {
         AttributeBuilder::new(self)
     }
 
+    /// Create a new named attribute on the object.
     pub fn attr(&self, name: &str) -> Result<Attribute> {
         let name = to_cstring(name)?;
         Attribute::from_id(h5try!(H5Aopen(self.id(), name.as_ptr(), H5P_DEFAULT)))
     }
 
+    /// Return the names of all attributes on the object.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if an underlying library call fails.
     pub fn attr_names(&self) -> Result<Vec<String>> {
         Attribute::attr_names(self)
     }
 
+    /// Returns the object's metadata.
     pub fn loc_info(&self) -> Result<LocationInfo> {
         H5O_get_info(self.id(), true)
     }
 
+    /// Returns the object's type.
     pub fn loc_type(&self) -> Result<LocationType> {
         Ok(H5O_get_info(self.id(), false)?.loc_type)
     }
 
+    /// Returns the metadata of another object with name relative to `self`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the name is invalid.
     pub fn loc_info_by_name(&self, name: &str) -> Result<LocationInfo> {
         let name = to_cstring(name)?;
         H5O_get_info_by_name(self.id(), name.as_ptr(), true)
     }
 
+    /// Returns the type of another object with name relative to `self`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the name is invalid.
     pub fn loc_type_by_name(&self, name: &str) -> Result<LocationType> {
         let name = to_cstring(name)?;
         Ok(H5O_get_info_by_name(self.id(), name.as_ptr(), false)?.loc_type)
     }
 
+    /// Opens an object using its location token.
     pub fn open_by_token(&self, token: LocationToken) -> Result<Self> {
         H5O_open_by_token(self.id(), token)
     }
 }
 
+/// A token containing the address or identifier of a [`Location`].
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct LocationToken(
     #[cfg(not(feature = "1.12.0"))] haddr_t,
     #[cfg(feature = "1.12.0")] H5O_token_t,
 );
 
+/// The type of an object in a [`Location`].
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum LocationType {
     Group,

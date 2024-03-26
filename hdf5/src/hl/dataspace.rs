@@ -78,46 +78,62 @@ unsafe fn get_simple_extents(space_id: hid_t) -> Result<SimpleExtents> {
 }
 
 impl Dataspace {
+    /// Tries to construct a `Dataspace` from the given extents.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the extents are invalid.
     pub fn try_new<T: Into<Extents>>(extents: T) -> Result<Self> {
         Self::from_extents(&extents.into())
     }
 
+    /// Creates a new `Dataspace` that is a copy of the current one.
     pub fn copy(&self) -> Self {
         Self::from_id(h5lock!(H5Scopy(self.id()))).unwrap_or_else(|_| Self::invalid())
     }
 
+    /// Returns the number of dimensions in the space.
     pub fn ndim(&self) -> usize {
         h5call!(H5Sget_simple_extent_ndims(self.id())).unwrap_or(0) as _
     }
 
+    /// Returns a vector containing the current size of each dimension.
     pub fn shape(&self) -> Vec<Ix> {
         h5lock!(get_shape(self.id())).unwrap_or_default()
     }
 
+    /// Returns a vector containing the current maximum size (if set) of each dimension.
     pub fn maxdims(&self) -> Vec<Option<Ix>> {
         self.extents().unwrap_or(Extents::Null).maxdims()
     }
 
+    /// Returns `true` if any dimension is resizable.
     pub fn is_resizable(&self) -> bool {
         self.maxdims().iter().any(Option::is_none)
     }
 
+    /// Returns `true` if the extent type is null.
     pub fn is_null(&self) -> bool {
         h5lock!(H5Sget_simple_extent_type(self.id())) == H5S_class_t::H5S_NULL
     }
 
+    /// Returns `true` if the extent type is scalar.
     pub fn is_scalar(&self) -> bool {
         h5lock!(H5Sget_simple_extent_type(self.id())) == H5S_class_t::H5S_SCALAR
     }
 
+    /// Returns `true` if the extent type is simple.
     pub fn is_simple(&self) -> bool {
         h5lock!(H5Sget_simple_extent_type(self.id())) == H5S_class_t::H5S_SIMPLE
     }
 
+    /// Returns `true` if the selection for the space is within the dataspace extent if the current
+    /// offset is used.
     pub fn is_valid(&self) -> bool {
         h5lock!(H5Sselect_valid(self.id())) > 0
     }
 
+    /// Returns the number of elements in the space.
     pub fn size(&self) -> usize {
         match h5lock!(H5Sget_simple_extent_type(self.id())) {
             H5S_class_t::H5S_SIMPLE => {
@@ -128,6 +144,11 @@ impl Dataspace {
         }
     }
 
+    /// Encodes the dataspace description into a new byte vector.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the underlying encoding call fails.
     #[allow(deprecated)]
     pub fn encode(&self) -> Result<Vec<u8>> {
         cfg_if::cfg_if! {
@@ -152,6 +173,11 @@ impl Dataspace {
         }
     }
 
+    /// Tries to decode a dataspace from a byte buffer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the buffer does not decode to a valid dataspace.
     pub fn decode<T>(buf: T) -> Result<Self>
     where
         T: AsRef<[u8]>,
@@ -174,6 +200,11 @@ impl Dataspace {
         }))
     }
 
+    /// Returns the extents of the dataspace.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the extents type is unsupported.
     #[allow(clippy::match_wildcard_for_single_variants)]
     pub fn extents(&self) -> Result<Extents> {
         h5lock!(match H5Sget_simple_extent_type(self.id()) {
@@ -184,6 +215,7 @@ impl Dataspace {
         })
     }
 
+    /// Returns the number of elements in the dataspace selection.
     pub fn selection_size(&self) -> usize {
         h5call!(H5Sget_select_npoints(self.id())).ok().map_or(0, |x| x as _)
     }
@@ -199,6 +231,7 @@ impl Dataspace {
         })
     }
 
+    /// Selects part of the dataspace and returns a new dataspace selection object.
     pub fn select<S: Into<Selection>>(&self, selection: S) -> Result<Self> {
         let raw_sel = selection.into().into_raw(self.shape())?;
         self.select_raw(raw_sel)
@@ -209,6 +242,7 @@ impl Dataspace {
         sync(|| unsafe { RawSelection::extract_from_dataspace(self.id()) })
     }
 
+    /// Returns a description of the current dataspace selection.
     pub fn get_selection(&self) -> Result<Selection> {
         let raw_sel = self.get_raw_selection()?;
         Selection::from_raw(raw_sel)

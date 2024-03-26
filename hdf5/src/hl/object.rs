@@ -29,6 +29,7 @@ impl Debug for Object {
 }
 
 impl Object {
+    /// Returns the object's identifier.
     pub fn id(&self) -> hid_t {
         self.0.id()
     }
@@ -57,7 +58,7 @@ impl Object {
 macro_rules! impl_downcast {
     ($func:ident, $tp:ty) => {
         impl Object {
-            #[doc = "Downcast the object into $tp if possible."]
+            #[doc = concat!("Downcast the object into `", stringify!($tp), "` if possible.")]
             pub fn $func(&self) -> Result<$tp> {
                 self.clone().cast()
             }

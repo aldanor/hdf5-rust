@@ -5,6 +5,7 @@ use std::ops::Deref;
 use std::ptr;
 use std::slice;
 
+/// A variable-length array.
 #[repr(C)]
 pub struct VarLenArray<T: Copy> {
     len: usize,
@@ -13,6 +14,14 @@ pub struct VarLenArray<T: Copy> {
 }
 
 impl<T: Copy> VarLenArray<T> {
+    /// Creates a `VarLenArray<T>` by copying the first `len` elements stored at `p`.
+    ///
+    /// Returns an empty array if `p` is null.
+    ///
+    /// # Safety
+    ///
+    /// - `p` must be valid for reads of `len * size_of::<T>()` bytes.
+    /// - `p` must point to `len` consecutive properly initialized and aligned values of type `T`.
     pub unsafe fn from_parts(p: *const T, len: usize) -> Self {
         let (len, ptr) = if !p.is_null() && len != 0 {
             let dst = crate::malloc(len * mem::size_of::<T>());
@@ -24,26 +33,31 @@ impl<T: Copy> VarLenArray<T> {
         Self { len, ptr: ptr as *const _, tag: PhantomData }
     }
 
+    /// Creates a `VarLenArray<T>` from a slice by copying its elements.
     #[inline]
     pub fn from_slice(arr: &[T]) -> Self {
         unsafe { Self::from_parts(arr.as_ptr(), arr.len()) }
     }
 
+    /// Returns a raw pointer to the array's buffer.
     #[inline]
     pub fn as_ptr(&self) -> *const T {
         self.ptr
     }
 
+    /// Returns the number of elements in the array.
     #[inline]
     pub fn len(&self) -> usize {
         self.len as _
     }
 
+    /// Returns `true` if the array has a length of zero.
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.len == 0
     }
 
+    /// Returns a slice containing the entire array.
     #[inline]
     pub fn as_slice(&self) -> &[T] {
         self
