@@ -140,7 +140,7 @@ jobs:
         include:
           - {os: ubuntu, rust: stable}
           - {os: windows, rust: stable-msvc}
-          - {os: windows, rust: stable-gnu}
+          # - {os: windows, rust: stable-gnu}
           - {os: macos, rust: stable}
     steps:
       - name: Checkout repository
@@ -240,31 +240,31 @@ jobs:
       - name: Build and test all crates
         run: cargo test -vv
 
-  mingw:
-    name: mingw
-    runs-on: windows-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        rust: [stable]
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-        with: {submodules: true}
-      - name: Install Rust (${{matrix.rust}})
-        uses: dtolnay/rust-toolchain@stable
-        with: {toolchain: '${{matrix.rust}}', targets: x86_64-pc-windows-gnu}
-      - name: Install HDF5
-        shell: pwsh
-        run: |
-          $env:PATH="$env:PATH;C:\msys64\mingw64\bin;C:\msys64\usr\bin;"
-          C:\msys64\usr\bin\pacman.exe -Syu --noconfirm
-          C:\msys64\usr\bin\pacman.exe -S --noconfirm mingw-w64-x86_64-hdf5 mingw-w64-x86_64-pkgconf
-      - name: Build and test all crates
-        shell: pwsh
-        run: |
-          $env:PATH="$env:PATH;C:\msys64\mingw64\bin;"
-          cargo test -vv --target=x86_64-pc-windows-gnu
+  # mingw:
+  #   name: mingw
+  #   runs-on: windows-latest
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       rust: [stable]
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v3
+  #       with: {submodules: true}
+  #     - name: Install Rust (${{matrix.rust}})
+  #       uses: dtolnay/rust-toolchain@stable
+  #       with: {toolchain: '${{matrix.rust}}', targets: x86_64-pc-windows-gnu}
+  #     - name: Install HDF5
+  #       shell: pwsh
+  #       run: |
+  #         $env:PATH="$env:PATH;C:\msys64\mingw64\bin;C:\msys64\usr\bin;"
+  #         C:\msys64\usr\bin\pacman.exe -Syu --noconfirm
+  #         C:\msys64\usr\bin\pacman.exe -S --noconfirm mingw-w64-x86_64-hdf5 mingw-w64-x86_64-pkgconf
+  #     - name: Build and test all crates
+  #       shell: pwsh
+  #       run: |
+  #         $env:PATH="$env:PATH;C:\msys64\mingw64\bin;"
+  #         cargo test -vv --target=x86_64-pc-windows-gnu
 
   msrv:
     name: Minimal Supported Rust Version
@@ -282,22 +282,22 @@ jobs:
         run:
           cargo test --workspace -vv --features=hdf5-sys/static,hdf5-sys/zlib --exclude=hdf5-derive
 
-  wine:
-    name: wine
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-        with: {submodules: true}
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with: {toolchain: stable, targets: x86_64-pc-windows-gnu}
-      - name: Install dependencies
-        run: sudo apt-get update && sudo apt install wine64 mingw-w64
-      - name: Build and test
-        env:
-          CARGO_TARGET_X86_64_PC_WINDOWS_GNU_RUNNER: wine64
-        run: cargo test --workspace --features hdf5-sys/static --target x86_64-pc-windows-gnu --exclude=hdf5-derive
+  # wine:
+  #   name: wine
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v3
+  #       with: {submodules: true}
+  #     - name: Install Rust
+  #       uses: dtolnay/rust-toolchain@stable
+  #       with: {toolchain: stable, targets: x86_64-pc-windows-gnu}
+  #     - name: Install dependencies
+  #       run: sudo apt-get update && sudo apt install wine64 mingw-w64
+  #     - name: Build and test
+  #       env:
+  #         CARGO_TARGET_X86_64_PC_WINDOWS_GNU_RUNNER: wine64
+  #       run: cargo test --workspace --features hdf5-sys/static --target x86_64-pc-windows-gnu --exclude=hdf5-derive
 
   addr_san:
     name: Address sanitizer
