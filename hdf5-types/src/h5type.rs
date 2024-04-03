@@ -160,6 +160,7 @@ pub enum TypeDescriptor {
     VarLenArray(Box<Self>),
     VarLenAscii,
     VarLenUnicode,
+    Reference(Reference),
 }
 
 impl Display for TypeDescriptor {
@@ -186,6 +187,8 @@ impl Display for TypeDescriptor {
             TypeDescriptor::VarLenArray(ref tp) => write!(f, "[{}] (var len)", tp),
             TypeDescriptor::VarLenAscii => write!(f, "string (var len)"),
             TypeDescriptor::VarLenUnicode => write!(f, "unicode (var len)"),
+            TypeDescriptor::Reference(Reference::Object) => write!(f, "reference (object)"),
+            TypeDescriptor::Reference(Reference::Region) => write!(f, "reference (region)"),
         }
     }
 }
@@ -202,6 +205,7 @@ impl TypeDescriptor {
             Self::FixedAscii(len) | Self::FixedUnicode(len) => len,
             Self::VarLenArray(_) => mem::size_of::<hvl_t>(),
             Self::VarLenAscii | Self::VarLenUnicode => mem::size_of::<*const u8>(),
+            Self::Reference(reftyp) => reftyp.size(),
         }
     }
 
@@ -372,6 +376,18 @@ unsafe impl H5Type for VarLenUnicode {
     #[inline]
     fn type_descriptor() -> TypeDescriptor {
         TypeDescriptor::VarLenUnicode
+    }
+}
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum Reference {
+    Object,
+    Region,
+}
+
+impl Reference {
+    fn size(self) -> usize {
+        mem::size_of::<hdf5_sys::h5r::H5R_ref_t>()
     }
 }
 

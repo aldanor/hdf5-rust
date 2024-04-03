@@ -58,11 +58,12 @@ mod export {
         hl::extents::{Extent, Extents, SimpleExtents},
         hl::selection::{Hyperslab, Selection, SliceOrIndex},
         hl::{
-            Attribute, AttributeBuilder, AttributeBuilderData, AttributeBuilderEmpty,
-            AttributeBuilderEmptyShape, ByteReader, Container, Conversion, Dataset, DatasetBuilder,
-            DatasetBuilderData, DatasetBuilderEmpty, DatasetBuilderEmptyShape, Dataspace, Datatype,
-            File, FileBuilder, Group, LinkInfo, LinkType, Location, LocationInfo, LocationToken,
-            LocationType, Object, OpenMode, PropertyList, Reader, Writer,
+            location::ObjectReference, Attribute, AttributeBuilder, AttributeBuilderData,
+            AttributeBuilderEmpty, AttributeBuilderEmptyShape, ByteReader, Container, Conversion,
+            Dataset, DatasetBuilder, DatasetBuilderData, DatasetBuilderEmpty,
+            DatasetBuilderEmptyShape, Dataspace, Datatype, File, FileBuilder, Group, LinkInfo,
+            LinkType, Location, LocationInfo, LocationToken, LocationType, Object, OpenMode,
+            PropertyList, Reader, Writer,
         },
     };
 
