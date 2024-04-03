@@ -6,7 +6,7 @@ use std::ptr;
 use std::slice;
 
 #[repr(C)]
-pub struct VarLenArray<T: Copy> {
+pub struct VarLenArray<T> {
     len: usize,
     ptr: *const T,
     tag: PhantomData<T>,
@@ -50,7 +50,7 @@ impl<T: Copy> VarLenArray<T> {
     }
 }
 
-impl<T: Copy> Drop for VarLenArray<T> {
+impl<T> Drop for VarLenArray<T> {
     fn drop(&mut self) {
         if !self.ptr.is_null() {
             unsafe {

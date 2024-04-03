@@ -20,6 +20,7 @@ extern crate quickcheck;
 mod array;
 pub mod dyn_value;
 mod h5type;
+pub mod references;
 mod string;
 
 #[cfg(feature = "complex")]

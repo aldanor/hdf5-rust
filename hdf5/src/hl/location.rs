@@ -150,14 +150,14 @@ impl Location {
         H5O_open_by_token(self.id(), token)
     }
 
-    pub fn reference(&self, name: &str) -> Result<ObjectReference> {
+    pub fn reference(&self, name: &str) -> Result<StdReference> {
         let mut out: std::mem::MaybeUninit<_> = std::mem::MaybeUninit::uninit();
         let name = to_cstring(name)?;
         h5call!(H5Rcreate_object(self.id(), name.as_ptr(), H5P_DEFAULT, out.as_mut_ptr()))?;
-        Ok(ObjectReference { inner: unsafe { out.assume_init() } })
+        Ok(StdReference { inner: unsafe { out.assume_init() } })
     }
 
-    pub fn dereference(&self, reference: &ObjectReference) -> Result<ReferencedObject> {
+    pub fn dereference(&self, reference: &StdReference) -> Result<ReferencedObject> {
         let mut objtype = std::mem::MaybeUninit::uninit();
         h5call!(H5Rget_obj_type3(
             std::ptr::addr_of!(reference.inner),
@@ -193,8 +193,26 @@ pub enum ReferencedObject {
 }
 
 #[repr(transparent)]
-pub struct ObjectReference {
+pub struct StdReference {
     inner: H5R_ref_t,
+}
+
+unsafe impl H5Type for StdReference {
+    fn type_descriptor() -> hdf5_types::TypeDescriptor {
+        hdf5_types::TypeDescriptor::Reference(hdf5_types::Reference::Std)
+    }
+}
+
+impl Drop for StdReference {
+    fn drop(&mut self) {
+        let _e = h5call!(H5Rdestroy(&mut self.inner));
+    }
+}
+
+#[repr(transparent)]
+#[derive(Debug, Copy, Clone)]
+pub struct ObjectReference {
+    inner: hdf5_sys::h5r::hobj_ref_t,
 }
 
 unsafe impl H5Type for ObjectReference {
@@ -203,11 +221,11 @@ unsafe impl H5Type for ObjectReference {
     }
 }
 
-impl Drop for ObjectReference {
-    fn drop(&mut self) {
-        let _e = h5call!(H5Rdestroy(&mut self.inner));
-    }
-}
+// impl Drop for ObjectReference {
+//     fn drop(&mut self) {
+//         // let _e = h5call!(H5Rdestroy(&mut self.inner));
+//     }
+// }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct LocationToken(

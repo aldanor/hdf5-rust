@@ -11,7 +11,25 @@ fn main() {
     ds.write_slice(&refs[1..2], 1..2).unwrap();
     ds.write_slice(&refs[2..3], 2..3).unwrap();
 
-    let refs: ndarray::Array1<ObjectReference> = ds.read().unwrap();
+    let refs: ndarray::Array1<StdReference> = ds.read().unwrap();
     let g = file.dereference(&refs[1]);
-    println!("{g:?}");
+    // println!("{g:?}");
+
+    #[derive(H5Type, Debug)]
+    #[repr(C)]
+    struct RefList {
+        dataset: ObjectReference,
+        dimension: u32,
+    }
+
+    let file = File::open("dims_1d.h5").unwrap();
+    let ds = file.dataset("x1").unwrap();
+    let attr = ds.attr("REFERENCE_LIST").unwrap();
+    let reflist = attr.read_1d::<RefList>().unwrap();
+    assert_eq!(reflist.len(), 1);
+
+    let ds = file.dataset("data").unwrap();
+    let attr = ds.attr("DIMENSION_LIST").unwrap();
+    let dimlist = attr.read_1d::<hdf5_types::VarLenArray<ObjectReference>>().unwrap();
+    println!("{dimlist:?}");
 }

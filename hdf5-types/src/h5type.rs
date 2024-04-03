@@ -189,6 +189,7 @@ impl Display for TypeDescriptor {
             TypeDescriptor::VarLenUnicode => write!(f, "unicode (var len)"),
             TypeDescriptor::Reference(Reference::Object) => write!(f, "reference (object)"),
             TypeDescriptor::Reference(Reference::Region) => write!(f, "reference (region)"),
+            TypeDescriptor::Reference(Reference::Std) => write!(f, "reference"),
         }
     }
 }
@@ -383,11 +384,16 @@ unsafe impl H5Type for VarLenUnicode {
 pub enum Reference {
     Object,
     Region,
+    Std,
 }
 
 impl Reference {
     fn size(self) -> usize {
-        mem::size_of::<hdf5_sys::h5r::H5R_ref_t>()
+        match self {
+            Self::Object => mem::size_of::<hdf5_sys::h5r::hobj_ref_t>(),
+            Self::Region => mem::size_of::<hdf5_sys::h5r::hdset_reg_ref_t>(),
+            Self::Std => mem::size_of::<hdf5_sys::h5r::H5R_ref_t>(),
+        }
     }
 }
 
