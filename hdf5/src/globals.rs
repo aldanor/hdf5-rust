@@ -76,6 +76,7 @@ link_hid!(H5T_STD_B64BE, h5t::H5T_STD_B64BE);
 link_hid!(H5T_STD_B64LE, h5t::H5T_STD_B64LE);
 link_hid!(H5T_STD_REF_OBJ, h5t::H5T_STD_REF_OBJ);
 link_hid!(H5T_STD_REF_DSETREG, h5t::H5T_STD_REF_DSETREG);
+link_hid!(H5T_STD_REF, h5t::H5T_STD_REF);
 link_hid!(H5T_UNIX_D32BE, h5t::H5T_UNIX_D32BE);
 link_hid!(H5T_UNIX_D32LE, h5t::H5T_UNIX_D32LE);
 link_hid!(H5T_UNIX_D64BE, h5t::H5T_UNIX_D64BE);

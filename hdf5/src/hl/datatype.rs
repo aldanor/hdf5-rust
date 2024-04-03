@@ -411,7 +411,7 @@ impl Datatype {
                 TD::VarLenAscii => string_type(None, H5T_cset_t::H5T_CSET_ASCII),
                 TD::VarLenUnicode => string_type(None, H5T_cset_t::H5T_CSET_UTF8),
                 TD::Reference(hdf5_types::Reference::Object) => {
-                    Ok(h5try!(H5Tcopy(*crate::globals::H5T_STD_REF_OBJ)))
+                    Ok(h5try!(H5Tcopy(*crate::globals::H5T_STD_REF)))
                 }
                 TD::Reference(hdf5_types::Reference::Region) => {
                     Ok(h5try!(H5Tcopy(*crate::globals::H5T_STD_REF_DSETREG)))
