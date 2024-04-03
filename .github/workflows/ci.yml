@@ -34,7 +34,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with: {toolchain: '${{matrix.rust}}', components: 'rustfmt, clippy'}
       - name: Install HDF5
-        run: sudo apt-get install libhdf5-dev
+        run: sudo apt-get update && sudo apt-get install libhdf5-dev
       - name: Run cargo ${{matrix.command}}
         run: cargo ${{matrix.command}} ${{matrix.command == 'fmt' && '--all -- --check' || '--workspace --exclude hdf5-src -- -D warnings -D clippy::cargo -A clippy::multiple-crate-versions'}}
 
