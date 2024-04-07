@@ -345,7 +345,7 @@ unsafe impl<T: H5Type, const N: usize> H5Type for [T; N] {
     }
 }
 
-unsafe impl<T: Copy + H5Type> H5Type for VarLenArray<T> {
+unsafe impl<T: H5Type> H5Type for VarLenArray<T> {
     #[inline]
     fn type_descriptor() -> TypeDescriptor {
         TypeDescriptor::VarLenArray(Box::new(<T as H5Type>::type_descriptor()))

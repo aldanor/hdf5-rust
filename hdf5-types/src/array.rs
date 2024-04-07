@@ -12,23 +12,7 @@ pub struct VarLenArray<T> {
     tag: PhantomData<T>,
 }
 
-impl<T: Copy> VarLenArray<T> {
-    pub unsafe fn from_parts(p: *const T, len: usize) -> Self {
-        let (len, ptr) = if !p.is_null() && len != 0 {
-            let dst = crate::malloc(len * mem::size_of::<T>());
-            ptr::copy_nonoverlapping(p, dst.cast(), len);
-            (len, dst)
-        } else {
-            (0, ptr::null_mut())
-        };
-        Self { len, ptr: ptr as *const _, tag: PhantomData }
-    }
-
-    #[inline]
-    pub fn from_slice(arr: &[T]) -> Self {
-        unsafe { Self::from_parts(arr.as_ptr(), arr.len()) }
-    }
-
+impl<T> VarLenArray<T> {
     #[inline]
     pub fn as_ptr(&self) -> *const T {
         self.ptr
@@ -46,7 +30,27 @@ impl<T: Copy> VarLenArray<T> {
 
     #[inline]
     pub fn as_slice(&self) -> &[T] {
-        self
+        unsafe { slice::from_raw_parts(self.as_ptr(), self.len()) }
+    }
+}
+
+impl<T: Copy> VarLenArray<T> {
+    /// Creates a new `VarLenArray` from a slice by copying the source data.
+    #[inline]
+    pub fn from_slice(arr: &[T]) -> Self {
+        unsafe { Self::from_parts(arr.as_ptr(), arr.len()) }
+    }
+
+    /// Create a new `VarLenArray` from a ptr/len combo by copying the source data.
+    pub unsafe fn from_parts(p: *const T, len: usize) -> Self {
+        let (len, ptr) = if !p.is_null() && len != 0 {
+            let dst = crate::malloc(len * mem::size_of::<T>());
+            ptr::copy_nonoverlapping(p, dst.cast(), len);
+            (len, dst)
+        } else {
+            (0, ptr::null_mut())
+        };
+        Self { len, ptr: ptr as *const _, tag: PhantomData }
     }
 }
 
@@ -71,7 +75,7 @@ impl<T: Copy> Clone for VarLenArray<T> {
     }
 }
 
-impl<T: Copy> Deref for VarLenArray<T> {
+impl<T> Deref for VarLenArray<T> {
     type Target = [T];
 
     #[inline]
@@ -79,7 +83,7 @@ impl<T: Copy> Deref for VarLenArray<T> {
         if self.len == 0 || self.ptr.is_null() {
             &[]
         } else {
-            unsafe { slice::from_raw_parts(self.as_ptr(), self.len()) }
+            self.as_slice()
         }
     }
 }
@@ -135,7 +139,7 @@ impl<T: Copy + PartialEq, const N: usize> PartialEq<[T; N]> for VarLenArray<T> {
     }
 }
 
-impl<T: Copy + fmt::Debug> fmt::Debug for VarLenArray<T> {
+impl<T: fmt::Debug> fmt::Debug for VarLenArray<T> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.as_slice().fmt(f)

@@ -1,5 +1,6 @@
 //! Tests for the reference type storage and retrieval.
 //!
+#![cfg(feature = "1.12.0")]
 
 mod common;
 

@@ -22,9 +22,6 @@ use hdf5_sys::{
     h5f::H5Fget_name,
     h5i::{H5Iget_file_id, H5Iget_name},
     h5o::{H5O_type_t, H5Oget_comment},
-    h5r::{
-        H5R_ref_t, H5Rcreate_object, H5Rdereference2, H5Rdestroy, H5Rget_obj_type3, H5R_OBJECT1,
-    },
 };
 
 use crate::internal_prelude::*;
@@ -154,88 +151,16 @@ impl Location {
     ///
     /// This can be a group, dataset or datatype. Other objects are not supported.
     pub fn reference(&self, name: &str) -> Result<StdReference> {
-        let mut out: std::mem::MaybeUninit<_> = std::mem::MaybeUninit::uninit();
-        let name = to_cstring(name)?;
-        h5call!(H5Rcreate_object(self.id(), name.as_ptr(), H5P_DEFAULT, out.as_mut_ptr()))?;
-        Ok(StdReference { inner: unsafe { out.assume_init() } })
+        StdReference::create(self, name)
     }
 
     /// Get a reference back to the referenced object from a standard reference.
     ///
     /// This can be called against any object in the same file as the referenced object.
     pub fn dereference(&self, reference: &StdReference) -> Result<ReferencedObject> {
-        let mut objtype = std::mem::MaybeUninit::uninit();
-        h5call!(H5Rget_obj_type3(
-            std::ptr::addr_of!(reference.inner),
-            H5P_DEFAULT,
-            objtype.as_mut_ptr()
-        ))?;
-        let objtype = unsafe { objtype.assume_init() };
-
-        let objid = h5call!(H5Rdereference2(
-            self.id(),
-            H5P_DEFAULT,
-            H5R_OBJECT1,
-            std::ptr::addr_of!(reference.inner).cast(),
-        ))?;
-        use hdf5_sys::h5o::H5O_type_t::*;
-        Ok(match objtype {
-            H5O_TYPE_GROUP => ReferencedObject::Group(Group::from_id(objid)?),
-            H5O_TYPE_DATASET => ReferencedObject::Dataset(Dataset::from_id(objid)?),
-            H5O_TYPE_NAMED_DATATYPE => ReferencedObject::Datatype(Datatype::from_id(objid)?),
-            #[cfg(feature = "1.12.0")]
-            H5O_TYPE_MAP => fail!("Can not create object from a map"),
-            H5O_TYPE_UNKNOWN => fail!("Unknown datatype"),
-            H5O_TYPE_NTYPES => fail!("hdf5 should not produce this type"),
-        })
+        reference.dereference(self)
     }
 }
-
-/// The result of dereferencing a [standard reference](StdReference).
-///
-/// Each variant represents a different type of object that can be referenced by a [StdReference].
-#[derive(Clone, Debug)]
-pub enum ReferencedObject {
-    Group(Group),
-    Dataset(Dataset),
-    Datatype(Datatype),
-}
-
-/// A reference to a HDF5 item that can be stored in attributes or datasets.
-#[repr(transparent)]
-pub struct StdReference {
-    inner: H5R_ref_t,
-}
-
-unsafe impl H5Type for StdReference {
-    fn type_descriptor() -> hdf5_types::TypeDescriptor {
-        hdf5_types::TypeDescriptor::Reference(hdf5_types::Reference::Std)
-    }
-}
-
-impl Drop for StdReference {
-    fn drop(&mut self) {
-        let _e = h5call!(H5Rdestroy(&mut self.inner));
-    }
-}
-
-#[repr(transparent)]
-#[derive(Debug, Copy, Clone)]
-pub struct ObjectReference {
-    inner: hdf5_sys::h5r::hobj_ref_t,
-}
-
-unsafe impl H5Type for ObjectReference {
-    fn type_descriptor() -> hdf5_types::TypeDescriptor {
-        hdf5_types::TypeDescriptor::Reference(hdf5_types::Reference::Object)
-    }
-}
-
-// impl Drop for ObjectReference {
-//     fn drop(&mut self) {
-//         // let _e = h5call!(H5Rdestroy(&mut self.inner));
-//     }
-// }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct LocationToken(
@@ -504,22 +429,6 @@ pub mod tests {
             assert!(var.name().starts_with("/group/hard"));
 
             assert!(file.loc_info_by_name("gibberish").is_err());
-        })
-    }
-
-    #[test]
-    pub fn test_references() {
-        use super::ReferencedObject;
-        with_tmp_file(|file| {
-            file.create_group("g").unwrap();
-            let gref = file.reference("g").unwrap();
-            let group = file.dereference(&gref).unwrap();
-            assert!(matches!(group, ReferencedObject::Group(_)));
-
-            file.new_dataset::<i32>().create("ds").unwrap();
-            let dsref = file.reference("ds").unwrap();
-            let ds = file.dereference(&dsref).unwrap();
-            assert!(matches!(ds, ReferencedObject::Dataset(_)));
         })
     }
 }
