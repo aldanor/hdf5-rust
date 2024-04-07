@@ -58,7 +58,7 @@ mod export {
         hl::extents::{Extent, Extents, SimpleExtents},
         hl::selection::{Hyperslab, Selection, SliceOrIndex},
         hl::{
-            location::{ObjectReference, StdReference},
+            location::{ObjectReference, ReferencedObject, StdReference},
             Attribute, AttributeBuilder, AttributeBuilderData, AttributeBuilderEmpty,
             AttributeBuilderEmptyShape, ByteReader, Container, Conversion, Dataset, DatasetBuilder,
             DatasetBuilderData, DatasetBuilderEmpty, DatasetBuilderEmptyShape, Dataspace, Datatype,

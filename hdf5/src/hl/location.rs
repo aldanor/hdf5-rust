@@ -150,6 +150,9 @@ impl Location {
         H5O_open_by_token(self.id(), token)
     }
 
+    /// Generate a [standard reference](StdReference) to the object for a reference storage.
+    ///
+    /// This can be a group, dataset or datatype. Other objects are not supported.
     pub fn reference(&self, name: &str) -> Result<StdReference> {
         let mut out: std::mem::MaybeUninit<_> = std::mem::MaybeUninit::uninit();
         let name = to_cstring(name)?;
@@ -157,6 +160,9 @@ impl Location {
         Ok(StdReference { inner: unsafe { out.assume_init() } })
     }
 
+    /// Get a reference back to the referenced object from a standard reference.
+    ///
+    /// This can be called against any object in the same file as the referenced object.
     pub fn dereference(&self, reference: &StdReference) -> Result<ReferencedObject> {
         let mut objtype = std::mem::MaybeUninit::uninit();
         h5call!(H5Rget_obj_type3(
@@ -185,6 +191,9 @@ impl Location {
     }
 }
 
+/// The result of dereferencing a [standard reference](StdReference).
+///
+/// Each variant represents a different type of object that can be referenced by a [StdReference].
 #[derive(Clone, Debug)]
 pub enum ReferencedObject {
     Group(Group),
@@ -192,6 +201,7 @@ pub enum ReferencedObject {
     Datatype(Datatype),
 }
 
+/// A reference to a HDF5 item that can be stored in attributes or datasets.
 #[repr(transparent)]
 pub struct StdReference {
     inner: H5R_ref_t,
