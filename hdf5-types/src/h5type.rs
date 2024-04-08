@@ -189,6 +189,7 @@ impl Display for TypeDescriptor {
             TypeDescriptor::VarLenUnicode => write!(f, "unicode (var len)"),
             TypeDescriptor::Reference(Reference::Object) => write!(f, "reference (object)"),
             TypeDescriptor::Reference(Reference::Region) => write!(f, "reference (region)"),
+            #[cfg(feature = "1.12.0")]
             TypeDescriptor::Reference(Reference::Std) => write!(f, "reference"),
         }
     }
