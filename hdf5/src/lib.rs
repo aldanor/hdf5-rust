@@ -58,7 +58,7 @@ mod export {
         hl::extents::{Extent, Extents, SimpleExtents},
         hl::selection::{Hyperslab, Selection, SliceOrIndex},
         hl::{
-            references::{ObjectReference, ReferencedObject, StdReference},
+            references::{ObjectReference, ReferencedObject},
             Attribute, AttributeBuilder, AttributeBuilderData, AttributeBuilderEmpty,
             AttributeBuilderEmptyShape, ByteReader, Container, Conversion, Dataset, DatasetBuilder,
             DatasetBuilderData, DatasetBuilderEmpty, DatasetBuilderEmptyShape, Dataspace, Datatype,
@@ -66,6 +66,9 @@ mod export {
             LocationType, Object, OpenMode, PropertyList, Reader, Writer,
         },
     };
+
+    #[cfg(feature = "1.12.0")]
+    pub use crate::hl::references::ObjectReference2;
 
     #[doc(hidden)]
     pub use crate::error::h5check;

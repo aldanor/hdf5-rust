@@ -1,20 +1,13 @@
+use std::ops::Deref;
+
 use hdf5_sys::h5r::{
     H5R_ref_t, H5Rcopy, H5Rcreate_object, H5Rdereference2, H5Rdestroy, H5Requal, H5Rget_obj_type3,
     H5R_OBJECT1,
 };
 
+use super::ObjectReference;
 use crate::internal_prelude::*;
 use crate::{Dataset, Datatype, Group, Location};
-
-/// The result of dereferencing a [standard reference](StdReference).
-///
-/// Each variant represents a different type of object that can be referenced by a [StdReference].
-#[derive(Clone, Debug)]
-pub enum ReferencedObject {
-    Group(Group),
-    Dataset(Dataset),
-    Datatype(Datatype),
-}
 
 /// A reference to a HDF5 item that can be stored in attributes or datasets.
 #[repr(transparent)]
@@ -23,13 +16,6 @@ pub struct StdReference {
 }
 
 impl StdReference {
-    pub fn create(source: &Location, name: &str) -> Result<Self> {
-        let mut out: std::mem::MaybeUninit<_> = std::mem::MaybeUninit::uninit();
-        let name = to_cstring(name)?;
-        h5call!(H5Rcreate_object(source.id(), name.as_ptr(), H5P_DEFAULT, out.as_mut_ptr()))?;
-        Ok(StdReference { inner: unsafe { out.assume_init() } })
-    }
-
     fn ptr(&self) -> *const H5R_ref_t {
         std::ptr::addr_of!(self.inner)
     }
@@ -41,22 +27,35 @@ impl StdReference {
             Ok(Self { inner: dst.assume_init() })
         }
     }
+}
 
-    pub fn dereference(&self, location: &Location) -> Result<ReferencedObject> {
+#[repr(transparent)]
+#[derive(Debug, PartialEq, Eq)]
+pub struct ObjectReference2(StdReference);
+
+impl Deref for ObjectReference2 {
+    type Target = StdReference;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl ObjectReference for ObjectReference2 {
+    fn create(source: &Location, name: &str) -> Result<Self> {
+        let mut out: std::mem::MaybeUninit<_> = std::mem::MaybeUninit::uninit();
+        let name = to_cstring(name)?;
+        h5call!(H5Rcreate_object(source.id(), name.as_ptr(), H5P_DEFAULT, out.as_mut_ptr()))?;
+        Ok(Self(StdReference { inner: unsafe { out.assume_init() } }))
+    }
+
+    fn dereference(&self, location: &Location) -> Result<ReferencedObject> {
         let mut objtype = std::mem::MaybeUninit::uninit();
-        h5call!(H5Rget_obj_type3(
-            std::ptr::addr_of!(self.inner),
-            H5P_DEFAULT,
-            objtype.as_mut_ptr()
-        ))?;
+        h5call!(H5Rget_obj_type3(self.ptr(), H5P_DEFAULT, objtype.as_mut_ptr()))?;
         let objtype = unsafe { objtype.assume_init() };
 
-        let objid = h5call!(H5Rdereference2(
-            location.id(),
-            H5P_DEFAULT,
-            H5R_OBJECT1,
-            std::ptr::addr_of!(self.inner).cast(),
-        ))?;
+        let objid =
+            h5call!(H5Rdereference2(location.id(), H5P_DEFAULT, H5R_OBJECT1, self.ptr().cast(),))?;
         use hdf5_sys::h5o::H5O_type_t::*;
         Ok(match objtype {
             H5O_TYPE_GROUP => ReferencedObject::Group(Group::from_id(objid)?),
@@ -67,6 +66,12 @@ impl StdReference {
             H5O_TYPE_UNKNOWN => fail!("Unknown datatype"),
             H5O_TYPE_NTYPES => fail!("hdf5 should not produce this type"),
         })
+    }
+}
+
+unsafe impl H5Type for ObjectReference2 {
+    fn type_descriptor() -> hdf5_types::TypeDescriptor {
+        hdf5_types::TypeDescriptor::Reference(hdf5_types::Reference::Std)
     }
 }
 
@@ -113,12 +118,12 @@ mod tests {
         use super::ReferencedObject;
         with_tmp_file(|file| {
             file.create_group("g").unwrap();
-            let gref = file.reference("g").unwrap();
+            let gref = file.reference::<ObjectReference2>("g").unwrap();
             let group = file.dereference(&gref).unwrap();
             assert!(matches!(group, ReferencedObject::Group(_)));
 
             file.new_dataset::<i32>().create("ds").unwrap();
-            let dsref = file.reference("ds").unwrap();
+            let dsref = file.reference::<ObjectReference2>("ds").unwrap();
             let ds = file.dereference(&dsref).unwrap();
             assert!(matches!(ds, ReferencedObject::Dataset(_)));
         })
@@ -128,7 +133,7 @@ mod tests {
     fn test_reference_equality() {
         with_tmp_file(|file| {
             file.create_group("g").unwrap();
-            let gref1 = file.reference("g").unwrap();
+            let gref1 = file.reference::<ObjectReference2>("g").unwrap();
             let gref2 = file.reference("g").unwrap();
             assert_eq!(gref1, gref2);
 

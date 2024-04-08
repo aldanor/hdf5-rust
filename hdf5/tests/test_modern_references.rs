@@ -5,20 +5,19 @@
 mod common;
 
 use common::util::new_in_memory_file;
-use hdf5::{file, Group, H5Type, ObjectReference, ReferencedObject, StdReference};
+use hdf5::{file, Group, H5Type, ObjectReference, ObjectReference2, ReferencedObject};
 use hdf5_types::VarLenArray;
 
-#[test]
-fn test_group_references() {
+fn test_group_references<R: ObjectReference>() {
     let file = new_in_memory_file().unwrap();
     let g1 = file.create_group("g1").unwrap();
     let _g1_1 = g1.create_group("g1_1").unwrap();
 
-    let refs = [file.reference("g1").unwrap(), g1.reference("g1_1").unwrap()];
+    let refs: [R; 2] = [file.reference("g1").unwrap(), g1.reference("g1_1").unwrap()];
 
     let ds = file.new_dataset_builder().with_data(&refs).create("refs").unwrap();
 
-    let read_references = ds.read_1d::<StdReference>().unwrap();
+    let read_references = ds.read_1d::<R>().unwrap();
 
     match file.dereference(&read_references[0]).unwrap() {
         ReferencedObject::Group(g) => {
@@ -48,18 +47,17 @@ fn test_group_references() {
     }
 }
 
-#[test]
-fn test_dataset_references() {
+fn test_dataset_references<R: ObjectReference>() {
     let dummy_data = [0, 1, 2, 3];
 
     let file = new_in_memory_file().unwrap();
     let ds1 = file.new_dataset_builder().with_data(&dummy_data).create("ds1").unwrap();
     let g = file.create_group("g").unwrap();
     let ds2 = g.new_dataset_builder().with_data(&dummy_data).create("ds2").unwrap();
-    let refs = [file.reference("ds1").unwrap(), g.reference("ds2").unwrap()];
+    let refs: [R; 2] = [file.reference("ds1").unwrap(), g.reference("ds2").unwrap()];
 
     let ds_refs = file.new_dataset_builder().with_data(&refs).create("refs").unwrap();
-    let read_references = ds_refs.read_1d::<StdReference>().unwrap();
+    let read_references = ds_refs.read_1d::<R>().unwrap();
 
     match file.dereference(&read_references[0]).unwrap() {
         ReferencedObject::Dataset(ds) => {
@@ -82,15 +80,14 @@ fn test_dataset_references() {
     }
 }
 
-#[test]
-fn test_reference_in_attribute() {
+fn test_reference_in_attribute<R: ObjectReference>() {
     let file = new_in_memory_file().unwrap();
     let _ds1 = file.new_dataset_builder().with_data(&[1, 2, 3]).create("ds1").unwrap();
-    let ref1 = file.reference("ds1").unwrap();
+    let ref1: R = file.reference("ds1").unwrap();
 
-    file.new_attr::<StdReference>().create("ref_attr").unwrap().write_scalar(&ref1).unwrap();
+    file.new_attr::<R>().create("ref_attr").unwrap().write_scalar(&ref1).unwrap();
 
-    let ref_read = file.attr("ref_attr").unwrap().read_scalar::<StdReference>().unwrap();
+    let ref_read = file.attr("ref_attr").unwrap().read_scalar::<R>().unwrap();
 
     match file.dereference(&ref_read).unwrap() {
         ReferencedObject::Dataset(ds) => {
@@ -103,28 +100,26 @@ fn test_reference_in_attribute() {
     }
 }
 
-#[test]
-fn test_reference_errors_on_attribute() {
+fn test_reference_errors_on_attribute<R: ObjectReference>() {
     let file = new_in_memory_file().unwrap();
     let attr = file.new_attr::<i32>().create("ref_attr").unwrap();
     // Attempt to create reference to attribute should fail.
-    let result = file.reference("ref_attr");
+    let result = file.reference::<R>("ref_attr");
     assert!(result.is_err());
 }
 
-#[test]
-fn test_reference_in_datatype() {
+fn test_reference_in_datatype<R: ObjectReference>() {
     let dummy_data = [1, 2, 3, 4];
     let file = new_in_memory_file().unwrap();
     let _ds1 = file.new_dataset_builder().with_data(&dummy_data).create("ds1").unwrap();
-    let ref1 = file.reference("ds1").unwrap();
+    let ref1 = file.reference::<R>("ds1").unwrap();
     let _ds2 = file.new_dataset_builder().with_data(&dummy_data).create("ds2").unwrap();
-    let ref2 = file.reference("ds2").unwrap();
+    let ref2 = file.reference::<R>("ds2").unwrap();
 
     #[derive(H5Type)]
     #[repr(C)]
-    struct RefData {
-        dataset: StdReference,
+    struct RefData<R: ObjectReference> {
+        dataset: R,
         value: i32,
     }
 
@@ -134,7 +129,7 @@ fn test_reference_in_datatype() {
         .create("ds3")
         .unwrap();
 
-    let read_data = ds3.read_1d::<RefData>().unwrap();
+    let read_data = ds3.read_1d::<RefData<R>>().unwrap();
     assert_eq!(read_data[0].value, 42);
     assert_eq!(read_data[1].value, 43);
     match file.dereference(&read_data[0].dataset).unwrap() {
@@ -198,3 +193,30 @@ fn test_references_in_array_types() {
     }
 }
 */
+
+mod object2tests {
+    use super::*;
+    #[test]
+    fn test_group_references_with_objectreference2() {
+        test_group_references::<ObjectReference2>();
+    }
+
+    #[test]
+    fn test_dataset_references_with_object_reference2() {
+        test_dataset_references::<ObjectReference2>();
+    }
+    #[test]
+    fn test_reference_in_attribute_object_reference2() {
+        test_reference_in_attribute::<ObjectReference2>();
+    }
+
+    #[test]
+    fn test_reference_errors_on_attribute_object_reference2() {
+        test_reference_errors_on_attribute::<ObjectReference2>();
+    }
+
+    #[test]
+    fn test_reference_in_datatype_object_reference2() {
+        test_reference_in_datatype::<ObjectReference2>();
+    }
+}

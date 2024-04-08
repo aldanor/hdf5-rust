@@ -5,11 +5,11 @@ use hdf5_types::H5Type;
 
 #[repr(transparent)]
 #[derive(Debug, Copy, Clone)]
-pub struct ObjectReference {
+pub struct ObjectReference1 {
     inner: hobj_ref_t,
 }
 
-unsafe impl H5Type for ObjectReference {
+unsafe impl H5Type for ObjectReference1 {
     fn type_descriptor() -> hdf5_types::TypeDescriptor {
         hdf5_types::TypeDescriptor::Reference(hdf5_types::Reference::Object)
     }
