@@ -1,12 +1,12 @@
 //! Tests for the reference type storage and retrieval.
 //!
-#![cfg(feature = "1.12.0")]
 
 mod common;
 
 use common::util::new_in_memory_file;
-use hdf5::{file, Group, H5Type, ObjectReference, ObjectReference2, ReferencedObject};
-use hdf5_types::VarLenArray;
+#[cfg(feature = "1.12.0")]
+use hdf5::ObjectReference2;
+use hdf5::{H5Type, ObjectReference, ObjectReference1, ReferencedObject};
 
 fn test_group_references<R: ObjectReference>() {
     let file = new_in_memory_file().unwrap();
@@ -51,9 +51,9 @@ fn test_dataset_references<R: ObjectReference>() {
     let dummy_data = [0, 1, 2, 3];
 
     let file = new_in_memory_file().unwrap();
-    let ds1 = file.new_dataset_builder().with_data(&dummy_data).create("ds1").unwrap();
+    let _ds1 = file.new_dataset_builder().with_data(&dummy_data).create("ds1").unwrap();
     let g = file.create_group("g").unwrap();
-    let ds2 = g.new_dataset_builder().with_data(&dummy_data).create("ds2").unwrap();
+    let _ds2 = g.new_dataset_builder().with_data(&dummy_data).create("ds2").unwrap();
     let refs: [R; 2] = [file.reference("ds1").unwrap(), g.reference("ds2").unwrap()];
 
     let ds_refs = file.new_dataset_builder().with_data(&refs).create("refs").unwrap();
@@ -102,7 +102,7 @@ fn test_reference_in_attribute<R: ObjectReference>() {
 
 fn test_reference_errors_on_attribute<R: ObjectReference>() {
     let file = new_in_memory_file().unwrap();
-    let attr = file.new_attr::<i32>().create("ref_attr").unwrap();
+    let _attr = file.new_attr::<i32>().create("ref_attr").unwrap();
     // Attempt to create reference to attribute should fail.
     let result = file.reference::<R>("ref_attr");
     assert!(result.is_err());
@@ -193,30 +193,55 @@ fn test_references_in_array_types() {
     }
 }
 */
+#[test]
+fn test_group_references_with_objectreference1() {
+    test_group_references::<ObjectReference1>();
+}
 
-mod object2tests {
-    use super::*;
-    #[test]
-    fn test_group_references_with_objectreference2() {
-        test_group_references::<ObjectReference2>();
-    }
+#[test]
+fn test_dataset_references_with_object_reference1() {
+    test_dataset_references::<ObjectReference1>();
+}
+#[test]
+fn test_reference_in_attribute_object_reference1() {
+    test_reference_in_attribute::<ObjectReference1>();
+}
 
-    #[test]
-    fn test_dataset_references_with_object_reference2() {
-        test_dataset_references::<ObjectReference2>();
-    }
-    #[test]
-    fn test_reference_in_attribute_object_reference2() {
-        test_reference_in_attribute::<ObjectReference2>();
-    }
+#[test]
+fn test_reference_errors_on_attribute_object_reference1() {
+    test_reference_errors_on_attribute::<ObjectReference1>();
+}
 
-    #[test]
-    fn test_reference_errors_on_attribute_object_reference2() {
-        test_reference_errors_on_attribute::<ObjectReference2>();
-    }
+#[test]
+fn test_reference_in_datatype_object_reference1() {
+    test_reference_in_datatype::<ObjectReference1>();
+}
 
-    #[test]
-    fn test_reference_in_datatype_object_reference2() {
-        test_reference_in_datatype::<ObjectReference2>();
-    }
+#[cfg(feature = "1.12.0")]
+#[test]
+fn test_group_references_with_objectreference2() {
+    test_group_references::<ObjectReference2>();
+}
+
+#[cfg(feature = "1.12.0")]
+#[test]
+fn test_dataset_references_with_object_reference2() {
+    test_dataset_references::<ObjectReference2>();
+}
+#[cfg(feature = "1.12.0")]
+#[test]
+fn test_reference_in_attribute_object_reference2() {
+    test_reference_in_attribute::<ObjectReference2>();
+}
+
+#[cfg(feature = "1.12.0")]
+#[test]
+fn test_reference_errors_on_attribute_object_reference2() {
+    test_reference_errors_on_attribute::<ObjectReference2>();
+}
+
+#[cfg(feature = "1.12.0")]
+#[test]
+fn test_reference_in_datatype_object_reference2() {
+    test_reference_in_datatype::<ObjectReference2>();
 }

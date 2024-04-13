@@ -1,13 +1,14 @@
 use std::ops::Deref;
 
+use hdf5_sys::h5o::H5O_type_t;
+use hdf5_sys::h5r::H5R_type_t::H5R_OBJECT2;
 use hdf5_sys::h5r::{
-    H5R_ref_t, H5Rcopy, H5Rcreate_object, H5Rdereference2, H5Rdestroy, H5Requal, H5Rget_obj_type3,
-    H5R_OBJECT1,
+    H5R_ref_t, H5Rcopy, H5Rcreate_object, H5Rdestroy, H5Rget_obj_type3, H5Ropen_object,
 };
 
 use super::ObjectReference;
 use crate::internal_prelude::*;
-use crate::{Dataset, Datatype, Group, Location};
+use crate::Location;
 
 /// A reference to a HDF5 item that can be stored in attributes or datasets.
 #[repr(transparent)]
@@ -30,8 +31,14 @@ impl StdReference {
 }
 
 #[repr(transparent)]
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug)]
 pub struct ObjectReference2(StdReference);
+
+impl ObjectReference2 {
+    pub fn try_clone(&self) -> Result<Self> {
+        self.0.try_clone().map(|std_ref| Self(std_ref))
+    }
+}
 
 impl Deref for ObjectReference2 {
     type Target = StdReference;
@@ -42,30 +49,28 @@ impl Deref for ObjectReference2 {
 }
 
 impl ObjectReference for ObjectReference2 {
-    fn create(source: &Location, name: &str) -> Result<Self> {
-        let mut out: std::mem::MaybeUninit<_> = std::mem::MaybeUninit::uninit();
-        let name = to_cstring(name)?;
-        h5call!(H5Rcreate_object(source.id(), name.as_ptr(), H5P_DEFAULT, out.as_mut_ptr()))?;
-        Ok(Self(StdReference { inner: unsafe { out.assume_init() } }))
+    const REF_TYPE: hdf5_sys::h5r::H5R_type_t = H5R_OBJECT2;
+
+    fn ptr(&self) -> *const c_void {
+        self.0.ptr().cast()
+    }
+
+    fn create(location: &Location, name: &str) -> Result<Self> {
+        let reference: H5R_ref_t = create_object_reference(location, name)?;
+        Ok(Self(StdReference { inner: reference }))
+    }
+
+    fn get_object_type(&self, _location: &Location) -> Result<hdf5_sys::h5o::H5O_type_t> {
+        let mut objtype = std::mem::MaybeUninit::<H5O_type_t>::uninit();
+        h5call!(H5Rget_obj_type3(self.0.ptr(), H5P_DEFAULT, objtype.as_mut_ptr()))?;
+        let objtype = unsafe { objtype.assume_init() };
+        Ok(objtype)
     }
 
     fn dereference(&self, location: &Location) -> Result<ReferencedObject> {
-        let mut objtype = std::mem::MaybeUninit::uninit();
-        h5call!(H5Rget_obj_type3(self.ptr(), H5P_DEFAULT, objtype.as_mut_ptr()))?;
-        let objtype = unsafe { objtype.assume_init() };
-
-        let objid =
-            h5call!(H5Rdereference2(location.id(), H5P_DEFAULT, H5R_OBJECT1, self.ptr().cast(),))?;
-        use hdf5_sys::h5o::H5O_type_t::*;
-        Ok(match objtype {
-            H5O_TYPE_GROUP => ReferencedObject::Group(Group::from_id(objid)?),
-            H5O_TYPE_DATASET => ReferencedObject::Dataset(Dataset::from_id(objid)?),
-            H5O_TYPE_NAMED_DATATYPE => ReferencedObject::Datatype(Datatype::from_id(objid)?),
-            #[cfg(feature = "1.12.0")]
-            H5O_TYPE_MAP => fail!("Can not create object from a map"),
-            H5O_TYPE_UNKNOWN => fail!("Unknown datatype"),
-            H5O_TYPE_NTYPES => fail!("hdf5 should not produce this type"),
-        })
+        let object_type = self.get_object_type(location)?;
+        let object_id = h5call!(H5Ropen_object(self.0.ptr(), H5P_DEFAULT, H5P_DEFAULT))?;
+        ReferencedObject::from_type_and_id(object_type, object_id)
     }
 }
 
@@ -74,21 +79,6 @@ unsafe impl H5Type for ObjectReference2 {
         hdf5_types::TypeDescriptor::Reference(hdf5_types::Reference::Std)
     }
 }
-
-impl PartialEq for StdReference {
-    fn eq(&self, other: &Self) -> bool {
-        let result = unsafe { H5Requal(self.ptr(), other.ptr()) };
-        println!("Result of H5Requal: {}", result);
-        match result {
-            0 => false,
-            1.. => true,
-            // Less than 0 indicates an error but not clear on what the error conditions could be. Fail the equality right now.
-            _ => false,
-        }
-    }
-}
-
-impl Eq for StdReference {}
 
 //todo: could we query some actual object parameters to make this more useful?
 impl std::fmt::Debug for StdReference {
@@ -107,6 +97,13 @@ impl Drop for StdReference {
     fn drop(&mut self) {
         let _e = h5call!(H5Rdestroy(&mut self.inner));
     }
+}
+
+fn create_object_reference(dataset: &Location, name: &str) -> Result<H5R_ref_t> {
+    let mut out: std::mem::MaybeUninit<H5R_ref_t> = std::mem::MaybeUninit::uninit();
+    let name = to_cstring(name)?;
+    h5call!(H5Rcreate_object(dataset.id(), name.as_ptr(), H5P_DEFAULT, out.as_mut_ptr().cast(),))?;
+    unsafe { Ok(out.assume_init()) }
 }
 
 #[cfg(test)]
@@ -130,22 +127,19 @@ mod tests {
     }
 
     #[test]
-    fn test_reference_equality() {
+    fn test_standard_reference_clone() {
         with_tmp_file(|file| {
-            file.create_group("g").unwrap();
-            let gref1 = file.reference::<ObjectReference2>("g").unwrap();
-            let gref2 = file.reference("g").unwrap();
-            assert_eq!(gref1, gref2);
+            let orig_group = file.create_group("g").unwrap();
+            let ref1 = file.reference::<ObjectReference2>("g").unwrap();
+            let ref2 = ref1.try_clone().unwrap();
 
-            file.new_dataset::<i32>().create("ds").unwrap();
-            file.new_dataset::<i32>().create("ds2").unwrap();
-            let dsref1 = file.reference("ds").unwrap();
-            let dsref2 = file.reference("ds").unwrap();
-            assert_eq!(dsref1, dsref2);
-
-            println!("{}", gref1 == dsref1);
-            assert_ne!(gref1, dsref1);
-            assert_ne!(dsref1, file.reference("ds2").unwrap());
+            let ref2_group = ref2.dereference(&file).unwrap();
+            match ref2_group {
+                crate::ReferencedObject::Group(g) => {
+                    assert_eq!(g.name(), orig_group.name())
+                }
+                _ => panic!("Wrong reference type."),
+            }
         })
     }
 }

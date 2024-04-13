@@ -27,7 +27,6 @@ use hdf5_sys::{
 use crate::internal_prelude::*;
 
 use super::attribute::AttributeBuilderEmpty;
-use super::references::ObjectReference2;
 
 /// Named location (file, group, dataset, named datatype).
 #[repr(transparent)]
