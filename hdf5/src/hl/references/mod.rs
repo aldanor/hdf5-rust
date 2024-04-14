@@ -23,7 +23,7 @@ pub trait ObjectReference: Sized + H5Type {
     /// Create a new reference in the same structure as the location provided.
     fn create(location: &Location, name: &str) -> Result<Self>;
 
-    /// Dereference the object reference.
+    /// Dereference the object reference in the space provided.
     fn dereference(&self, location: &Location) -> Result<ReferencedObject>;
 }
 /// The result of dereferencing an [object reference](ObjectReference).

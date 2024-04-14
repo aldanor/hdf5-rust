@@ -36,12 +36,12 @@ impl ObjectReference for ObjectReference1 {
         pointer.cast()
     }
 
-    fn create(dataspace: &Location, name: &str) -> Result<Self> {
+    fn create(location: &Location, name: &str) -> Result<Self> {
         let mut ref_out: std::mem::MaybeUninit<hobj_ref_t> = std::mem::MaybeUninit::uninit();
         let name = to_cstring(name)?;
         h5call!(H5Rcreate(
             ref_out.as_mut_ptr().cast(),
-            dataspace.id(),
+            location.id(),
             name.as_ptr(),
             Self::REF_TYPE,
             -1
@@ -50,17 +50,17 @@ impl ObjectReference for ObjectReference1 {
         Ok(Self { inner: reference })
     }
 
-    fn get_object_type(&self, dataset: &Location) -> Result<hdf5_sys::h5o::H5O_type_t> {
+    fn get_object_type(&self, location: &Location) -> Result<hdf5_sys::h5o::H5O_type_t> {
         let mut objtype = std::mem::MaybeUninit::<H5O_type_t>::uninit();
-        h5call!(H5Rget_obj_type2(dataset.id(), H5R_OBJECT1, self.ptr(), objtype.as_mut_ptr()))?;
+        h5call!(H5Rget_obj_type2(location.id(), H5R_OBJECT1, self.ptr(), objtype.as_mut_ptr()))?;
         let objtype = unsafe { objtype.assume_init() };
         Ok(objtype)
     }
 
-    fn dereference(&self, dataset: &Location) -> Result<ReferencedObject> {
-        let object_type = self.get_object_type(dataset)?;
+    fn dereference(&self, location: &Location) -> Result<ReferencedObject> {
+        let object_type = self.get_object_type(location)?;
         let object_id =
-            h5call!(H5Rdereference(dataset.id(), H5P_DEFAULT, H5R_OBJECT1, self.ptr()))?;
+            h5call!(H5Rdereference(location.id(), H5P_DEFAULT, H5R_OBJECT1, self.ptr()))?;
         ReferencedObject::from_type_and_id(object_type, object_id)
     }
 }
