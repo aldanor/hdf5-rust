@@ -67,7 +67,7 @@ mod export {
         },
     };
 
-    #[cfg(feature = "1.12.0")]
+    #[cfg(feature = "1.12.1")]
     pub use crate::hl::references::ObjectReference2;
 
     #[doc(hidden)]

@@ -1,5 +1,7 @@
-use std::ops::Deref;
-
+//! New standard reference types introduced in v1.12.0.
+//!
+//! These are gated on v1.12.1 since there appear to be multiple bugs in v1.12.0.
+//!
 use hdf5_sys::h5o::H5O_type_t;
 use hdf5_sys::h5r::H5R_type_t::H5R_OBJECT2;
 use hdf5_sys::h5r::{H5R_ref_t, H5Rcreate_object, H5Rdestroy, H5Rget_obj_type3, H5Ropen_object};
@@ -10,27 +12,36 @@ use crate::Location;
 
 /// A reference to a HDF5 item that can be stored in attributes or datasets.
 #[repr(transparent)]
-pub struct StdReference {
-    inner: H5R_ref_t,
-}
+pub struct StdReference(H5R_ref_t);
 
 impl StdReference {
     fn ptr(&self) -> *const H5R_ref_t {
-        std::ptr::addr_of!(self.inner)
+        std::ptr::addr_of!(self.0)
+    }
+}
+
+//todo: could we query some actual object parameters to make this more useful?
+impl std::fmt::Debug for StdReference {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("StdReference")
+    }
+}
+
+unsafe impl H5Type for StdReference {
+    fn type_descriptor() -> hdf5_types::TypeDescriptor {
+        hdf5_types::TypeDescriptor::Reference(hdf5_types::Reference::Std)
+    }
+}
+
+impl Drop for StdReference {
+    fn drop(&mut self) {
+        let _e = h5call!(H5Rdestroy(&mut self.0));
     }
 }
 
 #[repr(transparent)]
 #[derive(Debug)]
 pub struct ObjectReference2(StdReference);
-
-impl Deref for ObjectReference2 {
-    type Target = StdReference;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
 
 impl ObjectReference for ObjectReference2 {
     const REF_TYPE: hdf5_sys::h5r::H5R_type_t = H5R_OBJECT2;
@@ -41,7 +52,7 @@ impl ObjectReference for ObjectReference2 {
 
     fn create(location: &Location, name: &str) -> Result<Self> {
         let reference: H5R_ref_t = create_object_reference(location, name)?;
-        Ok(Self(StdReference { inner: reference }))
+        Ok(Self(StdReference(reference)))
     }
 
     fn get_object_type(&self, _location: &Location) -> Result<hdf5_sys::h5o::H5O_type_t> {
@@ -61,25 +72,6 @@ impl ObjectReference for ObjectReference2 {
 unsafe impl H5Type for ObjectReference2 {
     fn type_descriptor() -> hdf5_types::TypeDescriptor {
         hdf5_types::TypeDescriptor::Reference(hdf5_types::Reference::Std)
-    }
-}
-
-//todo: could we query some actual object parameters to make this more useful?
-impl std::fmt::Debug for StdReference {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str("StdReference")
-    }
-}
-
-unsafe impl H5Type for StdReference {
-    fn type_descriptor() -> hdf5_types::TypeDescriptor {
-        hdf5_types::TypeDescriptor::Reference(hdf5_types::Reference::Std)
-    }
-}
-
-impl Drop for StdReference {
-    fn drop(&mut self) {
-        let _e = h5call!(H5Rdestroy(&mut self.inner));
     }
 }
 

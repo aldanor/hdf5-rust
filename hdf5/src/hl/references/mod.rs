@@ -3,14 +3,14 @@ use crate::Location;
 
 mod legacy;
 
-#[cfg(feature = "1.12.0")]
+#[cfg(feature = "1.12.1")]
 mod standard;
 
 use hdf5_sys::h5o::H5O_type_t;
 use hdf5_sys::h5r::H5R_type_t;
 
 pub use legacy::ObjectReference1;
-#[cfg(feature = "1.12.0")]
+#[cfg(feature = "1.12.1")]
 pub use standard::ObjectReference2;
 
 pub trait ObjectReference: Sized + H5Type {

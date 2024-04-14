@@ -4,7 +4,7 @@
 mod common;
 
 use common::util::new_in_memory_file;
-#[cfg(feature = "1.12.0")]
+#[cfg(feature = "1.12.1")]
 use hdf5::ObjectReference2;
 use hdf5::{H5Type, ObjectReference, ObjectReference1, ReferencedObject};
 
@@ -217,30 +217,30 @@ fn test_reference_in_datatype_object_reference1() {
     test_reference_in_datatype::<ObjectReference1>();
 }
 
-#[cfg(feature = "1.12.0")]
+#[cfg(feature = "1.12.1")]
 #[test]
 fn test_group_references_with_objectreference2() {
     test_group_references::<ObjectReference2>();
 }
 
-#[cfg(feature = "1.12.0")]
+#[cfg(feature = "1.12.1")]
 #[test]
 fn test_dataset_references_with_object_reference2() {
     test_dataset_references::<ObjectReference2>();
 }
-#[cfg(feature = "1.12.0")]
+#[cfg(feature = "1.12.1")]
 #[test]
 fn test_reference_in_attribute_object_reference2() {
     test_reference_in_attribute::<ObjectReference2>();
 }
 
-#[cfg(feature = "1.12.0")]
+#[cfg(feature = "1.12.1")]
 #[test]
 fn test_reference_errors_on_attribute_object_reference2() {
     test_reference_errors_on_attribute::<ObjectReference2>();
 }
 
-#[cfg(feature = "1.12.0")]
+#[cfg(feature = "1.12.1")]
 #[test]
 fn test_reference_in_datatype_object_reference2() {
     test_reference_in_datatype::<ObjectReference2>();
