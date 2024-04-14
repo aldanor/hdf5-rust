@@ -703,7 +703,7 @@ impl<'a> DynValue<'a> {
             FixedUnicode(_) => DynFixedString::new(buf, true).into(),
             VarLenAscii => DynVarLenString::new(buf, false).into(),
             VarLenUnicode => DynVarLenString::new(buf, true).into(),
-            Reference(x) => todo!(),
+            Reference(_x) => todo!(),
         }
     }
 }
