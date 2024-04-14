@@ -29,9 +29,9 @@ mod complex;
 pub use self::array::VarLenArray;
 pub use self::dyn_value::{DynValue, OwnedDynValue};
 pub use self::h5type::{
-    CompoundField, CompoundType, EnumMember, EnumType, FloatSize, H5Type, IntSize, Reference,
-    TypeDescriptor,
+    CompoundField, CompoundType, EnumMember, EnumType, FloatSize, H5Type, IntSize, TypeDescriptor,
 };
+pub use self::references::Reference;
 pub use self::string::{FixedAscii, FixedUnicode, StringError, VarLenAscii, VarLenUnicode};
 
 pub(crate) unsafe fn malloc(n: usize) -> *mut core::ffi::c_void {

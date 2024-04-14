@@ -4,6 +4,7 @@ use std::os::raw::c_void;
 use std::ptr;
 
 use crate::array::VarLenArray;
+use crate::references::Reference;
 use crate::string::{FixedAscii, FixedUnicode, VarLenAscii, VarLenUnicode};
 
 #[allow(non_camel_case_types)]
@@ -378,25 +379,6 @@ unsafe impl H5Type for VarLenUnicode {
     #[inline]
     fn type_descriptor() -> TypeDescriptor {
         TypeDescriptor::VarLenUnicode
-    }
-}
-
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
-pub enum Reference {
-    Object,
-    Region,
-    #[cfg(feature = "1.12.0")]
-    Std,
-}
-
-impl Reference {
-    fn size(self) -> usize {
-        match self {
-            Self::Object => mem::size_of::<hdf5_sys::h5r::hobj_ref_t>(),
-            Self::Region => mem::size_of::<hdf5_sys::h5r::hdset_reg_ref_t>(),
-            #[cfg(feature = "1.12.0")]
-            Self::Std => mem::size_of::<hdf5_sys::h5r::H5R_ref_t>(),
-        }
     }
 }
 
