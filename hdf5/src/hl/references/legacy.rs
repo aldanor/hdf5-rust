@@ -59,8 +59,11 @@ impl ObjectReference for ObjectReference1 {
 
     fn dereference(&self, location: &Location) -> Result<ReferencedObject> {
         let object_type = self.get_object_type(location)?;
+        #[cfg(feature = "1.10.0")]
         let object_id =
             h5call!(H5Rdereference(location.id(), H5P_DEFAULT, H5R_OBJECT1, self.ptr()))?;
+        #[cfg(not(feature = "1.10.0"))]
+        let object_id = h5call!(H5Rdereference(location.id(), H5R_OBJECT1, self.ptr()))?;
         ReferencedObject::from_type_and_id(object_type, object_id)
     }
 }
