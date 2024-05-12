@@ -20,6 +20,7 @@ fn main() {
         "HDF5_BUILD_CPP_LIB",
         "HDF5_BUILD_UTILS",
         "HDF5_ENABLE_PARALLEL",
+        "HDF5_ENABLE_NONSTANDARD_FEATURES",
     ] {
         cfg.define(option, "OFF");
     }
@@ -30,6 +31,7 @@ fn main() {
         "HDF5_ENABLE_THREADSAFE",
         "ALLOW_UNSUPPORTED",
         "HDF5_BUILD_HL_LIB",
+        "HDF5_ENABLE_NONSTANDARD_FEATURE_FLOAT16",
     ] {
         cfg.define(option, "OFF");
     }
