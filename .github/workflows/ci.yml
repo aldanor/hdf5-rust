@@ -117,7 +117,7 @@ jobs:
         with: {toolchain: '${{matrix.rust}}'}
       - name: Install conda
         uses: conda-incubator/setup-miniconda@v2
-        with: {auto-update-conda: false, activate-environment: testenv}
+        with: {auto-update-conda: false, activate-environment: testenv, miniconder-version: latest}
       - name: Install HDF5 (${{matrix.version}}${{matrix.mpi && '-' || ''}}${{matrix.mpi}})
         run: |
           [ "${{matrix.mpi}}" != "" ] && MPICC_PKG=${{matrix.mpi}}-mpicc
