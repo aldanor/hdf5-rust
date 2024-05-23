@@ -119,7 +119,7 @@ jobs:
         uses: conda-incubator/setup-miniconda@v2
         with: {auto-update-conda: false, activate-environment: testenv, miniconda-version: latest}
       - name: Set conda for Arm64
-        if: matrix.os == 'macos-latest'
+        if: matrix.os == 'macos'
         run: conda config --env --set subdir osx-arm64
       - name: Install HDF5 (${{matrix.version}}${{matrix.mpi && '-' || ''}}${{matrix.mpi}})
         run: |
