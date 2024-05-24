@@ -79,32 +79,32 @@ jobs:
 
   conda:
     name: conda
-    runs-on: ${{matrix.os}}-latest
+    runs-on: ${{matrix.os}}
     strategy:
       fail-fast: false
       matrix:
         include:
-          - {os: ubuntu, version: 1.8.16, channel: conda-forge, rust: stable}
-          - {os: windows, version: 1.8.17, channel: conda-forge, rust: stable}
-          - {os: macos, version: 1.8.18, channel: anaconda, rust: stable}
-          - {os: ubuntu, version: 1.8.20, channel: anaconda, rust: beta}
-          - {os: ubuntu, version: 1.10.1, channel: anaconda, rust: nightly}
-          - {os: windows, version: 1.10.2, channel: anaconda, rust: beta}
-          - {os: ubuntu, version: 1.10.3, channel: conda-forge, rust: nightly}
-          - {os: windows, version: 1.10.4, channel: anaconda, rust: nightly}
-          - {os: ubuntu, version: 1.10.4, mpi: openmpi, channel: conda-forge, rust: stable}
-          - {os: ubuntu, version: 1.10.5, channel: conda-forge, rust: beta}
-          - {os: macos, version: 1.10.5, mpi: openmpi, channel: conda-forge, rust: beta}
-          - {os: ubuntu, version: 1.10.6, channel: anaconda, rust: stable}
-          - {os: ubuntu, version: 1.10.6, mpi: mpich, channel: conda-forge, rust: nightly}
+          - {os: ubuntu-latest, version: 1.8.16, channel: conda-forge, rust: stable}
+          - {os: windows-latest, version: 1.8.17, channel: conda-forge, rust: stable}
+          - {os: macos-13, version: 1.8.18, channel: anaconda, rust: stable}
+          - {os: ubuntu-latest, version: 1.8.20, channel: anaconda, rust: beta}
+          - {os: ubuntu-latest, version: 1.10.1, channel: anaconda, rust: nightly}
+          - {os: windows-latest, version: 1.10.2, channel: anaconda, rust: beta}
+          - {os: ubuntu-latest, version: 1.10.3, channel: conda-forge, rust: nightly}
+          - {os: windows-latest, version: 1.10.4, channel: anaconda, rust: nightly}
+          - {os: ubuntu-latest, version: 1.10.4, mpi: openmpi, channel: conda-forge, rust: stable}
+          - {os: ubuntu-latest, version: 1.10.5, channel: conda-forge, rust: beta}
+          - {os: macos-13, version: 1.10.5, mpi: openmpi, channel: conda-forge, rust: beta}
+          - {os: ubuntu-latest, version: 1.10.6, channel: anaconda, rust: stable}
+          - {os: ubuntu-latest, version: 1.10.6, mpi: mpich, channel: conda-forge, rust: nightly}
           # - {os: ubuntu, version: 1.10.8, channel: conda-forge, rust: stable}
-          - {os: ubuntu, version: 1.12.0, mpi: openmpi, channel: conda-forge, rust: stable}
-          - {os: macos, version: 1.12.0, channel: conda-forge, rust: stable}
-          - {os: windows, version: 1.12.0, channel: conda-forge, rust: stable}
-          - {os: ubuntu, version: 1.12.1, channel: conda-forge, rust: stable}
-          - {os: macos, version: 1.14.0, channel: conda-forge, rust: stable}
-          - {os: windows, version: 1.14.0, channel: conda-forge, rust: stable}
-          - {os: ubuntu, version: 1.14.0, channel: conda-forge, rust: stable}
+          - {os: ubuntu-latest, version: 1.12.0, mpi: openmpi, channel: conda-forge, rust: stable}
+          - {os: macos-latest, version: 1.12.0, channel: conda-forge, rust: stable}
+          - {os: windows-latest, version: 1.12.0, channel: conda-forge, rust: stable}
+          - {os: ubuntu-latest, version: 1.12.1, channel: conda-forge, rust: stable}
+          - {os: macos-latest, version: 1.14.0, channel: conda-forge, rust: stable}
+          - {os: windows-latest, version: 1.14.0, channel: conda-forge, rust: stable}
+          - {os: ubuntu-latest, version: 1.14.0, channel: conda-forge, rust: stable}
     defaults:
       run:
         shell: bash -l {0}
@@ -119,7 +119,7 @@ jobs:
         uses: conda-incubator/setup-miniconda@v2
         with: {auto-update-conda: false, activate-environment: testenv, miniconda-version: latest}
       - name: Set conda for Arm64
-        if: matrix.os == 'macos'
+        if: runner.arch == 'arm64' && runner.os == 'macOS'
         run: conda config --env --set subdir osx-arm64
       - name: Install HDF5 (${{matrix.version}}${{matrix.mpi && '-' || ''}}${{matrix.mpi}})
         run: |
