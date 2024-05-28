@@ -20,6 +20,7 @@ fn main() {
         "HDF5_BUILD_CPP_LIB",
         "HDF5_BUILD_UTILS",
         "HDF5_ENABLE_PARALLEL",
+        "HDF5_ENABLE_NONSTANDARD_FEATURES",
     ] {
         cfg.define(option, "OFF");
     }
@@ -30,6 +31,7 @@ fn main() {
         "HDF5_ENABLE_THREADSAFE",
         "ALLOW_UNSUPPORTED",
         "HDF5_BUILD_HL_LIB",
+        "HDF5_ENABLE_NONSTANDARD_FEATURE_FLOAT16",
     ] {
         cfg.define(option, "OFF");
     }
@@ -44,6 +46,8 @@ fn main() {
             .define("ZLIB_STATIC_LIBRARY", zlib_lib);
         println!("cargo:zlib_header={}", zlib_header.to_str().unwrap());
         println!("cargo:zlib={}", zlib_lib);
+    } else {
+        cfg.define("HDF5_ENABLE_Z_LIB_SUPPORT", "OFF");
     }
 
     if feature_enabled("DEPRECATED") {

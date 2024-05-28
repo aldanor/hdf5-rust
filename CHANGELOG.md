@@ -23,6 +23,7 @@
   library which is threadsafe.
 - Requesting a feature which is not compiled in the dynamic HDF5 library will
   now cause a compile time error.
+- The bundled version of HDF5 in `hdf5-src` is now 1.14.3.
 
 ### Fixed
 
