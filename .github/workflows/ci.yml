@@ -59,7 +59,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {version: hdf5@1.8}
           - {version: hdf5@1.10}
           - {version: hdf5@1.14}
           - {version: hdf5-mpi, mpi: true}
@@ -294,7 +293,8 @@ jobs:
         with: {submodules: true}
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
-        with: {toolchain: stable, targets: x86_64-pc-windows-gnu}
+        # Last version to support Wine pre 8.13
+        with: {toolchain: "1.75", targets: x86_64-pc-windows-gnu}
       - name: Install dependencies
         run: sudo apt-get update && sudo apt install wine64 mingw-w64
       - name: Build and test
