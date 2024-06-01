@@ -261,10 +261,14 @@ impl From<IterationOrder> for H5_iter_order_t {
     }
 }
 
+/// The type of an object link.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum LinkType {
+    /// A hard link to an object within a single file.
     Hard,
+    /// A symbolic link to an object within a single file.
     Soft,
+    /// A symbolic link to an object in a different file.
     External,
 }
 
@@ -278,6 +282,7 @@ impl From<H5L_type_t> for LinkType {
     }
 }
 
+/// Metadata describing an object link.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct LinkInfo {
     pub link_type: LinkType,

@@ -1,3 +1,5 @@
+//! Dynamically-typed values.
+
 use std::fmt::{self, Debug, Display};
 use std::mem;
 use std::ptr;
@@ -26,6 +28,7 @@ unsafe trait DynClone {
     fn dyn_clone(&mut self, out: &mut [u8]);
 }
 
+/// A dynamically-typed integer.
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub enum DynInteger {
     Int8(i8),
@@ -114,6 +117,7 @@ impl From<DynInteger> for DynValue<'_> {
     }
 }
 
+/// A dynamically-typed floating-point value.
 #[derive(Copy, Clone, PartialEq)]
 pub enum DynFloat {
     #[cfg(feature = "f16")]
@@ -173,6 +177,7 @@ impl From<DynFloat> for DynValue<'_> {
     }
 }
 
+/// A dynamically-typed scalar value.
 #[derive(Copy, Clone, PartialEq)]
 pub enum DynScalar {
     Integer(DynInteger),
@@ -212,6 +217,7 @@ impl From<DynScalar> for DynValue<'static> {
     }
 }
 
+/// A dynamically-typed enumeration value.
 #[derive(Copy, Clone)]
 pub struct DynEnum<'a> {
     tp: &'a EnumType,
@@ -269,6 +275,7 @@ impl<'a> From<DynEnum<'a>> for DynValue<'a> {
     }
 }
 
+/// A dynamically-typed compound value.
 pub struct DynCompound<'a> {
     tp: &'a CompoundType,
     buf: &'a [u8],
@@ -354,6 +361,7 @@ impl<'a> From<DynCompound<'a>> for DynValue<'a> {
     }
 }
 
+/// A dynamically-typed array.
 pub struct DynArray<'a> {
     tp: &'a TypeDescriptor,
     buf: &'a [u8],
@@ -470,6 +478,7 @@ impl<'a> From<DynArray<'a>> for DynValue<'a> {
     }
 }
 
+/// A fixed-length string with a dynamic encoding.
 pub struct DynFixedString<'a> {
     buf: &'a [u8],
     unicode: bool,
@@ -529,6 +538,7 @@ impl<'a> From<DynFixedString<'a>> for DynValue<'a> {
     }
 }
 
+/// A variable-length string with a dynamic encoding.
 pub struct DynVarLenString<'a> {
     buf: &'a [u8],
     unicode: bool,
@@ -633,6 +643,7 @@ impl<'a> From<DynVarLenString<'a>> for DynValue<'a> {
     }
 }
 
+/// A dynamically-typed string.
 #[derive(PartialEq, Eq)]
 pub enum DynString<'a> {
     Fixed(DynFixedString<'a>),
@@ -677,6 +688,7 @@ impl<'a> From<DynString<'a>> for DynValue<'a> {
     }
 }
 
+/// A borrowed value with dynamic type.
 #[derive(PartialEq)]
 pub enum DynValue<'a> {
     Scalar(DynScalar),
@@ -687,6 +699,7 @@ pub enum DynValue<'a> {
 }
 
 impl<'a> DynValue<'a> {
+    /// Constructs a new `DynValue` from a `TypeDescriptor` and a byte slice.
     pub fn new(tp: &'a TypeDescriptor, buf: &'a [u8]) -> Self {
         use TypeDescriptor::*;
         debug_assert_eq!(tp.size(), buf.len());
@@ -748,12 +761,14 @@ impl Display for DynValue<'_> {
     }
 }
 
+/// An owned value with dynamic type.
 pub struct OwnedDynValue {
     tp: TypeDescriptor,
     buf: Box<[u8]>,
 }
 
 impl OwnedDynValue {
+    /// Constructs a new `OwnedDynValue` from the given value.
     pub fn new<T: H5Type>(value: T) -> Self {
         let ptr = (&value as *const T).cast::<u8>();
         let len = mem::size_of_val(&value);
@@ -762,10 +777,12 @@ impl OwnedDynValue {
         Self { tp: T::type_descriptor(), buf: buf.to_owned().into_boxed_slice() }
     }
 
+    /// Returns a borrowed version of the contained value.
     pub fn get(&self) -> DynValue {
         DynValue::new(&self.tp, &self.buf)
     }
 
+    /// Returns the value's type descriptor.
     pub fn type_descriptor(&self) -> &TypeDescriptor {
         &self.tp
     }
@@ -780,9 +797,12 @@ impl OwnedDynValue {
         Self { tp, buf }
     }
 
-    /// Cast to the concrete type
+    /// Tries to downcast the value to a concrete type.
     ///
-    /// Will fail if the type-descriptors are not equal
+    /// # Errors
+    ///
+    /// If the type descriptors of `self` and `T` are not equal, this will fail and return a
+    /// `Result::Err` containing the original value.
     pub fn cast<T: H5Type>(mut self) -> Result<T, Self> {
         use mem::MaybeUninit;
         if self.tp != T::type_descriptor() {

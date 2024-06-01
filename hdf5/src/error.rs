@@ -35,6 +35,7 @@ pub fn silence_errors(silence: bool) {
     h5lock!(silence_errors_no_sync(silence));
 }
 
+/// A stack of error records from an HDF5 library call.
 #[repr(transparent)]
 #[derive(Clone)]
 pub struct ErrorStack(Handle);
@@ -107,6 +108,7 @@ impl ErrorStack {
     }
 }
 
+/// An error record for an HDF5 library call.
 #[derive(Clone, Debug)]
 pub struct ErrorFrame {
     desc: String,
@@ -127,19 +129,24 @@ impl ErrorFrame {
         }
     }
 
+    /// Returns the error description.
     pub fn desc(&self) -> &str {
         self.desc.as_ref()
     }
 
+    /// Returns a message with the error description and the relevant function name.
     pub fn description(&self) -> &str {
         self.description.as_ref()
     }
 
+    /// Returns a message with the error description and the relevant function name, file name,
+    /// and line number.
     pub fn detail(&self) -> Option<String> {
         Some(format!("Error in {}(): {} [{}: {}]", self.func, self.desc, self.major, self.minor))
     }
 }
 
+/// A converted [`ErrorStack`] with methods to access [`ErrorFrame`] data.
 #[derive(Clone, Debug)]
 pub struct ExpandedErrorStack {
     frames: Vec<ErrorFrame>,
@@ -178,10 +185,12 @@ impl ExpandedErrorStack {
         }
     }
 
+    /// Returns the top [`ErrorFrame`] of the stack, or `None` if it is empty.
     pub fn top(&self) -> Option<&ErrorFrame> {
         self.first()
     }
 
+    /// Returns the description of the error on top of the stack.
     pub fn description(&self) -> &str {
         match self.description {
             None => "unknown library error",
@@ -189,6 +198,7 @@ impl ExpandedErrorStack {
         }
     }
 
+    /// Returns a detailed message for the error on top of the stack, or `None` if it is empty.
     pub fn detail(&self) -> Option<String> {
         self.top().and_then(ErrorFrame::detail)
     }
