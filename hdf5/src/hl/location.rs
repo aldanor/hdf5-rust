@@ -146,6 +146,20 @@ impl Location {
     pub fn open_by_token(&self, token: LocationToken) -> Result<Self> {
         H5O_open_by_token(self.id(), token)
     }
+
+    /// Generate a [object reference](ObjectReference) to the object for a reference storage.
+    ///
+    /// This can be a group, dataset or datatype. Other objects are not supported.
+    pub fn reference<R: ObjectReference>(&self, name: &str) -> Result<R> {
+        R::create(self, name)
+    }
+
+    /// Get a reference back to the referenced object from a standard reference.
+    ///
+    /// This can be called against any object in the same file as the referenced object.
+    pub fn dereference<R: ObjectReference>(&self, reference: &R) -> Result<ReferencedObject> {
+        reference.dereference(self)
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

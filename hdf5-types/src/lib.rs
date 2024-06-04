@@ -20,6 +20,7 @@ extern crate quickcheck;
 mod array;
 pub mod dyn_value;
 mod h5type;
+pub mod references;
 mod string;
 
 #[cfg(feature = "complex")]
@@ -30,6 +31,7 @@ pub use self::dyn_value::{DynValue, OwnedDynValue};
 pub use self::h5type::{
     CompoundField, CompoundType, EnumMember, EnumType, FloatSize, H5Type, IntSize, TypeDescriptor,
 };
+pub use self::references::Reference;
 pub use self::string::{FixedAscii, FixedUnicode, StringError, VarLenAscii, VarLenUnicode};
 
 pub(crate) unsafe fn malloc(n: usize) -> *mut core::ffi::c_void {

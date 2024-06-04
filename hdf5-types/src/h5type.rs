@@ -4,6 +4,7 @@ use std::os::raw::c_void;
 use std::ptr;
 
 use crate::array::VarLenArray;
+use crate::references::Reference;
 use crate::string::{FixedAscii, FixedUnicode, VarLenAscii, VarLenUnicode};
 
 #[allow(non_camel_case_types)]
@@ -160,6 +161,7 @@ pub enum TypeDescriptor {
     VarLenArray(Box<Self>),
     VarLenAscii,
     VarLenUnicode,
+    Reference(Reference),
 }
 
 impl Display for TypeDescriptor {
@@ -186,6 +188,10 @@ impl Display for TypeDescriptor {
             TypeDescriptor::VarLenArray(ref tp) => write!(f, "[{}] (var len)", tp),
             TypeDescriptor::VarLenAscii => write!(f, "string (var len)"),
             TypeDescriptor::VarLenUnicode => write!(f, "unicode (var len)"),
+            TypeDescriptor::Reference(Reference::Object) => write!(f, "reference (object)"),
+            TypeDescriptor::Reference(Reference::Region) => write!(f, "reference (region)"),
+            #[cfg(feature = "1.12.0")]
+            TypeDescriptor::Reference(Reference::Std) => write!(f, "reference"),
         }
     }
 }
@@ -202,6 +208,7 @@ impl TypeDescriptor {
             Self::FixedAscii(len) | Self::FixedUnicode(len) => len,
             Self::VarLenArray(_) => mem::size_of::<hvl_t>(),
             Self::VarLenAscii | Self::VarLenUnicode => mem::size_of::<*const u8>(),
+            Self::Reference(reftyp) => reftyp.size(),
         }
     }
 
@@ -340,7 +347,7 @@ unsafe impl<T: H5Type, const N: usize> H5Type for [T; N] {
     }
 }
 
-unsafe impl<T: Copy + H5Type> H5Type for VarLenArray<T> {
+unsafe impl<T: H5Type + Copy> H5Type for VarLenArray<T> {
     #[inline]
     fn type_descriptor() -> TypeDescriptor {
         TypeDescriptor::VarLenArray(Box::new(<T as H5Type>::type_descriptor()))
