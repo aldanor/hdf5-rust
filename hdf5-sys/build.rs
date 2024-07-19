@@ -4,7 +4,7 @@
 use std::convert::TryInto;
 use std::env;
 use std::error::Error;
-use std::fmt::{self, Debug, Display};
+use std::fmt::{self, Debug};
 use std::fs;
 use std::os::raw::{c_int, c_uint};
 use std::path::{Path, PathBuf};
@@ -78,17 +78,6 @@ fn is_msvc() -> bool {
     // `cfg!(target_env = "msvc")` will report wrong value when using
     // MSVC toolchain targeting GNU.
     std::env::var("CARGO_CFG_TARGET_ENV").unwrap() == "msvc"
-}
-
-#[derive(Clone, Debug)]
-struct RuntimeError(String);
-
-impl Error for RuntimeError {}
-
-impl Display for RuntimeError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "HDF5 runtime error: {}", self.0)
-    }
 }
 
 #[allow(non_snake_case, non_camel_case_types)]
@@ -283,7 +272,7 @@ mod pkgconf {
             for dir in &library.include_paths {
                 if is_inc_dir(dir) {
                     config.inc_dir = Some(dir.into());
-                    config.link_paths = library.link_paths.clone();
+                    config.link_paths.clone_from(&library.link_paths);
                     break;
                 }
             }
