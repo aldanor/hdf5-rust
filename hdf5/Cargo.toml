@@ -45,7 +45,7 @@ lazy_static = "1.4"
 libc = { workspace = true }
 lzf-sys = { version = "0.1", optional = true }
 mpi-sys = { workspace = true, optional = true }
-ndarray = "0.15"
+ndarray = ">=0.15, < 0.17"
 parking_lot = "0.12"
 paste = "1.0"
 # internal
