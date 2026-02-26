@@ -2,6 +2,8 @@
 
 HDF5 for Rust.
 
+**Unmaintained**: A maintained fork is at https://github.com/metno/hdf5-rust
+
 [![Build](https://github.com/aldanor/hdf5-rust/workflows/CI/badge.svg)](https://github.com/aldanor/hdf5-rust/actions?query=branch%3Amaster)
 [![Latest Version](https://img.shields.io/crates/v/hdf5.svg)](https://crates.io/crates/hdf5)
 [![Documentation](https://docs.rs/hdf5/badge.svg)](https://docs.rs/hdf5)
